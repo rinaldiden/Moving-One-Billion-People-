@@ -1,0 +1,16 @@
+logLevel: info
+logDestinations: [file]
+logFile: /tmp/mediamtx.log
+
+rtsp: yes
+rtspAddress: :8554
+protocols: [tcp, udp]
+
+rtmp: no
+hls: no
+webrtc: no
+srt: no
+
+paths:
+  stream:
+    source: publisher

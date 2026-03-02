@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Compiled
+*.so
+*.o
+*.out
+
+# Binaries (download locali, non versionare)
+mediamtx
+
+# Logs
+*.log
+
+# Modelli ML (troppo grandi per git)
+*.pt
+*.pth
+*.onnx
+*.tflite
+models/
+
+# Dati di training (troppo grandi)
+datasets/
+recordings/
