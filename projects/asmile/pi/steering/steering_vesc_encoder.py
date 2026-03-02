@@ -5,13 +5,18 @@ Legge encoder SSI 12-bit, calcola delta, invia duty al VESC via UART.
 
 Convertito da: firmware/steering/steering_vesc_encoder.ino
 
-Cablaggio Raspi 5:
-  UART:  GPIO 14 (TX) → VESC RX  |  GPIO 15 (RX) → VESC TX
-  Encoder SSI:
-    GPIO 4  → CLOCK
-    GPIO 3  → DATA (input)
-    GPIO 5  → CLOCK_ENABLE (tenere HIGH)
-    GPIO 6  → DATA_ENABLE (tenere LOW)
+Cablaggio Raspi 5 (pin aggiornati per compatibilità con GPS + IMU):
+  UART0:  GPIO 14 (TX) → VESC RX  |  GPIO 15 (RX) → VESC TX
+  Encoder SSI (via 2x moduli RS-485):
+    GPIO 17 (Pin 11) → CLOCK  (RS-485 #1 DI → encoder CLK+/CLK-)
+    GPIO 27 (Pin 13) → DATA   (RS-485 #2 RO ← encoder DATA+/DATA-)
+    GPIO 22 (Pin 15) → CLOCK_ENABLE (tenere HIGH)
+    GPIO 23 (Pin 16) → DATA_ENABLE  (tenere LOW)
+
+  Altri dispositivi sullo stesso Raspi:
+    UART3 GPIO 8/9   → GPS NEO-M10
+    I2C1  GPIO 2/3   → MPU6050 IMU
+    PWM0  GPIO 12    → Servo freno
 
 Dipendenze:
   sudo apt install python3-lgpio
@@ -28,11 +33,12 @@ UART_PORT = "/dev/ttyAMA0"
 UART_BAUD = 115200
 
 # GPIO (BCM) — Pi 5 usa gpiochip4
+# Pin riassegnati per evitare conflitto con I2C1 (MPU6050) e UART3 (GPS)
 GPIO_CHIP = 4
-PIN_CLOCK = 4
-PIN_DATA = 3
-PIN_CLOCK_EN = 5
-PIN_DATA_EN = 6
+PIN_CLOCK = 17      # Pin 11 — era GPIO 4
+PIN_DATA = 27       # Pin 13 — era GPIO 3 (ora libero per I2C1 SCL)
+PIN_CLOCK_EN = 22   # Pin 15 — era GPIO 5
+PIN_DATA_EN = 23    # Pin 16 — era GPIO 6
 
 # Encoder SSI
 BITS = 12
