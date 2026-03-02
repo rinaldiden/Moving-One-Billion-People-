@@ -2,7 +2,7 @@
 
 **Tecnologia al servizio della mobilità universale.**
 
-Moving One Billion People è un progetto open-source che sviluppa soluzioni tecnologiche per permettere a persone con disabilità di muoversi in autonomia. L'obiettivo è ambizioso: creare strumenti che possano impattare la vita di un miliardo di persone nel mondo.
+Moving One Billion People è un movimento per democratizzare la mobilità delle Persone. Progettiamo veicoli stampabili in 3D — bici adattive, cargo bike, tricicli, micro-veicoli elettrici — replicabili ovunque con stampanti desktop, tubi e giunti stampati. Dall'aula scolastica al fab lab, dalla città al villaggio remoto: mobilità accessibile, personalizzabile e per tutti.
 
 ## Progetti
 
