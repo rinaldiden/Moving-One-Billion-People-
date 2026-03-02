@@ -1,36 +1,36 @@
-# Firmware Freno — Arduino + Servomotore
+# Braking Firmware — Arduino + Servomotor
 
-Sketch Arduino per il controllo del freno idraulico a disco via servomotore.
+Arduino sketch for hydraulic disc brake control via servomotor.
 
-## Componenti
+## Components
 
-- **Servomotore** — Aziona il pompante del freno idraulico a disco
-- **Arduino** — Controlla il servo con profilo di frenata realistico
+- **Servomotor** — Actuates the hydraulic disc brake pump
+- **Arduino** — Controls the servo with a realistic braking profile
 
-## Come funziona
+## How It Works
 
-Il sistema simula una frenata realistica in due fasi:
+The system simulates a realistic braking action in two phases:
 
-1. **Scatto rapido** — Primi gradi a velocità massima (recupero gioco meccanico)
-2. **Progressiva** — Ultimi gradi con ritardo crescente (frenata progressiva)
+1. **Quick snap** — First degrees at maximum speed (mechanical play recovery)
+2. **Progressive** — Last degrees with increasing delay (progressive braking)
 
-Il rilascio è sempre rapido (1ms/grado).
+Release is always fast (1ms/degree).
 
-## Parametri chiave
+## Key Parameters
 
-| Parametro | Valore | Note |
-|-----------|--------|------|
-| CENTRO | 0° | Posizione di riposo (leva rilasciata) |
-| ESCURSIONE_MEDIA | 85° | Corsa per frenata media |
-| GRADI_VELOCI | 56° | Fase rapida iniziale |
-| RITARDO_FRENO_DOLCE | 60 ms/° | Velocità fase progressiva |
-| RITARDO_SUPER_RAPIDO | 1 ms/° | Velocità scatto e rilascio |
-| Pin servo | 9 | PWM (500–2500 µs) |
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| CENTER | 0° | Rest position (lever released) |
+| MEDIUM_TRAVEL | 85° | Travel for medium braking |
+| FAST_DEGREES | 56° | Initial fast phase |
+| SOFT_BRAKE_DELAY | 60 ms/° | Progressive phase speed |
+| SUPER_FAST_DELAY | 1 ms/° | Snap and release speed |
+| Servo pin | 9 | PWM (500–2500 µs) |
 
 ## Test
 
-Lo sketch `brake_servo_test.ino` esegue 500 cicli di frenata media per stress test del sistema meccanico.
+The `brake_servo_test.ino` sketch runs 500 medium braking cycles for mechanical system stress testing.
 
-## Stato
+## Status
 
-✅ Testato (500 cicli) su Arduino — da convertire in Python per Raspberry Pi 5.
+✅ Tested (500 cycles) on Arduino — converted to Python for Raspberry Pi 5: `pi/braking/brake_servo.py`

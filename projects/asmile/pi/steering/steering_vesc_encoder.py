@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
 """
-Sterzo Asmile — Raspberry Pi 5
-Legge encoder SSI 12-bit, calcola delta, invia duty al VESC via UART.
+Asmile Steering — Raspberry Pi 5
+Reads 12-bit SSI encoder, calculates delta, sends duty to VESC via UART.
 
-Convertito da: firmware/steering/steering_vesc_encoder.ino
+Converted from: firmware/steering/steering_vesc_encoder.ino
 
-Cablaggio Raspi 5 (pin aggiornati per compatibilità con GPS + IMU):
+Raspi 5 Wiring (pins updated for GPS + IMU compatibility):
   UART0:  GPIO 14 (TX) → VESC RX  |  GPIO 15 (RX) → VESC TX
-  Encoder SSI (via 2x moduli RS-485):
+  SSI Encoder (via 2x RS-485 modules):
     GPIO 17 (Pin 11) → CLOCK  (RS-485 #1 DI → encoder CLK+/CLK-)
     GPIO 27 (Pin 13) → DATA   (RS-485 #2 RO ← encoder DATA+/DATA-)
-    GPIO 22 (Pin 15) → CLOCK_ENABLE (tenere HIGH)
-    GPIO 23 (Pin 16) → DATA_ENABLE  (tenere LOW)
+    GPIO 22 (Pin 15) → CLOCK_ENABLE (keep HIGH)
+    GPIO 23 (Pin 16) → DATA_ENABLE  (keep LOW)
 
-  Altri dispositivi sullo stesso Raspi:
+  Other devices on the same Raspi:
     UART3 GPIO 8/9   → GPS NEO-M10
     I2C1  GPIO 2/3   → MPU6050 IMU
-    PWM0  GPIO 12    → Servo freno
+    PWM0  GPIO 12    → Brake servo
 
-Dipendenze:
+Dependencies:
   sudo apt install python3-lgpio
   pip install pyserial
 """
@@ -32,15 +32,15 @@ import time
 UART_PORT = "/dev/ttyAMA0"
 UART_BAUD = 115200
 
-# GPIO (BCM) — Pi 5 usa gpiochip4
-# Pin riassegnati per evitare conflitto con I2C1 (MPU6050) e UART3 (GPS)
+# GPIO (BCM) — Pi 5 uses gpiochip4
+# Pins reassigned to avoid conflict with I2C1 (MPU6050) and UART3 (GPS)
 GPIO_CHIP = 4
-PIN_CLOCK = 17      # Pin 11 — era GPIO 4
-PIN_DATA = 27       # Pin 13 — era GPIO 3 (ora libero per I2C1 SCL)
-PIN_CLOCK_EN = 22   # Pin 15 — era GPIO 5
-PIN_DATA_EN = 23    # Pin 16 — era GPIO 6
+PIN_CLOCK = 17      # Pin 11 — was GPIO 4
+PIN_DATA = 27       # Pin 13 — was GPIO 3 (now free for I2C1 SCL)
+PIN_CLOCK_EN = 22   # Pin 15 — was GPIO 5
+PIN_DATA_EN = 23    # Pin 16 — was GPIO 6
 
-# Encoder SSI
+# SSI Encoder
 BITS = 12
 SAMPLES = 5
 MIN_CHANGE = 5
@@ -53,7 +53,7 @@ COMM_SET_DUTY = 5
 # --- VESC UART ---
 
 def crc16(data: bytes) -> int:
-    """CRC16-CCITT per protocollo VESC."""
+    """CRC16-CCITT for VESC protocol."""
     crc = 0
     for b in data:
         crc ^= b << 8
@@ -67,7 +67,7 @@ def crc16(data: bytes) -> int:
 
 
 def vesc_set_duty(ser, duty: float):
-    """Invia comando SET_DUTY al VESC via UART."""
+    """Send SET_DUTY command to VESC via UART."""
     duty_int = int(duty * 100000)
     payload = struct.pack(">Bi", COMM_SET_DUTY, duty_int)
     crc = crc16(payload)
@@ -80,10 +80,10 @@ def vesc_set_duty(ser, duty: float):
     ser.write(packet)
 
 
-# --- Encoder SSI ---
+# --- SSI Encoder ---
 
 def read_ssi_single(h) -> int:
-    """Legge una singola posizione dall'encoder SSI (bit-bang)."""
+    """Read a single position from SSI encoder (bit-bang)."""
     raw = 0
     time.sleep(25e-6)
     for _ in range(BITS):
@@ -97,7 +97,7 @@ def read_ssi_single(h) -> int:
 
 
 def read_ssi(h) -> int:
-    """Legge encoder SSI con median filter (5 campioni)."""
+    """Read SSI encoder with median filter (5 samples)."""
     readings = sorted(read_ssi_single(h) for _ in range(SAMPLES))
     return readings[SAMPLES // 2]
 
@@ -109,13 +109,13 @@ def main():
     h = lgpio.gpiochip_open(GPIO_CHIP)
     lgpio.gpio_claim_output(h, PIN_CLOCK, 1)
     lgpio.gpio_claim_input(h, PIN_DATA)
-    lgpio.gpio_claim_output(h, PIN_CLOCK_EN, 1)  # HIGH sempre
-    lgpio.gpio_claim_output(h, PIN_DATA_EN, 0)   # LOW sempre
+    lgpio.gpio_claim_output(h, PIN_CLOCK_EN, 1)  # Always HIGH
+    lgpio.gpio_claim_output(h, PIN_DATA_EN, 0)   # Always LOW
 
     # Init UART
     ser = serial.Serial(UART_PORT, UART_BAUD, timeout=0.1)
 
-    print("Encoder → VESC — Motore gira solo con rotazione (orario/antiorario)")
+    print("Encoder → VESC — Motor spins only with rotation (CW/CCW)")
     vesc_set_duty(ser, 0.0)
     last_pos = 0
 
@@ -140,7 +140,7 @@ def main():
             time.sleep(0.02)  # ~50Hz
 
     except KeyboardInterrupt:
-        print("\nStop — motore fermo")
+        print("\nStop — motor idle")
         vesc_set_duty(ser, 0.0)
     finally:
         ser.close()

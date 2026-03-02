@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """
-GPS Asmile — Raspberry Pi 5
-Legge dati NMEA dal GPS NEO-M10 via UART3.
+Asmile GPS — Raspberry Pi 5
+Reads NMEA data from GPS NEO-M10 via UART3.
 
-Cablaggio Raspi 5:
+Raspi 5 Wiring:
   GPIO 8  (Pin 24) TX → GPS RX
   GPIO 9  (Pin 21) RX ← GPS TX
   3.3V    (Pin 1)     → GPS VCC
   GND     (Pin 6)     → GPS GND
 
-Config.txt richiesto:
+Required config.txt:
   dtoverlay=uart3
 
-Dipendenze:
+Dependencies:
   pip install pyserial
 """
 
@@ -21,11 +21,11 @@ import time
 
 # --- Config ---
 UART_PORT = "/dev/ttyAMA3"
-UART_BAUD = 9600  # Default NEO-M10
+UART_BAUD = 9600  # NEO-M10 default
 
 
 def parse_gga(sentence: str) -> dict | None:
-    """Estrae lat/lon/alt da sentenza $GPGGA o $GNGGA."""
+    """Extract lat/lon/alt from $GPGGA or $GNGGA sentence."""
     parts = sentence.split(",")
     if len(parts) < 15:
         return None
@@ -42,7 +42,7 @@ def parse_gga(sentence: str) -> dict | None:
 
 
 def parse_rmc(sentence: str) -> dict | None:
-    """Estrae velocità e heading da sentenza $GPRMC o $GNRMC."""
+    """Extract speed and heading from $GPRMC or $GNRMC sentence."""
     parts = sentence.split(",")
     if len(parts) < 12:
         return None
@@ -57,7 +57,7 @@ def parse_rmc(sentence: str) -> dict | None:
 
 
 def _nmea_to_decimal(coord: str, direction: str) -> float:
-    """Converte coordinata NMEA (ddmm.mmmm) in gradi decimali."""
+    """Convert NMEA coordinate (ddmm.mmmm) to decimal degrees."""
     if len(coord) < 4:
         return 0.0
     dot = coord.index(".")
@@ -71,8 +71,8 @@ def _nmea_to_decimal(coord: str, direction: str) -> float:
 
 def main():
     ser = serial.Serial(UART_PORT, UART_BAUD, timeout=1.0)
-    print(f"GPS NEO-M10 su {UART_PORT} @ {UART_BAUD} baud")
-    print("In attesa di fix GPS...")
+    print(f"GPS NEO-M10 on {UART_PORT} @ {UART_BAUD} baud")
+    print("Waiting for GPS fix...")
 
     try:
         while True:
@@ -84,12 +84,12 @@ def main():
                 data = parse_gga(line)
                 if data and data["fix"] > 0:
                     print(f"FIX: {data['lat']:.6f}, {data['lon']:.6f} | "
-                          f"Alt: {data['alt']:.1f}m | Sat: {data['sats']}")
+                          f"Alt: {data['alt']:.1f}m | Sats: {data['sats']}")
 
             elif "RMC" in line:
                 data = parse_rmc(line)
                 if data:
-                    print(f"VEL: {data['speed_kmh']:.1f} km/h | "
+                    print(f"SPD: {data['speed_kmh']:.1f} km/h | "
                           f"Heading: {data['heading']:.1f}°")
 
     except KeyboardInterrupt:

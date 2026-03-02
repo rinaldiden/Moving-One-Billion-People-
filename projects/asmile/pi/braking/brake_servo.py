@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-Freno Asmile — Raspberry Pi 5
-Controlla servo freno idraulico a disco con profilo di frenata realistico.
+Asmile Braking — Raspberry Pi 5
+Controls hydraulic disc brake servo with realistic braking profile.
 
-Convertito da: firmware/braking/brake_servo_test.ino
+Converted from: firmware/braking/brake_servo_test.ino
 
-Cablaggio Raspi 5:
-  GPIO 12 (PWM0) → Segnale servo (bianco/arancione)
-  GND (pin 14)   → GND servo + GND alimentatore 6V
-  Alimentatore 6V esterno → +V servo (rosso)
+Raspi 5 Wiring:
+  GPIO 12 (PWM0) → Servo signal (white/orange wire)
+  GND (Pin 14)   → Servo GND + 6V power supply GND
+  External 6V supply → Servo +V (red wire)
 
-Dipendenze:
+Dependencies:
   sudo apt install python3-lgpio
 """
 
@@ -19,30 +19,30 @@ import time
 
 # --- Config ---
 GPIO_CHIP = 4       # Pi 5 = gpiochip4
-PIN_SERVO = 12      # GPIO 12 = PWM0 hardware
+PIN_SERVO = 12      # GPIO 12 = hardware PWM0
 
 # Servo timing
-SERVO_FREQ = 50          # 50Hz = periodo 20ms
+SERVO_FREQ = 50          # 50Hz = 20ms period
 PULSE_MIN_US = 500       # 0°
 PULSE_MAX_US = 2500      # 180°
 
-# Parametri frenata (stessi dello sketch Arduino)
-CENTRO = 0
-ESCURSIONE_MEDIA = 85                      # Gradi frenata media
-GRADI_VELOCI = ESCURSIONE_MEDIA - 29       # 56° fase rapida
-RITARDO_SUPER_RAPIDO = 0.001               # 1 ms/grado
-RITARDO_FRENO_DOLCE = 0.060                # 60 ms/grado
-RIPETIZIONI = 500
+# Braking parameters (same as Arduino sketch)
+CENTER = 0
+MEDIUM_TRAVEL = 85                         # Medium braking degrees
+FAST_DEGREES = MEDIUM_TRAVEL - 29          # 56° fast phase
+SUPER_FAST_DELAY = 0.001                   # 1 ms/degree
+SOFT_BRAKE_DELAY = 0.060                   # 60 ms/degree
+REPETITIONS = 500
 
 
 def angle_to_duty(angle: int) -> float:
-    """Converte angolo (0-180) in duty cycle % per servo a 50Hz."""
+    """Convert angle (0-180) to duty cycle % for 50Hz servo."""
     pulse_us = PULSE_MIN_US + (angle / 180.0) * (PULSE_MAX_US - PULSE_MIN_US)
     return (pulse_us / 20000.0) * 100.0
 
 
 class Servo:
-    """Wrapper servo su lgpio PWM hardware."""
+    """Servo wrapper on lgpio hardware PWM."""
 
     def __init__(self, h, pin):
         self.h = h
@@ -61,7 +61,7 @@ class Servo:
 
 
 def move_servo(servo, target: int, delay_per_deg: float):
-    """Muove il servo grado per grado con ritardo costante."""
+    """Move servo degree by degree with constant delay."""
     current = servo.read()
     step = 1 if target > current else -1
     while current != target:
@@ -70,44 +70,44 @@ def move_servo(servo, target: int, delay_per_deg: float):
         time.sleep(delay_per_deg)
 
 
-def frenata_realistica(servo, target: int, gradi_veloci: int, ritardo_max: float):
-    """Frenata in due fasi: scatto rapido + progressiva."""
+def realistic_braking(servo, target: int, fast_degrees: int, max_delay: float):
+    """Two-phase braking: quick snap + progressive."""
     current = servo.read()
     direction = 1 if target > current else -1
-    gradi_totali = abs(target - current)
-    gradi_veloci = min(gradi_veloci, gradi_totali)
+    total_degrees = abs(target - current)
+    fast_degrees = min(fast_degrees, total_degrees)
 
-    # Fase 1: scatto rapido (recupero gioco meccanico)
-    if gradi_veloci > 0:
-        fine_veloce = current + direction * gradi_veloci
-        print(f"  → Scatto rapido (primi {gradi_veloci}°)")
-        while current != fine_veloce:
+    # Phase 1: quick snap (mechanical play recovery)
+    if fast_degrees > 0:
+        fast_end = current + direction * fast_degrees
+        print(f"  → Quick snap (first {fast_degrees}°)")
+        while current != fast_end:
             current += direction
             servo.write(current)
-            time.sleep(RITARDO_SUPER_RAPIDO)
+            time.sleep(SUPER_FAST_DELAY)
 
-    # Fase 2: progressiva (frenata modulata)
-    gradi_freno = gradi_totali - gradi_veloci
-    if gradi_freno > 0:
-        print(f"  → Progressiva ({gradi_freno}°)")
-        for i in range(gradi_freno):
-            progresso = i / max(1, gradi_freno - 1)
-            delay = RITARDO_SUPER_RAPIDO + progresso * (ritardo_max - RITARDO_SUPER_RAPIDO)
+    # Phase 2: progressive (modulated braking)
+    brake_degrees = total_degrees - fast_degrees
+    if brake_degrees > 0:
+        print(f"  → Progressive ({brake_degrees}°)")
+        for i in range(brake_degrees):
+            progress = i / max(1, brake_degrees - 1)
+            delay = SUPER_FAST_DELAY + progress * (max_delay - SUPER_FAST_DELAY)
             current += direction
             servo.write(current)
             time.sleep(delay)
 
 
 def perform_brake(servo):
-    """Esegue un ciclo completo: frenata + rilascio."""
-    target = CENTRO + ESCURSIONE_MEDIA
-    print(f"FRENATA MEDIA: +{ESCURSIONE_MEDIA}°")
-    frenata_realistica(servo, target, GRADI_VELOCI, RITARDO_FRENO_DOLCE)
-    print(f"Freno azionato ({target}°)")
+    """Execute a full cycle: brake + release."""
+    target = CENTER + MEDIUM_TRAVEL
+    print(f"MEDIUM BRAKE: +{MEDIUM_TRAVEL}°")
+    realistic_braking(servo, target, FAST_DEGREES, SOFT_BRAKE_DELAY)
+    print(f"Brake engaged ({target}°)")
     time.sleep(1.0)
 
-    print("Rilascio rapido")
-    move_servo(servo, CENTRO, RITARDO_SUPER_RAPIDO)
+    print("Quick release")
+    move_servo(servo, CENTER, SUPER_FAST_DELAY)
     time.sleep(1.5)
 
 
@@ -115,26 +115,26 @@ def main():
     h = lgpio.gpiochip_open(GPIO_CHIP)
     servo = Servo(h, PIN_SERVO)
 
-    print(f"=== SISTEMA FRENO BICI — {RIPETIZIONI}x FRENATA MEDIA ===")
+    print(f"=== BICYCLE BRAKE SYSTEM — {REPETITIONS}x MEDIUM BRAKING ===")
 
-    # Posizione zero
-    print("Ricerca ZERO...")
-    servo.write(CENTRO)
+    # Zero position
+    print("Finding ZERO...")
+    servo.write(CENTER)
     time.sleep(1.0)
-    print(f"Zero: {CENTRO}°")
+    print(f"Zero: {CENTER}°")
     time.sleep(2.0)
-    print("Leva in posizione ZERO — Inizio frenate")
+    print("Lever at ZERO position — Starting brake cycles")
 
     try:
-        for i in range(1, RIPETIZIONI + 1):
-            print(f"--- Frenata {i}/{RIPETIZIONI} ---")
+        for i in range(1, REPETITIONS + 1):
+            print(f"--- Brake {i}/{REPETITIONS} ---")
             perform_brake(servo)
 
-        print(f"=== {RIPETIZIONI} FRENATE COMPLETATE ===")
+        print(f"=== {REPETITIONS} BRAKE CYCLES COMPLETED ===")
 
     except KeyboardInterrupt:
-        print("\nStop — servo in posizione zero")
-        servo.write(CENTRO)
+        print("\nStop — servo at zero position")
+        servo.write(CENTER)
         time.sleep(0.5)
     finally:
         servo.stop()

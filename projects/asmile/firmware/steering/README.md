@@ -1,32 +1,32 @@
-# Firmware Sterzo — Arduino + VESC + Encoder SSI
+# Steering Firmware — Arduino + VESC + SSI Encoder
 
-Sketch Arduino originale per il controllo dello sterzo via VESC.
+Original Arduino sketch for steering control via VESC.
 
-## Componenti
+## Components
 
-- **VESC** — Controller motore BLDC in modalità FOC (Field Oriented Control)
-- **Encoder SSI 12-bit** — Posizione assoluta dello sterzo (0–4095)
-- **Arduino** — Lettura encoder → calcolo duty → invio a VESC via UART
+- **VESC** — BLDC motor controller in FOC (Field Oriented Control) mode
+- **SSI 12-bit Encoder** — Absolute steering position (0–4095)
+- **Arduino** — Reads encoder → calculates duty → sends to VESC via UART
 
-## Come funziona
+## How It Works
 
-1. L'encoder SSI viene letto con median filter (5 campioni) per stabilità
-2. Il delta tra posizione attuale e precedente determina direzione e velocità
-3. Il duty cycle viene calcolato proporzionalmente al delta e inviato al VESC
-4. Gestione wrap-around a 0/4095 per continuità
+1. The SSI encoder is read with a median filter (5 samples) for stability
+2. The delta between current and previous position determines direction and speed
+3. The duty cycle is calculated proportionally to the delta and sent to the VESC
+4. Wrap-around handling at 0/4095 for continuity
 
-## Parametri chiave
+## Key Parameters
 
-| Parametro | Valore | Note |
-|-----------|--------|------|
-| Risoluzione encoder | 12 bit (4096 posizioni) | ~0.088° per step |
-| MIN_CHANGE | 5 | Soglia minima per inviare comando |
-| MAX_DUTY | 0.8 | Limite velocità motore (sicurezza) |
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| Encoder resolution | 12 bit (4096 positions) | ~0.088° per step |
+| MIN_CHANGE | 5 | Minimum threshold to send command |
+| MAX_DUTY | 0.8 | Motor speed limit (safety) |
 | Loop delay | 20ms | ~50Hz |
 
-## Pin Arduino
+## Arduino Pins
 
-| Pin | Funzione |
+| Pin | Function |
 |-----|----------|
 | 10 (RX) | VESC UART RX |
 | 11 (TX) | VESC UART TX |
@@ -35,6 +35,6 @@ Sketch Arduino originale per il controllo dello sterzo via VESC.
 | 5 | CLOCK_ENABLE (HIGH) |
 | 6 | DATA_ENABLE (LOW) |
 
-## Stato
+## Status
 
-✅ Funzionante su Arduino — da convertire in Python per Raspberry Pi 5.
+✅ Working on Arduino — converted to Python for Raspberry Pi 5: `pi/steering/steering_vesc_encoder.py`

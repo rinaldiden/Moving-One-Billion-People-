@@ -1,71 +1,71 @@
 # Bill of Materials — Asmile
 
-Lista completa hardware per il sistema di guida autonoma bicicletta.
+Complete hardware list for the autonomous bicycle guidance system.
 
-## Computazione
+## Computation
 
-| # | Componente | Modello | Quantità | Note |
+| # | Component | Model | Qty | Notes |
 |---|---|---|---|---|
-| 1 | Single Board Computer | Raspberry Pi 5 Model B | 1 | 8GB RAM consigliato |
+| 1 | Single Board Computer | Raspberry Pi 5 Model B | 1 | 8GB RAM recommended |
 | 2 | Stereo Camera | Arducam Camarray HAT (2x OV9281 mono) | 1 | Global shutter, 1280x400 stereo |
 
-## Sterzo
+## Steering
 
-| # | Componente | Modello | Quantità | Note |
+| # | Component | Model | Qty | Notes |
 |---|---|---|---|---|
-| 3 | Controller motore | VESC (FOC) | 1 | Firmware FOC configurato |
-| 4 | Motore sterzo | Flipsky 6354 BLDC | 1 | Collegato al VESC (3 fasi U/V/W) |
-| 5 | Encoder assoluto | Briter 5V 12-bit SSI | 1 | Posizione sterzo, uscita differenziale RS-485 |
-| 6 | Modulo RS-485 | TTL to RS-485 (MAX485) | 2 | #1 per CLOCK, #2 per DATA |
-| 6b | Coppia conica | Rapporto 1:5 (⚠️ DA VERIFICARE) | 1 | Accoppiamento motore Flipsky 6354 ↔ asse sterzo |
+| 3 | Motor controller | VESC (FOC) | 1 | FOC firmware configured |
+| 4 | Steering motor | Flipsky 6354 BLDC | 1 | Connected to VESC (3 phases U/V/W) |
+| 5 | Absolute encoder | Briter 5V 12-bit SSI | 1 | Steering position, RS-485 differential output |
+| 6 | RS-485 module | TTL to RS-485 (MAX485) | 2 | #1 for CLOCK, #2 for DATA |
+| 6b | Bevel gear | Ratio 1:5 (⚠️ TO BE VERIFIED) | 1 | Coupling Flipsky 6354 motor ↔ steering axis |
 
-## Frenata
+## Braking
 
-| # | Componente | Modello | Quantità | Note |
+| # | Component | Model | Qty | Notes |
 |---|---|---|---|---|
-| 7 | Servomotore freno | PDI-6221MG (20kg, 180°) | 1 | 6V, PWM 500-2500µs |
-| 8 | Freno meccanico | Freno idraulico a disco | 1 | Servo collegato al pompante |
+| 7 | Brake servo | PDI-6221MG (20kg, 180°) | 1 | 6V, PWM 500-2500µs |
+| 8 | Mechanical brake | Hydraulic disc brake | 1 | Servo connected to pump lever |
 
-## Sensori
+## Sensors
 
-| # | Componente | Modello | Quantità | Note |
+| # | Component | Model | Qty | Notes |
 |---|---|---|---|---|
 | 9 | GPS | NEO-M10 | 1 | UART, 9600 baud default |
-| 10 | IMU | MPU6050 | 1 | I2C, accelerometro + giroscopio, feedback frenata |
+| 10 | IMU | MPU6050 | 1 | I2C, accelerometer + gyroscope, braking feedback |
 
-## Alimentazione
+## Power
 
-| # | Componente | Modello | Quantità | Note |
+| # | Component | Model | Qty | Notes |
 |---|---|---|---|---|
-| 11 | Batteria | 13S Li-ion 48V | 1 | ~54.6V carica, alimenta tutto |
-| 12 | Step-down 5V | Pololu D24V55F5 | 1 | 48V→5V, per Raspberry Pi + periferiche |
-| 13 | Step-down 6V | Pololu D24V55F6 | 1 | 48V→6V, per servo freno PDI-6221MG |
+| 11 | Battery | 13S Li-ion 48V | 1 | ~54.6V full charge, powers everything |
+| 12 | 5V step-down | Pololu D24V55F5 | 1 | 48V→5V, for Raspberry Pi + peripherals |
+| 13 | 6V step-down | Pololu D24V55F6 | 1 | 48V→6V, for brake servo PDI-6221MG |
 
-## Previsti / Futuri
+## Planned / Future
 
-| # | Componente | Note |
+| # | Component | Notes |
 |---|---|---|
-| 14 | Sensori ultrasuoni | Rilevamento ostacoli laterali/posteriori |
-| 15 | Encoder ruota | Velocità/odometria |
-| 16 | Kill switch / E-stop | Interruttore emergenza sulla linea 48V |
-| 17 | Secondo Raspberry Pi 5 | Ridondanza con failover |
+| 14 | Ultrasonic sensors | Side/rear obstacle detection |
+| 15 | Wheel encoder | Speed/odometry |
+| 16 | Kill switch / E-stop | Emergency switch on 48V line |
+| 17 | Second Raspberry Pi 5 | Redundancy with failover |
 
-## Interfacce Utilizzate sul Raspi 5
+## Raspi 5 Interfaces Used
 
 ```
-UART0 (/dev/ttyAMA0)  → VESC (sterzo)
+UART0 (/dev/ttyAMA0)  → VESC (steering)
 UART3 (/dev/ttyAMA3)  → GPS NEO-M10
 I2C1  (bus 1, 0x68)   → MPU6050 IMU
-PWM0  (GPIO 12)       → Servo freno PDI-6221MG
-GPIO  (bit-bang SSI)   → Encoder Briter (via RS-485)
+PWM0  (GPIO 12)       → Brake servo PDI-6221MG
+GPIO  (bit-bang SSI)   → Briter encoder (via RS-485)
 CSI   (camera port)    → Arducam Camarray HAT
 ```
 
-## Documenti Correlati
+## Related Documents
 
-| Documento | Percorso |
+| Document | Path |
 |---|---|
-| Schema collegamento pin Raspi | [wiring_raspi5.md](wiring_raspi5.md) |
-| Schema alimentazione 48V | [power_48v.md](power_48v.md) |
-| Config VESC FOC | [../config/vesc_foc_ok.xml](../config/vesc_foc_ok.xml) |
-| Config camera OV9281 | [../config/ov9281_mono_pisp.json](../config/ov9281_mono_pisp.json) |
+| Raspi pin wiring diagram | [wiring_raspi5.md](wiring_raspi5.md) |
+| 48V power wiring diagram | [power_48v.md](power_48v.md) |
+| VESC FOC config | [../config/vesc_foc_ok.xml](../config/vesc_foc_ok.xml) |
+| OV9281 camera config | [../config/ov9281_mono_pisp.json](../config/ov9281_mono_pisp.json) |

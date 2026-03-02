@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-RTSP streaming – Arducam Camarray dual OV9281 su Raspberry Pi 5
+RTSP Streaming — Arducam Camarray dual OV9281 on Raspberry Pi 5
 
 Stereo side-by-side 1280x400 GREY → H264 → RTSP via MediaMTX
 
-Avvio MANUALE:  python3 rtsp_stream.py
-Stop:           Ctrl+C
+Manual start:  python3 rtsp_stream.py
+Stop:          Ctrl+C
 
-CPU stimata: ~28% a 15fps
+Estimated CPU: ~28% at 15fps
 """
 
 import subprocess, signal, sys, time, os
@@ -17,12 +17,12 @@ MEDIAMTX_BIN = os.path.join(WORK_DIR, "mediamtx")
 MEDIAMTX_CFG = os.path.join(WORK_DIR, "mediamtx.yml")
 ARDUCAM_FIX  = os.path.join(WORK_DIR, "arducam_fix.so")
 
-# ──── Parametri modificabili ────
+# ──── Configurable parameters ────
 WIDTH   = 1280
 HEIGHT  = 400
-FPS     = 15       # ← CAMBIA QUI: 15 = leggero (~28% CPU), 30 = più fluido (~50% CPU)
-BITRATE = 500_000  # ← CAMBIA QUI: 500k = leggero, 800k-1500k = più qualità
-# ────────────────────────────────
+FPS     = 15       # ← CHANGE HERE: 15 = light (~28% CPU), 30 = smoother (~50% CPU)
+BITRATE = 500_000  # ← CHANGE HERE: 500k = light, 800k-1500k = better quality
+# ──────────────────────────────────
 
 
 def build_gst_pipeline() -> list[str]:
@@ -114,7 +114,7 @@ def main():
     try:
         ip = subprocess.check_output(["hostname", "-I"], text=True).strip().split()[0]
     except Exception:
-        ip = "<IP_DEL_PI>"
+        ip = "<PI_IP>"
 
     print(f"")
     print(f"  ╔═══════════════════════════════════════════╗")

@@ -1,5 +1,5 @@
 # Shared Libraries
 
-Librerie e utilità condivise tra i vari progetti di Moving One Billion People.
+Shared libraries and utilities across Moving One Billion People projects.
 
-Questa cartella verrà popolata man mano che i progetti inizieranno a condividere codice comune (logging, protocolli di comunicazione, safety layer, ecc.).
+This folder will be populated as projects begin sharing common code (logging, communication protocols, safety layer, etc.).

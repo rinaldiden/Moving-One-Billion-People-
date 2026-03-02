@@ -1,47 +1,47 @@
 # 🌍 Moving One Billion People
 
-**Tecnologia al servizio della mobilità universale.**
+**Technology at the service of universal mobility.**
 
-Moving One Billion People è un movimento per democratizzare la mobilità delle Persone. Progettiamo veicoli stampabili in 3D — bici adattive, cargo bike, tricicli, micro-veicoli elettrici — replicabili ovunque con stampanti desktop, tubi e giunti stampati. Dall'aula scolastica al fab lab, dalla città al villaggio remoto: mobilità accessibile, personalizzabile e per tutti.
+Moving One Billion People is a movement to democratize mobility for everyone. We design 3D-printable vehicles — adaptive bikes, cargo bikes, tricycles, electric micro-vehicles — replicable anywhere with desktop printers, tubes, and printed joints. From the classroom to the fab lab, from the city to the remote village: accessible, customizable mobility for all.
 
-## Progetti
+## Projects
 
-| Progetto | Descrizione | Stato |
-|----------|-------------|-------|
-| [**Asmile**](projects/asmile/) | 🚲 Sistema di guida autonoma per bicicletta | 🟢 In sviluppo |
+| Project | Description | Status |
+|---------|-------------|--------|
+| [**Asmile**](projects/asmile/) | 🚲 Autonomous bicycle guidance system | 🟢 In development |
 
-## Filosofia
+## Philosophy
 
-Ogni progetto in questo repository nasce da un bisogno reale. Asmile nasce per Arianna, e da lì per tutte le persone che meritano la libertà di muoversi.
+Every project in this repository is born from a real need. Asmile was born for Arianna, and from there for all people who deserve the freedom to move.
 
-Un passo alla volta, ci arriviamo.
+One step at a time, we'll get there.
 
-## Struttura
+## Structure
 
 ```
 Moving-One-Billion-People/
-├── projects/           # Progetti individuali
-│   └── asmile/         # Guida autonoma bicicletta
-├── shared/             # Librerie condivise tra progetti
+├── projects/           # Individual projects
+│   └── asmile/         # Autonomous bicycle guidance
+├── shared/             # Shared libraries across projects
 └── README.md
 ```
 
-## Supporta il progetto
+## Support the Project
 
-Se credi in quello che stiamo costruendo, puoi aiutarci concretamente:
+If you believe in what we're building, you can help us concretely:
 
-💛 [**Dona su GoFundMe — Aiutami a far sorridere Arianna**](https://www.gofundme.com/f/aiutami-a-far-sorridere-arianna-costruiamo-insieme-asmile)
+💛 [**Donate on GoFundMe — Help me make Arianna smile**](https://www.gofundme.com/f/aiutami-a-far-sorridere-arianna-costruiamo-insieme-asmile)
 
-Ogni contributo ci avvicina a dare ad Arianna, e a tante altre persone, la libertà di muoversi.
+Every contribution brings us closer to giving Arianna, and many other people, the freedom to move.
 
-## Contribuire
+## Contributing
 
-Il progetto è in fase iniziale. Se vuoi contribuire, apri una issue o contattaci.
+The project is in its early stages. If you want to contribute, open an issue or contact us.
 
-## Licenza
+## License
 
-[Da definire]
+[To be defined]
 
-## Contatti
+## Contacts
 
 GitHub: [@rinaldiden](https://github.com/rinaldiden)

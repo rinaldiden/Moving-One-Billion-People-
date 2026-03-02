@@ -1,22 +1,22 @@
-# Schema Alimentazione 48V — Asmile
+# 48V Power Wiring Diagram — Asmile
 
-Tutto il sistema è alimentato da una singola batteria 48V montata sulla bici.
+The entire system is powered by a single 48V battery mounted on the bicycle.
 
-## Sorgente
+## Source
 
 ```
-Batteria 13S Li-ion
-├── Nominale: 48V
-├── Carica completa: ~54.6V
-├── Scarica minima: ~42V
-└── Alimenta tutto il sistema
+13S Li-ion Battery
+├── Nominal: 48V
+├── Full charge: ~54.6V
+├── Min discharge: ~42V
+└── Powers the entire system
 ```
 
-## Distribuzione Potenza
+## Power Distribution
 
 ```
                         ┌─────────────────────────────────┐
-                        │      BATTERIA 48V (13S)          │
+                        │       48V BATTERY (13S)          │
                         │          + ─── −                 │
                         └──────┬───────────┬───────────────┘
                                │           │
@@ -31,58 +31,58 @@ Batteria 13S Li-ion
               ┌─────┴─────┐ ┌────┴────┐ ┌─┴──────────┐
               │           │ │         │ │            │
               │ Raspi 5   │ │ Servo   │ │   VESC     │
-              │ (5V/5A)   │ │ PDI-6221MG  │ │  (48V)     │
-              │           │ │ (6V)    │ │            │
+              │ (5V/5A)   │ │PDI-6221 │ │  (48V)     │
+              │           │ │  (6V)   │ │            │
               │ ┌───────┐ │ │         │ │ ┌────────┐ │
-              │ │Encoder│ │ │         │ │ │Motore  │ │
-              │ │GPS    │ │ │         │ │ │BLDC    │ │
-              │ │MPU6050│ │ │         │ │ │sterzo  │ │
-              │ │RS-485 │ │ │         │ │ └────────┘ │
-              │ │Camera │ │ │         │ │            │
+              │ │Encoder│ │ │         │ │ │Flipsky │ │
+              │ │GPS    │ │ │         │ │ │ 6354   │ │
+              │ │MPU6050│ │ │         │ │ │steering│ │
+              │ │RS-485 │ │ │         │ │ │ motor  │ │
+              │ │Camera │ │ │         │ │ └────────┘ │
               │ └───────┘ │ │         │ │            │
               └───────────┘ └─────────┘ └────────────┘
-                   5V           6V          48V diretto
+                   5V           6V          48V direct
 ```
 
-## Cablaggi Dettagliati
+## Detailed Wiring
 
-### Batteria 48V → Pololu D24V55F5 (5V per Raspi)
+### Battery 48V → Pololu D24V55F5 (5V for Raspi)
 
-| Pololu D24V55F5 | Collega a |
+| Pololu D24V55F5 | Connect to |
 |---|---|
-| VIN | Batteria 48V + |
-| GND | Batteria 48V − (GND comune) |
-| VOUT (5V) | Raspi Pin 2 e Pin 4 (5V) via cavo USB-C o header GPIO |
+| VIN | Battery 48V + |
+| GND | Battery 48V − (common GND) |
+| VOUT (5V) | Raspi Pin 2 and Pin 4 (5V) via USB-C cable or GPIO header |
 | GND | Raspi GND |
 
-> **Alimentazione Raspi:** Il Pi 5 richiede 5V/5A stabili.
-> Collegare via USB-C PD oppure direttamente ai pin 5V del GPIO header
-> (Pin 2 + Pin 4 in parallelo per distribuire corrente).
+> **Raspi Power:** The Pi 5 requires stable 5V/5A.
+> Connect via USB-C PD or directly to GPIO header 5V pins
+> (Pin 2 + Pin 4 in parallel to distribute current).
 
-### Batteria 48V → Pololu D24V55F6 (6V per Servo)
+### Battery 48V → Pololu D24V55F6 (6V for Servo)
 
-| Pololu D24V55F6 | Collega a |
+| Pololu D24V55F6 | Connect to |
 |---|---|
-| VIN | Batteria 48V + |
-| GND | Batteria 48V − (GND comune) |
-| VOUT (6V) | Servo PDI-6221MG filo rosso (+V) |
-| GND | Servo PDI-6221MG filo nero (GND) |
+| VIN | Battery 48V + |
+| GND | Battery 48V − (common GND) |
+| VOUT (6V) | Servo PDI-6221MG red wire (+V) |
+| GND | Servo PDI-6221MG black wire (GND) |
 
-### Batteria 48V → VESC (diretto)
+### Battery 48V → VESC (direct)
 
-| VESC | Collega a |
+| VESC | Connect to |
 |---|---|
-| BAT+ | Batteria 48V + |
-| BAT− | Batteria 48V − |
-| Motore U/V/W | Motore BLDC sterzo (3 fasi) |
+| BAT+ | Battery 48V + |
+| BAT− | Battery 48V − |
+| Motor U/V/W | Flipsky 6354 BLDC steering motor (3 phases) |
 
-## Schema Fisico Connessioni
+## Physical Connection Diagram
 
 ```
-BATTERIA 48V (13S Li-ion)
+48V BATTERY (13S Li-ion)
     │(+)                    │(−)
     │                       │
-    ├───────────────────────┤ GND COMUNE
+    ├───────────────────────┤ COMMON GND
     │         │         │   │      │         │          │
     │    ┌────┴───┐ ┌───┴───┴─┐    │    ┌────┴───┐ ┌───┴────┐
     │    │POLOLU  │ │ POLOLU  │    │    │POLOLU  │ │POLOLU  │
@@ -93,7 +93,7 @@ BATTERIA 48V (13S Li-ion)
     │        │          │          │        │          │
     │   ┌────┴────┐  ┌──┴──────┐  │   ┌────┴────┐  ┌──┴──────┐
     │   │RASPI 5  │  │SERVO    │  │   │RASPI 5  │  │SERVO    │
-    │   │Pin 2 +4 │  │+V rosso │  │   │GND Pin 6│  │GND nero │
+    │   │Pin 2 +4 │  │+V red   │  │   │GND Pin 6│  │GND black│
     │   └─────────┘  └─────────┘  │   └────┬────┘  └─────────┘
     │                              │        │
   ┌─┴──────┐                    ┌──┴────┐   │
@@ -104,25 +104,25 @@ BATTERIA 48V (13S Li-ion)
                                             └── RS-485 #2 GND
 ```
 
-## Periferiche alimentate dal Raspi
+## Peripherals Powered by Raspi
 
-Il Raspi 5 a sua volta alimenta le periferiche a basso consumo:
+The Raspi 5 in turn powers the low-consumption peripherals:
 
-| Periferica | Tensione | Fonte Raspi | Corrente tipica |
+| Peripheral | Voltage | Raspi Source | Typical Current |
 |---|---|---|---|
-| Encoder Briter | 5V | Pin 2 (5V) | ~50mA |
+| Briter Encoder | 5V | Pin 2 (5V) | ~50mA |
 | GPS NEO-M10 | 3.3V | Pin 1 (3.3V) | ~30mA |
 | MPU6050 | 3.3V | Pin 1 (3.3V) | ~5mA |
-| RS-485 modulo #1 | 3.3V | Pin 1 (3.3V) | ~10mA |
-| RS-485 modulo #2 | 3.3V | Pin 1 (3.3V) | ~10mA |
-| Arducam Camarray HAT | 5V | via header GPIO | ~300mA |
+| RS-485 module #1 | 3.3V | Pin 1 (3.3V) | ~10mA |
+| RS-485 module #2 | 3.3V | Pin 1 (3.3V) | ~10mA |
+| Arducam Camarray HAT | 5V | via GPIO header | ~300mA |
 
-**Totale periferiche:** ~400mA + Raspi stesso (~2-3A sotto carico) = **~3.5A max sul Pololu 5V**
+**Total peripherals:** ~400mA + Raspi itself (~2-3A under load) = **~3.5A max on 5V Pololu**
 
-## Note Sicurezza
+## Safety Notes
 
-- **GND COMUNE:** Tutti i GND (batteria, Pololu x2, VESC, Raspi, servo, sensori) devono essere collegati insieme
-- **Fusibile:** Consigliato fusibile inline sulla linea 48V+ prima della distribuzione
-- **Interruttore generale:** Un interruttore/kill switch sulla linea 48V+ per spegnere tutto
-- **Protezione inversione:** I Pololu hanno protezione da inversione di polarità integrata
-- **Dissipazione:** I Pololu possono scaldare sotto carico — montarli con ventilazione o su dissipatore
+- **COMMON GND:** All GNDs (battery, Pololu x2, VESC, Raspi, servo, sensors) must be connected together
+- **Fuse:** Inline fuse recommended on the 48V+ line before distribution
+- **Main switch:** A switch/kill switch on the 48V+ line to shut down everything
+- **Reverse protection:** Pololu regulators have built-in reverse polarity protection
+- **Heat dissipation:** Pololu regulators may heat up under load — mount with ventilation or on a heatsink
