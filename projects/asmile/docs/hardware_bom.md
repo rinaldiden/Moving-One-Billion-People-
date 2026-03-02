@@ -17,6 +17,7 @@ Lista completa hardware per il sistema di guida autonoma bicicletta.
 | 4 | Motore sterzo | Flipsky 6354 BLDC | 1 | Collegato al VESC (3 fasi U/V/W) |
 | 5 | Encoder assoluto | Briter 5V 12-bit SSI | 1 | Posizione sterzo, uscita differenziale RS-485 |
 | 6 | Modulo RS-485 | TTL to RS-485 (MAX485) | 2 | #1 per CLOCK, #2 per DATA |
+| 6b | Coppia conica | Rapporto 1:5 (⚠️ DA VERIFICARE) | 1 | Accoppiamento motore Flipsky 6354 ↔ asse sterzo |
 
 ## Frenata
 
