@@ -2,6 +2,8 @@
 
 Full setup for the Asmile project: steering, braking, GPS, IMU.
 
+> **Note:** Arducam Camarray HAT is mounted on the GPIO header with stacking (pass-through) headers. All connections are made from the top of the HAT.
+
 ## Devices
 
 | Device | Protocol | Port |
@@ -11,13 +13,14 @@ Full setup for the Asmile project: steering, braking, GPS, IMU.
 | GPS NEO-M10 | UART3 | /dev/ttyAMA3 |
 | MPU6050 IMU | I2C1 | 0x68 |
 | Brake servo | Hardware PWM0 | GPIO 12 |
+| Arducam Camarray HAT | CSI + I2C1 | Camera port |
 
 ## Complete Pin Map
 
 | GPIO | Header Pin | Device | Function | Direction |
 |---|---|---|---|---|
-| GPIO 2 | Pin 3 | MPU6050 | I2C1 SDA | I/O |
-| GPIO 3 | Pin 5 | MPU6050 | I2C1 SCL | OUT |
+| GPIO 2 | Pin 3 | MPU6050 + Camarray | I2C1 SDA (shared bus) | I/O |
+| GPIO 3 | Pin 5 | MPU6050 + Camarray | I2C1 SCL (shared bus) | OUT |
 | GPIO 8 | Pin 24 | GPS NEO-M10 | UART3 TX | OUT |
 | GPIO 9 | Pin 21 | GPS NEO-M10 | UART3 RX | IN |
 | GPIO 12 | Pin 32 | Brake servo | PWM0 signal | OUT |
@@ -28,139 +31,160 @@ Full setup for the Asmile project: steering, braking, GPS, IMU.
 | GPIO 23 | Pin 16 | SSI Encoder | DATA_ENABLE (LOW) | OUT |
 | GPIO 27 | Pin 13 | SSI Encoder | DATA (via RS-485 #2) | IN |
 
-## 40-Pin Header — Final View
+## 40-Pin Header — Final View (from top of Camarray HAT)
 
 ```
          Raspberry Pi 5 — GPIO Header
-    ╔═══════════════════════════════════════════════╗
-    ║  3V3              [ 1] [ 2]  5V               ║
-    ║  GPIO 2  I2C SDA  [ 3] [ 4]  5V               ║  ← MPU6050 SDA + Encoder VCC
-    ║  GPIO 3  I2C SCL  [ 5] [ 6]  GND              ║  ← MPU6050 SCL + Common GND
-    ║  GPIO 4           [ 7] [ 8]  GPIO 14 UART TX  ║  ← VESC TX
-    ║  GND              [ 9] [10]  GPIO 15 UART RX  ║  ← VESC RX
-    ║  GPIO 17 ENC CLK  [11] [12]  GPIO 18          ║  ← Encoder CLOCK
-    ║  GPIO 27 ENC DAT  [13] [14]  GND              ║  ← Encoder DATA
-    ║  GPIO 22 CLK_EN   [15] [16]  GPIO 23 DAT_EN   ║  ← Encoder enable pins
-    ║  3V3              [17] [18]  GPIO 24          ║
-    ║  GPIO 10          [19] [20]  GND              ║
-    ║  GPIO 9  GPS RX   [21] [22]  GPIO 25          ║  ← GPS UART3 RX
-    ║  GPIO 11          [23] [24]  GPIO 8  GPS TX   ║  ← GPS UART3 TX
-    ║  GND              [25] [26]  GPIO 7           ║
-    ║  GPIO 0           [27] [28]  GPIO 1           ║
-    ║  GPIO 5           [29] [30]  GND              ║
-    ║  GPIO 6           [31] [32]  GPIO 12 SERVO    ║  ← Brake servo PWM
-    ║  GPIO 13          [33] [34]  GND              ║
-    ║  GPIO 19          [35] [36]  GPIO 16          ║
-    ║  GPIO 26          [37] [38]  GPIO 20          ║
-    ║  GND              [39] [40]  GPIO 21          ║
-    ╚═══════════════════════════════════════════════╝
+         (accessed from top of Camarray HAT stacking header)
+    ╔═══════════════════════════════════════════════════════════╗
+    ║  3V3  RS485+GPS+IMU  [ 1] [ 2]  5V   Pololu F5 + HAT    ║
+    ║  GPIO 2  I2C SDA     [ 3] [ 4]  5V   Encoder VCC        ║
+    ║  GPIO 3  I2C SCL     [ 5] [ 6]  GND  HAT                ║
+    ║  (free)              [ 7] [ 8]  GPIO 14 TX → VESC       ║
+    ║  GND  VESC           [ 9] [10]  GPIO 15 RX ← VESC       ║
+    ║  GPIO 17 ENC CLOCK   [11] [12]  (free)                   ║
+    ║  GPIO 27 ENC DATA    [13] [14]  GND                      ║
+    ║  GPIO 22 CLK_EN HIGH [15] [16]  GPIO 23 DAT_EN LOW       ║
+    ║  3V3                 [17] [18]  (free)                    ║
+    ║  (free)              [19] [20]  GND  GPS                  ║
+    ║  GPIO 9  GPS RX      [21] [22]  (free)                   ║
+    ║  (free)              [23] [24]  GPIO 8  GPS TX            ║
+    ║  GND  MPU6050        [25] [26]  (free)                   ║
+    ║  (free)              [27] [28]  (free)                    ║
+    ║  (free)              [29] [30]  GND  RS485+Encoder        ║
+    ║  (free)              [31] [32]  GPIO 12 SERVO PWM         ║
+    ║  (free)              [33] [34]  GND  Servo                ║
+    ║  (free)              [35] [36]  (free)                    ║
+    ║  (free)              [37] [38]  (free)                    ║
+    ║  GND                 [39] [40]  (free)                    ║
+    ╚═══════════════════════════════════════════════════════════╝
 ```
 
 ## Detailed Wiring Per Device
 
-### 1. VESC (Steering) — UART0
+### 1. Power — 48V Battery → Pololu → Raspi
+
+```
+Pololu D24V55F5:
+  VIN  ← Battery 48V+
+  GND  ← Battery 48V−
+  VOUT (5V) ──→ Raspi Pin 2 (5V) via HAT stacking header
+  GND       ──→ Raspi GND
+
+  EN, PG, VRP → leave unconnected
+```
+
+> Raspi and Camarray HAT are powered together from the same 5V rail.
+
+### 2. VESC (Steering) — UART0
 
 ```
 Raspi GPIO 14 (Pin 8)  TX ──→ VESC RX
 Raspi GPIO 15 (Pin 10) RX ←── VESC TX
-Raspi GND     (Pin 6)     ─── VESC GND
+Raspi GND     (Pin 9)     ─── VESC GND
 ```
 
-### 2. Briter 5V 12-bit SSI Encoder — via 2x TTL-RS485 Modules
+> VESC is powered directly from 48V battery. Do NOT connect VESC 5V pin to Raspi.
+
+### 3. Briter 5V 12-bit SSI Encoder — via 2x TTL-RS485 Modules
 
 The encoder uses RS-485 differential signals. Two modules are needed:
 - Module #1 for CLOCK (Raspi transmits → Encoder receives)
 - Module #2 for DATA (Encoder transmits → Raspi receives)
 
+**Briter Encoder Wire Colors (⚠️ TO BE VERIFIED when encoder arrives):**
+
+| Wire Color | Signal |
+|---|---|
+| **Red** | VCC (5V) |
+| **Black** | GND |
+| **Green** | CLK+ |
+| **Brown** | CLK- |
+| **White** | DATA+ |
+| **Gray** | DATA- |
+
 **RS-485 Module #1 — CLOCK (transmit)**
 
 ```
-Raspi GPIO 17 (Pin 11) ──→ DI
-Raspi 3.3V    (Pin 1)  ──→ DE (HIGH = transmit)
-Raspi 3.3V    (Pin 1)  ──→ RE (HIGH = disable receive)
-Raspi 3.3V    (Pin 1)  ──→ VCC
-Raspi GND     (Pin 6)  ──→ GND
-                            A  ──→ Encoder CLK+
-                            B  ──→ Encoder CLK-
+Raspi side (TTL):              Encoder side (screw terminal):
+  VCC ← Raspi Pin 17 (3.3V)     A ──→ Green wire  (CLK+)
+  DI  ← Raspi Pin 11 (GPIO 17)  B ──→ Brown wire  (CLK-)
+  DE  ← Raspi Pin 17 (3.3V)
+  RE  ← Raspi Pin 17 (3.3V)
+  GND ← Raspi Pin 30 (GND)
 ```
 
 **RS-485 Module #2 — DATA (receive)**
 
 ```
-Raspi GPIO 27 (Pin 13) ←── RO
-GND                     ──→ DE (LOW = disable transmit)
-GND                     ──→ RE (LOW = receive)
-Raspi 3.3V    (Pin 1)  ──→ VCC
-Raspi GND     (Pin 6)  ──→ GND
-                            A  ←── Encoder DATA+
-                            B  ←── Encoder DATA-
+Raspi side (TTL):              Encoder side (screw terminal):
+  VCC ← Raspi Pin 17 (3.3V)     A ←── White wire  (DATA+)
+  RO  ──→ Raspi Pin 13 (GPIO 27) B ←── Gray wire   (DATA-)
+  DE  ← GND (Pin 30)
+  RE  ← GND (Pin 30)
+  GND ← Raspi Pin 30 (GND)
 ```
 
-**Briter Encoder**
+**Briter Encoder Power**
 
 ```
-VCC (red)    ←── Raspi Pin 2 (5V)
-GND (black)  ─── Common GND
-CLK+         ─── RS-485 #1 pin A
-CLK-         ─── RS-485 #1 pin B
-DATA+        ─── RS-485 #2 pin A
-DATA-        ─── RS-485 #2 pin B
+Red wire   (VCC) ←── Raspi Pin 4 (5V)
+Black wire (GND) ─── Raspi Pin 30 (GND)
 ```
 
-### 3. GPS NEO-M10 — UART3
+> Both RS-485 modules powered at 3.3V from Raspi. This ensures RO output is 3.3V safe for Pi GPIO.
+
+### 4. GPS NEO-M10 — UART3
 
 ```
 Raspi GPIO 8  (Pin 24) TX ──→ GPS RX
 Raspi GPIO 9  (Pin 21) RX ←── GPS TX
 Raspi 3.3V    (Pin 1)     ──→ GPS VCC
-Raspi GND     (Pin 6)     ─── GPS GND
+Raspi GND     (Pin 20)    ─── GPS GND
 ```
 
-### 4. MPU6050 IMU — I2C1
+### 5. MPU6050 IMU — I2C1 (shared bus with Camarray HAT)
 
 ```
 Raspi GPIO 2  (Pin 3)  SDA ↔── MPU6050 SDA
 Raspi GPIO 3  (Pin 5)  SCL ──→ MPU6050 SCL
 Raspi 3.3V    (Pin 1)      ──→ MPU6050 VCC
-Raspi GND     (Pin 6)      ─── MPU6050 GND
+Raspi GND     (Pin 25)     ─── MPU6050 GND
                                 MPU6050 AD0 ─── GND (address 0x68)
 ```
 
-### 5. Brake Servo — Direct PWM + External 6V Power
+> I2C1 is shared between Camarray HAT and MPU6050 — different addresses, no conflict.
+
+### 6. Brake Servo PDI-6221MG — PWM + External 6V Power
 
 ```
 Raspi GPIO 12 (Pin 32) PWM ──→ Servo signal wire (white/orange)
-Raspi GND     (Pin 14)     ─── Servo GND + Power supply GND
-External 6V power supply   ──→ Servo +V (red wire)
+Raspi GND     (Pin 34)     ─── Servo GND + Pololu F6 GND
+
+Pololu D24V55F6:
+  VIN  ← Battery 48V+
+  GND  ← Battery 48V−
+  VOUT (6V) ──→ Servo +V (red wire)
+  GND       ──→ Servo GND
+
+  EN, PG, VRP → leave unconnected
 ```
 
-> **IMPORTANT:** GND must be common between Raspi, servo, and 6V power supply.
+> **IMPORTANT:** GND must be common between Raspi, servo, and Pololu F6.
 
-## Power Wiring
+## Power Distribution
 
 ```
-┌─────────────┐
-│  Raspi 5V   │──→ Briter Encoder VCC (5V)
-│  (Pin 2)    │
-├─────────────┤
-│  Raspi 3.3V │──→ GPS NEO-M10 VCC
-│  (Pin 1)    │──→ MPU6050 VCC
-│             │──→ RS-485 #1 VCC
-│             │──→ RS-485 #2 VCC
-├─────────────┤
-│  Ext. 6V    │──→ Brake servo +V (red)
-│  supply     │
-├─────────────┤
-│  Common GND │─── Raspi GND
-│             │─── VESC GND
-│             │─── Encoder GND
-│             │─── GPS GND
-│             │─── MPU6050 GND
-│             │─── RS-485 #1 GND
-│             │─── RS-485 #2 GND
-│             │─── Servo GND
-│             │─── 6V supply GND
-└─────────────┘
+48V BATTERY (13S Li-ion)
+    │
+    ├──→ Pololu D24V55F5 ──→ 5V ──→ Raspi Pin 2 (powers Raspi + HAT)
+    │                                  ├── Pin 4 (5V) → Encoder Briter VCC
+    │                                  ├── Pin 1 (3.3V) → GPS + MPU6050 + RS-485 x2
+    │                                  └── Pin 17 (3.3V) → RS-485 VCC + encoder enables
+    │
+    ├──→ Pololu D24V55F6 ──→ 6V ──→ Servo PDI-6221MG
+    │
+    └──→ VESC (direct 48V) ──→ Flipsky 6354 BLDC steering motor
 ```
 
 ## Raspi Configuration
@@ -196,3 +220,4 @@ pip install pyserial
 | Braking | `pi/braking/brake_servo.py` | Servo PWM realistic braking profile |
 | GPS | `pi/sensors/gps_neo_m10.py` | NMEA parser lat/lon/speed |
 | IMU | `pi/sensors/imu_mpu6050.py` | Accelerometer + gyroscope braking feedback |
+| Vision | `pi/vision/rtsp_stream.py` | Stereo cam RTSP streaming |
