@@ -1,0 +1,13 @@
+[Unit]
+Description=SSI Encoder Reader (SPI1)
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -u /home/asmile/wip/ripristino-test/Moving-One-Billion-People-/projects/asmile/pi/steering/encoder_spi_daemon.py --quiet
+Restart=always
+RestartSec=2
+User=root
+
+[Install]
+WantedBy=multi-user.target

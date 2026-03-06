@@ -3,7 +3,7 @@
 # Some settings may impact device functionality. See link above for details
 
 # Uncomment some or all of these to enable the optional hardware interfaces
-#dtparam=i2c_arm=on
+dtparam=i2c_arm=on
 #dtparam=i2s=on
 #dtparam=spi=on
 
@@ -13,8 +13,8 @@ dtparam=audio=on
 # Additional overlays and parameters are documented
 # /boot/firmware/overlays/README
 
-# Disable auto-detect to avoid conflicts with manual camera overlay
-camera_auto_detect=0
+# Automatically load overlays for detected cameras
+camera_auto_detect=1
 
 # Automatically load overlays for detected DSI displays
 display_auto_detect=1
@@ -49,5 +49,12 @@ otg_mode=1
 dtoverlay=dwc2,dr_mode=host
 
 [all]
-# Arducam Camarray HAT (dual OV9281)
+
+# Asmile: UART3 for GPS NEO-M10
+dtoverlay=uart3
+
+# Asmile: Arducam Camarray HAT (dual OV9281)
 dtoverlay=arducam-pivariety
+
+# Asmile: SPI1 for SSI Encoder (via RS-485 modules)
+dtoverlay=spi1-1cs
