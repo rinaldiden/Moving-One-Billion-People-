@@ -92,47 +92,62 @@ The encoder uses RS-485 differential signals. Two modules are needed:
 - Module #1 for CLOCK (Raspi transmits → Encoder receives)
 - Module #2 for DATA (Encoder transmits → Raspi receives)
 
-**Briter Encoder Wire Colors (⚠️ TO BE VERIFIED when encoder arrives):**
+**Briter BRT38 Encoder Wire Colors (VERIFIED):**
 
-| Wire Color | Signal |
-|---|---|
-| **Red** | VCC (5V) |
-| **Black** | GND |
-| **Green** | CLK+ |
-| **Brown** | CLK- |
-| **White** | DATA+ |
-| **Gray** | DATA- |
+| Wire Color | Signal | Notes |
+|---|---|---|
+| **Red** | VCC (5V) | |
+| **Black** | GND | |
+| **Green** | CLK (SSI clock) | via RS-485 #1 |
+| **White** | DATA (SSI data) | via RS-485 #2 |
+| **Yellow** | ZR (zero reference) | LEAVE UNCONNECTED |
+| **Orange** | Config | LEAVE UNCONNECTED (used only for reset) |
 
-**RS-485 Module #1 — CLOCK (transmit)**
+> **Yellow and Orange wires MUST be insulated/unconnected during normal operation.**
 
-```
-Raspi side (TTL):              Encoder side (screw terminal):
-  VCC ← Raspi Pin 17 (3.3V)     A ──→ Green wire  (CLK+)
-  DI  ← Raspi Pin 11 (GPIO 17)  B ──→ Brown wire  (CLK-)
-  DE  ← Raspi Pin 17 (3.3V)
-  RE  ← Raspi Pin 17 (3.3V)
-  GND ← Raspi Pin 30 (GND)
-```
-
-**RS-485 Module #2 — DATA (receive)**
+**Level Shifter #2 — 3.3V ↔ 5V (between Pi GPIO and RS-485 modules)**
 
 ```
-Raspi side (TTL):              Encoder side (screw terminal):
-  VCC ← Raspi Pin 17 (3.3V)     A ←── White wire  (DATA+)
-  RO  ──→ Raspi Pin 13 (GPIO 27) B ←── Gray wire   (DATA-)
-  DE  ← GND (Pin 30)
-  RE  ← GND (Pin 30)
-  GND ← Raspi Pin 30 (GND)
+Level Shifter (bidirectional):
+  LV  ← Raspi 3.3V (Pin 17)
+  HV  ← Raspi 5V (Pin 4)
+  GND ← Raspi GND (Pin 30)
+
+  LV1 ← GPIO 17 (Pin 11) CLOCK    →  HV1 → DI of RS-485 #1
+  LV2 ← GPIO 27 (Pin 13) DATA     ←  HV2 ← RO of RS-485 #2
+```
+
+**RS-485 Module #1 — CLOCK (transmit to encoder)**
+
+```
+TTL side:                      Encoder side (screw terminal):
+  VCC ← 5V (Pin 4)              A ──→ Green wire  (CLK)
+  DI  ← HV1 of level shifter    B ──→ (not used, single-ended)
+  DE  ← 5V (always TX enabled)
+  RE  ← 5V (RX disabled)
+  GND ← GND (Pin 30)
+```
+
+**RS-485 Module #2 — DATA (receive from encoder)**
+
+```
+TTL side:                      Encoder side (screw terminal):
+  VCC ← 5V (Pin 4)              A ←── White wire  (DATA)
+  RO  ──→ HV2 of level shifter  B ←── (not used, single-ended)
+  DE  ← GND (TX disabled)
+  RE  ← GND (always RX enabled)
+  GND ← GND (Pin 30)
 ```
 
 **Briter Encoder Power**
 
 ```
-Red wire   (VCC) ←── Raspi Pin 4 (5V)
-Black wire (GND) ─── Raspi Pin 30 (GND)
+Red wire    (VCC) ←── Raspi Pin 4 (5V)
+Black wire  (GND) ─── Raspi Pin 30 (GND)
 ```
 
-> Both RS-485 modules powered at 3.3V from Raspi. This ensures RO output is 3.3V safe for Pi GPIO.
+> RS-485 modules powered at 5V. Level shifter #2 converts between Pi 3.3V GPIO and 5V RS-485 TTL signals.
+> GPIO 22 (Pin 15) = CLOCK_ENABLE held HIGH, GPIO 23 (Pin 16) = DATA_ENABLE held LOW.
 
 ### 4. GPS NEO-M10 — UART3
 
@@ -178,9 +193,9 @@ Pololu D24V55F6:
 48V BATTERY (13S Li-ion)
     │
     ├──→ Pololu D24V55F5 ──→ 5V ──→ Raspi Pin 2 (powers Raspi + HAT)
-    │                                  ├── Pin 4 (5V) → Encoder Briter VCC
-    │                                  ├── Pin 1 (3.3V) → GPS + MPU6050 + RS-485 x2
-    │                                  └── Pin 17 (3.3V) → RS-485 VCC + encoder enables
+    │                                  ├── Pin 4 (5V) → Encoder Briter VCC + RS-485 x2 VCC + Level Shifter HV
+    │                                  ├── Pin 1 (3.3V) → GPS + MPU6050
+    │                                  └── Pin 17 (3.3V) → Level Shifter LV
     │
     ├──→ Pololu D24V55F6 ──→ 6V ──→ Servo PDI-6221MG
     │
