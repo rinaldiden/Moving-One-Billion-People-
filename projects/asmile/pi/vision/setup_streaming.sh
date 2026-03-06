@@ -9,7 +9,7 @@ set -e
 # ═══════════════════════════════════════════════════════════════
 
 INSTALL_DIR="/home/asmile/streaming"
-MEDIAMTX_VERSION="v1.16.1"
+MEDIAMTX_VERSION="v1.16.3"
 MEDIAMTX_URL="https://github.com/bluenviron/mediamtx/releases/download/${MEDIAMTX_VERSION}/mediamtx_${MEDIAMTX_VERSION}_linux_arm64v8.tar.gz"
 
 echo ""
