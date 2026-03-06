@@ -9,7 +9,7 @@ Full setup for the Asmile project: steering, braking, GPS, IMU.
 | Device | Protocol | Port |
 |---|---|---|
 | VESC (steering) | UART0 | /dev/ttyAMA0 |
-| Briter 5V 12-bit SSI Encoder | GPIO bit-bang (via 2x RS-485) | GPIO 17/27 |
+| Briter 5V 12-bit SSI Encoder | SPI1 (via 2x RS-485) | /dev/spidev1.0 |
 | GPS NEO-M10 | UART3 | /dev/ttyAMA3 |
 | MPU6050 IMU | I2C1 | 0x68 |
 | Brake servo | Hardware PWM0 | GPIO 12 |
@@ -26,10 +26,9 @@ Full setup for the Asmile project: steering, braking, GPS, IMU.
 | GPIO 12 | Pin 32 | Brake servo | PWM0 signal | OUT |
 | GPIO 14 | Pin 8 | VESC | UART0 TX | OUT |
 | GPIO 15 | Pin 10 | VESC | UART0 RX | IN |
-| GPIO 17 | Pin 11 | SSI Encoder | CLOCK (via RS-485 #1) | OUT |
-| GPIO 22 | Pin 15 | SSI Encoder | CLOCK_ENABLE (HIGH) | OUT |
-| GPIO 23 | Pin 16 | SSI Encoder | DATA_ENABLE (LOW) | OUT |
-| GPIO 27 | Pin 13 | SSI Encoder | DATA (via RS-485 #2) | IN |
+| GPIO 18 | Pin 12 | SSI Encoder | SPI1 CE0 (unused but claimed) | OUT |
+| GPIO 19 | Pin 35 | SSI Encoder | SPI1 MISO ← DATA (via RS-485 #2) | IN |
+| GPIO 21 | Pin 40 | SSI Encoder | SPI1 SCLK → CLOCK (via RS-485 #1) | OUT |
 
 ## 40-Pin Header — Final View (from top of Camarray HAT)
 
@@ -42,9 +41,9 @@ Full setup for the Asmile project: steering, braking, GPS, IMU.
     ║  GPIO 3  I2C SCL     [ 5] [ 6]  GND  HAT                ║
     ║  (free)              [ 7] [ 8]  GPIO 14 TX → VESC       ║
     ║  GND  VESC           [ 9] [10]  GPIO 15 RX ← VESC       ║
-    ║  GPIO 17 ENC CLOCK   [11] [12]  (free)                   ║
-    ║  GPIO 27 ENC DATA    [13] [14]  GND                      ║
-    ║  GPIO 22 CLK_EN HIGH [15] [16]  GPIO 23 DAT_EN LOW       ║
+    ║  (free)              [11] [12]  GPIO 18 SPI1_CE0 (enc)    ║
+    ║  (free)              [13] [14]  GND                      ║
+    ║  (free)              [15] [16]  (free)                    ║
     ║  3V3                 [17] [18]  (free)                    ║
     ║  (free)              [19] [20]  GND  GPS                  ║
     ║  GPIO 9  GPS RX      [21] [22]  (free)                   ║
@@ -54,9 +53,9 @@ Full setup for the Asmile project: steering, braking, GPS, IMU.
     ║  (free)              [29] [30]  GND  RS485+Encoder        ║
     ║  (free)              [31] [32]  GPIO 12 SERVO PWM         ║
     ║  (free)              [33] [34]  GND  Servo                ║
-    ║  (free)              [35] [36]  (free)                    ║
-    ║  (free)              [37] [38]  (free)                    ║
-    ║  GND                 [39] [40]  (free)                    ║
+    ║  GPIO 19 SPI1_MISO   [35] [36]  (free)                    ║
+    ║  (free)              [37] [38]  GPIO 20 (SPI1_MOSI free)  ║
+    ║  GND                 [39] [40]  GPIO 21 SPI1_SCLK (enc)   ║
     ╚═══════════════════════════════════════════════════════════╝
 ```
 
@@ -113,8 +112,8 @@ Level Shifter (bidirectional):
   HV  ← Raspi 5V (Pin 4)
   GND ← Raspi GND (Pin 30)
 
-  LV1 ← GPIO 17 (Pin 11) CLOCK    →  HV1 → DI of RS-485 #1
-  LV2 ← GPIO 27 (Pin 13) DATA     ←  HV2 ← RO of RS-485 #2
+  LV1 ← GPIO 21 (Pin 40) SPI1_SCLK →  HV1 → DI of RS-485 #1
+  LV2 ← GPIO 19 (Pin 35) SPI1_MISO ←  HV2 ← RO of RS-485 #2
 ```
 
 **RS-485 Module #1 — CLOCK (transmit to encoder)**
@@ -146,8 +145,8 @@ Red wire    (VCC) ←── Raspi Pin 4 (5V)
 Black wire  (GND) ─── Raspi Pin 30 (GND)
 ```
 
-> RS-485 modules powered at 5V. Level shifter #2 converts between Pi 3.3V GPIO and 5V RS-485 TTL signals.
-> GPIO 22 (Pin 15) = CLOCK_ENABLE held HIGH, GPIO 23 (Pin 16) = DATA_ENABLE held LOW.
+> RS-485 modules powered at 5V. Level shifter #2 converts between Pi 3.3V SPI1 and 5V RS-485 TTL signals.
+> GPIO 22 and GPIO 23 are no longer used (DE/RE pins now hardwired to 5V/GND).
 
 ### 4. GPS NEO-M10 — UART3
 
@@ -209,6 +208,7 @@ Add to `/boot/firmware/config.txt`:
 ```
 dtoverlay=uart3
 dtparam=i2c_arm=on
+dtoverlay=spi1-1cs
 ```
 
 Disable serial console (for UART0 → VESC):
@@ -232,6 +232,8 @@ pip install pyserial
 | Script | Path | Function |
 |---|---|---|
 | Steering | `pi/steering/steering_vesc_encoder.py` | SSI Encoder → VESC UART duty |
+| Encoder SPI | `pi/steering/test_encoder_spi.py` | SPI1 SSI encoder test |
+| Encoder C | `pi/steering/test_encoder_bitbang.c` | C bit-bang fallback (libgpiod v2) |
 | Braking | `pi/braking/brake_servo.py` | Servo PWM realistic braking profile |
 | GPS | `pi/sensors/gps_neo_m10.py` | NMEA parser lat/lon/speed |
 | IMU | `pi/sensors/imu_mpu6050.py` | Accelerometer + gyroscope braking feedback |
