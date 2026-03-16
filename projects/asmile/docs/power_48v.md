@@ -122,8 +122,19 @@ The Raspi 5 in turn powers the low-consumption peripherals:
 ## Safe Shutdown (Supercapacitor)
 
 When the 48V battery switch is turned off, the Raspi needs time to shut down cleanly
-to avoid SD card corruption. A **supercapacitor** on the 5V rail provides ~5-10 seconds
+to avoid SD card corruption. A **supercapacitor** on the 5V rail provides ~5-6 seconds
 of power after the battery is disconnected.
+
+### Supercap Specs
+
+| Parameter | Value |
+|---|---|
+| Part | Abracon ADCM-S05R5SA106RB |
+| Digikey | 535-ADCM-S05R5SA106RB-ND |
+| Capacitance | **10F** |
+| Voltage | 5.5V (max) |
+| Mount | Through-hole |
+| Holdup time | ~5.7s at 3.5A (from 5V down to 3V cutoff) |
 
 ### How it works
 
