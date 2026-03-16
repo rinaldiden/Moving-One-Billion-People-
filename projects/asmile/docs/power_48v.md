@@ -140,25 +140,106 @@ of power after the battery is disconnected.
 
 ```
 48V Battery ON:   Battery → Pololu 5V → Raspi + Supercap (charging)
-48V Battery OFF:  Supercap → Raspi (discharging, ~5-10s of power)
+48V Battery OFF:  Supercap → Raspi (discharging, ~5.7s of power)
                   GPIO sense pin goes LOW → safe_shutdown.py → shutdown -h now
 ```
 
-### Wiring
+The key: the supercap sits **between** the Pololu 5V output and the Raspi.
+When the battery is cut, the Pololu stops outputting 5V instantly, but the
+supercap has stored enough energy to keep the Raspi powered while it shuts down.
+
+A Schottky diode prevents the supercap from back-feeding into the Pololu
+(which would drain it faster). The diode also ensures the Pololu charges the
+supercap normally when the battery is connected.
+
+### Wiring Diagram
 
 ```
-Pololu D24V55F5 (5V)
-    │
-    ├──── Supercap (+) ────┐
-    │                      │
-    ├──── Raspi 5V ────────┤
-    │     (Pin 2 + Pin 4)  │
-    │                      │
-    GND ── Supercap (−) ── GND
+                    BATTERY ON                         BATTERY OFF
+               ┌──────────────────┐              ┌──────────────────┐
+               │ Pololu charges   │              │ Supercap powers  │
+               │ Raspi + supercap │              │ Raspi for ~5.7s  │
+               └──────────────────┘              └──────────────────┘
 
-Power sense (from Pololu 5V output):
-    Pololu VOUT (5V) → 10kΩ → GPIO 26 → 10kΩ → GND
-    (voltage divider: ~2.5V = HIGH when power present, 0V when battery off)
+48V Battery ──→ Pololu D24V55F5 (5V out)
+                      │
+                      │ VOUT (5V)
+                      │
+                      ├────── Schottky diode (1N5822) ──→ Supercap (+)
+                      │       (anode=Pololu, cathode=cap)      │
+                      │                                        │
+                      │       ┌────────────────────────────────┤
+                      │       │                                │
+                      │  Supercap 10F 5.5V              Raspi 5V
+                      │  (Abracon ADCM-S05R5SA106RB)   (Pin 2 + Pin 4)
+                      │       │                                │
+                      │       │                                │
+                      GND ────┴──────────────── GND ───────────┘
+                                              (Pin 6)
+```
+
+### Physical wiring step-by-step
+
+| Step | From | To | Notes |
+|------|------|----|-------|
+| 1 | Pololu D24V55F5 **VOUT** | Schottky diode **anode** (band away from Pololu) | 1N5822 or similar, ≥3A rated |
+| 2 | Schottky diode **cathode** (band side) | Supercap **+** pin | Respect polarity! |
+| 3 | Supercap **+** pin | Raspi **Pin 2 + Pin 4** (5V) | This is the Raspi power input |
+| 4 | Supercap **−** pin | Raspi **Pin 6** (GND) | Common ground |
+| 5 | Pololu D24V55F5 **GND** | Same GND rail | All GNDs together |
+
+> **Why the Schottky diode?** When the battery is cut, the Pololu output drops
+> to 0V. Without the diode, the supercap would discharge back through the Pololu
+> output, wasting energy. The Schottky blocks reverse current with minimal forward
+> voltage drop (~0.3V), so the Raspi sees ~4.7V — still enough for stable operation.
+
+### Power sense (GPIO for shutdown detection)
+
+To detect when the battery is cut, tap the **Pololu VOUT** side (before the diode):
+
+```
+Pololu VOUT (5V) ─── 10kΩ ─── GPIO 26 (Pin 37) ─── 10kΩ ─── GND
+                                    │
+                           voltage divider
+                           ~2.5V = HIGH (battery on)
+                           ~0V   = LOW  (battery off)
+```
+
+When the battery is connected: Pololu outputs 5V → GPIO reads ~2.5V → HIGH.
+When the battery is cut: Pololu output drops to 0V → GPIO reads 0V → LOW.
+The supercap is on the OTHER side of the diode, so it does NOT keep GPIO high.
+This is what triggers the safe shutdown script.
+
+### Complete circuit
+
+```
+48V BATTERY
+    │(+)                              │(−)
+    │                                 │
+    ▼                                 ▼
+┌────────────────┐              ┌─────────────┐
+│ Pololu D24V55F5│              │ Pololu GND  │
+│ VIN            │              │             │
+└───────┬────────┘              └──────┬──────┘
+        │ VOUT (5V)                    │ GND
+        │                              │
+        ├── 10kΩ ── GPIO 26 ── 10kΩ ──┤  ← power sense
+        │                              │
+        ▼ (anode)                      │
+   ┌─────────┐                         │
+   │ Schottky│ 1N5822                  │
+   │  diode  │ (~0.3V drop)           │
+   └────┬────┘                         │
+        │ (cathode)                    │
+        │                              │
+        ├──── Supercap (+) ────────────┤── Supercap (−)
+        │     10F / 5.5V              │
+        │                              │
+        ├──── Raspi Pin 2 (5V) ────────┤── Raspi Pin 6 (GND)
+        ├──── Raspi Pin 4 (5V)        │
+        │                              │
+        └──────────────────────────────┘
+              all GNDs connected
 ```
 
 ### Software
