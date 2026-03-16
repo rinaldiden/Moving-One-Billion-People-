@@ -119,10 +119,60 @@ The Raspi 5 in turn powers the low-consumption peripherals:
 
 **Total peripherals:** ~400mA + Raspi itself (~2-3A under load) = **~3.5A max on 5V Pololu**
 
+## Safe Shutdown (Supercapacitor)
+
+When the 48V battery switch is turned off, the Raspi needs time to shut down cleanly
+to avoid SD card corruption. A **supercapacitor** on the 5V rail provides ~5-10 seconds
+of power after the battery is disconnected.
+
+### How it works
+
+```
+48V Battery ON:   Battery → Pololu 5V → Raspi + Supercap (charging)
+48V Battery OFF:  Supercap → Raspi (discharging, ~5-10s of power)
+                  GPIO sense pin goes LOW → safe_shutdown.py → shutdown -h now
+```
+
+### Wiring
+
+```
+Pololu D24V55F5 (5V)
+    │
+    ├──── Supercap (+) ────┐
+    │                      │
+    ├──── Raspi 5V ────────┤
+    │     (Pin 2 + Pin 4)  │
+    │                      │
+    GND ── Supercap (−) ── GND
+
+Power sense (from Pololu 5V output):
+    Pololu VOUT (5V) → 10kΩ → GPIO 26 → 10kΩ → GND
+    (voltage divider: ~2.5V = HIGH when power present, 0V when battery off)
+```
+
+### Software
+
+A systemd service runs `safe_shutdown.py` which monitors GPIO 26:
+- **HIGH** = battery connected, all good
+- **LOW** for >500ms = power loss detected → `shutdown -h now`
+
+Install:
+```bash
+sudo cp safe_shutdown.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now safe_shutdown.service
+```
+
+Quick manual shutdown (alias in .bashrc):
+```bash
+alias off='sudo shutdown -h now'
+```
+
 ## Safety Notes
 
 - **COMMON GND:** All GNDs (battery, Pololu x2, VESC, Raspi, servo, sensors) must be connected together
 - **Fuse:** Inline fuse recommended on the 48V+ line before distribution
 - **Main switch:** A switch/kill switch on the 48V+ line to shut down everything
+- **Safe shutdown:** Supercap + GPIO sense ensures clean Raspi shutdown when battery is cut
 - **Reverse protection:** Pololu regulators have built-in reverse polarity protection
 - **Heat dissipation:** Pololu regulators may heat up under load — mount with ventilation or on a heatsink

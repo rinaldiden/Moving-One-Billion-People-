@@ -1,0 +1,13 @@
+[Unit]
+Description=Asmile Safe Shutdown — monitors power loss via GPIO
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/asmile/pi/power/safe_shutdown.py
+Restart=always
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target
