@@ -12,7 +12,9 @@ Moving One Billion People is a movement to democratize mobility for everyone. We
 
 ## Vision
 
-A mobility that leaves no trace on Earth. We build vehicles that come from nature and return to nature: bio-based materials, circular design, zero waste. Movement as a right, not a footprint.
+Our goal is a mobility that leaves no trace on Earth — vehicles built from what nature provides, designed to return to nature when their journey ends.
+
+We're just getting started, but the direction is set.
 
 ## Philosophy
 
@@ -30,17 +32,15 @@ Moving-One-Billion-People/
 └── README.md
 ```
 
-## Support the Project
-
-If you believe in what we're building, you can help us concretely:
-
-💛 [**Donate on GoFundMe — Help me make Arianna smile**](https://www.gofundme.com/f/aiutami-a-far-sorridere-arianna-costruiamo-insieme-asmile)
-
-Every contribution brings us closer to giving Arianna, and many other people, the freedom to move.
-
 ## Contributing
 
-The project is in its early stages. If you want to contribute, open an issue or contact us.
+The project is in its early stages and every form of help matters.
+
+- **Build with us** — open an issue, submit a PR, or just start a conversation
+- **Spread the word** — share the project with anyone who cares about accessible mobility
+- **Support financially** — [Donate on GoFundMe](https://www.gofundme.com/f/aiutami-a-far-sorridere-arianna-costruiamo-insieme-asmile) to help us bring Asmile to Arianna and beyond
+
+Every contribution, big or small, brings us closer to giving people the freedom to move.
 
 ## License
 
