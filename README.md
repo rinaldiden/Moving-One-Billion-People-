@@ -10,6 +10,10 @@ Moving One Billion People is a movement to democratize mobility for everyone. We
 |---------|-------------|--------|
 | [**Asmile**](projects/asmile/) | 🚲 Autonomous bicycle guidance system | 🟢 In development |
 
+## Vision
+
+A mobility that leaves no trace on Earth. We build vehicles that come from nature and return to nature: bio-based materials, circular design, zero waste. Movement as a right, not a footprint.
+
 ## Philosophy
 
 Every project in this repository is born from a real need. Asmile was born for Arianna, and from there for all people who deserve the freedom to move.
@@ -40,7 +44,10 @@ The project is in its early stages. If you want to contribute, open an issue or 
 
 ## License
 
-[To be defined]
+This project uses a dual license:
+
+- **Hardware** (CAD, schematics, mechanical designs): [CERN-OHL-S v2](LICENSE-HARDWARE)
+- **Software** (firmware, scripts, code): [GPL-3.0](LICENSE-SOFTWARE)
 
 ## Contacts
 
