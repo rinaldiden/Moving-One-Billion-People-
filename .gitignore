@@ -42,3 +42,12 @@ models/
 # Dati di training (troppo grandi)
 datasets/
 recordings/
+
+# Environment secrets
+.env
+
+# Pipeline output
+output/
+
+# Training data (local)
+training/data/
