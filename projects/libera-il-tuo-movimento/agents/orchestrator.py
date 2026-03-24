@@ -1,16 +1,13 @@
 """
 LIBERA IL TUO MOVIMENTO
 Orchestrator — coordina tutti gli agenti in sequenza
+Usa `claude -p` (piano locale) invece dell'API diretta.
 """
 
-import anthropic
+import subprocess
 import json
 import yaml
-import os
 from pathlib import Path
-
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-MODEL = "claude-opus-4-5"
 
 CONFIG_PATH = Path(__file__).parent.parent / "config" / "agents_config.yaml"
 with open(CONFIG_PATH) as f:
@@ -25,13 +22,27 @@ def call_agent(agent_name: str, user_message: str, context: dict = {}) -> str:
     else:
         full_message = user_message
 
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=4096,
-        system=system,
-        messages=[{"role": "user", "content": full_message}]
+    prompt = f"{system}\n\n---\n\n{full_message}"
+
+    result = subprocess.run(
+        ["claude", "-p", "--model", "sonnet"],
+        input=prompt,
+        capture_output=True,
+        text=True,
+        timeout=300
     )
-    return response.content[0].text
+
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"claude -p failed for {agent_name} (rc={result.returncode})\n"
+            f"stderr: {result.stderr[:500]}\n"
+            f"stdout: {result.stdout[:500]}"
+        )
+
+    if not result.stdout.strip():
+        raise RuntimeError(f"claude -p returned empty output for {agent_name}")
+
+    return result.stdout.strip()
 
 
 def run_pipeline(user_input: str, verbose: bool = True) -> dict:
@@ -43,7 +54,7 @@ def run_pipeline(user_input: str, verbose: bool = True) -> dict:
             print(output)
         pipeline_context[agent] = output
 
-    print(f"\n LIBERA IL TUO MOVIMENTO — Pipeline avviata")
+    print(f"\nLIBERA IL TUO MOVIMENTO — Pipeline avviata")
     print(f"Input: {user_input}\n")
 
     out1 = call_agent("agent1_architect", user_input)
@@ -85,8 +96,8 @@ def run_pipeline(user_input: str, verbose: bool = True) -> dict:
     with open(gcode_path, "w") as f:
         f.write(extract_gcode(out7))
 
-    print(f"\n G-code salvato: {gcode_path}")
-    print(f" Apri con OrcaSlicer: File → Import → Import G-code per verifica visiva")
+    print(f"\nG-code salvato: {gcode_path}")
+    print(f"Apri con OrcaSlicer: File → Import → Import G-code per verifica visiva")
     return pipeline_context
 
 
