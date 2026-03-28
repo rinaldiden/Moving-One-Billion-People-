@@ -169,22 +169,32 @@ Raspi GND     (Pin 25)     ─── MPU6050 GND
 
 > I2C1 is shared between Camarray HAT and MPU6050 — different addresses, no conflict.
 
-### 6. Brake Servo PDI-6221MG — PWM + External 6V Power
+### 6. Brake Servo PDI-6221MG — PWM + Level Shifter + External 6V Power
+
+**Level Shifter #1 — 3.3V ↔ 6V (between Pi GPIO and servo signal)**
 
 ```
-Raspi GPIO 12 (Pin 32) PWM ──→ Servo signal wire (white/orange)
+Level Shifter (bidirectional):
+  LV  ← Raspi 3.3V (Pin 17)
+  HV  ← Pololu F6 6V
+  GND ← common (Raspi + Pololu F6)
+
+  LV1 ← GPIO 12 (Pin 32) PWM0  →  HV1 → Servo signal wire (white/orange)
+```
+
+```
 Raspi GND     (Pin 34)     ─── Servo GND + Pololu F6 GND
 
 Pololu D24V55F6:
   VIN  ← Battery 48V+
   GND  ← Battery 48V−
-  VOUT (6V) ──→ Servo +V (red wire)
+  VOUT (6V) ──→ Servo +V (red wire) + Level Shifter HV
   GND       ──→ Servo GND
 
   EN, PG, VRP → leave unconnected
 ```
 
-> **IMPORTANT:** GND must be common between Raspi, servo, and Pololu F6.
+> **IMPORTANT:** GND must be common between Raspi, servo, level shifter, and Pololu F6.
 
 ## Power Distribution
 
