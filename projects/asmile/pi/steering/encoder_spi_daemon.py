@@ -21,7 +21,7 @@ SPI_BUS = 1
 SPI_DEV = 0
 SPI_SPEED_HZ = 500_000
 POSITION_FILE = "/tmp/encoder_position"
-POLL_INTERVAL = 0.02  # 50Hz polling = continuous clock activity
+POLL_INTERVAL = 0.005  # 200Hz polling
 
 def read_encoder(spi):
     raw = spi.xfer2([0x00, 0x00])
