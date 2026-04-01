@@ -30,8 +30,9 @@ ENCODER_STEPS_PER_REV = 4096
 DEG_PER_STEP = 360.0 / ENCODER_STEPS_PER_REV  # 0.0879°
 
 # Direzione assistenza (misurato dai log):
-# Con config vesc_foc_ok.xml
-ASSIST_DIRECTION = 1
+# encoder delta>0 (angolo sale) → serve corrente NEGATIVA per assistere
+# encoder delta<0 (angolo scende) → serve corrente POSITIVA per assistere
+ASSIST_DIRECTION = -1
 
 # --- VESC protocol ---
 COMM_GET_VALUES = 4
