@@ -74,17 +74,33 @@ def parse_vesc_values(data: bytes):
 
     p = payload[1:]
     try:
-        return {
+        d = {
             'temp_fet': struct.unpack(">h", p[0:2])[0] / 10.0,
             'temp_motor': struct.unpack(">h", p[2:4])[0] / 10.0,
             'i_motor': struct.unpack(">i", p[4:8])[0] / 100.0,
             'i_input': struct.unpack(">i", p[8:12])[0] / 100.0,
+            'id': struct.unpack(">i", p[12:16])[0] / 100.0,
+            'iq': struct.unpack(">i", p[16:20])[0] / 100.0,
             'duty': struct.unpack(">h", p[20:22])[0] / 1000.0,
             'rpm': struct.unpack(">i", p[22:26])[0],
             'v_in': struct.unpack(">h", p[26:28])[0] / 10.0,
+            'ah': struct.unpack(">i", p[28:32])[0] / 10000.0,
+            'ah_charged': struct.unpack(">i", p[32:36])[0] / 10000.0,
             'wh': struct.unpack(">i", p[36:40])[0] / 10000.0,
+            'wh_charged': struct.unpack(">i", p[40:44])[0] / 10000.0,
+            'tachometer': struct.unpack(">i", p[44:48])[0],
+            'tachometer_abs': struct.unpack(">i", p[48:52])[0],
             'fault': p[52],
         }
+        if len(p) >= 72:
+            d['pid_pos'] = struct.unpack(">i", p[53:57])[0] / 1000000.0
+            d['controller_id'] = p[57]
+            d['temp_mos1'] = struct.unpack(">h", p[58:60])[0] / 10.0
+            d['temp_mos2'] = struct.unpack(">h", p[60:62])[0] / 10.0
+            d['temp_mos3'] = struct.unpack(">h", p[62:64])[0] / 10.0
+            d['vd'] = struct.unpack(">i", p[64:68])[0] / 100.0
+            d['vq'] = struct.unpack(">i", p[68:72])[0] / 100.0
+        return d
     except (struct.error, IndexError):
         return None
 
@@ -99,7 +115,7 @@ class SteeringController:
                  deadband_steps=2,
                  loop_hz=200,
                  smoothing=0.85,
-                 telemetry_hz=10):
+                 telemetry_hz=50):
         # Tuning
         self.scale = scale
         self.max_current = min(max_current, 30.0)
@@ -129,6 +145,9 @@ class SteeringController:
         self.filtered_current = 0.0
         self.last_current = 0.0
         self.current_angle = 0.0
+        self._last_delta = 0
+        self._last_boosted = False
+        self._last_raw = 0
 
         # Safety
         self.encoder_ok = True
@@ -204,18 +223,38 @@ class SteeringController:
             self.peak_i_motor = max(self.peak_i_motor, abs(vals['i_motor']))
             self.peak_i_input = max(self.peak_i_input, abs(vals['i_input']))
             if self._telem_file:
+                v = vals
                 self._telem_file.write(
                     f"{time.time():.3f},"
                     f"{self.current_angle:.1f},"
                     f"{self.last_current:.2f},"
-                    f"{vals['i_motor']:.2f},"
-                    f"{vals['i_input']:.2f},"
-                    f"{vals['v_in']:.1f},"
-                    f"{vals['rpm']},"
-                    f"{vals['duty']:.3f},"
-                    f"{vals['temp_fet']:.1f},"
-                    f"{vals['temp_motor']:.1f},"
-                    f"{vals['fault']}\n"
+                    f"{v['i_motor']:.2f},"
+                    f"{v['i_input']:.2f},"
+                    f"{v.get('id',0):.2f},"
+                    f"{v.get('iq',0):.2f},"
+                    f"{v['duty']:.3f},"
+                    f"{v['rpm']},"
+                    f"{v['v_in']:.1f},"
+                    f"{v.get('ah',0):.4f},"
+                    f"{v.get('ah_charged',0):.4f},"
+                    f"{v.get('wh',0):.4f},"
+                    f"{v.get('wh_charged',0):.4f},"
+                    f"{v.get('tachometer',0)},"
+                    f"{v.get('tachometer_abs',0)},"
+                    f"{v['fault']},"
+                    f"{v.get('pid_pos',0):.6f},"
+                    f"{v.get('controller_id',0)},"
+                    f"{v['temp_fet']:.1f},"
+                    f"{v['temp_motor']:.1f},"
+                    f"{v.get('temp_mos1',0):.1f},"
+                    f"{v.get('temp_mos2',0):.1f},"
+                    f"{v.get('temp_mos3',0):.1f},"
+                    f"{v.get('vd',0):.2f},"
+                    f"{v.get('vq',0):.2f},"
+                    f"{self._last_delta},"
+                    f"{self.filtered_current:.2f},"
+                    f"{int(self._last_boosted)},"
+                    f"{self._last_raw}\n"
                 )
                 self._telem_file.flush()
         return vals
@@ -229,6 +268,7 @@ class SteeringController:
         raw = self._read_encoder_raw()
         if raw < 0:
             return 0.0
+        self._last_raw = raw
 
         now = time.monotonic()
 
@@ -241,6 +281,7 @@ class SteeringController:
         self.current_angle = angle_delta * DEG_PER_STEP
 
         # Deadband
+        self._last_delta = delta
         if abs(delta) < self.deadband_steps:
             delta = 0
 
@@ -278,8 +319,11 @@ class SteeringController:
         # Boost minimo: sotto 1.5A il VESC non muove il motore in una direzione
         # Se c'è un target non-zero, portalo almeno alla soglia minima
         min_effective = 1.5  # A — sotto questo il motore non risponde
+        boosted = False
         if 0 < abs(target) < min_effective and abs(target) > 0.05:
             target = min_effective if target > 0 else -min_effective
+            boosted = True
+        self._last_boosted = boosted
 
         # Safety: frena oltre i limiti angolari
         if self.current_angle > self.max_angle:
@@ -363,8 +407,13 @@ class SteeringController:
         log_path = os.path.join(TELEMETRY_DIR, f"steering_{ts}.csv")
         self._telem_file = open(log_path, "w")
         self._telem_file.write(
-            "timestamp,angle_deg,i_cmd,i_motor,i_input,"
-            "v_in,rpm,duty,temp_fet,temp_motor,fault\n"
+            "timestamp,angle_deg,i_cmd,"
+            "i_motor,i_input,id,iq,duty,rpm,v_in,"
+            "ah,ah_charged,wh,wh_charged,"
+            "tachometer,tachometer_abs,fault,"
+            "pid_pos,controller_id,temp_fet,temp_motor,temp_mos1,temp_mos2,temp_mos3,"
+            "vd,vq,"
+            "delta_enc,filtered,boosted,enc_raw\n"
         )
         try:
             if os.path.islink(TELEMETRY_LATEST):
