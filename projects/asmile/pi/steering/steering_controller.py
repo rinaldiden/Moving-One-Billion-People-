@@ -114,7 +114,7 @@ class SteeringController:
                  max_angle=50.0,
                  deadband_steps=2,
                  loop_hz=200,
-                 smoothing=0.85,
+                 smoothing=0.5,
                  telemetry_hz=50):
         # Tuning
         self.scale = scale
@@ -148,6 +148,11 @@ class SteeringController:
         self._last_delta = 0
         self._last_boosted = False
         self._last_raw = 0
+        self._loop_dt = 0.0
+        self._loop_dt_min = 999.0
+        self._loop_dt_max = 0.0
+        self._loop_dt_sum = 0.0
+        self._loop_count = 0
 
         # Safety
         self.encoder_ok = True
@@ -254,7 +259,8 @@ class SteeringController:
                     f"{self._last_delta},"
                     f"{self.filtered_current:.2f},"
                     f"{int(self._last_boosted)},"
-                    f"{self._last_raw}\n"
+                    f"{self._last_raw},"
+                    f"{self._loop_dt*1000:.1f}\n"
                 )
                 self._telem_file.flush()
         return vals
@@ -280,7 +286,7 @@ class SteeringController:
         angle_delta = self._wrap_delta(raw - self.zero_offset)
         self.current_angle = angle_delta * DEG_PER_STEP
 
-        # Deadband
+        # Deadband sugli step encoder
         self._last_delta = delta
         if abs(delta) < self.deadband_steps:
             delta = 0
@@ -316,14 +322,8 @@ class SteeringController:
 
         target = self.filtered_current
 
-        # Boost minimo: sotto 1.5A il VESC non muove il motore in una direzione
-        # Se c'è un target non-zero, portalo almeno alla soglia minima
-        min_effective = 1.5  # A — sotto questo il motore non risponde
-        boosted = False
-        if 0 < abs(target) < min_effective and abs(target) > 0.05:
-            target = min_effective if target > 0 else -min_effective
-            boosted = True
-        self._last_boosted = boosted
+        # Boost rimosso — causava oscillazione ON/OFF → vibrazioni
+        self._last_boosted = False
 
         # Safety: frena oltre i limiti angolari
         if self.current_angle > self.max_angle:
@@ -354,8 +354,17 @@ class SteeringController:
         print(f"Limiti angolari: ±{self.max_angle}°")
         print(f"Telemetria: {self.telemetry_hz}Hz → {TELEMETRY_DIR}/")
 
+        t_prev = time.monotonic()
         while self.running:
             t0 = time.monotonic()
+            # Misura dt reale dall'iterazione precedente
+            self._loop_dt = t0 - t_prev
+            t_prev = t0
+            if self._loop_count > 0:
+                self._loop_dt_min = min(self._loop_dt_min, self._loop_dt)
+                self._loop_dt_max = max(self._loop_dt_max, self._loop_dt)
+            self._loop_dt_sum += self._loop_dt
+            self._loop_count += 1
 
             if not self.encoder_ok:
                 self._stop_motor()
@@ -388,6 +397,12 @@ class SteeringController:
         print("Power steering fermato")
         print(f"Picco corrente motore: {self.peak_i_motor:.1f}A")
         print(f"Picco corrente batteria: {self.peak_i_input:.1f}A")
+        if self._loop_count > 1:
+            avg_dt = self._loop_dt_sum / self._loop_count
+            print(f"Loop dt: min={self._loop_dt_min*1000:.1f}ms "
+                  f"avg={avg_dt*1000:.1f}ms "
+                  f"max={self._loop_dt_max*1000:.1f}ms "
+                  f"(jitter={self._loop_dt_max*1000 - self._loop_dt_min*1000:.1f}ms)")
 
     def start(self):
         if self.running:
@@ -413,7 +428,7 @@ class SteeringController:
             "tachometer,tachometer_abs,fault,"
             "pid_pos,controller_id,temp_fet,temp_motor,temp_mos1,temp_mos2,temp_mos3,"
             "vd,vq,"
-            "delta_enc,filtered,boosted,enc_raw\n"
+            "delta_enc,filtered,boosted,enc_raw,loop_dt_ms\n"
         )
         try:
             if os.path.islink(TELEMETRY_LATEST):
