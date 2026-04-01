@@ -30,9 +30,10 @@ ENCODER_STEPS_PER_REV = 4096
 DEG_PER_STEP = 360.0 / ENCODER_STEPS_PER_REV  # 0.0879°
 
 # Direzione assistenza (misurato dai log):
-# encoder delta>0 (angolo sale) → serve corrente NEGATIVA per assistere
-# encoder delta<0 (angolo scende) → serve corrente POSITIVA per assistere
-ASSIST_DIRECTION = -1
+# Dopo ricalibrazione FOC 2026-04-01: direzione invertita
+# encoder delta>0 (angolo sale) → serve corrente POSITIVA per assistere
+# encoder delta<0 (angolo scende) → serve corrente NEGATIVA per assistere
+ASSIST_DIRECTION = 1
 
 # --- VESC protocol ---
 COMM_GET_VALUES = 4
