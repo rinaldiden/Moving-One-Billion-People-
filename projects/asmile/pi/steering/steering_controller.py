@@ -93,7 +93,7 @@ class SteeringController:
     """Power steering: corrente proporzionale alla velocità encoder."""
 
     def __init__(self,
-                 scale=0.5,
+                 scale=3.0,
                  max_current=5.0,
                  max_angle=50.0,
                  deadband_steps=2,
@@ -248,17 +248,9 @@ class SteeringController:
             scale = self.scale
 
         if delta != 0:
-            # Step rilevato: calcola velocità dal tempo tra step
-            dt_step = now - self._last_step_time if self._last_step_time > 0 else self.dt
-            dt_step = max(dt_step, 0.001)  # evita div/0
-
-            # Velocità in steps/sec
-            velocity = abs(delta) / dt_step
-
-            # Corrente proporzionale alla velocità
-            # velocity in steps/sec, scale in A per step/ciclo
-            # Normalizza: a 50 steps/sec (circa 4.4°/sec, lento) → scale * 1A
-            raw_target = (velocity / 50.0) * scale * ASSIST_DIRECTION
+            # Step rilevato: corrente fissa nella direzione di rotazione
+            # scale = ampere di assistenza (uguale a qualsiasi velocità)
+            raw_target = scale * ASSIST_DIRECTION
             if delta < 0:
                 raw_target = -raw_target
 
@@ -312,7 +304,7 @@ class SteeringController:
 
     def _control_loop(self):
         print(f"Power steering avviato @ {self.loop_hz}Hz")
-        print(f"Scale={self.scale} A/step, max={self.max_current}A, "
+        print(f"Scale={self.scale}A (fisso), max={self.max_current}A, "
               f"deadband={self.deadband_steps} steps, "
               f"smoothing={self.smoothing}")
         print(f"Limiti angolari: ±{self.max_angle}°")
@@ -413,7 +405,7 @@ class SteeringController:
 
 
 if __name__ == "__main__":
-    ctrl = SteeringController(scale=0.5, max_current=5.0)
+    ctrl = SteeringController(scale=3.0, max_current=5.0)
 
     def log_fn(t, angle, current, telem):
         if abs(current) > 0.01 or telem:
