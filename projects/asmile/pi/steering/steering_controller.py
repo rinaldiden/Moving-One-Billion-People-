@@ -22,7 +22,7 @@ import os
 UART_PORT = "/dev/ttyAMA0"
 UART_BAUD = 115200
 POSITION_FILE = "/tmp/encoder_position"
-TELEMETRY_DIR = os.path.expanduser("~/wip/logging/vesc")
+TELEMETRY_DIR = "/root/wip/logging/vesc"
 TELEMETRY_LATEST = "/tmp/steering_telemetry.csv"
 
 # Encoder
