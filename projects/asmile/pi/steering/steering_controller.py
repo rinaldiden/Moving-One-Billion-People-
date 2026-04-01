@@ -30,9 +30,7 @@ ENCODER_STEPS_PER_REV = 4096
 DEG_PER_STEP = 360.0 / ENCODER_STEPS_PER_REV  # 0.0879°
 
 # Direzione assistenza (misurato dai log):
-# Dopo ricalibrazione FOC 2026-04-01: direzione invertita
-# encoder delta>0 (angolo sale) → serve corrente POSITIVA per assistere
-# encoder delta<0 (angolo scende) → serve corrente NEGATIVA per assistere
+# Con config vesc_foc_ok.xml
 ASSIST_DIRECTION = 1
 
 # --- VESC protocol ---
@@ -284,8 +282,11 @@ class SteeringController:
 
         target = self.filtered_current
 
-        # Niente boost minimo — causa scatti a bassa velocità
-        # La zona morta VESC si compensa con scale più alto, non con soglia
+        # Boost minimo: sotto 1.5A il VESC non muove il motore in una direzione
+        # Se c'è un target non-zero, portalo almeno alla soglia minima
+        min_effective = 1.5  # A — sotto questo il motore non risponde
+        if 0 < abs(target) < min_effective and abs(target) > 0.05:
+            target = min_effective if target > 0 else -min_effective
 
         # Safety: frena oltre i limiti angolari
         if self.current_angle > self.max_angle:
@@ -411,7 +412,7 @@ class SteeringController:
 
 
 if __name__ == "__main__":
-    ctrl = SteeringController(scale=1.5, max_current=5.0, smoothing=0.7, deadband_steps=1)
+    ctrl = SteeringController(scale=0.5, max_current=5.0)
 
     def log_fn(t, angle, current, telem):
         if abs(current) > 0.01 or telem:
