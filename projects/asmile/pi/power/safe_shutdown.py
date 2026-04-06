@@ -52,12 +52,25 @@ def main():
     lgpio.gpio_claim_input(h, POWER_SENSE_PIN, lgpio.SET_PULL_DOWN)
 
     print(f"[safe_shutdown] Monitoring GPIO {POWER_SENSE_PIN} for power loss...")
+    print(f"[safe_shutdown] Waiting for battery HIGH signal before arming...")
 
+    # Safety: do NOT trigger shutdown until we've seen the pin HIGH at least once.
+    # This prevents spurious shutdowns when hardware is not yet connected
+    # (pin floats LOW with pull-down → would immediately trigger shutdown).
+    armed = False
     low_since = None
 
     try:
         while True:
             level = lgpio.gpio_read(h, POWER_SENSE_PIN)
+
+            if not armed:
+                if level == 1:
+                    armed = True
+                    print("[safe_shutdown] Battery detected (GPIO HIGH). Armed.")
+                else:
+                    time.sleep(CHECK_INTERVAL)
+                    continue
 
             if level == 0:
                 if low_since is None:
