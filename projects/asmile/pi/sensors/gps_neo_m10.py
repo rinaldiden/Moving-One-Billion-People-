@@ -21,7 +21,7 @@ import time
 
 # --- Config ---
 UART_PORT = "/dev/ttyAMA3"
-UART_BAUD = 9600  # NEO-M10 default
+UART_BAUD = 38400  # NEO-M10 (configured baud)
 
 
 def parse_gga(sentence: str) -> dict | None:

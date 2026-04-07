@@ -63,7 +63,7 @@ GYRO_SCALE = 131.0      # LSB/(°/s) at ±250°/s
 # GPS CONFIG — from gps_neo_m10.py (exact values)
 # ═══════════════════════════════════════════════════════════
 GPS_PORT = "/dev/ttyAMA3"
-GPS_BAUD = 9600
+GPS_BAUD = 38400
 
 # ═══════════════════════════════════════════════════════════
 # ENCODER — read from daemon shared file
