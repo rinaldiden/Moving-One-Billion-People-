@@ -195,18 +195,21 @@ supercap normally when the battery is connected.
 
 ### Power sense (GPIO for shutdown detection)
 
-To detect when the battery is cut, tap the **Pololu VOUT** side (before the diode):
+To detect when the battery is cut, tap the **Pololu VOUT** side (before the diode)
+via **Level Shifter #2 channel 3** (the same shifter used for the encoder):
 
 ```
-Pololu VOUT (5V) ─── 10kΩ ─── GPIO 26 (Pin 37) ─── 10kΩ ─── GND
-                                    │
-                           voltage divider
-                           ~2.5V = HIGH (battery on)
-                           ~0V   = LOW  (battery off)
+Pololu VOUT (5V) ──→ Level Shifter #2 HV3
+                     Level Shifter #2 LV3 ──→ GPIO 26 (Pin 37)
+
+Level shifter converts 5V → 3.3V automatically.
+  Battery ON:  HV3 = 5V  → LV3 = 3.3V → GPIO reads HIGH
+  Battery OFF: HV3 = 0V  → LV3 = 0V   → GPIO reads LOW
 ```
 
-When the battery is connected: Pololu outputs 5V → GPIO reads ~2.5V → HIGH.
-When the battery is cut: Pololu output drops to 0V → GPIO reads 0V → LOW.
+Previous design used a 2x 10kΩ resistor divider — replaced with level shifter
+for reliability (no voltage to verify, cleaner signal).
+
 The supercap is on the OTHER side of the diode, so it does NOT keep GPIO high.
 This is what triggers the safe shutdown script.
 
@@ -223,11 +226,12 @@ This is what triggers the safe shutdown script.
 └───────┬────────┘              └──────┬──────┘
         │ VOUT (5V)                    │ GND
         │                              │
-        ├── 10kΩ ── GPIO 26 ── 10kΩ ──┤  ← power sense
+        ├──→ Level Shifter #2 HV3      │  ← power sense
+        │    (LV3 → GPIO 26 Pin 37)   │
         │                              │
         ▼ (anode)                      │
    ┌─────────┐                         │
-   │ Schottky│ 1N5822                  │
+   │ Schottky│ S580 (or 1N5822)        │
    │  diode  │ (~0.3V drop)           │
    └────┬────┘                         │
         │ (cathode)                    │

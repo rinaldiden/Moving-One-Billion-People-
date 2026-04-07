@@ -34,6 +34,11 @@
 - SPI1, daemon writes to /tmp/encoder_position
 - systemd service: encoder-ssi.service
 
+### Power sense (safe shutdown)
+- GPIO 26 (Pin 37) via Level Shifter #2 channel 3 (same shifter as encoder)
+- HV3 ← Pololu F5 VOUT (before Schottky diode), LV3 → GPIO 26
+- HIGH = battery ON, LOW = battery OFF → triggers shutdown
+
 ### VESC (steering motor)
 - UART0 /dev/ttyAMA0, 115200 baud
 - Serial console disabled in cmdline.txt

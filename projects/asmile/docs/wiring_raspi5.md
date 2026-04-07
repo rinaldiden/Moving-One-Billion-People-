@@ -29,6 +29,7 @@ Full setup for the Asmile project: steering, braking, GPS, IMU.
 | GPIO 18 | Pin 12 | SSI Encoder | SPI1 CE0 (unused but claimed) | OUT |
 | GPIO 19 | Pin 35 | SSI Encoder | SPI1 MISO ← DATA (via RS-485 #2) | IN |
 | GPIO 21 | Pin 40 | SSI Encoder | SPI1 SCLK → CLOCK (via RS-485 #1) | OUT |
+| GPIO 26 | Pin 37 | Power sense | Battery detect (via Level Shifter #2 ch3) | IN |
 
 ## 40-Pin Header — Final View (from top of Camarray HAT)
 
@@ -114,7 +115,11 @@ Level Shifter (bidirectional):
 
   LV1 ← GPIO 21 (Pin 40) SPI1_SCLK →  HV1 → DI of RS-485 #1
   LV2 ← GPIO 19 (Pin 35) SPI1_MISO ←  HV2 ← RO of RS-485 #2
+  LV3 ← GPIO 26 (Pin 37) power sense ← HV3 ← Pololu F5 VOUT (before diode)
 ```
+
+> Channel 3 replaces the 2x 10kΩ resistor divider for power-loss detection.
+> Level shifter converts 5V → 3.3V cleanly. GPIO 26 reads HIGH when battery is ON.
 
 **RS-485 Module #1 — CLOCK (transmit to encoder)**
 
