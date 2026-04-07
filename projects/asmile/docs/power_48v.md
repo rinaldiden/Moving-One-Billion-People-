@@ -199,12 +199,15 @@ To detect when the battery is cut, tap the **Pololu VOUT** side (before the diod
 via **Level Shifter #2 channel 3** (the same shifter used for the encoder):
 
 ```
-Pololu VOUT (5V) ──→ Level Shifter #2 HV3
-                     Level Shifter #2 LV3 ──→ GPIO 26 (Pin 37)
+Pololu VOUT (5V, before diode) ──→ Level Shifter #2 HV (power)
+                                    Level Shifter #2 HV3 ← jumper to HV
+                                    Level Shifter #2 LV3 ──→ GPIO 26 (Pin 37)
 
-Level shifter converts 5V → 3.3V automatically.
-  Battery ON:  HV3 = 5V  → LV3 = 3.3V → GPIO reads HIGH
-  Battery OFF: HV3 = 0V  → LV3 = 0V   → GPIO reads LOW
+Wiring: HV and HV3 jumpered on the board. GND pins jumpered, one wire to
+common GND terminal block. Shifter powered from Pololu F5 VOUT (before diode).
+
+  Battery ON:  Pololu outputs 5V → shifter alive → LV3 = 3.3V → GPIO HIGH
+  Battery OFF: Pololu drops to 0V → shifter dies → LV3 = 0V → GPIO LOW
 ```
 
 Previous design used a 2x 10kΩ resistor divider — replaced with level shifter

@@ -115,11 +115,17 @@ Level Shifter (bidirectional):
 
   LV1 ← GPIO 21 (Pin 40) SPI1_SCLK →  HV1 → DI of RS-485 #1
   LV2 ← GPIO 19 (Pin 35) SPI1_MISO ←  HV2 ← RO of RS-485 #2
-  LV3 ← GPIO 26 (Pin 37) power sense ← HV3 ← Pololu F5 VOUT (before diode)
+  LV3 ← GPIO 26 (Pin 37) power sense ← HV3 ← jumper to HV (same 5V)
 ```
 
+> **Wiring note:** HV and HV3 are jumpered together on the board (same 5V from
+> Pololu F5 VOUT, before the Schottky diode). GND pins jumpered together, one
+> wire from either GND pad to the common GND terminal block.
+>
+> When battery is cut: Pololu VOUT drops → shifter loses power → LV3 goes LOW
+> → GPIO 26 reads LOW → safe_shutdown triggers. Raspi stays alive via supercap.
+>
 > Channel 3 replaces the 2x 10kΩ resistor divider for power-loss detection.
-> Level shifter converts 5V → 3.3V cleanly. GPIO 26 reads HIGH when battery is ON.
 
 **RS-485 Module #1 — CLOCK (transmit to encoder)**
 

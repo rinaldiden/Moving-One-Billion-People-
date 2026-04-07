@@ -36,8 +36,10 @@
 
 ### Power sense (safe shutdown)
 - GPIO 26 (Pin 37) via Level Shifter #2 channel 3 (same shifter as encoder)
-- HV3 ← Pololu F5 VOUT (before Schottky diode), LV3 → GPIO 26
-- HIGH = battery ON, LOW = battery OFF → triggers shutdown
+- Shifter powered from Pololu F5 VOUT (before Schottky diode)
+- HV jumpered to HV3 on the board, GND pins jumpered with one wire to common terminal
+- Battery ON → shifter alive → LV3=3.3V → GPIO HIGH
+- Battery OFF → shifter dies → LV3=0V → GPIO LOW → shutdown
 
 ### VESC (steering motor)
 - UART0 /dev/ttyAMA0, 115200 baud
