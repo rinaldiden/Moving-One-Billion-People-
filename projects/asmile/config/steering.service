@@ -6,8 +6,8 @@ Requires=encoder-ssi.service
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/bin/python3 /home/asmile/wip/ripristino-test/Moving-One-Billion-People-/projects/asmile/pi/steering/steering_controller.py
-WorkingDirectory=/home/asmile/wip/ripristino-test/Moving-One-Billion-People-/projects/asmile/pi/steering
+ExecStart=/usr/bin/python3 /home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/pi/steering/steering_controller.py
+WorkingDirectory=/home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/pi/steering
 Restart=on-failure
 RestartSec=3
 

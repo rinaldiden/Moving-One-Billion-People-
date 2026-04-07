@@ -41,10 +41,10 @@ echo "  If supercap + voltage divider are not wired yet, the service will"
 echo "  run safely without triggering any shutdown."
 
 # Bash alias for quick shutdown
-if ! grep -q "alias off=" /home/asmile/.bashrc 2>/dev/null; then
-    echo "" >> /home/asmile/.bashrc
-    echo "# Asmile quick shutdown" >> /home/asmile/.bashrc
-    echo "alias off='sudo shutdown -h now'" >> /home/asmile/.bashrc
+if ! grep -q "alias off=" /home/asmile2/.bashrc 2>/dev/null; then
+    echo "" >> /home/asmile2/.bashrc
+    echo "# Asmile quick shutdown" >> /home/asmile2/.bashrc
+    echo "alias off='sudo shutdown -h now'" >> /home/asmile2/.bashrc
 fi
 
 echo ""
