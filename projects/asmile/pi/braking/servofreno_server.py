@@ -73,11 +73,11 @@ ENCODER_FILE = "/tmp/encoder_position"
 # ═══════════════════════════════════════════════════════════
 # BRAKE LOOP PARAMETERS
 # ═══════════════════════════════════════════════════════════
-RAMP_DURATION = 2.0       # seconds of gentle ramp
+RAMP_DURATION = 1.0       # seconds of gentle ramp
 RAMP_START_ANGLE = 20     # initial angle during ramp
-LOOP_INTERVAL = 0.1       # 100ms per iteration
-ANGLE_INCREMENT_SLOW = 2  # degrees per step during ramp
-ANGLE_INCREMENT_FAST = 5  # degrees per step after ramp
+LOOP_INTERVAL = 0.020     # 20ms per iteration (50Hz, matches IMU rate)
+ANGLE_INCREMENT_SLOW = 1  # degrees per step during ramp
+ANGLE_INCREMENT_FAST = 2  # degrees per step after ramp
 EXPECTED_DECEL_G = 0.15   # expected deceleration in g
 SPEED_STOP_MS = 0.1       # speed threshold to consider stopped
 
