@@ -44,7 +44,7 @@ PULSE_MAX_US = 2500
 PERIOD_US = 1_000_000 / SERVO_FREQ  # ~3030us
 
 CENTER = 0              # release angle
-MEDIUM_TRAVEL = 85      # max braking angle
+MEDIUM_TRAVEL = 88      # max braking angle
 
 # ═══════════════════════════════════════════════════════════
 # IMU CONFIG — from imu_mpu6050.py (exact values)
@@ -73,11 +73,11 @@ ENCODER_FILE = "/tmp/encoder_position"
 # ═══════════════════════════════════════════════════════════
 # BRAKE LOOP PARAMETERS
 # ═══════════════════════════════════════════════════════════
-RAMP_DURATION = 1.0       # seconds of gentle ramp
-RAMP_START_ANGLE = 20     # initial angle during ramp
-LOOP_INTERVAL = 0.020     # 20ms per iteration (50Hz, matches IMU rate)
-ANGLE_INCREMENT_SLOW = 1  # degrees per step during ramp
-ANGLE_INCREMENT_FAST = 2  # degrees per step after ramp
+RAMP_DURATION = 2.0       # seconds of gentle ramp
+RAMP_START_ANGLE = 40     # initial angle during ramp
+LOOP_INTERVAL = 0.1       # 100ms per iteration
+ANGLE_INCREMENT_SLOW = 2  # degrees per step during ramp
+ANGLE_INCREMENT_FAST = 5  # degrees per step after ramp
 EXPECTED_DECEL_G = 0.15   # expected deceleration in g
 SPEED_STOP_MS = 0.1       # speed threshold to consider stopped
 
@@ -310,43 +310,19 @@ def brake_loop():
         braking = True
         brake_event = "FRENATA"
 
-    angle = RAMP_START_ANGLE
-    start_time = time.monotonic()
+    angle = MEDIUM_TRAVEL
 
-    print(f"[BRAKE] Start — initial angle {angle}°")
+    print(f"[BRAKE] Start — FULL BRAKE {angle}°")
     log_servo("INIZIO_FRENATA", 0, 0, angle)
 
     try:
         servo.write(angle)
 
         while braking:
-            elapsed = time.monotonic() - start_time
             imu = read_imu(i2c_bus)
             gps = gps_reader.get()
-            decel_g = -imu["ax"]  # negative ax = braking
+            decel_g = -imu["ax"]
             speed_ms = gps["speed_ms"]
-
-            # Stop if speed ~0
-            if gps["fix"] and speed_ms <= SPEED_STOP_MS:
-                log_servo("FERMATO", speed_ms, decel_g, angle, "velocita_zero")
-                print(f"[BRAKE] Stopped (speed {speed_ms:.2f} m/s)")
-                break
-
-            # Ramp logic
-            if elapsed < RAMP_DURATION:
-                increment = ANGLE_INCREMENT_SLOW
-            else:
-                increment = ANGLE_INCREMENT_FAST
-
-            # Increase angle if deceleration is insufficient
-            if decel_g < EXPECTED_DECEL_G:
-                new_angle = min(angle + increment, MEDIUM_TRAVEL)
-                if new_angle != angle:
-                    angle = new_angle
-                    servo.write(angle)
-                    log_servo("AUMENTO_ANGOLO", speed_ms, decel_g, angle,
-                              f"decel={decel_g:.2f}g<{EXPECTED_DECEL_G}g")
-                    print(f"[BRAKE] Angle → {angle}° (decel {decel_g:.2f}g)")
 
             log_servo("LOOP", speed_ms, decel_g, angle)
             time.sleep(LOOP_INTERVAL)
@@ -425,15 +401,16 @@ HTML_PAGE = """<!DOCTYPE html>
   </div>
 <script>
 const btn = document.getElementById('btn-brake');
-const status = document.getElementById('status');
+const st = document.getElementById('status');
 let braking = false;
+let useTouch = false;
 
 function startBrake() {
   if (braking) return;
   braking = true;
   btn.classList.add('active');
-  status.textContent = 'FRENATA IN CORSO';
-  status.className = 'braking';
+  st.textContent = 'FRENATA IN CORSO';
+  st.className = 'braking';
   fetch('/frena', {method: 'POST'});
 }
 
@@ -441,17 +418,20 @@ function stopBrake() {
   if (!braking) return;
   braking = false;
   btn.classList.remove('active');
-  status.textContent = 'Rilasciato';
-  status.className = '';
+  st.textContent = 'Rilasciato';
+  st.className = '';
   fetch('/rilascia', {method: 'POST'});
 }
 
-btn.addEventListener('mousedown', startBrake);
-btn.addEventListener('mouseup', stopBrake);
-btn.addEventListener('mouseleave', stopBrake);
-btn.addEventListener('touchstart', (e) => { e.preventDefault(); startBrake(); });
+// Touch events — block mouse events once touch is detected
+btn.addEventListener('touchstart', (e) => { e.preventDefault(); useTouch = true; startBrake(); });
 btn.addEventListener('touchend', (e) => { e.preventDefault(); stopBrake(); });
 btn.addEventListener('touchcancel', stopBrake);
+
+// Mouse events — only fire if no touch detected
+btn.addEventListener('mousedown', () => { if (!useTouch) startBrake(); });
+btn.addEventListener('mouseup', () => { if (!useTouch) stopBrake(); });
+btn.addEventListener('mouseleave', () => { if (!useTouch) stopBrake(); });
 </script>
 </body>
 </html>"""
