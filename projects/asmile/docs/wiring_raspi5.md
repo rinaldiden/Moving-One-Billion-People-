@@ -92,18 +92,21 @@ The encoder uses RS-485 differential signals. Two modules are needed:
 - Module #1 for CLOCK (Raspi transmits → Encoder receives)
 - Module #2 for DATA (Encoder transmits → Raspi receives)
 
-**Briter BRT38 Encoder Wire Colors (VERIFIED):**
+**Briter BRT38 Encoder Wire Colors (VERIFIED on working Arduino setup + Raspi):**
 
-| Wire Color | Signal | Notes |
+| Wire Color | Signal | Connect to |
 |---|---|---|
-| **Red** | VCC (5V) | |
-| **Black** | GND | |
-| **Green** | CLK (SSI clock) | via RS-485 #1 |
-| **White** | DATA (SSI data) | via RS-485 #2 |
+| **Red** | VCC (5V) | 5V rail |
+| **Black** | GND | common GND |
+| **Green** | CLK A+ | RS-485 #1 terminal **A** |
+| **Brown** | CLK B- | RS-485 #1 terminal **B** |
+| **White** | DATA A+ | RS-485 #2 terminal **A** |
+| **Gray** | DATA B- | RS-485 #2 terminal **B** |
 | **Yellow** | ZR (zero reference) | LEAVE UNCONNECTED |
 | **Orange** | Config | LEAVE UNCONNECTED (used only for reset) |
 
 > **Yellow and Orange wires MUST be insulated/unconnected during normal operation.**
+> Full differential wiring (A+B on both modules) for noise immunity.
 
 **Level Shifter #2 — 3.3V ↔ 5V (between Pi GPIO and RS-485 modules)**
 
@@ -131,8 +134,8 @@ Level Shifter (bidirectional):
 
 ```
 TTL side:                      Encoder side (screw terminal):
-  VCC ← 5V (Pin 4)              A ──→ Green wire  (CLK)
-  DI  ← HV1 of level shifter    B ──→ (not used, single-ended)
+  VCC ← 5V (Pin 4)              A ──→ Green wire  (CLK A+)
+  DI  ← HV1 of level shifter    B ──→ Brown wire  (CLK B-)
   DE  ← 5V (always TX enabled)
   RE  ← 5V (RX disabled)
   GND ← GND (Pin 30)
@@ -142,8 +145,8 @@ TTL side:                      Encoder side (screw terminal):
 
 ```
 TTL side:                      Encoder side (screw terminal):
-  VCC ← 5V (Pin 4)              A ←── White wire  (DATA)
-  RO  ──→ HV2 of level shifter  B ←── (not used, single-ended)
+  VCC ← 5V (Pin 4)              A ←── White wire  (DATA A+)
+  RO  ──→ HV2 of level shifter  B ←── Gray wire   (DATA B-)
   DE  ← GND (TX disabled)
   RE  ← GND (always RX enabled)
   GND ← GND (Pin 30)
