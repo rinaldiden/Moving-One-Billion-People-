@@ -37,7 +37,7 @@ from datetime import datetime
 # ═══════════════════════════════════════════════════════════
 # CONFIG
 # ═══════════════════════════════════════════════════════════
-SESSIONS_DIR = os.path.expanduser("~/training_sessions")
+SESSIONS_DIR = os.path.expanduser("~/wip/recorder")
 ARDUCAM_FIX = os.path.expanduser("~/streaming/arducam_fix.so")
 
 # Video
