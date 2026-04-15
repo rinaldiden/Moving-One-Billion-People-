@@ -1,0 +1,16 @@
+[Unit]
+Description=Asmile Master Switch — GPIO toggle controls brake and logging
+After=multi-user.target
+Before=servofreno.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/pi/power/master_switch.py
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+User=root
+
+[Install]
+WantedBy=multi-user.target
