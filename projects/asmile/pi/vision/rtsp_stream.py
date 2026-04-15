@@ -27,7 +27,7 @@ BITRATE = 500_000  # ← CHANGE HERE: 500k = light, 800k-1500k = better quality
 
 def build_gst_pipeline() -> list[str]:
     return [
-        "gst-launch-1.0", "-e",
+        "/usr/bin/gst-launch-1.0", "-e",
         "libcamerasrc",
         "!", f"video/x-raw,width={WIDTH},height={HEIGHT},framerate={FPS}/1",
         "!", "queue",
