@@ -73,12 +73,26 @@ class MasterSwitch:
         subprocess.run(["systemctl", "start", "servofreno.service"])
         print("[SWITCH] servofreno started — brake released")
 
+        # Start training recorder as asmile2 (not root — camera needs user access)
+        recorder = "/home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/pi/logging/training_recorder.py"
+        subprocess.Popen(
+            ["sudo", "-u", "asmile2",
+             "env", "LD_PRELOAD=/home/asmile2/streaming/arducam_fix.so",
+             "python3", "-u", recorder],
+            stdout=open("/tmp/recorder.log", "w"),
+            stderr=subprocess.STDOUT)
+        print("[SWITCH] training recorder started")
+
     def deactivate(self):
         """Switch turned OFF — stop servofreno, lock brake."""
         if not self.active:
             return
         self.active = False
         print("[SWITCH] OFF — stopping servofreno, locking brake")
+
+        # Stop training recorder
+        subprocess.run(["pkill", "-f", "training_recorder.py"], capture_output=True)
+        print("[SWITCH] training recorder stopped")
 
         # Stop servofreno (releases GPIO 12)
         subprocess.run(["systemctl", "stop", "servofreno.service"],

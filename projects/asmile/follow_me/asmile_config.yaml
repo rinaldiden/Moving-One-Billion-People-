@@ -1,0 +1,49 @@
+asmile:
+  larghezza_max_cm: 80        # PLACEHOLDER — misurare fisicamente
+  sporgenza_muso_cm: 40       # PLACEHOLDER — distanza cam→muso
+  altezza_cam_da_terra_cm: 90  # PLACEHOLDER — misurare fisicamente
+  distanza_frenata_cm: 150     # PLACEHOLDER — testare a 5km/h
+
+stereo:
+  calibration_file: "../config/stereo_calibration.yaml"
+  frame_width: 1280
+  frame_height: 400
+
+gpio:
+  buzzer_pin: 13        # PWM1 hardware
+  button_pin: 27        # pull-up, active LOW
+  gpio_chip: 4          # Pi 5
+
+follow_me:
+  range_min_m: 3.0
+  range_max_m: 10.0
+  range_ok_min_m: 3.0
+  range_ok_max_m: 8.0
+  deadband_pct: 5
+  acquisition_hold_s: 2.0
+  acquisition_window_s: 10.0
+  acquisition_min_frames: 5
+  acquisition_min_confidence: 0.7
+  lost_frame_threshold: 30
+  timeout_sessione_min: 10
+
+stereo_matching:
+  block_size: 7
+  num_disparities: 192
+  uniqueness_ratio: 15
+
+cone_detector:
+  r_squared_min: 0.85
+  symmetry_tolerance_pct: 10
+  search_zone_pct: 30
+
+safety:
+  d_stop_m: 1.0
+  d_brake_m: 2.0
+  d_steer_m: 4.0
+
+buzzer:
+  freq_ready: 1000
+  freq_window: 800
+  freq_close: 2000
+  freq_obstacle: 1500

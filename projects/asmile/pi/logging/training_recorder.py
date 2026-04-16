@@ -37,8 +37,8 @@ from datetime import datetime
 # ═══════════════════════════════════════════════════════════
 # CONFIG
 # ═══════════════════════════════════════════════════════════
-SESSIONS_DIR = os.path.expanduser("~/wip/recorder")
-ARDUCAM_FIX = os.path.expanduser("~/streaming/arducam_fix.so")
+SESSIONS_DIR = "/home/asmile2/wip/recorder"
+ARDUCAM_FIX = "/home/asmile2/streaming/arducam_fix.so"
 
 # Video
 WIDTH = 1280
@@ -126,41 +126,26 @@ def nmea_to_decimal(coord, direction):
 
 
 def gps_thread():
+    """Read GPS from servofreno server API (avoids serial port conflict)."""
     global gps_data, running
-    import serial
-    try:
-        ser = serial.Serial(GPS_PORT, GPS_BAUD, timeout=1.0)
-    except Exception as e:
-        print(f"[GPS] Cannot open: {e}")
-        return
+    import urllib.request
+    import json as _json
 
+    print("[GPS] Reading from servofreno API (localhost:5000)")
     while running:
         try:
-            line = ser.readline().decode("ascii", errors="ignore").strip()
-            if not line.startswith("$"):
-                continue
-
-            if "GGA" in line:
-                parts = line.split(",")
-                if len(parts) >= 15 and parts[2] and parts[4]:
-                    with gps_lock:
-                        gps_data["lat"] = nmea_to_decimal(parts[2], parts[3])
-                        gps_data["lon"] = nmea_to_decimal(parts[4], parts[5])
-                        gps_data["fix"] = int(parts[6]) > 0 if parts[6] else False
-
-            elif "RMC" in line:
-                parts = line.split(",")
-                if len(parts) >= 12 and parts[2] == "A":
-                    speed_knots = float(parts[7]) if parts[7] else 0.0
-                    heading = float(parts[8]) if parts[8] else 0.0
-                    with gps_lock:
-                        gps_data["speed_ms"] = speed_knots * 1.852 / 3.6
-                        gps_data["heading"] = heading
-                        gps_data["fix"] = True
+            resp = urllib.request.urlopen("http://localhost:5000/stato", timeout=2)
+            data = _json.loads(resp.read())
+            gps = data.get("gps", {})
+            with gps_lock:
+                gps_data["lat"] = gps.get("lat", 0)
+                gps_data["lon"] = gps.get("lon", 0)
+                gps_data["speed_ms"] = gps.get("speed_ms", 0)
+                gps_data["heading"] = gps.get("heading", 0)
+                gps_data["fix"] = gps.get("fix", False)
         except Exception:
             pass
-
-    ser.close()
+        time.sleep(0.5)
 
 
 # ═══════════════════════════════════════════════════════════
