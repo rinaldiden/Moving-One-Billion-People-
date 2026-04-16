@@ -57,44 +57,45 @@ class MasterSwitch:
         return lgpio.gpio_read(self.h, SWITCH_PIN) == 0
 
     def activate(self):
-        """Switch turned ON — unlock brake, start logging."""
+        """Switch turned ON — start servofreno (it releases the brake on startup)."""
         if self.active:
             return
         self.active = True
-        print("[SWITCH] ON — unlocking brake, starting services")
+        print("[SWITCH] ON — starting servofreno")
 
-        # Release brake servo
-        lgpio.tx_pwm(self.h, PIN_SERVO, SERVO_FREQ, angle_to_duty(RELEASE_ANGLE))
-        time.sleep(0.5)
-        lgpio.tx_pwm(self.h, PIN_SERVO, 0, 0)  # stop PWM, let servofreno take over
+        # Release servo GPIO if we were holding it
+        if hasattr(self, 'servo_handle') and self.servo_handle:
+            lgpio.tx_pwm(self.servo_handle, PIN_SERVO, 0, 0)
+            lgpio.gpiochip_close(self.servo_handle)
+            self.servo_handle = None
+            time.sleep(0.3)
 
-        # Start servofreno server (if not running)
-        result = subprocess.run(["systemctl", "is-active", "servofreno.service"],
-                                capture_output=True, text=True)
-        if result.stdout.strip() != "active":
-            subprocess.run(["systemctl", "start", "servofreno.service"])
-            print("[SWITCH] servofreno started")
-        else:
-            print("[SWITCH] servofreno already running")
+        subprocess.run(["systemctl", "start", "servofreno.service"])
+        print("[SWITCH] servofreno started — brake released")
 
     def deactivate(self):
-        """Switch turned OFF — lock brake, stop logging."""
+        """Switch turned OFF — stop servofreno, lock brake."""
         if not self.active:
             return
         self.active = False
-        print("[SWITCH] OFF — locking brake, stopping services")
+        print("[SWITCH] OFF — stopping servofreno, locking brake")
 
-        # Stop servofreno server
+        # Stop servofreno (releases GPIO 12)
         subprocess.run(["systemctl", "stop", "servofreno.service"],
                         capture_output=True)
-        print("[SWITCH] servofreno stopped")
+        time.sleep(0.5)
 
-        # Lock brake at full angle
-        lgpio.tx_pwm(self.h, PIN_SERVO, SERVO_FREQ, angle_to_duty(BRAKE_ANGLE))
+        # Now we can take GPIO 12 and lock brake
+        h2 = lgpio.gpiochip_open(GPIO_CHIP)
+        lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, angle_to_duty(BRAKE_ANGLE))
         print(f"[SWITCH] Brake locked at {BRAKE_ANGLE}°")
+        # Keep h2 open so PWM stays active
+        self.servo_handle = h2
 
     def cleanup(self):
-        lgpio.tx_pwm(self.h, PIN_SERVO, 0, 0)
+        if hasattr(self, 'servo_handle') and self.servo_handle:
+            lgpio.tx_pwm(self.servo_handle, PIN_SERVO, 0, 0)
+            lgpio.gpiochip_close(self.servo_handle)
         lgpio.gpiochip_close(self.h)
 
 
