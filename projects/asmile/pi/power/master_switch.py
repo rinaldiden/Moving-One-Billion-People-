@@ -56,12 +56,13 @@ class MasterSwitch:
         """Returns True if switch is ON (closed, LOW)."""
         return lgpio.gpio_read(self.h, SWITCH_PIN) == 0
 
-    def activate(self):
-        """Switch turned ON — start servofreno (it releases the brake on startup)."""
+    def activate(self, follow_me=False):
+        """Switch turned ON — start servofreno and logging.
+        If follow_me=True, also start follow-me cone tracking."""
         if self.active:
             return
         self.active = True
-        print("[SWITCH] ON — starting servofreno")
+        self.follow_me = follow_me
 
         # Release servo GPIO if we were holding it
         if hasattr(self, 'servo_handle') and self.servo_handle:
@@ -83,6 +84,18 @@ class MasterSwitch:
             stderr=subprocess.STDOUT)
         print("[SWITCH] training recorder started")
 
+        if follow_me:
+            follow_me_main = "/home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/follow_me/main.py"
+            subprocess.Popen(
+                ["sudo", "-u", "asmile2",
+                 "env", "LD_PRELOAD=/home/asmile2/streaming/arducam_fix.so",
+                 "python3", "-u", follow_me_main],
+                stdout=open("/tmp/follow_me.log", "w"),
+                stderr=subprocess.STDOUT)
+            print("[SWITCH] FOLLOW-ME mode activated!")
+        else:
+            print("[SWITCH] Normal logging mode")
+
     def deactivate(self):
         """Switch turned OFF — stop servofreno, lock brake."""
         if not self.active:
@@ -90,9 +103,11 @@ class MasterSwitch:
         self.active = False
         print("[SWITCH] OFF — stopping servofreno, locking brake")
 
+        # Stop follow-me if running
+        subprocess.run(["pkill", "-f", "follow_me/main.py"], capture_output=True)
         # Stop training recorder
         subprocess.run(["pkill", "-f", "training_recorder.py"], capture_output=True)
-        print("[SWITCH] training recorder stopped")
+        print("[SWITCH] services stopped")
 
         # Stop servofreno (releases GPIO 12)
         subprocess.run(["systemctl", "stop", "servofreno.service"],
@@ -103,8 +118,12 @@ class MasterSwitch:
         h2 = lgpio.gpiochip_open(GPIO_CHIP)
         lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, angle_to_duty(BRAKE_ANGLE))
         print(f"[SWITCH] Brake locked at {BRAKE_ANGLE}°")
-        # Keep h2 open so PWM stays active
-        self.servo_handle = h2
+        # Wait for servo to reach position, then cut PWM to avoid burnout
+        time.sleep(0.5)
+        lgpio.tx_pwm(h2, PIN_SERVO, 0, 0)
+        lgpio.gpiochip_close(h2)
+        self.servo_handle = None
+        print("[SWITCH] Servo PWM off (holds mechanically)")
 
     def cleanup(self):
         if hasattr(self, 'servo_handle') and self.servo_handle:
@@ -120,8 +139,11 @@ def main():
     print("  ASMILE MASTER SWITCH")
     print("=" * 50)
     print(f"GPIO {SWITCH_PIN} (Pin 11) — pull-up, switch to GND (Pin 9)")
-    print(f"ON  = brake released, servofreno active")
-    print(f"OFF = brake locked at {BRAKE_ANGLE}°, servofreno stopped")
+    print(f"ON         = brake released, logging active")
+    print(f"ON-OFF-ON  = follow-me mode (within 1s)")
+    print(f"OFF        = brake locked at {BRAKE_ANGLE}°, all stopped")
+
+    DOUBLE_TAP_WINDOW = 1.0  # seconds to detect ON-OFF-ON
 
     # Read initial state
     initial = sw.read_switch()
@@ -144,8 +166,36 @@ def main():
                 if (now - last_change) * 1000 >= DEBOUNCE_MS:
                     last_state = current
                     last_change = now
+
                     if current:
-                        sw.activate()
+                        # ON detected — wait to see if it's a double-tap
+                        # (ON now, need to see OFF then ON within DOUBLE_TAP_WINDOW)
+                        double_tap = False
+                        deadline = time.monotonic() + DOUBLE_TAP_WINDOW
+                        while time.monotonic() < deadline:
+                            time.sleep(CHECK_INTERVAL)
+                            s = sw.read_switch()
+                            if not s:
+                                # OFF detected — now wait for second ON
+                                while time.monotonic() < deadline:
+                                    time.sleep(CHECK_INTERVAL)
+                                    s2 = sw.read_switch()
+                                    if s2:
+                                        double_tap = True
+                                        break
+                                break
+
+                        if double_tap:
+                            sw.activate(follow_me=True)
+                        else:
+                            # Check switch is still ON after the wait
+                            if sw.read_switch():
+                                sw.activate(follow_me=False)
+                            # else: switch went OFF during wait, deactivate
+                            else:
+                                sw.deactivate()
+                        last_state = sw.read_switch()
+                        last_change = time.monotonic()
                     else:
                         sw.deactivate()
 
