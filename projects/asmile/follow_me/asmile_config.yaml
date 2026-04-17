@@ -1,8 +1,9 @@
 asmile:
-  larghezza_max_cm: 80        # PLACEHOLDER — misurare fisicamente
-  sporgenza_muso_cm: 40       # PLACEHOLDER — distanza cam→muso
-  altezza_cam_da_terra_cm: 90  # PLACEHOLDER — misurare fisicamente
-  distanza_frenata_cm: 150     # PLACEHOLDER — testare a 5km/h
+  larghezza_max_cm: 110       # misurato: larghezza esterna mozzi ruote ant
+  cam_offset_laterale_cm: 10  # cam a 100mm per lato dell'asse bici
+  sporgenza_muso_cm: 30       # misurato: distanza cam→punta muso
+  altezza_cam_da_terra_cm: 77  # misurato: centro cam da terra
+  distanza_frenata_cm: 50      # stimato a 5km/h — da verificare dai log
 
 stereo:
   calibration_file: "../config/stereo_calibration.yaml"
