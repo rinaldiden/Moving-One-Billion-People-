@@ -148,4 +148,21 @@ Sessione 181452: az_stdev = 0.44 (strada ruvida) vs altre sessioni ~0.22.
 
 ---
 
+## Software Tools
+
+Pipeline di training in `projects/asmile/training/`:
+
+| Tool | File | Scopo |
+|---|---|---|
+| Frame Extractor | `frame_extractor.py` | Estrae frame video sincronizzati con CSV sensori, split stereo left/right |
+| Depth Extractor | `depth_extractor.py` | Calcola mappe di profondita da coppie stereo con calibrazione e StereoSGBM |
+| Training Dataset | `training_dataset.py` | Crea dataset (frame + depth + label) per behavioral cloning, split train/val |
+| Visualizer | `visualizer.py` | Crea frame/video annotati con depth overlay, sterzo, velocita, frenata |
+| Behavioral Cloning | `behavioral_cloning.py` | CNN proof-of-concept: input visivo + sensori -> sterzo + frenata (PyTorch/NumPy) |
+| Shadow Analyzer | `shadow_analyzer.py` | Confronta predizioni modello vs guidatore umano, identifica edge case |
+
+Dipendenze: Python 3, OpenCV, NumPy. PyTorch opzionale (necessario solo per il training).
+
+---
+
 *Asmile Shadow Mode — l'AI osserva, il guidatore guida. Un passo alla volta.* 🚲
