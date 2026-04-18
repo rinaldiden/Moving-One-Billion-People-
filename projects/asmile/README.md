@@ -22,45 +22,25 @@ Single 48V battery (13S Li-ion) powers everything:
 - **Pololu D24V55F6** → 6V for brake servo
 - **VESC direct** → 48V for steering motor
 
-## Raspi "asmile2" — current state (2026-04-06)
-
-| What | Status | Notes |
-|------|--------|-------|
-| SSH | ✅ | user `asmile2`, DHCP on WiFi EOLO_378899 |
-| Servo freno | ✅ running | GPIO 12, 330Hz, CENTER=0°, MAX=85° |
-| servofreno_server.py | ✅ running | Flask on :5000, hold-to-brake button |
-| Training data logger | ✅ running | 10Hz CSV in `pi/logging/training_data/` |
-| Brake event logger | ✅ running | CSV in `pi/logging/servofreno/` |
-| IMU / GPS / Encoder / VESC | ⏳ need reboot | config.txt overlays ready, boot activates them |
-| safe_shutdown service | ✅ safe | arms only after seeing GPIO HIGH (no spurious shutdown) |
-
-## Logging
-
-Continuous data collection for autonomous driving training:
-
-```
-pi/logging/
-  servofreno/           servofreno_YYYYMMDD.csv  — brake events
-  training_data/        training_YYYYMMDD.csv    — 10Hz IMU+GPS+encoder+events
-```
-
-**Training CSV columns** (10Hz, continuous):
-`timestamp, gps_lat, gps_lon, gps_speed_ms, gps_heading, imu_accel_x/y/z, imu_gyro_x/y/z, encoder_pos, evento`
-
-The `evento` field = `FRENATA` during active braking, empty otherwise. Used to correlate stereo camera frames with driver actions.
-
 ## Roadmap
 
 1. ✅ Stereo cam streaming (RTSP 1280x400@15fps)
-2. ✅ Brake servo remote control (Flask + progressive braking loop)
-3. ✅ Training data logging pipeline (10Hz CSV)
-4. 🔄 Stereo camera calibration
-5. ⬜ Reboot to activate IMU + GPS + Encoder + VESC overlays
-6. ⬜ Real-time depth map
-7. ⬜ Manual driving with data recording (cam + sensors + commands)
-8. ⬜ Training driving model
-9. ⬜ Autonomous driving (single Pi)
-10. ⬜ Second redundant Pi with failover
+2. ✅ Brake servo remote control (Flask :5000 + master switch ON/OFF)
+3. ✅ IMU + GPS + Encoder + VESC — all connected and working
+4. ✅ Training data logging (10Hz CSV + stereo H264 video, synchronized)
+5. ✅ Stereo camera calibration (RMS 1.27, baseline 199.5mm)
+6. ✅ Depth map from stereo (StereoSGBM, 7.8% error — improving)
+7. ✅ Shadow Mode — first rides recorded, driving patterns extracted
+8. ✅ Training pipeline (frame extractor, behavioral cloning, shadow analyzer)
+9. ✅ Follow-me module (cone detection, safety envelope, state machine — testing)
+10. ✅ Flash script for new bikes (`flash_asmile.sh`)
+11. 🔄 Stereo calibration improvement (target < 2% depth error at 2560x800)
+12. 🔄 Follow-me hardware test (buzzer, --dry-run, cone tuning)
+13. ⬜ 50h shadow mode data collection (autoresearch + sim-to-real trigger)
+14. ⬜ Behavioral cloning model training (Karpathy autoresearch overnight)
+15. ⬜ Autonomous driving (single Pi)
+16. ⬜ Second Asmile bike for parallel data collection
+17. ⬜ Sim-to-real (CARLA/Unity simulator from real ride data)
 
 ## Structure
 
