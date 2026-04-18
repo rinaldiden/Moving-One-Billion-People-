@@ -80,6 +80,11 @@ Development on the Pi is done via SSH through Claude Code. The 27W power supply 
 
 ## Support Asmile
 
+Asmile is an open-source project. Your support helps purchase components, sensors, and keep development going.
+
+[![Support me on Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20me-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/danielerinaldi)
+[![PayPal](https://img.shields.io/badge/PayPal-Donate-003087?logo=paypal&logoColor=white)](https://paypal.me/Rinaldiden1991)
+
 💛 [**Donate on GoFundMe — Help me make Arianna smile**](https://www.gofundme.com/f/aiutami-a-far-sorridere-arianna-costruiamo-insieme-asmile)
 
 ---
