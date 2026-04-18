@@ -4,16 +4,18 @@ An autonomous guidance system for bicycles designed to enable people with disabi
 
 ## Hardware
 
-| Component | Model | Status |
-|-----------|-------|--------|
-| Computer | Raspberry Pi 5 Model B | ✅ Operational |
-| Stereo Camera | Arducam Camarray HAT (2x OV9281 mono) | ✅ Streaming OK |
-| Steering motor | Flipsky 6354 BLDC via VESC (FOC) + Briter SSI 12-bit encoder | ✅ Mounted |
-| Bevel gear | Ratio 1:5 (⚠️ TO BE VERIFIED) | ✅ Mounted |
-| Brake | PDI-6221MG servo on hydraulic disc brake pump | ✅ Mounted + remote control |
-| IMU | MPU6050 — I2C1 (0x68) | ⏳ Needs reboot for I2C overlay |
-| GPS | NEO-M10 — UART3 (/dev/ttyAMA3, 9600 baud) | ⏳ Needs reboot for UART3 overlay |
-| Steering encoder | Briter SSI 12-bit — SPI1 | ⏳ Needs reboot for SPI1 overlay |
+| Component | Model |
+|-----------|-------|
+| Computer | Raspberry Pi 5 Model B |
+| Stereo Camera | Arducam Camarray HAT (2x OV9281 Global Shutter mono, baseline 200mm) |
+| Steering motor | Flipsky 6354 BLDC via VESC (FOC) |
+| Steering encoder | Briter SSI 12-bit absolute (SPI1, via RS-485) |
+| Bevel gear | Ratio 1:5 |
+| Brake | PDI-6221MG servo on hydraulic disc brake pump |
+| IMU | MPU6050 — I2C1 |
+| GPS | NEO-M10 — UART3 (38400 baud) |
+| Safe shutdown | Supercapacitor 10F + Schottky diode + GPIO power sense |
+| Master switch | GPIO toggle ON/OFF (controls brake + logging + follow-me) |
 
 ## Power
 

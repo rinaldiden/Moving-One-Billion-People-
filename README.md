@@ -38,9 +38,18 @@ The project is in its early stages and every form of help matters.
 
 - **Build with us** — open an issue, submit a PR, or just start a conversation
 - **Spread the word** — share the project with anyone who cares about accessible mobility
-- **Support financially** — [Donate on GoFundMe](https://www.gofundme.com/f/aiutami-a-far-sorridere-arianna-costruiamo-insieme-asmile) to help us bring Asmile to Arianna and beyond
+- **Ride and collect data** — mount the kit on your bike, pedal, and contribute training data for autonomous driving
+- **Support financially** — help us buy components, sensors, and keep development going
 
 Every contribution, big or small, brings us closer to giving people the freedom to move.
+
+## Support
+
+[![Support me on Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20me-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/danielerinaldi)
+[![PayPal](https://img.shields.io/badge/PayPal-Donate-003087?logo=paypal&logoColor=white)](https://paypal.me/Rinaldiden1991)
+[![GoFundMe](https://img.shields.io/badge/GoFundMe-Donate-00b964?logo=gofundme&logoColor=white)](https://www.gofundme.com/f/aiutami-a-far-sorridere-arianna-costruiamo-insieme-asmile)
+
+Your support goes directly to components, sensors, Raspberry Pi boards, and everything needed to build open-source autonomous mobility for people who need it most.
 
 ## License
 
