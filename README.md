@@ -9,6 +9,7 @@ Moving One Billion People is a movement to democratize mobility for everyone. We
 | Project | Description | Status |
 |---------|-------------|--------|
 | [**Asmile**](projects/asmile/) | 🚲 Autonomous bicycle guidance system | 🟢 In development |
+| [**Libera il tuo Movimento**](projects/libera-il-tuo-movimento/) | 🔧 Multi-agent AI pipeline: natural language to G-code for 3D-printable frame joints | 🟢 In development |
 
 ## Vision
 
@@ -26,9 +27,10 @@ One step at a time, we'll get there.
 
 ```
 Moving-One-Billion-People/
-├── projects/           # Individual projects
-│   └── asmile/         # Autonomous bicycle guidance
-├── shared/             # Shared libraries across projects
+├── projects/
+│   ├── asmile/                      # Autonomous bicycle guidance
+│   └── libera-il-tuo-movimento/     # AI pipeline: text → G-code joints
+├── shared/                          # Shared libraries across projects
 └── README.md
 ```
 

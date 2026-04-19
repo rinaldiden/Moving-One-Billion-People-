@@ -1,0 +1,12 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      - ./output:/app/output
+      - ./training/data:/app/training/data
+      - ./config:/app/config
+    restart: unless-stopped

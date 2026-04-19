@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Libera il tuo Movimento — Moving One Billion People</title>
+    <meta name="description" content="Descrivi un telaio a parole. 7 agenti AI lo progettano per te. G-code pronto per la tua stampante. Mobilita' accessibile, ovunque.">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+    <!-- HERO -->
+    <header class="hero">
+        <div class="hero-content">
+            <p class="hero-project">Moving One Billion People</p>
+            <h1>Libera il tuo Movimento</h1>
+            <p class="subtitle">
+                Ogni persona merita la liberta' di muoversi.<br>
+                Descrivi il telaio che serve. La pipeline lo progetta.<br>
+                Tu lo stampi. Con una stampante 3D, tubi e le tue mani.
+            </p>
+            <a href="#progetta" class="cta-btn">Progetta un giunto</a>
+        </div>
+        <div class="hero-wave">
+            <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M0,60 C300,100 600,20 900,60 C1050,80 1150,50 1200,50 L1200,120 L0,120 Z" fill="var(--bg)"/>
+            </svg>
+        </div>
+    </header>
+
+    <!-- PERCHE' -->
+    <section class="section" id="perche">
+        <div class="manifesto">
+            <h2>Perche' questo esiste</h2>
+            <p>
+                Un miliardo di persone nel mondo non ha accesso a una mobilita' dignitosa.
+                Non servono fabbriche. Servono stampanti 3D, tubi, e la conoscenza giusta.
+            </p>
+            <p>
+                Questa pipeline trasforma una descrizione a parole in un giunto stampabile &mdash;
+                il pezzo che tiene insieme i tubi di un telaio. Bambu', alluminio, acciaio.
+                Dal fab lab al villaggio, dall'officina di quartiere al garage.
+            </p>
+            <p>
+                Ogni giunto e' pensato per il mondo reale: non il giunto perfetto sulla carta,
+                ma il giunto giusto per quel telaio, quel contesto, quel pilota.
+            </p>
+        </div>
+    </section>
+
+    <!-- COME FUNZIONA -->
+    <section class="section" id="pipeline-section">
+        <h2>Come funziona</h2>
+        <p class="section-desc">
+            7 agenti ragionano come un team di progettazione reale.
+            Ognuno ha un punto di vista diverso &mdash; e i punti di vista contrastano
+            in modo produttivo prima di convergere sul giunto finale.
+        </p>
+        <div class="pipeline-visual">
+            <div class="pipe-node" data-agent="agent1_architect">
+                <div class="pipe-icon">1</div>
+                <div class="pipe-label">Architetto</div>
+                <div class="pipe-desc">Legge le tue parole, pensa in 3D</div>
+            </div>
+            <div class="pipe-connector"></div>
+            <div class="pipe-node" data-agent="agent2_structural">
+                <div class="pipe-icon">2</div>
+                <div class="pipe-label">Strutturista</div>
+                <div class="pipe-desc">Sa cosa si rompe davvero</div>
+            </div>
+            <div class="pipe-connector"></div>
+            <div class="pipe-node" data-agent="agent3_pilot">
+                <div class="pipe-icon">3</div>
+                <div class="pipe-label">Pilota</div>
+                <div class="pipe-desc">Ragiona con il corpo, non con i numeri</div>
+            </div>
+            <div class="pipe-connector"></div>
+            <div class="pipe-node" data-agent="agent4_dimensioner">
+                <div class="pipe-icon">4</div>
+                <div class="pipe-label">Dimensionatore</div>
+                <div class="pipe-desc">Sceglie tubi reali, non ideali</div>
+            </div>
+            <div class="pipe-connector"></div>
+            <div class="pipe-node" data-agent="agent4b_components">
+                <div class="pipe-icon">4B</div>
+                <div class="pipe-label">Geometra</div>
+                <div class="pipe-desc">Mappa ingombri e zone proibite</div>
+            </div>
+            <div class="pipe-connector"></div>
+            <div class="pipe-node" data-agent="agent5_joint_generator">
+                <div class="pipe-icon">5</div>
+                <div class="pipe-label">Generatore</div>
+                <div class="pipe-desc">Crea la forma organica del giunto</div>
+            </div>
+            <div class="pipe-connector"></div>
+            <div class="pipe-node" data-agent="agent6_visual_reviewer">
+                <div class="pipe-icon">6</div>
+                <div class="pipe-label">Revisore</div>
+                <div class="pipe-desc">Controlla estetica e stampabilita'</div>
+            </div>
+            <div class="pipe-connector"></div>
+            <div class="pipe-node" data-agent="agent7_gcode">
+                <div class="pipe-icon">7</div>
+                <div class="pipe-label">G-code</div>
+                <div class="pipe-desc">Traduce tutto in movimenti macchina</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PROGETTA -->
+    <section class="section" id="progetta">
+        <h2>Progetta il tuo giunto</h2>
+        <p class="section-desc">
+            Descrivi cosa ti serve. Come lo spiegheresti a un amico in officina.
+        </p>
+
+        <div class="app-layout">
+            <!-- INPUT -->
+            <div class="app-input">
+                <label for="prompt-input">Cosa stai costruendo?</label>
+                <textarea id="prompt-input" rows="6" placeholder="Nodo del movimento centrale per una cargo bike. Tre tubi in entrata: orizzontale 32mm in bambu', carro posteriore 28mm chainstay in alluminio, piantone sella 31.6mm. Giunti in PETG-CF. Deve essere montabile con chiavi normali, senza attrezzi speciali."></textarea>
+                <div class="input-hints">
+                    <span>Parla come in officina. Piu' contesto dai, meglio ragionano gli agenti.</span>
+                </div>
+                <button id="run-btn" class="cta-btn">Lancia la pipeline</button>
+                <div id="status-bar" class="status-bar hidden"></div>
+            </div>
+
+            <!-- OUTPUT -->
+            <div class="app-output">
+                <div class="output-panel" id="pipeline-log">
+                    <h3>Gli agenti al lavoro</h3>
+                    <div id="log-content" class="log-content">
+                        <p class="placeholder-text">Qui vedrai gli agenti ragionare, uno dopo l'altro...</p>
+                    </div>
+                </div>
+
+                <div class="output-panel" id="gcode-panel">
+                    <h3>Il tuo giunto</h3>
+                    <div class="viewer-toolbar">
+                        <button id="download-gcode" class="btn-secondary" disabled>Scarica G-code</button>
+                        <span id="gcode-stats" class="stats-text"></span>
+                    </div>
+                    <canvas id="gcode-canvas" width="600" height="400"></canvas>
+                    <p class="viewer-hint">Trascina per ruotare. Scroll per zoom. Colori = altezza layer.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TRAINING -->
+    <section class="section" id="training-section">
+        <h2>Il dataset cresce con te</h2>
+        <p class="section-desc">
+            Ogni giunto che stampi e verifichi diventa un esempio per la pipeline.
+            Piu' giunti reali entrano nel training, piu' gli agenti imparano
+            cos'e' un buon giunto &mdash; non dalla teoria, dalla strada.
+        </p>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="stat-pairs">0</div>
+                <div class="stat-label">Coppie 3D + G-code</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-stl">0</div>
+                <div class="stat-label">Modelli 3D</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-gcode">0</div>
+                <div class="stat-label">G-code verificati</div>
+            </div>
+        </div>
+        <p class="training-cta">
+            Hai giunti gia' stampati? Metti gli STL in <code>training/data/joints_3d/</code>
+            e i G-code in <code>training/data/joints_gcode/</code>.
+            La pipeline impara dai tuoi pezzi reali.
+        </p>
+    </section>
+
+    <!-- CONTRIBUISCI -->
+    <section class="section" id="contribuisci">
+        <h2>Costruisci con noi</h2>
+        <div class="contribute-grid">
+            <div class="contribute-card">
+                <h3>Stampa e testa</h3>
+                <p>Genera un giunto, stampalo, montalo. Se funziona o se si rompe, e' un dato prezioso.</p>
+            </div>
+            <div class="contribute-card">
+                <h3>Migliora la pipeline</h3>
+                <p>Ogni agente puo' essere affinato. Apri una issue, proponi un prompt migliore, manda un PR.</p>
+            </div>
+            <div class="contribute-card">
+                <h3>Porta il progetto nel tuo territorio</h3>
+                <p>In un fab lab, una scuola, un'officina sociale. Ovunque servano veicoli accessibili.</p>
+            </div>
+            <div class="contribute-card">
+                <h3>Sostieni</h3>
+                <p>Ogni contributo va in componenti, sensori, filamento. Niente stipendi, solo pezzi che diventano mobilita'.</p>
+                <div class="support-links">
+                    <a href="https://ko-fi.com/danielerinaldi">Ko-fi</a>
+                    <a href="https://paypal.me/Rinaldiden1991">PayPal</a>
+                    <a href="https://www.gofundme.com/f/aiutami-a-far-sorridere-arianna-costruiamo-insieme-asmile">GoFundMe</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p class="footer-motto">
+            Ogni progetto nasce da un bisogno reale.<br>
+            Asmile e' nato per Arianna, e da li' per tutte le persone
+            che meritano la liberta' di muoversi.
+        </p>
+        <p class="footer-links">
+            <a href="https://github.com/rinaldiden/Moving-One-Billion-People-">GitHub</a>
+            <span class="footer-sep">&middot;</span>
+            Hardware: CERN-OHL-S v2
+            <span class="footer-sep">&middot;</span>
+            Software: GPL-3.0
+        </p>
+        <p class="footer-sign">Un passo alla volta, ci arriviamo.</p>
+    </footer>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/pipeline.js"></script>
+    <script src="/js/gcode-viewer.js"></script>
+</body>
+</html>
