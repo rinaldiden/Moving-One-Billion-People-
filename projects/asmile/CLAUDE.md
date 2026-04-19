@@ -63,6 +63,28 @@ pi/logging/training_data/   → training_YYYYMMDD.csv (10Hz continuous)
 
 Training CSV: `timestamp,gps_lat,gps_lon,gps_speed_ms,gps_heading,imu_accel_x,imu_accel_y,imu_accel_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,encoder_pos,evento`
 
+## Camera — critical notes
+
+**IMPORTANT:** Use `rpicam-vid` for video recording, NOT `gst-launch + libcamerasrc`.
+gst-launch produces very dark frames (brightness ~36) while rpicam-vid exposes correctly (~110).
+
+```bash
+# CORRECT — good exposure
+LD_PRELOAD=~/streaming/arducam_fix.so rpicam-vid --width 1280 --height 400 \
+  --framerate 15 --bitrate 500000 --codec h264 --profile baseline \
+  --timeout 0 --nopreview --vflip --hflip -o output.h264
+
+# WRONG — dark frames, broken auto-exposure
+gst-launch-1.0 libcamerasrc ! ... ! openh264enc ! filesink  # DO NOT USE
+```
+
+Camera notes:
+- Cameras mounted upside down → use `--vflip --hflip` (rpicam) or `videoflip method=rotate-180` (gst)
+- LD_PRELOAD of arducam_fix.so is required for Camarray HAT
+- First ~2 seconds of recording are warm-up (exposure stabilizing), skip frame 0-30
+- OV9281 global shutter mono — poor low-light performance, record in daylight
+- Stereo side-by-side: 1280x400 total, left 640x400 | right 640x400
+
 ## Running the brake server
 
 ```bash
