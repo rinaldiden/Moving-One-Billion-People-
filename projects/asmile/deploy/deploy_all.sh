@@ -1,0 +1,77 @@
+#!/bin/bash
+# deploy_all.sh
+# Master script for the Asmile deploy pipeline.
+# Shows the ordered steps required to fully provision a Raspberry Pi 5
+# for the Asmile safety/OTA pipeline.
+#
+# This script is intentionally read-only — it prints instructions rather
+# than running everything automatically, because some steps require human
+# interaction (adding a GitHub deploy key, connecting Tailscale, etc.).
+#
+# Run as: bash deploy_all.sh
+# Target: Raspberry Pi 5 (arm64, Debian Trixie), user asmile2
+
+DEPLOY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+echo "=== Asmile Deploy Pipeline ==="
+echo ""
+echo "Run these steps in order:"
+echo ""
+echo "1. sudo bash ${DEPLOY_DIR}/setup_deploy_key.sh"
+echo "   → Generates ~/.ssh/asmile_data_key and prints the public key."
+echo ""
+echo "2. Add the public key to GitHub → Settings → Deploy keys (write access)"
+echo "   → Repo: Moving-One-Billion-People- → Settings → Deploy keys → Add deploy key"
+echo "   → Paste the public key, tick 'Allow write access', click Add key."
+echo ""
+echo "3. sudo bash ${DEPLOY_DIR}/install_cosign.sh"
+echo "   → Downloads the latest cosign binary for linux/arm64."
+echo ""
+echo "4. Copy cosign.pub to USB, then run: bash ${DEPLOY_DIR}/import_cosign_key.sh"
+echo "   → Imports the cosign public key from /media/usb/cosign.pub"
+echo "   → Saves to /home/asmile2/asmile/keys/cosign.pub"
+echo ""
+echo "5. sudo bash ${DEPLOY_DIR}/install_tailscale.sh"
+echo "   → Installs Tailscale (does NOT auto-connect)."
+echo ""
+echo "6. sudo tailscale up"
+echo "   → Open the printed auth URL in a browser to connect this device."
+echo ""
+echo "7. sudo bash ${DEPLOY_DIR}/rauc/setup_rauc.sh"
+echo "   → Installs RAUC, copies system.conf, creates placeholder keyring cert."
+echo "   → Replace /etc/rauc/keyring.pem with your real CA cert before production!"
+echo ""
+echo "8. Copy .env.example to /home/asmile2/asmile/.env and fill in tokens:"
+echo "   cp ${DEPLOY_DIR}/.env.example /home/asmile2/asmile/.env"
+echo "   chmod 600 /home/asmile2/asmile/.env"
+echo "   nano /home/asmile2/asmile/.env"
+echo ""
+echo "9. Install and enable the systemd services:"
+echo "   sudo cp ${DEPLOY_DIR}/asmile-ota.service  /etc/systemd/system/"
+echo "   sudo cp ${DEPLOY_DIR}/asmile-main.service /etc/systemd/system/"
+echo "   sudo systemctl daemon-reload"
+echo "   sudo systemctl enable asmile-ota.service"
+echo "   sudo systemctl enable asmile-main.service"
+echo ""
+echo "10. Reboot to verify the full pipeline starts correctly:"
+echo "    sudo reboot"
+echo "    # After reboot, check:"
+echo "    sudo systemctl status asmile-ota.service"
+echo "    sudo systemctl status asmile-main.service"
+echo "    sudo journalctl -u asmile-ota -n 50"
+echo ""
+echo "================================================================"
+echo "  Optional: test individual components"
+echo ""
+echo "  Verify a release package:"
+echo "    bash ${DEPLOY_DIR}/verify_release.sh package.tar.gz package.sig"
+echo ""
+echo "  Send a test notification:"
+echo "    bash ${DEPLOY_DIR}/notify.sh 'Hello from Asmile Pi 5!'"
+echo ""
+echo "  Validate a data file:"
+echo "    python3 ${DEPLOY_DIR}/validate_log.py /path/to/session.csv"
+echo ""
+echo "  Push a session:"
+echo "    bash ${DEPLOY_DIR}/push_session.sh /path/to/session_dir/"
+echo "================================================================"

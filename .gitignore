@@ -51,3 +51,7 @@ output/
 
 # Training data (local)
 training/data/
+
+# Asmile deploy pipeline
+keys/
+/tmp/asmile_ota/

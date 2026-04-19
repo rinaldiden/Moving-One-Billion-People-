@@ -1,0 +1,29 @@
+[Unit]
+Description=Asmile Main Application
+Documentation=https://github.com/Moving-One-Billion-People/asmile
+# Start only after the OTA update check has completed.
+After=asmile-ota.service network-online.target
+Wants=network-online.target
+# If the OTA unit exists and fails hard (shouldn't happen), still start.
+# PartOf would prevent that, so we use After/Wants only.
+
+[Service]
+Type=simple
+User=asmile2
+WorkingDirectory=/home/asmile2/wip/Moving-One-Billion-People-
+# TODO: Replace the ExecStart line with the actual application entry point.
+# Example for a Python application:
+#   ExecStart=/usr/bin/python3 /home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/main.py
+# Example for a compiled binary:
+#   ExecStart=/home/asmile2/asmile/bin/asmile
+ExecStart=/bin/echo "Asmile main service placeholder — replace ExecStart with the real command"
+Restart=on-failure
+RestartSec=5s
+# Environment file with application-level config (not the same as notify .env)
+# EnvironmentFile=/home/asmile2/asmile/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=asmile-main
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,29 @@
+[Unit]
+Description=Asmile OTA Update Check
+Documentation=https://github.com/Moving-One-Billion-People/asmile
+# Run after the network is up and DNS is available.
+After=network-online.target
+Wants=network-online.target
+# Must complete before the main application starts.
+Before=asmile-main.service
+
+[Service]
+Type=oneshot
+# Run as root so RAUC can install to block devices.
+User=root
+ExecStart=/bin/bash /home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/deploy/ota_update.sh
+# Give the update check up to 10 minutes before timing out.
+TimeoutStartSec=600
+# Never restart — it's a oneshot run-once-at-boot check.
+Restart=no
+# Don't fail the boot if OTA fails (ota_update.sh exits 0 on all errors,
+# but belt-and-suspenders: we also set RemainAfterExit=yes so systemd
+# considers this unit "done" once ExecStart returns).
+RemainAfterExit=yes
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=asmile-ota
+
+[Install]
+WantedBy=multi-user.target
