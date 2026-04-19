@@ -163,21 +163,24 @@ def read_encoder():
 # VIDEO RECORDER
 # ═══════════════════════════════════════════════════════════
 def start_video(output_path):
+    """Record video using rpicam-vid (correct auto-exposure, unlike gst-launch)."""
     env = os.environ.copy()
     if os.path.isfile(ARDUCAM_FIX):
         env["LD_PRELOAD"] = ARDUCAM_FIX
 
     cmd = [
-        "/usr/bin/gst-launch-1.0", "-e",
-        "libcamerasrc",
-        "!", f"video/x-raw,width={WIDTH},height={HEIGHT},framerate={FPS}/1",
-        "!", "videoflip", "method=rotate-180",
-        "!", "videoconvert",
-        "!", "video/x-raw,format=I420",
-        "!", "openh264enc", f"bitrate={BITRATE}",
-        "!", "video/x-h264,profile=baseline",
-        "!", "h264parse",
-        "!", "filesink", f"location={output_path}",
+        "rpicam-vid",
+        "--width", str(WIDTH),
+        "--height", str(HEIGHT),
+        "--framerate", str(FPS),
+        "--bitrate", str(BITRATE),
+        "--codec", "h264",
+        "--profile", "baseline",
+        "--timeout", "0",       # unlimited recording
+        "--nopreview",
+        "--vflip",              # cameras mounted upside down
+        "--hflip",              # 180° rotation = vflip + hflip
+        "-o", output_path,
     ]
 
     proc = subprocess.Popen(cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
