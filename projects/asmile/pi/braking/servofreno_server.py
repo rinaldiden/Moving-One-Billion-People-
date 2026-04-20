@@ -310,13 +310,24 @@ def brake_loop():
         braking = True
         brake_event = "FRENATA"
 
-    angle = MEDIUM_TRAVEL
+    SNAP_ANGLE = 85       # fast phase: grab the disc
+    PROGRESSIVE_STEP = 1  # degrees per step in progressive phase
+    PROGRESSIVE_DELAY = 0.05  # 50ms between steps
 
-    print(f"[BRAKE] Start — FULL BRAKE {angle}°")
-    log_servo("INIZIO_FRENATA", 0, 0, angle)
+    print(f"[BRAKE] Start — snap to {SNAP_ANGLE}° then progressive to {MEDIUM_TRAVEL}°")
+    log_servo("INIZIO_FRENATA", 0, 0, SNAP_ANGLE)
 
     try:
-        servo.write(angle)
+        # Phase 1: fast snap to grab the disc
+        servo.write(SNAP_ANGLE)
+        time.sleep(0.1)
+
+        # Phase 2: progressive from SNAP to MEDIUM_TRAVEL
+        angle = SNAP_ANGLE
+        while angle < MEDIUM_TRAVEL and braking:
+            angle = min(angle + PROGRESSIVE_STEP, MEDIUM_TRAVEL)
+            servo.write(angle)
+            time.sleep(PROGRESSIVE_DELAY)
 
         while braking:
             imu = read_imu(i2c_bus)
