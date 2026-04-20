@@ -36,7 +36,7 @@ SERVO_FREQ = 330
 PULSE_MIN_US = 500
 PULSE_MAX_US = 2500
 PERIOD_US = 1_000_000 / SERVO_FREQ
-BRAKE_ANGLE = 88       # full brake when OFF
+BRAKE_ANGLE = 105      # full brake when OFF
 RELEASE_ANGLE = 0      # released when ON
 
 

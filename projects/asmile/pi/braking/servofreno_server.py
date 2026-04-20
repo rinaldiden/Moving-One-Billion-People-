@@ -44,7 +44,7 @@ PULSE_MAX_US = 2500
 PERIOD_US = 1_000_000 / SERVO_FREQ  # ~3030us
 
 CENTER = 0              # release angle
-MEDIUM_TRAVEL = 88      # max braking angle
+MEDIUM_TRAVEL = 105     # max braking angle
 
 # ═══════════════════════════════════════════════════════════
 # IMU CONFIG — from imu_mpu6050.py (exact values)
