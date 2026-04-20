@@ -105,10 +105,13 @@ class MasterSwitch:
 
         # Stop follow-me if running
         subprocess.run(["pkill", "-f", "follow_me/main.py"], capture_output=True)
-        # Stop training recorder and video
+        # Stop training recorder and ALL video processes
         subprocess.run(["pkill", "-9", "-f", "training_recorder.py"], capture_output=True)
         subprocess.run(["killall", "-9", "gst-launch-1.0"], capture_output=True)
-        time.sleep(0.5)
+        subprocess.run(["killall", "-9", "rpicam-vid"], capture_output=True)
+        time.sleep(1.0)
+        # Double-check camera is released
+        subprocess.run(["fuser", "-k", "/dev/video0"], capture_output=True)
         print("[SWITCH] services stopped")
 
         # Stop servofreno (releases GPIO 12)
