@@ -325,19 +325,50 @@ def api_fill():
     if x < 0 or x >= w or y < 0 or y >= h:
         return send_file(io.BytesIO(mask.tobytes()), mimetype="application/octet-stream")
 
-    # Flood fill on the frame (use edges to guide fill)
+    # Load frame
     frame = cv2.imread(get_frame_path(idx))
-    left = frame[:, :frame.shape[1] // 2]
-    gray = cv2.cvtColor(left, cv2.COLOR_BGR2GRAY) if len(left.shape) == 3 else left
+    if frame.shape[1] > w:
+        frame = frame[:, :w]
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if len(frame.shape) == 3 else frame
 
-    # Create a fill mask using OpenCV floodFill
-    flood_mask = np.zeros((h + 2, w + 2), dtype=np.uint8)
-    _, _, flood_mask, _ = cv2.floodFill(
-        gray.copy(), flood_mask, (x, y),
-        newVal=255, loDiff=(15,), upDiff=(15,),
-        flags=cv2.FLOODFILL_MASK_ONLY | (255 << 8)
-    )
-    filled = flood_mask[1:-1, 1:-1] == 255
+    # Use Watershed segmentation — detects edges precisely including
+    # perspective lines like road/wall boundaries
+
+    # Strong edge detection
+    blurred = cv2.GaussianBlur(gray, (3, 3), 0)
+
+    # Gradient magnitude (catches texture changes like porfido→wall)
+    grad_x = cv2.Sobel(blurred, cv2.CV_64F, 1, 0, ksize=3)
+    grad_y = cv2.Sobel(blurred, cv2.CV_64F, 0, 1, ksize=3)
+    gradient = np.sqrt(grad_x**2 + grad_y**2).astype(np.uint8)
+
+    # Markers from local minima (regions between edges)
+    _, thresh = cv2.threshold(gradient, 15, 255, cv2.THRESH_BINARY)
+    # Invert: regions = white, edges = black
+    regions = cv2.bitwise_not(thresh)
+    # Label connected components as markers
+    n_labels, markers = cv2.connectedComponents(regions)
+    markers = markers + 1  # background = 1, not 0
+    markers[thresh == 255] = 0  # edge pixels = unknown (0)
+
+    # Watershed
+    color_frame = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+    cv2.watershed(color_frame, markers)
+
+    # Find which region the user clicked on
+    clicked_region = markers[y, x]
+    if clicked_region <= 0:
+        # Clicked on an edge — find nearest region
+        for dy in range(-5, 6):
+            for dx in range(-5, 6):
+                ny, nx = y + dy, x + dx
+                if 0 <= ny < h and 0 <= nx < w and markers[ny, nx] > 0:
+                    clicked_region = markers[ny, nx]
+                    break
+            if clicked_region > 0:
+                break
+
+    filled = markers == clicked_region
     mask[filled] = cat_id
 
     # Save to state
