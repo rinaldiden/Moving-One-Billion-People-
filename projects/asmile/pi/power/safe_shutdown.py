@@ -47,6 +47,30 @@ DEBOUNCE_MS = 500      # ignore glitches shorter than this
 CHECK_INTERVAL = 0.2   # seconds between checks
 
 
+def fast_shutdown():
+    """Kill all Asmile services first, then shutdown.
+    With 2.2F supercap we have ~1.3s — every ms counts."""
+    print("[safe_shutdown] Fast shutdown — killing services...")
+
+    # Kill heavy processes first (video, recorder, flask)
+    kills = [
+        ["killall", "-9", "gst-launch-1.0"],
+        ["pkill", "-9", "-f", "training_recorder.py"],
+        ["pkill", "-9", "-f", "follow_me/main.py"],
+        ["systemctl", "stop", "servofreno.service"],
+        ["systemctl", "stop", "master_switch.service"],
+        ["systemctl", "stop", "encoder-ssi.service"],
+    ]
+    for cmd in kills:
+        subprocess.run(cmd, capture_output=True, timeout=1)
+
+    # Sync filesystem
+    subprocess.run(["sync"], timeout=1)
+
+    print("[safe_shutdown] Services killed. Shutting down NOW.")
+    subprocess.run(["shutdown", "-h", "now"])
+
+
 def main():
     h = lgpio.gpiochip_open(GPIO_CHIP)
     lgpio.gpio_claim_input(h, POWER_SENSE_PIN, lgpio.SET_PULL_DOWN)
@@ -76,8 +100,8 @@ def main():
                 if low_since is None:
                     low_since = time.monotonic()
                 elif (time.monotonic() - low_since) * 1000 >= DEBOUNCE_MS:
-                    print("[safe_shutdown] Power loss detected! Shutting down...")
-                    subprocess.run(["sudo", "shutdown", "-h", "now"])
+                    print("[safe_shutdown] Power loss detected!")
+                    fast_shutdown()
                     sys.exit(0)
             else:
                 low_since = None
