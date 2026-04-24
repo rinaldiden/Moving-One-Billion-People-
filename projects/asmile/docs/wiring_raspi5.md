@@ -13,6 +13,7 @@ Full setup for the Asmile project: steering, braking, GPS, IMU.
 | GPS NEO-M10 | UART3 | /dev/ttyAMA3 |
 | MPU6050 IMU | I2C1 | 0x68 |
 | Brake servo | Hardware PWM0 | GPIO 12 |
+| Buzzer KY-006 (passive) | PWM via Level Shifter #2 ch4 | GPIO 5 |
 | Arducam Camarray HAT | CSI + I2C1 | Camera port |
 
 ## Complete Pin Map
@@ -30,6 +31,7 @@ Full setup for the Asmile project: steering, braking, GPS, IMU.
 | GPIO 19 | Pin 35 | SSI Encoder | SPI1 MISO ← DATA (via RS-485 #2) | IN |
 | GPIO 21 | Pin 40 | SSI Encoder | SPI1 SCLK → CLOCK (via RS-485 #1) | OUT |
 | GPIO 26 | Pin 37 | Power sense | Battery detect (via Level Shifter #2 ch3) | IN |
+| GPIO 5 | Pin 29 | Buzzer KY-006 | PWM signal (via Level Shifter #2 ch4) | OUT |
 
 ## 40-Pin Header — Final View (from top of Camarray HAT)
 
@@ -119,6 +121,7 @@ Level Shifter (bidirectional):
   LV1 ← GPIO 21 (Pin 40) SPI1_SCLK →  HV1 → DI of RS-485 #1
   LV2 ← GPIO 19 (Pin 35) SPI1_MISO ←  HV2 ← RO of RS-485 #2
   LV3 ← GPIO 26 (Pin 37) power sense ← HV3 ← jumper to HV (same 5V)
+  LV4 ← GPIO 5  (Pin 29) buzzer PWM  →  HV4 → Buzzer KY-006 signal (S)
 ```
 
 > **Wiring note:** HV and HV3 are jumpered together on the board (same 5V from
@@ -209,6 +212,18 @@ Pololu D24V55F6:
 ```
 
 > **IMPORTANT:** GND must be common between Raspi, servo, level shifter, and Pololu F6.
+
+### 7. Buzzer KY-006 (passive) — via Level Shifter #2 ch4
+
+```
+Raspi GPIO 5  (Pin 29) → LV4 of Level Shifter #2
+                          HV4 → Buzzer S (signal)
+Raspi GND     (Pin 30)   ─── Buzzer - (GND)
+```
+
+> Buzzer needs 5V signal to produce audible sound. 3.3V GPIO is too weak.
+> Level Shifter #2 converts 3.3V PWM → 5V PWM on channel 4.
+> Middle pin (+/VCC) of KY-006 is NOT connected on the PCB — ignore it.
 
 ## Power Distribution
 
