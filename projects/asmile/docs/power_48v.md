@@ -131,10 +131,10 @@ of power after the battery is disconnected.
 |---|---|
 | Part | Abracon ADCM-S05R5SA106RB |
 | Digikey | 535-ADCM-S05R5SA106RB-ND |
-| Capacitance | **10F** |
+| Capacitance | **2.2F** |
 | Voltage | 5.5V (max) |
 | Mount | Through-hole |
-| Holdup time | ~5.7s at 3.5A (from 5V down to 3V cutoff) |
+| Holdup time | ~1.8s at 1.2A (from 4.7V down to 3.8V cutoff) |
 
 ### How it works
 
@@ -240,13 +240,25 @@ This is what triggers the safe shutdown script.
         │ (cathode)                    │
         │                              │
         ├──── Supercap (+) ────────────┤── Supercap (−)
-        │     10F / 5.5V              │
+        │     2.2F / 5.5V             │
         │                              │
         ├──── Raspi Pin 2 (5V) ────────┤── Raspi Pin 6 (GND)
         ├──── Raspi Pin 4 (5V)        │
         │                              │
+        ├──── Resistenza 22Ω ──→ Drain │
+        │     (bleed discharge)  IRL540N│
+        │                        Source─┤
+        │                              │
+        │     Gate ──┬── pull-up 10kΩ ─┤ (a Supercap +)
+        │            └── GPIO 6 Pin 31 │ (LOW=Pi on, MOSFET off)
+        │                              │
         └──────────────────────────────┘
               all GNDs connected
+
+Auto-discharge after shutdown:
+  Pi ON:  GPIO 6 = LOW → Gate LOW → MOSFET off → no drain
+  Pi OFF: GPIO floats → pull-up pulls Gate to supercap V → MOSFET on → discharge via 22Ω
+  Discharge time: τ = 22 × 2.2 = ~48s from 4.7V to ~0V
 ```
 
 ### Software

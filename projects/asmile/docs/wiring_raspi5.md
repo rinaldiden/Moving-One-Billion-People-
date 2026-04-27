@@ -14,6 +14,7 @@ Full setup for the Asmile project: steering, braking, GPS, IMU.
 | MPU6050 IMU | I2C1 | 0x68 |
 | Brake servo | Hardware PWM0 | GPIO 12 |
 | Buzzer KY-006 (passive) | PWM via Level Shifter #2 ch4 | GPIO 5 |
+| Supercap discharge MOSFET | GPIO direct (IRL540N gate) | GPIO 6 |
 | Arducam Camarray HAT | CSI + I2C1 | Camera port |
 
 ## Complete Pin Map
@@ -32,6 +33,7 @@ Full setup for the Asmile project: steering, braking, GPS, IMU.
 | GPIO 21 | Pin 40 | SSI Encoder | SPI1 SCLK → CLOCK (via RS-485 #1) | OUT |
 | GPIO 26 | Pin 37 | Power sense | Battery detect (via Level Shifter #2 ch3) | IN |
 | GPIO 5 | Pin 29 | Buzzer KY-006 | PWM signal (via Level Shifter #2 ch4) | OUT |
+| GPIO 6 | Pin 31 | Supercap discharge | MOSFET gate control (LOW=off, float=discharge) | OUT |
 
 ## 40-Pin Header — Final View (from top of Camarray HAT)
 
