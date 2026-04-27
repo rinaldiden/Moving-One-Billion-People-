@@ -26,7 +26,7 @@
 - Longitudinal deceleration = -ax
 
 ### GPS (NEO-M10)
-- UART3 /dev/ttyAMA3, 9600 baud
+- UART3 /dev/ttyAMA3, 38400 baud
 - NMEA parsing: GGA for position, RMC for speed
 - Speed conversion: knots × 1.852 / 3.6 = m/s
 
