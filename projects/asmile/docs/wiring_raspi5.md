@@ -55,8 +55,8 @@ Full setup for the Asmile project: steering, braking, GPS, IMU.
     ║  (free)              [23] [24]  GPIO 8  GPS TX            ║
     ║  GND  MPU6050        [25] [26]  (free)                   ║
     ║  (free)              [27] [28]  (free)                    ║
-    ║  (free)              [29] [30]  GND  RS485+Encoder        ║
-    ║  (free)              [31] [32]  GPIO 12 SERVO PWM         ║
+    ║  GPIO 5  BUZZER PWM   [29] [30]  GND  RS485+Encoder        ║
+    ║  GPIO 6  MOSFET GATE [31] [32]  GPIO 12 SERVO PWM         ║
     ║  (free)              [33] [34]  GND  Servo                ║
     ║  GPIO 19 SPI1_MISO   [35] [36]  (free)                    ║
     ║  (free)              [37] [38]  GPIO 20 (SPI1_MOSI free)  ║
@@ -188,7 +188,7 @@ Raspi GND     (Pin 25)     ─── MPU6050 GND
 
 > I2C1 is shared between Camarray HAT and MPU6050 — different addresses, no conflict.
 
-### 6. Brake Servo PDI-6221MG — PWM + Level Shifter + External 6V Power
+### 6. Brake Servo Miuzei M S69 (45 kg.cm) — PWM + Level Shifter + External 6V Power
 
 **Level Shifter #1 — 3.3V ↔ 6V (between Pi GPIO and servo signal)**
 
@@ -227,6 +227,33 @@ Raspi GND     (Pin 30)   ─── Buzzer - (GND)
 > Level Shifter #2 converts 3.3V PWM → 5V PWM on channel 4.
 > Middle pin (+/VCC) of KY-006 is NOT connected on the PCB — ignore it.
 
+### 8. Supercap 2.2F Auto-Discharge — IRL540N MOSFET
+
+```
+Supercap + ──→ Resistenza 22Ω ──→ Drain IRL540N
+                                   Source ──→ GND
+                                   Gate ──┬── pull-up 10kΩ ──→ Supercap +
+                                          └── GPIO 6 (Pin 31)
+```
+
+> Pi ON: GPIO 6 held LOW → MOSFET off → zero drain on supercap.
+> Pi OFF: GPIO floats → pull-up pulls gate HIGH from supercap → MOSFET on → discharge via 22Ω.
+> Discharge time: ~48 seconds (τ = 22 × 2.2). After discharge, supercap ready for next power cycle.
+> IRL540N is logic-level: 5V gate is enough to fully saturate.
+
+### 9. INA219 Current Sensor (when available) — I2C1
+
+```
+Pololu F6 VOUT (6V) ──→ INA219 VIN+ ──→ INA219 VIN- ──→ Servo +V (red)
+INA219 SDA ──→ Raspi GPIO 2 (Pin 3)   ← same I2C bus as MPU6050
+INA219 SCL ──→ Raspi GPIO 3 (Pin 5)
+INA219 VCC ──→ Raspi 3.3V (Pin 1)
+INA219 GND ──→ GND
+```
+
+> Address 0x40 (MPU6050 is 0x68, no conflict). Measures servo current to detect:
+> arrived (current drops), moving (current high), stalled (current stays high → cut PWM).
+
 ## Power Distribution
 
 ```
@@ -237,7 +264,7 @@ Raspi GND     (Pin 30)   ─── Buzzer - (GND)
     │                                  ├── Pin 1 (3.3V) → GPS + MPU6050
     │                                  └── Pin 17 (3.3V) → Level Shifter LV
     │
-    ├──→ Pololu D24V55F6 ──→ 6V ──→ Servo PDI-6221MG
+    ├──→ Pololu D24V55F6 ──→ 6V ──→ Servo Miuzei M S69 (45 kg.cm)
     │
     └──→ VESC (direct 48V) ──→ Flipsky 6354 BLDC steering motor
 ```
