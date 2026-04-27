@@ -6,8 +6,8 @@ All GPIO assignments for the Asmile project on Raspberry Pi 5 (gpiochip4).
 
 | GPIO | Header Pin | Device | Function |
 |------|------------|--------|----------|
-| GPIO 2 | Pin 3 | MPU6050 + Camarray | I2C1 SDA (shared bus) |
-| GPIO 3 | Pin 5 | MPU6050 + Camarray | I2C1 SCL (shared bus) |
+| GPIO 2 | Pin 3 | MPU6050 + INA219 + Camarray | I2C1 SDA (shared bus) |
+| GPIO 3 | Pin 5 | MPU6050 + INA219 + Camarray | I2C1 SCL (shared bus) |
 | GPIO 8 | Pin 24 | GPS NEO-M10 | UART3 TX |
 | GPIO 9 | Pin 21 | GPS NEO-M10 | UART3 RX |
 | GPIO 12 | Pin 32 | Brake servo PDI-6221MG | PWM0 signal (via level shifter) |

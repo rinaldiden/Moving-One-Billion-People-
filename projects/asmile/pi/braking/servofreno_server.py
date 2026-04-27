@@ -66,6 +66,58 @@ GPS_PORT = "/dev/ttyAMA3"
 GPS_BAUD = 38400
 
 # ═══════════════════════════════════════════════════════════
+# INA219 — servo brake current sensor
+# ═══════════════════════════════════════════════════════════
+INA219_ADDR = 0x40
+INA219_REG_CONFIG = 0x00
+INA219_REG_SHUNT_VOLTAGE = 0x01
+INA219_REG_BUS_VOLTAGE = 0x02
+INA219_REG_CURRENT = 0x04
+INA219_REG_CALIBRATION = 0x05
+
+INA219_SHUNT_OHMS = 0.1
+INA219_CURRENT_LSB = 0.0001  # 0.1 mA per bit
+INA219_CAL_VALUE = int(0.04096 / (INA219_CURRENT_LSB * INA219_SHUNT_OHMS))
+
+
+def _ina_write(bus, reg, value):
+    import struct as _st
+    data = _st.pack(">H", value & 0xFFFF)
+    bus.write_i2c_block_data(INA219_ADDR, reg, list(data))
+
+
+def _ina_read_signed(bus, reg):
+    import struct as _st
+    data = bus.read_i2c_block_data(INA219_ADDR, reg, 2)
+    return _st.unpack(">h", bytes(data))[0]
+
+
+def _ina_read_unsigned(bus, reg):
+    import struct as _st
+    data = bus.read_i2c_block_data(INA219_ADDR, reg, 2)
+    return _st.unpack(">H", bytes(data))[0]
+
+
+def init_ina219(bus):
+    config = (0b1 << 13 | 0b11 << 11 | 0b0011 << 7 | 0b0011 << 3 | 0b111)
+    _ina_write(bus, INA219_REG_CONFIG, config)
+    time.sleep(0.01)
+    _ina_write(bus, INA219_REG_CALIBRATION, INA219_CAL_VALUE)
+    time.sleep(0.01)
+
+
+INA_ZERO = {"voltage_v": 0, "current_a": 0, "power_w": 0}
+
+
+def read_ina219(bus) -> dict:
+    if bus is None:
+        return INA_ZERO
+    voltage = (_ina_read_unsigned(bus, INA219_REG_BUS_VOLTAGE) >> 3) * 0.004
+    current = _ina_read_signed(bus, INA219_REG_CURRENT) * INA219_CURRENT_LSB
+    return {"voltage_v": voltage, "current_a": current, "power_w": voltage * current}
+
+
+# ═══════════════════════════════════════════════════════════
 # ENCODER — read from daemon shared file
 # ═══════════════════════════════════════════════════════════
 ENCODER_FILE = "/tmp/encoder_position"
@@ -332,10 +384,12 @@ def brake_loop():
         while braking:
             imu = read_imu(i2c_bus)
             gps = gps_reader.get()
+            ina = read_ina219(i2c_bus)
             decel_g = -imu["ax"]
             speed_ms = gps["speed_ms"]
 
-            log_servo("LOOP", speed_ms, decel_g, angle)
+            log_servo("LOOP", speed_ms, decel_g, angle,
+                      f"I={ina['current_a']:.3f}A V={ina['voltage_v']:.2f}V")
             time.sleep(LOOP_INTERVAL)
 
     except Exception as e:
@@ -474,11 +528,17 @@ def stato():
         imu_data = read_imu(i2c_bus) if i2c_bus else {}
     except Exception:
         pass
+    ina_data = {}
+    try:
+        ina_data = read_ina219(i2c_bus) if i2c_bus else {}
+    except Exception:
+        pass
     return jsonify({
         "braking": braking,
         "servo_angle": servo.read() if servo else 0,
         "gps": gps,
         "imu": imu_data,
+        "ina219": ina_data,
         "encoder": read_encoder(),
     })
 
@@ -511,6 +571,18 @@ def main():
         i2c_bus = None
         print(f"[IMU] Not available: {e}")
         print(f"[IMU] (needs reboot to enable I2C — will work without)")
+
+    # INA219 (servo current sensor)
+    try:
+        if i2c_bus is not None:
+            init_ina219(i2c_bus)
+            ina_test = read_ina219(i2c_bus)
+            print(f"[INA219] Servo current sensor on I2C{I2C_BUS} @ 0x{INA219_ADDR:02X}")
+            print(f"[INA219] Test: V={ina_test['voltage_v']:.2f}V I={ina_test['current_a']:.3f}A")
+        else:
+            print("[INA219] Skipped (I2C not available)")
+    except Exception as e:
+        print(f"[INA219] Not available: {e} (will work without)")
 
     # GPS
     gps_reader = GPSReader()

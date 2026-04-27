@@ -30,6 +30,12 @@
 - NMEA parsing: GGA for position, RMC for speed
 - Speed conversion: knots × 1.852 / 3.6 = m/s
 
+### INA219 (servo current sensor)
+- I2C bus 1, address 0x40 (shared bus with MPU6050)
+- Shunt 0.1Ω, monitors brake servo PDI-6221MG current
+- smbus2 library, current_LSB = 0.1mA
+- Inline between 6V supply and servo power pin
+
 ### Encoder (Briter SSI 12-bit)
 - SPI1, daemon writes to /tmp/encoder_position
 - systemd service: encoder-ssi.service
