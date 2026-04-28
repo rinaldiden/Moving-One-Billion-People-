@@ -1,0 +1,12 @@
+# Asmile Fleet ID — unique per bike
+# Deployed to /home/asmile/asmile_id.conf on each Pi
+#
+# ASMILE_ID: sequential number (001, 002, ..., 999999999)
+# ASMILE_NAME: human-readable name for this bike
+# ASMILE_LOCATION: where this bike operates
+# ASMILE_HW_VERSION: hardware revision
+
+ASMILE_ID=001
+ASMILE_NAME=asmile-tirano
+ASMILE_LOCATION=tirano
+ASMILE_HW_VERSION=hw1

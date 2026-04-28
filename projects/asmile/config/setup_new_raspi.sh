@@ -47,6 +47,21 @@ if ! grep -q "alias off=" /home/asmile/.bashrc 2>/dev/null; then
     echo "alias off='sudo shutdown -h now'" >> /home/asmile/.bashrc
 fi
 
+# Fleet ID — prompt for ID if not already set
+if [ ! -f /home/asmile/asmile_id.conf ]; then
+    echo ""
+    read -p "Enter Asmile Fleet ID (e.g. 001): " FLEET_ID
+    read -p "Enter location (e.g. tirano): " FLEET_LOC
+    cat > /home/asmile/asmile_id.conf << IDEOF
+ASMILE_ID=${FLEET_ID:-001}
+ASMILE_NAME=asmile-${FLEET_LOC:-unknown}
+ASMILE_LOCATION=${FLEET_LOC:-unknown}
+ASMILE_HW_VERSION=hw1
+IDEOF
+    chown asmile:asmile /home/asmile/asmile_id.conf
+    echo "  Fleet ID set: ${FLEET_ID:-001} @ ${FLEET_LOC:-unknown}"
+fi
+
 echo ""
 echo "=== Done! Reboot to activate. ==="
 echo "After reboot:"
