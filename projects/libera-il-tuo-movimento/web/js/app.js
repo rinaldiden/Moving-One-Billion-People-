@@ -84,6 +84,13 @@ function handleMessage(msg) {
             loadGcode();
             break;
 
+        case 'pipeline_error':
+            statusBar.textContent = `Pipeline interrotta allo step ${msg.step}. Riprova.`;
+            statusBar.classList.add('error');
+            statusBar.style.borderLeftColor = 'var(--danger)';
+            resetBtn();
+            break;
+
         case 'error':
             statusBar.textContent = msg.message;
             statusBar.classList.add('error');

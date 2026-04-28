@@ -42,9 +42,27 @@ def load_config():
         return yaml.safe_load(f)
 
 
+def _compress_context(context: dict) -> dict:
+    """Taglia il contesto a max 2000 char per campo per evitare timeout."""
+    compressed = {}
+    for key, value in context.items():
+        if isinstance(value, str) and len(value) > 2000:
+            # Tieni il JSON se c'e', altrimenti tronca
+            json_start = value.find("{")
+            json_end = value.rfind("}") + 1
+            if json_start >= 0 and json_end > json_start:
+                compressed[key] = value[json_start:json_end][:2000]
+            else:
+                compressed[key] = value[:2000]
+        else:
+            compressed[key] = value
+    return compressed
+
+
 def call_agent_sync(config, agent_name: str, user_message: str, context: dict = None) -> str:
     system = config["agents"][agent_name]["system_prompt"]
     if context:
+        context = _compress_context(context)
         context_str = "\n\n---CONTESTO PIPELINE---\n" + json.dumps(context, indent=2, ensure_ascii=False)
         full_message = user_message + context_str
     else:
@@ -57,7 +75,7 @@ def call_agent_sync(config, agent_name: str, user_message: str, context: dict = 
         input=prompt,
         capture_output=True,
         text=True,
-        timeout=300,
+        timeout=600,
     )
 
     if result.returncode != 0:
@@ -106,8 +124,12 @@ async def run_pipeline_async(user_input: str, ws: Optional[WebSocket] = None) ->
                 None, call_agent_sync, config, agent_name, user_input, context
             )
         except Exception as e:
-            await send({"type": "agent_error", "agent": agent_name, "error": str(e)})
-            raise
+            error_msg = str(e)
+            if "timed out" in error_msg:
+                error_msg = f"{label} ha superato il tempo massimo (10 min). Riprova con una descrizione piu' breve."
+            await send({"type": "agent_error", "agent": agent_name, "error": error_msg})
+            await send({"type": "pipeline_error", "failed_at": agent_name, "step": i + 1})
+            return pipeline_context
 
         pipeline_context[agent_name] = output
 
