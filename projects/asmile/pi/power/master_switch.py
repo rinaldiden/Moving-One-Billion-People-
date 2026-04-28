@@ -74,21 +74,21 @@ class MasterSwitch:
         subprocess.run(["systemctl", "start", "servofreno.service"])
         print("[SWITCH] servofreno started — brake released")
 
-        # Start training recorder as asmile2 (not root — camera needs user access)
-        recorder = "/home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/pi/logging/training_recorder.py"
+        # Start training recorder as asmile (not root — camera needs user access)
+        recorder = "/home/asmile/wip/Moving-One-Billion-People-/projects/asmile/pi/logging/training_recorder.py"
         subprocess.Popen(
-            ["sudo", "-u", "asmile2",
-             "env", "LD_PRELOAD=/home/asmile2/streaming/arducam_fix.so",
+            ["sudo", "-u", "asmile",
+             "env", "LD_PRELOAD=/home/asmile/streaming/arducam_fix.so",
              "python3", "-u", recorder],
             stdout=open("/tmp/recorder.log", "w"),
             stderr=subprocess.STDOUT)
         print("[SWITCH] training recorder started")
 
         if follow_me:
-            follow_me_main = "/home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/follow_me/main.py"
+            follow_me_main = "/home/asmile/wip/Moving-One-Billion-People-/projects/asmile/follow_me/main.py"
             subprocess.Popen(
-                ["sudo", "-u", "asmile2",
-                 "env", "LD_PRELOAD=/home/asmile2/streaming/arducam_fix.so",
+                ["sudo", "-u", "asmile",
+                 "env", "LD_PRELOAD=/home/asmile/streaming/arducam_fix.so",
                  "python3", "-u", follow_me_main],
                 stdout=open("/tmp/follow_me.log", "w"),
                 stderr=subprocess.STDOUT)

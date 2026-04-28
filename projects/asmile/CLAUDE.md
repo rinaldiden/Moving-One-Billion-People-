@@ -6,11 +6,11 @@
 - **NEVER start safe_shutdown.service** manually — it arms only after GPIO HIGH
 - The user controls all power operations manually
 
-## Raspi "asmile2"
+## Raspi "asmile"
 
-- **SSH**: `asmile2@192.168.1.119` (DHCP, IP may change on hotspot)
+- **SSH**: `asmile@192.168.1.119` (DHCP, IP may change on hotspot)
 - **Password**: `asmile`
-- **Repo**: `/home/asmile2/wip/Moving-One-Billion-People-/`
+- **Repo**: `/home/asmile/wip/Moving-One-Billion-People-/`
 - **OS**: Debian Trixie, Raspberry Pi 5, kernel 6.12
 
 ## Hardware parameters (do not change without testing)

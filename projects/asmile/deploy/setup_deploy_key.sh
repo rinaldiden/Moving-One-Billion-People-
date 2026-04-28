@@ -5,22 +5,22 @@
 # with write access so the Pi can push session data to the data/ branch.
 #
 # Target: Raspberry Pi 5 (arm64, Debian Trixie)
-# User:   asmile2
+# User:   asmile
 # Run as: sudo bash setup_deploy_key.sh
 
 set -euo pipefail
 
-KEY_PATH="/home/asmile2/.ssh/asmile_data_key"
-SSH_CONFIG="/home/asmile2/.ssh/config"
+KEY_PATH="/home/asmile/.ssh/asmile_data_key"
+SSH_CONFIG="/home/asmile/.ssh/config"
 REPO_HOST="github.com"
 
 echo "=== Asmile Deploy Key Setup ==="
 echo ""
 
 # Ensure .ssh directory exists with correct permissions
-mkdir -p /home/asmile2/.ssh
-chmod 700 /home/asmile2/.ssh
-chown asmile2:asmile2 /home/asmile2/.ssh
+mkdir -p /home/asmile/.ssh
+chmod 700 /home/asmile/.ssh
+chown asmile:asmile /home/asmile/.ssh
 
 # Generate the ed25519 key (no passphrase for unattended use)
 if [[ -f "${KEY_PATH}" ]]; then
@@ -30,9 +30,9 @@ else
     echo "[INFO] Generating ed25519 key at ${KEY_PATH} ..."
     ssh-keygen -t ed25519 \
         -f "${KEY_PATH}" \
-        -C "asmile2@pi5-data-push" \
+        -C "asmile@pi5-data-push" \
         -N ""
-    chown asmile2:asmile2 "${KEY_PATH}" "${KEY_PATH}.pub"
+    chown asmile:asmile "${KEY_PATH}" "${KEY_PATH}.pub"
     chmod 600 "${KEY_PATH}"
     chmod 644 "${KEY_PATH}.pub"
     echo "[OK]  Key generated."
@@ -51,7 +51,7 @@ else
     echo "" >> "${SSH_CONFIG}"
     echo "# Asmile data-push deploy key" >> "${SSH_CONFIG}"
     echo "${SSH_BLOCK}" >> "${SSH_CONFIG}"
-    chown asmile2:asmile2 "${SSH_CONFIG}"
+    chown asmile:asmile "${SSH_CONFIG}"
     chmod 600 "${SSH_CONFIG}"
     echo "[OK]  SSH config updated at ${SSH_CONFIG}."
 fi
@@ -68,4 +68,4 @@ echo "  1. Copy the public key above."
 echo "  2. Go to your GitHub repo → Settings → Deploy keys → Add deploy key."
 echo "  3. Paste the key, tick 'Allow write access', save."
 echo ""
-echo "Done. Test with: sudo -u asmile2 ssh -T git@github.com"
+echo "Done. Test with: sudo -u asmile ssh -T git@github.com"

@@ -8,13 +8,13 @@
 #         1 = signature invalid or verification error
 #
 # Log:    /var/log/asmile_verify.log
-# Key:    /home/asmile2/asmile/keys/cosign.pub
+# Key:    /home/asmile/asmile/keys/cosign.pub
 #
 # Target: Raspberry Pi 5 (arm64, Debian Trixie)
 
 set -uo pipefail   # note: no -e so we control exit codes explicitly
 
-COSIGN_PUB="/home/asmile2/asmile/keys/cosign.pub"
+COSIGN_PUB="/home/asmile/asmile/keys/cosign.pub"
 LOG_FILE="/var/log/asmile_verify.log"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 

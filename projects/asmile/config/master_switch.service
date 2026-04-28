@@ -5,7 +5,7 @@ Before=servofreno.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/pi/power/master_switch.py
+ExecStart=/usr/bin/python3 /home/asmile/wip/Moving-One-Billion-People-/projects/asmile/pi/power/master_switch.py
 Restart=on-failure
 RestartSec=5
 StartLimitIntervalSec=60

@@ -2,7 +2,7 @@
 # ═══════════════════════════════════════════════════════════
 # Asmile — Flash completo Raspberry Pi 5
 #
-# Replica l'intera configurazione di asmile2 su un nuovo Pi.
+# Replica l'intera configurazione di asmile su un nuovo Pi.
 # Prerequisiti: Raspberry Pi OS con SSH abilitato, user creato.
 #
 # Uso:

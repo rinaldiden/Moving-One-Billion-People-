@@ -37,8 +37,8 @@ from datetime import datetime
 # ═══════════════════════════════════════════════════════════
 # CONFIG
 # ═══════════════════════════════════════════════════════════
-SESSIONS_DIR = "/home/asmile2/wip/recorder"
-ARDUCAM_FIX = "/home/asmile2/streaming/arducam_fix.so"
+SESSIONS_DIR = "/home/asmile/wip/recorder"
+ARDUCAM_FIX = "/home/asmile/streaming/arducam_fix.so"
 
 # Video
 WIDTH = 1280

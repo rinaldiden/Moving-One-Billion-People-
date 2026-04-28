@@ -4,14 +4,14 @@
 # Used by ota_update.sh and other pipeline scripts to report status.
 #
 # Usage:  notify.sh "<message text>"
-# Config: /home/asmile2/asmile/.env  (TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)
+# Config: /home/asmile/asmile/.env  (TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)
 # Log:    /var/log/asmile_notify.log
 #
 # Never blocks boot — all errors are caught and logged, script always exits 0.
 #
 # Target: Raspberry Pi 5 (arm64, Debian Trixie)
 
-ENV_FILE="/home/asmile2/asmile/.env"
+ENV_FILE="/home/asmile/asmile/.env"
 LOG_FILE="/var/log/asmile_notify.log"
 TELEGRAM_API="https://api.telegram.org"
 CURL_TIMEOUT=5   # seconds

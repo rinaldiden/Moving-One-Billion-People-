@@ -9,7 +9,7 @@
 # interaction (adding a GitHub deploy key, connecting Tailscale, etc.).
 #
 # Run as: bash deploy_all.sh
-# Target: Raspberry Pi 5 (arm64, Debian Trixie), user asmile2
+# Target: Raspberry Pi 5 (arm64, Debian Trixie), user asmile
 
 DEPLOY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -29,7 +29,7 @@ echo "   → Downloads the latest cosign binary for linux/arm64."
 echo ""
 echo "4. Copy cosign.pub to USB, then run: bash ${DEPLOY_DIR}/import_cosign_key.sh"
 echo "   → Imports the cosign public key from /media/usb/cosign.pub"
-echo "   → Saves to /home/asmile2/asmile/keys/cosign.pub"
+echo "   → Saves to /home/asmile/asmile/keys/cosign.pub"
 echo ""
 echo "5. sudo bash ${DEPLOY_DIR}/install_tailscale.sh"
 echo "   → Installs Tailscale (does NOT auto-connect)."
@@ -41,10 +41,10 @@ echo "7. sudo bash ${DEPLOY_DIR}/rauc/setup_rauc.sh"
 echo "   → Installs RAUC, copies system.conf, creates placeholder keyring cert."
 echo "   → Replace /etc/rauc/keyring.pem with your real CA cert before production!"
 echo ""
-echo "8. Copy .env.example to /home/asmile2/asmile/.env and fill in tokens:"
-echo "   cp ${DEPLOY_DIR}/.env.example /home/asmile2/asmile/.env"
-echo "   chmod 600 /home/asmile2/asmile/.env"
-echo "   nano /home/asmile2/asmile/.env"
+echo "8. Copy .env.example to /home/asmile/asmile/.env and fill in tokens:"
+echo "   cp ${DEPLOY_DIR}/.env.example /home/asmile/asmile/.env"
+echo "   chmod 600 /home/asmile/asmile/.env"
+echo "   nano /home/asmile/asmile/.env"
 echo ""
 echo "9. Install and enable the systemd services:"
 echo "   sudo cp ${DEPLOY_DIR}/asmile-ota.service  /etc/systemd/system/"

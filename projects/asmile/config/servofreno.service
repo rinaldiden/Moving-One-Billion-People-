@@ -4,13 +4,13 @@ After=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/pi/braking/servofreno_server.py
+ExecStart=/usr/bin/python3 /home/asmile/wip/Moving-One-Billion-People-/projects/asmile/pi/braking/servofreno_server.py
 Restart=on-failure
 RestartSec=5
 StartLimitIntervalSec=60
 StartLimitBurst=5
 User=root
-WorkingDirectory=/home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/pi/braking
+WorkingDirectory=/home/asmile/wip/Moving-One-Billion-People-/projects/asmile/pi/braking
 
 [Install]
 WantedBy=multi-user.target

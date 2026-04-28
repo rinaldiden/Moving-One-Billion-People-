@@ -11,7 +11,7 @@ Before=asmile-main.service
 Type=oneshot
 # Run as root so RAUC can install to block devices.
 User=root
-ExecStart=/bin/bash /home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/deploy/ota_update.sh
+ExecStart=/bin/bash /home/asmile/wip/Moving-One-Billion-People-/projects/asmile/deploy/ota_update.sh
 # Give the update check up to 10 minutes before timing out.
 TimeoutStartSec=600
 # Never restart — it's a oneshot run-once-at-boot check.
