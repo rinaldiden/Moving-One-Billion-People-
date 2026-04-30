@@ -96,22 +96,32 @@ class DualCamRecorder:
         return proc
 
     def _start_combined_recording(self):
-        """Record both cameras and combine side-by-side using gstreamer."""
-        # Record individual streams
+        """Record both cameras with minimal start delay using threads."""
         left_path = self.session_dir / "video_left.h264"
         right_path = self.session_dir / "video_right.h264"
 
-        print(f"[CAM0] Starting left camera → {left_path}")
-        self._procs["left"] = self._start_camera(0, left_path)
+        # Start both cameras nearly simultaneously using a barrier
+        barrier = threading.Barrier(2, timeout=5)
+        results = {}
 
-        # Small delay to not overwhelm the system
-        time.sleep(0.1)
+        def launch_cam(cam_id, path, name):
+            barrier.wait()  # both threads release at the same instant
+            results[name] = self._start_camera(cam_id, path)
 
-        print(f"[CAM1] Starting right camera → {right_path}")
-        self._procs["right"] = self._start_camera(1, right_path)
+        t0 = threading.Thread(target=launch_cam, args=(0, left_path, "left"))
+        t1 = threading.Thread(target=launch_cam, args=(1, right_path, "right"))
 
+        t0.start()
+        t1.start()
         self._start_time = time.monotonic()
-        print(f"[SYNC] Both cameras started, drift < {time.monotonic() - self._start_time:.3f}s")
+        t0.join()
+        t1.join()
+
+        self._procs = results
+        drift = (time.monotonic() - self._start_time) * 1000
+        print(f"[CAM0] Left → {left_path}")
+        print(f"[CAM1] Right → {right_path}")
+        print(f"[SYNC] Both cameras started, drift < {drift:.0f}ms")
 
     def _save_metadata(self):
         meta = {
@@ -238,8 +248,9 @@ class DualCamRecorder:
             with open(meta_path, "w") as f:
                 json.dump(meta, f, indent=2)
 
-        # Combine videos
-        self._combine_to_stereo()
+        # Don't combine on Pi — too heavy. Transfer to Mac and run:
+        # ffmpeg -i video_left.h264 -i video_right.h264 -filter_complex hstack=inputs=2 -c:v libx264 -preset fast -crf 23 video_stereo.mp4
+        print(f"[NOTE] Combine on Mac: ffmpeg -i video_left.h264 -i video_right.h264 -filter_complex hstack=inputs=2 -c:v libx264 -preset fast -crf 23 video_stereo.mp4")
 
         print(f"\n[SESSION] Saved to {self.session_dir}")
 

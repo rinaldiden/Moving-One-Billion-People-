@@ -63,8 +63,11 @@ def test_capture(cam_id):
 def test_simultaneous():
     print("\n=== Testing simultaneous capture (3 seconds) ===")
 
-    procs = []
-    for cam_id in [0, 1]:
+    import threading
+    barrier = threading.Barrier(2, timeout=5)
+    procs = {}
+
+    def launch(cam_id):
         cmd = [
             "rpicam-vid",
             "--camera", str(cam_id),
@@ -76,13 +79,20 @@ def test_simultaneous():
             "--vflip", "--hflip",
             "-o", f"/tmp/test_dual_cam{cam_id}.h264",
         ]
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        procs.append((cam_id, proc))
-        time.sleep(0.05)
+        barrier.wait()
+        procs[cam_id] = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+    t0 = threading.Thread(target=launch, args=(0,))
+    t1 = threading.Thread(target=launch, args=(1,))
+    t0.start()
+    t1.start()
     start = time.monotonic()
+    t0.join()
+    t1.join()
+    drift = (time.monotonic() - start) * 1000
+    print(f"  Start drift: <{drift:.0f}ms")
 
-    for cam_id, proc in procs:
+    for cam_id, proc in procs.items():
         try:
             proc.wait(timeout=10)
             elapsed = time.monotonic() - start
