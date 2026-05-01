@@ -27,7 +27,10 @@ locks = {0: threading.Lock(), 1: threading.Lock()}
 
 
 def camera_thread(cam_id):
-    """Capture JPEG frames from one camera."""
+    """Capture JPEG frames from one camera via MJPEG stream."""
+    # Small delay between camera starts to avoid resource conflict
+    time.sleep(cam_id * 1.0)
+
     cmd = [
         "rpicam-vid",
         "--camera", str(cam_id),
@@ -35,17 +38,19 @@ def camera_thread(cam_id):
         "--height", str(CAM_HEIGHT),
         "--framerate", str(FPS),
         "--codec", "mjpeg",
+        "--quality", "50",
         "--nopreview",
         "--vflip", "--hflip",
         "--timeout", "0",
         "-o", "-",
     ]
 
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                            bufsize=1024*1024)
     buf = b''
 
-    while True:
-        chunk = proc.stdout.read(4096)
+    while proc.poll() is None:
+        chunk = proc.stdout.read(32768)
         if not chunk:
             break
         buf += chunk
@@ -53,14 +58,18 @@ def camera_thread(cam_id):
         # Find JPEG boundaries (FFD8 = start, FFD9 = end)
         while True:
             start = buf.find(b'\xff\xd8')
-            end = buf.find(b'\xff\xd9', start + 2) if start >= 0 else -1
-            if start >= 0 and end >= 0:
-                jpeg = buf[start:end + 2]
-                buf = buf[end + 2:]
-                with locks[cam_id]:
-                    frames[cam_id] = jpeg
-            else:
+            if start < 0:
+                buf = b''
                 break
+            end = buf.find(b'\xff\xd9', start + 2)
+            if end < 0:
+                # Keep from start marker, discard before
+                buf = buf[start:]
+                break
+            jpeg = buf[start:end + 2]
+            buf = buf[end + 2:]
+            with locks[cam_id]:
+                frames[cam_id] = jpeg
 
 
 class StreamHandler(BaseHTTPRequestHandler):
