@@ -20,26 +20,26 @@ def _beep(h, freq, duration):
 
 def boot(h):
     """System ready — two quick high beeps"""
-    _beep(h, 2000, 0.1)
+    _beep(h, 2048, 0.1)
     time.sleep(0.05)
-    _beep(h, 2000, 0.1)
+    _beep(h, 2048, 0.1)
 
 
 def follow_me_searching(h):
     """Follow-me searching for target — rapid beeps (call in loop, non-blocking)"""
-    _beep(h, 2000, 0.08)
+    _beep(h, 2048, 0.08)
     time.sleep(0.12)
 
 
 def follow_me_locked(h):
     """Follow-me target acquired — pause + long beep"""
     time.sleep(0.3)
-    _beep(h, 2000, 0.4)
+    _beep(h, 2048, 0.4)
 
 
 def follow_me_off(h):
     """Follow-me stopped (voluntary or target lost) — descending two-tone"""
-    _beep(h, 2000, 0.1)
+    _beep(h, 2048, 0.1)
     time.sleep(0.05)
     _beep(h, 1000, 0.15)
 
