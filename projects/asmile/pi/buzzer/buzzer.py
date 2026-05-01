@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Asmile Buzzer — KY-006 passive piezo on GPIO 5 (via Level Shifter #2 ch4)
+Asmile Buzzer — KY-006 passive piezo on GPIO 4 (via 2N2222 transistor)
 
 Sound patterns for different events.
 """
@@ -9,7 +9,7 @@ import lgpio
 import time
 
 GPIO_CHIP = 4
-BUZZER_PIN = 5
+BUZZER_PIN = 4
 
 
 def _beep(h, freq, duration):
