@@ -37,8 +37,11 @@ from datetime import datetime
 # ═══════════════════════════════════════════════════════════
 # CONFIG
 # ═══════════════════════════════════════════════════════════
-SESSIONS_DIR = "/home/asmile/wip/recorder"
-ARDUCAM_FIX = "/home/asmile/streaming/arducam_fix.so"
+import pwd
+_USER = os.environ.get("USER") or os.environ.get("SUDO_USER") or pwd.getpwuid(os.getuid()).pw_name
+_HOME = f"/home/{_USER}"
+SESSIONS_DIR = os.path.join(_HOME, "wip/recorder")
+ARDUCAM_FIX = os.path.join(_HOME, "streaming/arducam_fix.so")
 
 # Video
 WIDTH = 1280
