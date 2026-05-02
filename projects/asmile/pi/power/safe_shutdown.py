@@ -44,7 +44,7 @@ import os
 # --- Config ---
 GPIO_CHIP = 4          # Pi 5 = gpiochip4
 POWER_SENSE_PIN = 26   # GPIO 26 — change to your wiring
-DEBOUNCE_MS = 3000     # 3s debounce — bike vibrations cause short glitches
+DEBOUNCE_MS = 500      # ignore glitches shorter than this
 CHECK_INTERVAL = 0.2   # seconds between checks
 HEALTH_LOG = "/tmp/asmile_health.csv"
 HEALTH_INTERVAL = 10   # log health every 10s
@@ -89,9 +89,20 @@ def main():
     last_health = 0
     glitch_count = 0
 
+    # Try to init INA219 for current monitoring
+    ina219 = None
+    try:
+        import smbus2
+        ina_bus = smbus2.SMBus(1)
+        ina_bus.write_word_data(0x40, 0x05, 0x1000)  # calibration register
+        ina219 = ina_bus
+        print("[safe_shutdown] INA219 current sensor detected")
+    except Exception:
+        print("[safe_shutdown] INA219 not found, logging without current")
+
     # Init health log
     with open(HEALTH_LOG, "w") as f:
-        f.write("timestamp,temp_c,throttled,voltage_ok,gpio26,glitches\n")
+        f.write("timestamp,temp_c,throttled,voltage_ok,current_mA,gpio26,glitches\n")
 
     try:
         while True:
@@ -109,9 +120,20 @@ def main():
                                           capture_output=True, text=True, timeout=2)
                     throt_val = throt.stdout.strip().split("=")[1] if "=" in throt.stdout else "?"
                     volt_ok = "1" if throt_val == "0x0" else "0"
+                    # Read current from INA219 if available
+                    current_mA = -1
+                    if ina219:
+                        try:
+                            raw = ina219.read_word_data(0x40, 0x04)
+                            raw = ((raw & 0xFF) << 8) | ((raw >> 8) & 0xFF)
+                            if raw > 32767:
+                                raw -= 65536
+                            current_mA = raw * 0.1  # 0.1mA per LSB
+                        except Exception:
+                            current_mA = -1
                     ts = time.strftime("%Y-%m-%dT%H:%M:%S")
                     with open(HEALTH_LOG, "a") as f:
-                        f.write(f"{ts},{temp_c},{throt_val},{volt_ok},{level},{glitch_count}\n")
+                        f.write(f"{ts},{temp_c},{throt_val},{volt_ok},{current_mA:.1f},{level},{glitch_count}\n")
                 except Exception:
                     pass
 
