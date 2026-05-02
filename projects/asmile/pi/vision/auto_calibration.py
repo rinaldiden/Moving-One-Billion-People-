@@ -146,7 +146,7 @@ class AutoCalibrator:
         # Epipolar constraint: matched points should be on ~same y
         # Filter outliers with large vertical disparity
         dy = np.abs(pts1[:, 1] - pts2[:, 1])
-        mask = dy < 5.0  # max 5px vertical difference
+        mask = dy < 15.0  # max 15px vertical difference (cameras not perfectly aligned)
         pts1 = pts1[mask]
         pts2 = pts2[mask]
 
@@ -161,8 +161,12 @@ class AutoCalibrator:
 
         return pts1, pts2
 
-    def process_frame(self, stereo_frame):
+    def process_frame(self, stereo_frame, flip=True):
         """Process a stereo side-by-side frame. Returns True if calibrated."""
+        # Cameras are mounted upside down — flip 180°
+        if flip:
+            stereo_frame = cv2.flip(stereo_frame, -1)
+
         # Split stereo frame
         if stereo_frame.shape[1] > CAM_W:
             left = stereo_frame[:, :CAM_W]
@@ -462,7 +466,7 @@ def main():
                 gray = yuv[:FRAME_H, :]  # Y channel = grayscale
 
                 calibrated = cal.process_frame(
-                    gray.reshape(FRAME_H, FRAME_W))
+                    gray.reshape(FRAME_H, FRAME_W), flip=False)  # rpicam-vid already flips
 
                 if calibrated and not args.monitor:
                     print("[auto_calib] Initial calibration done!")

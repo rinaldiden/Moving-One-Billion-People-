@@ -252,7 +252,9 @@ def process_frames(model, frames_dir, output_dir, device, max_frames=0):
 
 def process_video(model, session_dir, output_dir, device, max_frames=100):
     """Process video from a session directory."""
-    video_path = os.path.join(session_dir, "video.h264")
+    video_path = os.path.join(session_dir, "video.mp4")
+    if not os.path.exists(video_path):
+        video_path = os.path.join(session_dir, "video.h264")
     if not os.path.exists(video_path):
         print(f"No video found in {session_dir}")
         return
