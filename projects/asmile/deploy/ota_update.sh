@@ -19,10 +19,10 @@ GITHUB_REPO="Moving-One-Billion-People-"
 GITHUB_OWNER="rinaldiden"
 GITHUB_API="https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest"
 
-VERSION_FILE="/home/asmile/asmile/current_version.txt"
+VERSION_FILE="/home/$(whoami)/asmile/current_version.txt"
 OTA_TMP_DIR="/tmp/asmile_ota"
 LOG_FILE="/var/log/asmile_ota.log"
-LAST_CHECK_FILE="/home/asmile/asmile/.last_ota_check"
+LAST_CHECK_FILE="/home/$(whoami)/asmile/.last_ota_check"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VERIFY_SCRIPT="${SCRIPT_DIR}/verify_release.sh"
@@ -195,7 +195,7 @@ log "INFO: rauc install complete."
 # ---- Step 7: Update version file + notify success ---------------------------
 
 echo "${LATEST_TAG}" > "${VERSION_FILE}"
-chown asmile:asmile "${VERSION_FILE}" 2>/dev/null || true
+chown $(whoami):$(whoami) "${VERSION_FILE}" 2>/dev/null || true
 
 log "OK: OTA update to ${LATEST_TAG} successful. Reboot to activate new slot."
 notify "OTA SUCCESS: Updated to ${LATEST_TAG}. Reboot scheduled."

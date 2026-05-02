@@ -11,14 +11,14 @@
 #
 # Log:    /var/log/asmile_push.log
 # Key:    ~/.ssh/asmile_data_key (configured by setup_deploy_key.sh)
-# Repo:   /home/asmile/wip/Moving-One-Billion-People-
+# Repo:   /home/$(whoami)/wip/Moving-One-Billion-People-
 # Target: Raspberry Pi 5 (arm64, Debian Trixie), user asmile
 
 set -uo pipefail
 
-REPO_DIR="/home/asmile/wip/Moving-One-Billion-People-"
+REPO_DIR="/home/$(whoami)/wip/Moving-One-Billion-People-"
 DATA_BRANCH="data"
-DEPLOY_KEY="/home/asmile/.ssh/asmile_data_key"
+DEPLOY_KEY="/home/$(whoami)/.ssh/asmile_data_key"
 LOG_FILE="/var/log/asmile_push.log"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

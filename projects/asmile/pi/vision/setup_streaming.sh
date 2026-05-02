@@ -8,7 +8,7 @@ set -e
 # Uso:  chmod +x setup.sh && sudo ./setup.sh
 # ═══════════════════════════════════════════════════════════════
 
-INSTALL_DIR="/home/asmile/streaming"
+INSTALL_DIR="/home/$(whoami)/streaming"
 MEDIAMTX_VERSION="v1.16.3"
 MEDIAMTX_URL="https://github.com/bluenviron/mediamtx/releases/download/${MEDIAMTX_VERSION}/mediamtx_${MEDIAMTX_VERSION}_linux_arm64v8.tar.gz"
 
@@ -97,7 +97,7 @@ chown -R asmile:asmile "$INSTALL_DIR"
 chmod +x "$INSTALL_DIR/rtsp_stream.py"
 
 # Aggiungi alias comodi in .bashrc
-BASHRC="/home/asmile/.bashrc"
+BASHRC="/home/$(whoami)/.bashrc"
 if ! grep -q "alias stream-start" "$BASHRC"; then
     echo '' >> "$BASHRC"
     echo '# === Asmile Streaming ===' >> "$BASHRC"

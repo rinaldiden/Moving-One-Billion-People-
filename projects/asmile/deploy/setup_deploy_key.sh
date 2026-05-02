@@ -10,17 +10,17 @@
 
 set -euo pipefail
 
-KEY_PATH="/home/asmile/.ssh/asmile_data_key"
-SSH_CONFIG="/home/asmile/.ssh/config"
+KEY_PATH="/home/$(whoami)/.ssh/asmile_data_key"
+SSH_CONFIG="/home/$(whoami)/.ssh/config"
 REPO_HOST="github.com"
 
 echo "=== Asmile Deploy Key Setup ==="
 echo ""
 
 # Ensure .ssh directory exists with correct permissions
-mkdir -p /home/asmile/.ssh
-chmod 700 /home/asmile/.ssh
-chown asmile:asmile /home/asmile/.ssh
+mkdir -p /home/$(whoami)/.ssh
+chmod 700 /home/$(whoami)/.ssh
+chown $(whoami):$(whoami) /home/$(whoami)/.ssh
 
 # Generate the ed25519 key (no passphrase for unattended use)
 if [[ -f "${KEY_PATH}" ]]; then
@@ -32,7 +32,7 @@ else
         -f "${KEY_PATH}" \
         -C "asmile@pi5-data-push" \
         -N ""
-    chown asmile:asmile "${KEY_PATH}" "${KEY_PATH}.pub"
+    chown $(whoami):$(whoami) "${KEY_PATH}" "${KEY_PATH}.pub"
     chmod 600 "${KEY_PATH}"
     chmod 644 "${KEY_PATH}.pub"
     echo "[OK]  Key generated."
@@ -51,7 +51,7 @@ else
     echo "" >> "${SSH_CONFIG}"
     echo "# Asmile data-push deploy key" >> "${SSH_CONFIG}"
     echo "${SSH_BLOCK}" >> "${SSH_CONFIG}"
-    chown asmile:asmile "${SSH_CONFIG}"
+    chown $(whoami):$(whoami) "${SSH_CONFIG}"
     chmod 600 "${SSH_CONFIG}"
     echo "[OK]  SSH config updated at ${SSH_CONFIG}."
 fi

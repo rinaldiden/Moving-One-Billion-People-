@@ -5,7 +5,7 @@
 #
 # Expected USB mount point: /media/usb/
 # Expected source file:     /media/usb/cosign.pub
-# Destination:              /home/asmile/asmile/keys/cosign.pub
+# Destination:              /home/$(whoami)/asmile/keys/cosign.pub
 #
 # Run as: bash import_cosign_key.sh  (does NOT require root)
 # Target: Raspberry Pi 5 (arm64, Debian Trixie), user asmile
@@ -14,7 +14,7 @@ set -euo pipefail
 
 USB_MOUNT="/media/usb"
 SOURCE_KEY="${USB_MOUNT}/cosign.pub"
-DEST_DIR="/home/asmile/asmile/keys"
+DEST_DIR="/home/$(whoami)/asmile/keys"
 DEST_KEY="${DEST_DIR}/cosign.pub"
 
 echo "=== Asmile Cosign Public Key Import ==="

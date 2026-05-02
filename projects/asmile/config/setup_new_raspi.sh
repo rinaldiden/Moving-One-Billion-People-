@@ -4,7 +4,9 @@
 
 set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-echo "=== Asmile Raspi 5 Setup ==="
+ASMILE_USER="${SUDO_USER:-$(whoami)}"
+ASMILE_HOME="/home/$ASMILE_USER"
+echo "=== Asmile Raspi 5 Setup (user: $ASMILE_USER) ==="
 
 # Packages
 echo "Installing packages..."
@@ -21,8 +23,14 @@ fi
 cp "$SCRIPT_DIR/boot_config.txt" /boot/firmware/config.txt
 
 # Systemd services (enable only, start after reboot)
-echo "Installing encoder service..."
-cp "$SCRIPT_DIR/encoder-ssi.service" /etc/systemd/system/
+# Replace %USER% placeholder with actual user in service files
+echo "Installing services for user $ASMILE_USER..."
+for svc in encoder-ssi.service master_switch.service safe_shutdown.service servofreno.service steering.service; do
+    if [ -f "$SCRIPT_DIR/$svc" ]; then
+        sed "s|%USER%|$ASMILE_USER|g" "$SCRIPT_DIR/$svc" > /etc/systemd/system/$svc
+        echo "  Installed $svc"
+    fi
+done
 systemctl daemon-reload
 systemctl enable encoder-ssi.service
 
@@ -31,34 +39,31 @@ echo "Disabling serial console..."
 systemctl disable serial-getty@ttyAMA0.service 2>/dev/null || true
 sed -i 's/ console=serial0,115200//' /boot/firmware/cmdline.txt 2>/dev/null || true
 
-# Safe shutdown service (enable only — DO NOT start before hardware is wired)
-echo "Installing safe shutdown service..."
-cp "$SCRIPT_DIR/safe_shutdown.service" /etc/systemd/system/
-systemctl daemon-reload
+# Safe shutdown (already installed above, just enable)
 systemctl enable safe_shutdown.service
 echo "  NOTE: safe_shutdown will arm only after GPIO sees battery HIGH."
 echo "  If supercap + voltage divider are not wired yet, the service will"
 echo "  run safely without triggering any shutdown."
 
 # Bash alias for quick shutdown
-if ! grep -q "alias off=" /home/asmile/.bashrc 2>/dev/null; then
-    echo "" >> /home/asmile/.bashrc
-    echo "# Asmile quick shutdown" >> /home/asmile/.bashrc
-    echo "alias off='sudo shutdown -h now'" >> /home/asmile/.bashrc
+if ! grep -q "alias off=" $ASMILE_HOME/.bashrc 2>/dev/null; then
+    echo "" >> $ASMILE_HOME/.bashrc
+    echo "# Asmile quick shutdown" >> $ASMILE_HOME/.bashrc
+    echo "alias off='sudo shutdown -h now'" >> $ASMILE_HOME/.bashrc
 fi
 
 # Fleet ID — prompt for ID if not already set
-if [ ! -f /home/asmile/asmile_id.conf ]; then
+if [ ! -f $ASMILE_HOME/asmile_id.conf ]; then
     echo ""
     read -p "Enter Asmile Fleet ID (e.g. 001): " FLEET_ID
     read -p "Enter location (e.g. tirano): " FLEET_LOC
-    cat > /home/asmile/asmile_id.conf << IDEOF
+    cat > $ASMILE_HOME/asmile_id.conf << IDEOF
 ASMILE_ID=${FLEET_ID:-001}
 ASMILE_NAME=asmile-${FLEET_LOC:-unknown}
 ASMILE_LOCATION=${FLEET_LOC:-unknown}
 ASMILE_HW_VERSION=hw1
 IDEOF
-    chown asmile:asmile /home/asmile/asmile_id.conf
+    chown $ASMILE_USER:$ASMILE_USER $ASMILE_HOME/asmile_id.conf
     echo "  Fleet ID set: ${FLEET_ID:-001} @ ${FLEET_LOC:-unknown}"
 fi
 

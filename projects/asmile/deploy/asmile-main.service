@@ -10,17 +10,17 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=asmile
-WorkingDirectory=/home/asmile/wip/Moving-One-Billion-People-
+WorkingDirectory=/home/$(whoami)/wip/Moving-One-Billion-People-
 # TODO: Replace the ExecStart line with the actual application entry point.
 # Example for a Python application:
-#   ExecStart=/usr/bin/python3 /home/asmile/wip/Moving-One-Billion-People-/projects/asmile/main.py
+#   ExecStart=/usr/bin/python3 /home/$(whoami)/wip/Moving-One-Billion-People-/projects/asmile/main.py
 # Example for a compiled binary:
-#   ExecStart=/home/asmile/asmile/bin/asmile
+#   ExecStart=/home/$(whoami)/asmile/bin/asmile
 ExecStart=/bin/echo "Asmile main service placeholder — replace ExecStart with the real command"
 Restart=on-failure
 RestartSec=5s
 # Environment file with application-level config (not the same as notify .env)
-# EnvironmentFile=/home/asmile/asmile/.env
+# EnvironmentFile=/home/$(whoami)/asmile/.env
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=asmile-main

@@ -11,7 +11,7 @@
 set -e
 
 LOG="/var/log/asmile_health.log"
-FAIL_COUNT_FILE="/home/asmile/asmile/.boot_fail_count"
+FAIL_COUNT_FILE="/home/$(whoami)/asmile/.boot_fail_count"
 MAX_FAILS=3  # after 3 consecutive failed boots → rollback
 
 log() {
@@ -82,14 +82,14 @@ else
     if [ $count -ge $MAX_FAILS ]; then
         log "MAX FAILURES REACHED — triggering RAUC rollback"
         # Notify before rollback
-        /home/asmile/asmile/deploy/notify.sh "ROLLBACK: $count consecutive boot failures on Asmile. Rolling back to previous version." 2>/dev/null || true
+        /home/$(whoami)/asmile/deploy/notify.sh "ROLLBACK: $count consecutive boot failures on Asmile. Rolling back to previous version." 2>/dev/null || true
         # Mark current slot as bad
         rauc status mark-bad booted 2>/dev/null || true
         log "RAUC rollback triggered. Rebooting..."
         # DO NOT reboot here — let the admin decide
         # reboot
     else
-        /home/asmile/asmile/deploy/notify.sh "Health check failed ($errors errors). Boot failure $count/$MAX_FAILS." 2>/dev/null || true
+        /home/$(whoami)/asmile/deploy/notify.sh "Health check failed ($errors errors). Boot failure $count/$MAX_FAILS." 2>/dev/null || true
     fi
     exit 1
 fi

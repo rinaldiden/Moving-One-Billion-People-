@@ -4,7 +4,7 @@ After=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 -u /home/asmile/wip/Moving-One-Billion-People-/projects/asmile/pi/steering/encoder_spi_daemon.py --quiet
+ExecStart=/usr/bin/python3 -u /home/%USER%/wip/Moving-One-Billion-People-/projects/asmile/pi/steering/encoder_spi_daemon.py --quiet
 Restart=on-failure
 RestartSec=5
 StartLimitIntervalSec=60
