@@ -148,9 +148,11 @@ The key: the supercap sits **between** the Pololu 5V output and the Raspi.
 When the battery is cut, the Pololu stops outputting 5V instantly, but the
 supercap has stored enough energy to keep the Raspi powered while it shuts down.
 
-A Schottky diode prevents the supercap from back-feeding into the Pololu
-(which would drain it faster). The diode also ensures the Pololu charges the
-supercap normally when the battery is connected.
+An ideal diode (LM74700 + MOSFET) prevents the supercap from back-feeding
+into the Pololu (which would drain it faster). Unlike a Schottky diode
+(~300mV drop), the ideal diode has near-zero voltage drop:
+- Phase 1: LM74700 + IRL540N (Rdson 44mΩ) → ~130mV drop → Pi sees 4.87V
+- Phase 2: LM74700 + IRF3205 (Rdson 8mΩ) → ~24mV drop → Pi sees 4.98V
 
 ### Wiring Diagram
 
@@ -232,12 +234,23 @@ This is what triggers the safe shutdown script.
         ├──→ Level Shifter #2 HV3      │  ← power sense
         │    (LV3 → GPIO 26 Pin 37)   │
         │                              │
-        ▼ (anode)                      │
-   ┌─────────┐                         │
-   │ Schottky│ S580 (or 1N5822)        │
-   │  diode  │ (~0.3V drop)           │
-   └────┬────┘                         │
-        │ (cathode)                    │
+        ▼
+   ┌──────────────────────┐            │
+   │ LM74700 + MOSFET     │            │
+   │ (ideal diode)        │            │
+   │                      │            │
+   │ Phase 1: IRL540N     │            │
+   │   Rdson=44mΩ         │            │
+   │   drop ~130mV @3A    │            │
+   │   Pi sees ~4.87V     │            │
+   │                      │            │
+   │ Phase 2 (mercoledì): │            │
+   │   IRF3205            │            │
+   │   Rdson=8mΩ          │            │
+   │   drop ~24mV @3A     │            │
+   │   Pi sees ~4.98V     │            │
+   └──────────┬───────────┘            │
+              │                        │
         │                              │
         ├──── Supercap (+) ────────────┤── Supercap (−)
         │     2.2F / 5.5V             │
