@@ -39,12 +39,15 @@ import lgpio
 import time
 import subprocess
 import sys
+import os
 
 # --- Config ---
 GPIO_CHIP = 4          # Pi 5 = gpiochip4
 POWER_SENSE_PIN = 26   # GPIO 26 — change to your wiring
-DEBOUNCE_MS = 500      # ignore glitches shorter than this
+DEBOUNCE_MS = 3000     # 3s debounce — bike vibrations cause short glitches
 CHECK_INTERVAL = 0.2   # seconds between checks
+HEALTH_LOG = "/tmp/asmile_health.csv"
+HEALTH_INTERVAL = 10   # log health every 10s
 
 
 def fast_shutdown():
@@ -83,10 +86,34 @@ def main():
     # (pin floats LOW with pull-down → would immediately trigger shutdown).
     armed = False
     low_since = None
+    last_health = 0
+    glitch_count = 0
+
+    # Init health log
+    with open(HEALTH_LOG, "w") as f:
+        f.write("timestamp,temp_c,throttled,voltage_ok,gpio26,glitches\n")
 
     try:
         while True:
             level = lgpio.gpio_read(h, POWER_SENSE_PIN)
+            now = time.monotonic()
+
+            # Health logging
+            if now - last_health >= HEALTH_INTERVAL:
+                last_health = now
+                try:
+                    temp = subprocess.run(["vcgencmd", "measure_temp"],
+                                         capture_output=True, text=True, timeout=2)
+                    temp_c = temp.stdout.strip().replace("temp=", "").replace("'C", "")
+                    throt = subprocess.run(["vcgencmd", "get_throttled"],
+                                          capture_output=True, text=True, timeout=2)
+                    throt_val = throt.stdout.strip().split("=")[1] if "=" in throt.stdout else "?"
+                    volt_ok = "1" if throt_val == "0x0" else "0"
+                    ts = time.strftime("%Y-%m-%dT%H:%M:%S")
+                    with open(HEALTH_LOG, "a") as f:
+                        f.write(f"{ts},{temp_c},{throt_val},{volt_ok},{level},{glitch_count}\n")
+                except Exception:
+                    pass
 
             if not armed:
                 if level == 1:
@@ -98,12 +125,17 @@ def main():
 
             if level == 0:
                 if low_since is None:
-                    low_since = time.monotonic()
-                elif (time.monotonic() - low_since) * 1000 >= DEBOUNCE_MS:
-                    print("[safe_shutdown] Power loss detected!")
+                    low_since = now
+                    glitch_count += 1
+                    print(f"[safe_shutdown] GPIO LOW detected (glitch #{glitch_count})")
+                elif (now - low_since) * 1000 >= DEBOUNCE_MS:
+                    print(f"[safe_shutdown] Power loss confirmed after {DEBOUNCE_MS}ms!")
                     fast_shutdown()
                     sys.exit(0)
             else:
+                if low_since is not None:
+                    duration = (now - low_since) * 1000
+                    print(f"[safe_shutdown] GPIO back HIGH after {duration:.0f}ms (glitch)")
                 low_since = None
 
             time.sleep(CHECK_INTERVAL)
