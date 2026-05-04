@@ -7,6 +7,7 @@ Saves synchronized:
   - GPS (lat, lon, speed, heading)
   - IMU (accel xyz, gyro xyz)
   - Encoder (steering position)
+  - VESC telemetry (rpm, current, tachometer, temperature, voltage)
   - Brake events
 
 All data timestamped for frame-level correlation.
@@ -30,6 +31,7 @@ import sys
 import os
 import time
 import json
+import struct
 import threading
 import argparse
 from datetime import datetime
@@ -65,6 +67,10 @@ GYRO_SCALE = 131.0
 GPS_PORT = "/dev/ttyAMA3"
 GPS_BAUD = 38400
 
+# VESC
+VESC_PORT = "/dev/ttyAMA0"
+VESC_BAUD = 115200
+
 # ═══════════════════════════════════════════════════════════
 # GLOBALS
 # ═══════════════════════════════════════════════════════════
@@ -72,6 +78,9 @@ running = True
 session_dir = ""
 gps_data = {"lat": 0, "lon": 0, "speed_ms": 0, "heading": 0, "fix": False}
 gps_lock = threading.Lock()
+vesc_data = {"rpm": 0, "duty": 0, "i_motor": 0, "i_input": 0, "v_in": 0,
+             "tach": 0, "tach_abs": 0, "temp_fet": 0, "temp_motor": 0, "fault": 0}
+vesc_lock = threading.Lock()
 
 
 def signal_handler(sig, frame):
@@ -163,6 +172,90 @@ def read_encoder():
 
 
 # ═══════════════════════════════════════════════════════════
+# VESC TELEMETRY (background thread)
+# ═══════════════════════════════════════════════════════════
+COMM_GET_VALUES = 4
+
+def _crc16(data: bytes) -> int:
+    crc = 0
+    for b in data:
+        crc ^= b << 8
+        for _ in range(8):
+            if crc & 0x8000:
+                crc = (crc << 1) ^ 0x1021
+            else:
+                crc <<= 1
+            crc &= 0xFFFF
+    return crc
+
+
+def _vesc_packet(payload: bytes) -> bytes:
+    c = _crc16(payload)
+    return bytes([0x02, len(payload)]) + payload + struct.pack(">H", c) + bytes([0x03])
+
+
+def _parse_vesc(data: bytes):
+    if len(data) < 10:
+        return None
+    idx = data.find(b'\x02')
+    if idx < 0 or idx + 2 > len(data):
+        return None
+    plen = data[idx + 1]
+    payload = data[idx + 2:idx + 2 + plen]
+    if len(payload) < 56 or payload[0] != COMM_GET_VALUES:
+        return None
+    p = payload[1:]
+    try:
+        return {
+            'temp_fet': struct.unpack(">h", p[0:2])[0] / 10.0,
+            'temp_motor': struct.unpack(">h", p[2:4])[0] / 10.0,
+            'i_motor': struct.unpack(">i", p[4:8])[0] / 100.0,
+            'i_input': struct.unpack(">i", p[8:12])[0] / 100.0,
+            'duty': struct.unpack(">h", p[20:22])[0] / 1000.0,
+            'rpm': struct.unpack(">i", p[22:26])[0],
+            'v_in': struct.unpack(">h", p[26:28])[0] / 10.0,
+            'tach': struct.unpack(">i", p[44:48])[0],
+            'tach_abs': struct.unpack(">i", p[48:52])[0],
+            'fault': p[52],
+        }
+    except (struct.error, IndexError):
+        return None
+
+
+def vesc_thread():
+    """Read VESC telemetry via UART. Runs in background, updates vesc_data."""
+    global vesc_data, running
+    import serial
+
+    try:
+        ser = serial.Serial(VESC_PORT, VESC_BAUD, timeout=0.2)
+        ser.reset_input_buffer()
+        print(f"[VESC] Connected on {VESC_PORT}")
+    except Exception as e:
+        print(f"[VESC] Not available: {e}")
+        return
+
+    while running:
+        try:
+            ser.reset_input_buffer()
+            ser.write(_vesc_packet(bytes([COMM_GET_VALUES])))
+            time.sleep(0.05)
+            resp = ser.read(ser.in_waiting or 128)
+            if resp:
+                time.sleep(0.01)
+                resp += ser.read(ser.in_waiting or 64)
+            vals = _parse_vesc(resp)
+            if vals:
+                with vesc_lock:
+                    vesc_data.update(vals)
+        except Exception:
+            pass
+        time.sleep(0.08)  # ~12Hz polling, faster than 10Hz logging
+
+    ser.close()
+
+
+# ═══════════════════════════════════════════════════════════
 # VIDEO RECORDER
 # ═══════════════════════════════════════════════════════════
 def start_video(output_path):
@@ -200,7 +293,9 @@ def sensor_logger(csv_path, imu_bus):
         f.write("timestamp,gps_lat,gps_lon,gps_speed_ms,gps_heading,"
                 "imu_accel_x,imu_accel_y,imu_accel_z,"
                 "imu_gyro_x,imu_gyro_y,imu_gyro_z,"
-                "encoder_pos\n")
+                "encoder_pos,"
+                "vesc_rpm,vesc_duty,vesc_i_motor,vesc_i_input,vesc_v_in,"
+                "vesc_tach,vesc_tach_abs,vesc_temp_fet,vesc_temp_motor,vesc_fault\n")
 
         while running:
             ts = datetime.now().isoformat(timespec="milliseconds")
@@ -208,12 +303,18 @@ def sensor_logger(csv_path, imu_bus):
             with gps_lock:
                 gps = gps_data.copy()
             enc = read_encoder()
+            with vesc_lock:
+                vesc = vesc_data.copy()
 
             f.write(f"{ts},{gps['lat']:.7f},{gps['lon']:.7f},"
                     f"{gps['speed_ms']:.3f},{gps['heading']:.1f},"
                     f"{imu['ax']:.4f},{imu['ay']:.4f},{imu['az']:.4f},"
                     f"{imu['gx']:.2f},{imu['gy']:.2f},{imu['gz']:.2f},"
-                    f"{enc}\n")
+                    f"{enc},"
+                    f"{vesc['rpm']},{vesc['duty']:.3f},"
+                    f"{vesc['i_motor']:.2f},{vesc['i_input']:.2f},{vesc['v_in']:.1f},"
+                    f"{vesc['tach']},{vesc['tach_abs']},"
+                    f"{vesc['temp_fet']:.1f},{vesc['temp_motor']:.1f},{vesc['fault']}\n")
             f.flush()
             time.sleep(1.0 / SENSOR_HZ)
 
@@ -259,6 +360,10 @@ def main():
     # Init Encoder
     enc = read_encoder()
     print(f"[ENCODER] Position: {enc}")
+
+    # Init VESC telemetry
+    vesc_t = threading.Thread(target=vesc_thread, daemon=True)
+    vesc_t.start()
 
     # Start video
     print(f"[VIDEO] Recording {WIDTH}x{HEIGHT}@{FPS}fps → {video_path}")
