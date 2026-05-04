@@ -31,9 +31,9 @@ The entire system is powered by a single 48V battery mounted on the bicycle.
               ┌─────┴─────┐ ┌────┴────┐ ┌─┴──────────┐
               │           │ │         │ │            │
               │ Raspi 5   │ │ Servo   │ │   VESC     │
-              │ (5V/5A)   │ │PDI-6221 │ │  (48V)     │
-              │           │ │  (6V)   │ │            │
-              │ ┌───────┐ │ │         │ │ ┌────────┐ │
+              │ (5V/5A)   │ │Miuzei   │ │  (48V)     │
+              │           │ │M S69    │ │            │
+              │ ┌───────┐ │ │ (6V)    │ │ ┌────────┐ │
               │ │Encoder│ │ │         │ │ │Flipsky │ │
               │ │GPS    │ │ │         │ │ │ 6354   │ │
               │ │MPU6050│ │ │         │ │ │steering│ │
@@ -44,259 +44,183 @@ The entire system is powered by a single 48V battery mounted on the bicycle.
                    5V           6V          48V direct
 ```
 
-## Detailed Wiring
+## Safe Shutdown — LM74700 Ideal Diode + Supercap 2.2F
 
-### Battery 48V → Pololu D24V55F5 (5V for Raspi)
+When the 48V battery switch is turned off, the Raspi needs time to shut down cleanly
+to avoid SD card corruption. A supercapacitor on the 5V rail provides power while
+the Pi shuts down. An ideal diode (LM74700 + MOSFET) prevents backfeed with
+near-zero voltage drop.
 
-| Pololu D24V55F5 | Connect to |
-|---|---|
-| VIN | Battery 48V + |
-| GND | Battery 48V − (common GND) |
-| VOUT (5V) | Raspi Pin 2 and Pin 4 (5V) via USB-C cable or GPIO header |
-| GND | Raspi GND |
-
-> **Raspi Power:** The Pi 5 requires stable 5V/5A.
-> Connect via USB-C PD or directly to GPIO header 5V pins
-> (Pin 2 + Pin 4 in parallel to distribute current).
-
-### Battery 48V → Pololu D24V55F6 (6V for Servo)
-
-| Pololu D24V55F6 | Connect to |
-|---|---|
-| VIN | Battery 48V + |
-| GND | Battery 48V − (common GND) |
-| VOUT (6V) | Servo PDI-6221MG red wire (+V) |
-| GND | Servo PDI-6221MG black wire (GND) |
-
-### Battery 48V → VESC (direct)
-
-| VESC | Connect to |
-|---|---|
-| BAT+ | Battery 48V + |
-| BAT− | Battery 48V − |
-| Motor U/V/W | Flipsky 6354 BLDC steering motor (3 phases) |
-
-## Physical Connection Diagram
+### Complete Circuit
 
 ```
-48V BATTERY (13S Li-ion)
-    │(+)                    │(−)
-    │                       │
-    ├───────────────────────┤ COMMON GND
-    │         │         │   │      │         │          │
-    │    ┌────┴───┐ ┌───┴───┴─┐    │    ┌────┴───┐ ┌───┴────┐
-    │    │POLOLU  │ │ POLOLU  │    │    │POLOLU  │ │POLOLU  │
-    │    │D24V55F5│ │D24V55F6 │    │    │D24V55F5│ │D24V55F6│
-    │    │VIN     │ │VIN      │    │    │GND     │ │GND     │
-    │    └───┬────┘ └───┬─────┘    │    └───┬────┘ └───┬────┘
-    │    VOUT│5V    VOUT│6V        │    GND │      GND │
-    │        │          │          │        │          │
-    │   ┌────┴────┐  ┌──┴──────┐  │   ┌────┴────┐  ┌──┴──────┐
-    │   │RASPI 5  │  │SERVO    │  │   │RASPI 5  │  │SERVO    │
-    │   │Pin 2 +4 │  │+V red   │  │   │GND Pin 6│  │GND black│
-    │   └─────────┘  └─────────┘  │   └────┬────┘  └─────────┘
-    │                              │        │
-  ┌─┴──────┐                    ┌──┴────┐   │
-  │ VESC   │                    │ VESC  │   ├── Encoder GND
-  │ BAT+   │                    │ BAT−  │   ├── GPS GND
-  └────────┘                    └───────┘   ├── MPU6050 GND
-                                            ├── RS-485 #1 GND
-                                            └── RS-485 #2 GND
+48V BATTERY
+    │(+)                                        │(−)
+    │                                           │
+    ▼                                           ▼
+┌────────────────┐                        ┌─────────────┐
+│ Pololu D24V55F5│                        │ Pololu GND  │
+│ VIN            │                        │             │
+└───────┬────────┘                        └──────┬──────┘
+        │ VOUT (5V)                              │ GND
+        │                                        │
+        ├──→ Level Shifter HV (power)            │
+        │    Level Shifter HV3 ← jumper to HV    │
+        │    Level Shifter LV3 → GPIO 26 Pin 37  │  ← power sense
+        │                                        │
+        ├──→ LM74700 ANODE (pin 1)               │
+        ├──→ LM74700 EN (pin 3)                  │
+        │                                        │
+        └──→ MOSFET Source                        │
+                │                                │
+            LM74700 GATE (pin 2) → MOSFET Gate   │
+            LM74700 VCAP (pin 5) ─┐              │
+                                  │ 100nF        │
+            LM74700 CATHODE (pin 4)┘              │
+                │                                │
+            MOSFET Drain                          │
+                │                                │
+                ├──── Supercap (+) 2.2F ─────────┤── Supercap (−)
+                │                                │
+                ├──── Raspi Pin 2 (5V) ──────────┤── Raspi Pin 6 (GND)
+                ├──── Raspi Pin 4 (5V)           │
+                │                                │
+                ├──── 22Ω ──→ Drain IRL540N      │
+                │             (discharge)  Source─┤
+                │                                │
+                │     Gate ──┬── pull-up 10kΩ ───┤ (a Supercap +)
+                │            └── GPIO 6 Pin 31   │ (LOW=Pi on, off)
+                │                                │
+            LM74700 GND (pin 6) ─────────────────┤
+                                                 │
+                └────────────────────────────────┘
+                          all GNDs connected
 ```
+
+### MOSFET Versions
+
+| Phase | MOSFET | Rdson | Drop @3A | Pi vede |
+|---|---|---|---|---|
+| 1 (ora) | IRL540N | 44mΩ | 132mV | 4.87V |
+| 2 (IRF3205) | IRF3205 | 8mΩ | 24mV | 4.98V |
+
+Il cablaggio è **identico** — cambia solo il MOSFET fisico.
+
+### Come funziona
+
+```
+Batteria ON:
+  Pololu VOUT = 5V
+  → Level Shifter HV = 5V → LV3 = 3.3V → GPIO 26 = HIGH (armed)
+  → LM74700 apre MOSFET → corrente passa → Supercap si carica + Pi alimentato
+  → Pi vede: 5V - drop MOSFET = 4.87V (IRL540N) o 4.98V (IRF3205)
+
+Batteria OFF:
+  Pololu VOUT = 0V (istantaneo)
+  → Level Shifter HV = 0V → shifter muore → LV3 = 0V → GPIO 26 = LOW
+  → safe_shutdown.py rileva LOW per >500ms → shutdown -h now
+  → LM74700 chiude MOSFET → blocca backfeed dal supercap al Pololu
+  → Supercap tiene Pi vivo (~1.8s a 1.2A) per completare shutdown
+
+Dopo shutdown:
+  Pi OFF → GPIO 6 flotta → pull-up 10kΩ tira gate IRL540N HIGH
+  → IRL540N ON → supercap si scarica via 22Ω
+  → τ = 22 × 2.2 = ~48s per scaricare completamente
+  → Pronto per prossimo ciclo
+```
+
+### LM74700 Collegamento Passo Passo
+
+```
+LM74700 (SOT-23-6, visto dall'alto con scritta dritta):
+
+        ┌─────┐
+  Pin 1 │     │ Pin 6
+  Pin 2 │     │ Pin 5
+  Pin 3 │     │ Pin 4
+        └─────┘
+
+Pin 1 (ANODE)   → Pololu 5V VOUT
+Pin 2 (GATE)    → MOSFET Gate
+Pin 3 (EN)      → Pololu 5V VOUT (jumper a Pin 1)
+Pin 4 (CATHODE) → MOSFET Drain (lato uscita: supercap + Pi)
+Pin 5 (VCAP)    → condensatore 100nF → Pin 4 (CATHODE)
+Pin 6 (GND)     → GND comune
+
+MOSFET (IRL540N o IRF3205, TO-220, visto da davanti):
+
+     ┌───────────┐
+     │  MOSFET   │
+     │           │
+     └─┬───┬───┬─┘
+       G   D   S
+       │   │   │
+       │   │   └── Pololu 5V VOUT (ingresso, = ANODE)
+       │   └────── Supercap + Raspi 5V (uscita, = CATHODE)
+       └────────── LM74700 pin 2 (GATE)
+```
+
+### Componenti necessari
+
+| # | Componente | Valore | Quantità |
+|---|---|---|---|
+| 1 | LM74700 | SOT-23-6 | 1 |
+| 2 | IRL540N (fase 1) o IRF3205 (fase 2) | TO-220 | 1 |
+| 3 | Condensatore ceramico | 100nF (0.1uF) | 1 |
+| 4 | Supercap | 2.2F 5.5V | 1 |
+| 5 | IRL540N (discharge) | TO-220 | 1 (già montato) |
+| 6 | Resistenza | 22Ω | 1 (già montata) |
+| 7 | Resistenza | 10kΩ (pull-up gate discharge) | 1 (già montata) |
+
+### Power Sense (GPIO 26)
+
+Il level shifter è alimentato dal **Pololu VOUT** (PRIMA dell'ideal diode).
+Quando la batteria si stacca, il Pololu va a 0V, il level shifter muore,
+GPIO 26 va LOW. Il supercap è DOPO l'ideal diode, quindi NON tiene alto
+il power sense — esattamente come con il vecchio diodo Schottky.
+
+```
+Level Shifter canali usati:
+  Canale 1: CLK encoder    GPIO 21 → LV1 → HV1 → RS-485 #1 DI
+  Canale 2: DATA encoder   GPIO 19 ← LV2 ← HV2 ← RS-485 #2 RO
+  Canale 3: Power sense    GPIO 26 ← LV3 ← HV3 ← Pololu VOUT (prima ideal diode)
+  Canale 4: LIBERO
+```
+
+## Buzzer — KY-006 via 2N2222A
+
+Il buzzer non passa più dal level shifter. Pilotato da transistor NPN:
+
+```
+GPIO 4 (Pin 7) ──→ Resistenza 1kΩ ──→ Base 2N2222A
+                                       Emitter → GND
+                                       Collector → Buzzer KY-006 (S)
+                                       Buzzer KY-006 (+) → 5V
+                                       Buzzer KY-006 (−) → GND
+```
+
+> GPIO 4 manda PWM → 2N2222A amplifica → buzzer suona a 5V.
+> Resistenza 1kΩ alla base limita la corrente dal GPIO (~3mA).
 
 ## Peripherals Powered by Raspi
-
-The Raspi 5 in turn powers the low-consumption peripherals:
 
 | Peripheral | Voltage | Raspi Source | Typical Current |
 |---|---|---|---|
 | Briter Encoder | 5V | Pin 2 (5V) | ~50mA |
 | GPS NEO-M10 | 3.3V | Pin 1 (3.3V) | ~30mA |
 | MPU6050 | 3.3V | Pin 1 (3.3V) | ~5mA |
-| RS-485 module #1 | 3.3V | Pin 1 (3.3V) | ~10mA |
-| RS-485 module #2 | 3.3V | Pin 1 (3.3V) | ~10mA |
-| Arducam Camarray HAT | 5V | via GPIO header | ~300mA |
+| RS-485 module #1 | 5V | Pin 2 (5V) | ~10mA |
+| RS-485 module #2 | 5V | Pin 2 (5V) | ~10mA |
+| Buzzer KY-006 | 5V via 2N2222A | Pin 2 (5V) | ~20mA |
+| Cameras OV9281 x2 | via CSI | Camera ports | ~300mA |
 
-**Total peripherals:** ~400mA + Raspi itself (~2-3A under load) = **~3.5A max on 5V Pololu**
-
-## Safe Shutdown (Supercapacitor)
-
-When the 48V battery switch is turned off, the Raspi needs time to shut down cleanly
-to avoid SD card corruption. A **supercapacitor** on the 5V rail provides ~5-6 seconds
-of power after the battery is disconnected.
-
-### Supercap Specs
-
-| Parameter | Value |
-|---|---|
-| Part | Abracon ADCM-S05R5SA106RB |
-| Digikey | 535-ADCM-S05R5SA106RB-ND |
-| Capacitance | **2.2F** |
-| Voltage | 5.5V (max) |
-| Mount | Through-hole |
-| Holdup time | ~1.8s at 1.2A (from 4.7V down to 3.8V cutoff) |
-
-### How it works
-
-```
-48V Battery ON:   Battery → Pololu 5V → Raspi + Supercap (charging)
-48V Battery OFF:  Supercap → Raspi (discharging, ~5.7s of power)
-                  GPIO sense pin goes LOW → safe_shutdown.py → shutdown -h now
-```
-
-The key: the supercap sits **between** the Pololu 5V output and the Raspi.
-When the battery is cut, the Pololu stops outputting 5V instantly, but the
-supercap has stored enough energy to keep the Raspi powered while it shuts down.
-
-An ideal diode (LM74700 + MOSFET) prevents the supercap from back-feeding
-into the Pololu (which would drain it faster). Unlike a Schottky diode
-(~300mV drop), the ideal diode has near-zero voltage drop:
-- Phase 1: LM74700 + IRL540N (Rdson 44mΩ) → ~130mV drop → Pi sees 4.87V
-- Phase 2: LM74700 + IRF3205 (Rdson 8mΩ) → ~24mV drop → Pi sees 4.98V
-
-### Wiring Diagram
-
-```
-                    BATTERY ON                         BATTERY OFF
-               ┌──────────────────┐              ┌──────────────────┐
-               │ Pololu charges   │              │ Supercap powers  │
-               │ Raspi + supercap │              │ Raspi for ~5.7s  │
-               └──────────────────┘              └──────────────────┘
-
-48V Battery ──→ Pololu D24V55F5 (5V out)
-                      │
-                      │ VOUT (5V)
-                      │
-                      ├────── Schottky diode (1N5822) ──→ Supercap (+)
-                      │       (anode=Pololu, cathode=cap)      │
-                      │                                        │
-                      │       ┌────────────────────────────────┤
-                      │       │                                │
-                      │  Supercap 10F 5.5V              Raspi 5V
-                      │  (Abracon ADCM-S05R5SA106RB)   (Pin 2 + Pin 4)
-                      │       │                                │
-                      │       │                                │
-                      GND ────┴──────────────── GND ───────────┘
-                                              (Pin 6)
-```
-
-### Physical wiring step-by-step
-
-| Step | From | To | Notes |
-|------|------|----|-------|
-| 1 | Pololu D24V55F5 **VOUT** | Schottky diode **anode** (band away from Pololu) | 1N5822 or similar, ≥3A rated |
-| 2 | Schottky diode **cathode** (band side) | Supercap **+** pin | Respect polarity! |
-| 3 | Supercap **+** pin | Raspi **Pin 2 + Pin 4** (5V) | This is the Raspi power input |
-| 4 | Supercap **−** pin | Raspi **Pin 6** (GND) | Common ground |
-| 5 | Pololu D24V55F5 **GND** | Same GND rail | All GNDs together |
-
-> **Why the Schottky diode?** When the battery is cut, the Pololu output drops
-> to 0V. Without the diode, the supercap would discharge back through the Pololu
-> output, wasting energy. The Schottky blocks reverse current with minimal forward
-> voltage drop (~0.3V), so the Raspi sees ~4.7V — still enough for stable operation.
-
-### Power sense (GPIO for shutdown detection)
-
-To detect when the battery is cut, tap the **Pololu VOUT** side (before the diode)
-via **Level Shifter #2 channel 3** (the same shifter used for the encoder):
-
-```
-Pololu VOUT (5V, before diode) ──→ Level Shifter #2 HV (power)
-                                    Level Shifter #2 HV3 ← jumper to HV
-                                    Level Shifter #2 LV3 ──→ GPIO 26 (Pin 37)
-
-Wiring: HV and HV3 jumpered on the board. GND pins jumpered, one wire to
-common GND terminal block. Shifter powered from Pololu F5 VOUT (before diode).
-
-  Battery ON:  Pololu outputs 5V → shifter alive → LV3 = 3.3V → GPIO HIGH
-  Battery OFF: Pololu drops to 0V → shifter dies → LV3 = 0V → GPIO LOW
-```
-
-Previous design used a 2x 10kΩ resistor divider — replaced with level shifter
-for reliability (no voltage to verify, cleaner signal).
-
-The supercap is on the OTHER side of the diode, so it does NOT keep GPIO high.
-This is what triggers the safe shutdown script.
-
-### Complete circuit
-
-```
-48V BATTERY
-    │(+)                              │(−)
-    │                                 │
-    ▼                                 ▼
-┌────────────────┐              ┌─────────────┐
-│ Pololu D24V55F5│              │ Pololu GND  │
-│ VIN            │              │             │
-└───────┬────────┘              └──────┬──────┘
-        │ VOUT (5V)                    │ GND
-        │                              │
-        ├──→ Level Shifter #2 HV3      │  ← power sense
-        │    (LV3 → GPIO 26 Pin 37)   │
-        │                              │
-        ▼
-   ┌──────────────────────┐            │
-   │ LM74700 + MOSFET     │            │
-   │ (ideal diode)        │            │
-   │                      │            │
-   │ Phase 1: IRL540N     │            │
-   │   Rdson=44mΩ         │            │
-   │   drop ~130mV @3A    │            │
-   │   Pi sees ~4.87V     │            │
-   │                      │            │
-   │ Phase 2 (mercoledì): │            │
-   │   IRF3205            │            │
-   │   Rdson=8mΩ          │            │
-   │   drop ~24mV @3A     │            │
-   │   Pi sees ~4.98V     │            │
-   └──────────┬───────────┘            │
-              │                        │
-        │                              │
-        ├──── Supercap (+) ────────────┤── Supercap (−)
-        │     2.2F / 5.5V             │
-        │                              │
-        ├──── Raspi Pin 2 (5V) ────────┤── Raspi Pin 6 (GND)
-        ├──── Raspi Pin 4 (5V)        │
-        │                              │
-        ├──── Resistenza 22Ω ──→ Drain │
-        │     (bleed discharge)  IRL540N│
-        │                        Source─┤
-        │                              │
-        │     Gate ──┬── pull-up 10kΩ ─┤ (a Supercap +)
-        │            └── GPIO 6 Pin 31 │ (LOW=Pi on, MOSFET off)
-        │                              │
-        └──────────────────────────────┘
-              all GNDs connected
-
-Auto-discharge after shutdown:
-  Pi ON:  GPIO 6 = LOW → Gate LOW → MOSFET off → no drain
-  Pi OFF: GPIO floats → pull-up pulls Gate to supercap V → MOSFET on → discharge via 22Ω
-  Discharge time: τ = 22 × 2.2 = ~48s from 4.7V to ~0V
-```
-
-### Software
-
-A systemd service runs `safe_shutdown.py` which monitors GPIO 26:
-- **HIGH** = battery connected, all good
-- **LOW** for >500ms = power loss detected → `shutdown -h now`
-
-Install:
-```bash
-sudo cp safe_shutdown.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now safe_shutdown.service
-```
-
-Quick manual shutdown (alias in .bashrc):
-```bash
-alias off='sudo shutdown -h now'
-```
+**Total peripherals:** ~425mA + Raspi itself (~2-3A under load) = **~3.5A max on 5V Pololu**
 
 ## Safety Notes
 
 - **COMMON GND:** All GNDs (battery, Pololu x2, VESC, Raspi, servo, sensors) must be connected together
 - **Fuse:** Inline fuse recommended on the 48V+ line before distribution
 - **Main switch:** A switch/kill switch on the 48V+ line to shut down everything
-- **Safe shutdown:** Supercap + GPIO sense ensures clean Raspi shutdown when battery is cut
+- **Safe shutdown:** LM74700 ideal diode + supercap + GPIO 26 sense ensures clean Raspi shutdown
 - **Reverse protection:** Pololu regulators have built-in reverse polarity protection
 - **Heat dissipation:** Pololu regulators may heat up under load — mount with ventilation or on a heatsink
