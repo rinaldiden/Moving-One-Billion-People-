@@ -86,12 +86,10 @@ class MasterSwitch:
         print("[SWITCH] camera zombies cleaned")
 
     def _start_recorder(self):
-        """Start training recorder, return the Popen object."""
-        recorder = f"{HOME_DIR}/wip/Moving-One-Billion-People-/projects/asmile/pi/logging/training_recorder.py"
-        arducam = f"{HOME_DIR}/streaming/arducam_fix.so"
+        """Start dual camera recorder, return the Popen object."""
+        recorder = f"{HOME_DIR}/wip/Moving-One-Billion-People-/projects/asmile/pi/camera/dual_cam_recorder.py"
         proc = subprocess.Popen(
             ["sudo", "-u", ASMILE_USER,
-             "env", f"LD_PRELOAD={arducam}",
              "python3", "-u", recorder],
             stdout=open("/tmp/recorder.log", "w"),
             stderr=subprocess.STDOUT)
