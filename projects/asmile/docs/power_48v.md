@@ -123,41 +123,18 @@ Batteria OFF:
   → Supercap tiene Pi vivo (~1.8s a 1.2A) per completare shutdown
 
 Dopo shutdown:
-  Pi OFF → GPIO 6 flotta → pull-up 10kΩ tira gate IRL540N HIGH
-  → IRL540N ON → supercap si scarica via 22Ω
-  → τ = 22 × 2.2 = ~48s per scaricare completamente
+  Pi OFF → GPIO 6 flotta → partitore 10kΩ/10kΩ dà 2.5V al gate IRL540N
+  → IRL540N ON → supercap si scarica via 120Ω
+  → Scarica lenta (~2-3 min) ma sufficiente per reset ciclo
   → Pronto per prossimo ciclo
 ```
 
-### LM74700 Collegamento Passo Passo
+### LM74700 Modulo (3 pin: VIN, VOUT, GND)
 
 ```
-LM74700 (SOT-23-6, visto dall'alto con scritta dritta):
-
-        ┌─────┐
-  Pin 1 │     │ Pin 6
-  Pin 2 │     │ Pin 5
-  Pin 3 │     │ Pin 4
-        └─────┘
-
-Pin 1 (ANODE)   → Pololu 5V VOUT
-Pin 2 (GATE)    → MOSFET Gate
-Pin 3 (EN)      → Pololu 5V VOUT (jumper a Pin 1)
-Pin 4 (CATHODE) → MOSFET Drain (lato uscita: supercap + Pi)
-Pin 5 (VCAP)    → condensatore 100nF → Pin 4 (CATHODE)
-Pin 6 (GND)     → GND comune
-
-MOSFET (IRL540N o IRF3205, TO-220, visto da davanti):
-
-     ┌───────────┐
-     │  MOSFET   │
-     │           │
-     └─┬───┬───┬─┘
-       G   D   S
-       │   │   │
-       │   │   └── Pololu 5V VOUT (ingresso, = ANODE)
-       │   └────── Supercap + Raspi 5V (uscita, = CATHODE)
-       └────────── LM74700 pin 2 (GATE)
+Pololu 5V VOUT ── Modulo LM74700 VIN
+                   Modulo LM74700 VOUT ── Supercap+ ── Raspi Pin 2 (5V)
+                   Modulo LM74700 GND  ── GND
 ```
 
 ### Componenti necessari
@@ -165,8 +142,7 @@ MOSFET (IRL540N o IRF3205, TO-220, visto da davanti):
 | # | Componente | Valore | Quantità |
 |---|---|---|---|
 | 1 | LM74700 | SOT-23-6 | 1 |
-| 2 | IRL540N (fase 1) o IRF3205 (fase 2) | TO-220 | 1 |
-| 3 | Condensatore ceramico | 100nF (0.1uF) | 1 |
+| 2 | Modulo LM74700 (3 pin: VIN, VOUT, GND) | breakout | 1 |
 | 4 | Supercap | 2.2F 5.5V | 1 |
 | 5 | IRL540N (discharge) | TO-220 | 1 (già montato) |
 | 6 | Resistenza | 120Ω (discharge, più tempo per shutdown) | 1 |
