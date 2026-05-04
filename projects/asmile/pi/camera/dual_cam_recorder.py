@@ -48,9 +48,9 @@ CAM_HEIGHT = 400
 FPS = 15
 BITRATE = 500_000  # 500kbps per camera
 
-# Cameras mounted upside down
-VFLIP = True
-HFLIP = True
+# Cameras mounted upright (Inno-Maker OV9281)
+VFLIP = False
+HFLIP = False
 
 
 class DualCamRecorder:
