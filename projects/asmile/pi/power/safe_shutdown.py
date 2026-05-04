@@ -44,6 +44,7 @@ import os
 # --- Config ---
 GPIO_CHIP = 4          # Pi 5 = gpiochip4
 POWER_SENSE_PIN = 26   # GPIO 26 — change to your wiring
+SUPERCAP_DISCHARGE_PIN = 6  # GPIO 6 — holds LOW to prevent supercap discharge
 DEBOUNCE_MS = 500      # ignore glitches shorter than this
 CHECK_INTERVAL = 0.2   # seconds between checks
 HEALTH_LOG = "/tmp/asmile_health.csv"
@@ -77,6 +78,10 @@ def fast_shutdown():
 def main():
     h = lgpio.gpiochip_open(GPIO_CHIP)
     lgpio.gpio_claim_input(h, POWER_SENSE_PIN, lgpio.SET_PULL_DOWN)
+
+    # Hold supercap discharge MOSFET OFF (LOW = don't discharge)
+    lgpio.gpio_claim_output(h, SUPERCAP_DISCHARGE_PIN, 0)
+    print(f"[safe_shutdown] GPIO {SUPERCAP_DISCHARGE_PIN} LOW — supercap discharge blocked")
 
     print(f"[safe_shutdown] Monitoring GPIO {POWER_SENSE_PIN} for power loss...")
     print(f"[safe_shutdown] Waiting for battery HIGH signal before arming...")
