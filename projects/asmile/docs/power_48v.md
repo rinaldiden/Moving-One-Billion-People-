@@ -169,7 +169,7 @@ MOSFET (IRL540N o IRF3205, TO-220, visto da davanti):
 | 3 | Condensatore ceramico | 100nF (0.1uF) | 1 |
 | 4 | Supercap | 2.2F 5.5V | 1 |
 | 5 | IRL540N (discharge) | TO-220 | 1 (già montato) |
-| 6 | Resistenza | 22Ω | 1 (già montata) |
+| 6 | Resistenza | 120Ω (discharge, più tempo per shutdown) | 1 |
 | 7 | Resistenza | 10kΩ (pull-up gate discharge) | 1 (già montata) |
 
 ### Power Sense (GPIO 26)
