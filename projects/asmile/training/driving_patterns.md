@@ -1,23 +1,44 @@
 # Asmile Driving Patterns & Anti-patterns
 
-Aggiornato: 2026-05-05. Estratti da 23 sessioni, 263.345 frame, 3.690 eventi.
+Aggiornato: 2026-05-05. Estratti da 23 sessioni, 263.345 frame.
+Keyframe extractor: 20.131 frame selezionati (7.6%) — smart (sensori) + brute (CV frame-by-frame).
 
-## Dataset
+## Dataset (da keyframe extractor full-scan)
 
-| Categoria | Rilevamenti | Note |
+| Categoria | Rilevamenti | Metodo | Note |
+|---|---|---|---|
+| person | 11.643 | brute | Ottimo dataset |
+| lane markings | 12.370 | brute | Strisce bianche verticali |
+| stop lines | 12.355 | brute | Righe orizzontali |
+| scene change | 4.437 | brute | Cambi scena |
+| braking | 3.800 + 2.089 hard | smart | Decelerazione IMU |
+| car | 3.367 | brute | Ottimo |
+| steering | 2.877 + 205 hard | smart | Cambio encoder |
+| truck | 2.395 | brute | Buono |
+| strong stop line | 2.262 | brute | Hough confirmed |
+| turning | 2.153 + 425 sharp | smart | Gyro_z curve |
+| traffic light | 781 | brute | Trovati con scan completo! |
+| bicycle | 783 | brute | Buono |
+| bus | 304 | brute | OK |
+| motorcycle | 293 | brute | OK |
+| full stop | 169 | smart | Fermata completa sensori |
+| dog | 98 | brute | Sufficiente |
+| stop sign | 74 | brute | Trovati con scan completo! |
+| cat | 35 | brute | OK |
+| stop arrival | 24 | smart | Transizione moving→stopped |
+| departure | 37 | smart | Transizione stopped→moving |
+
+## Confronto Smart vs Brute
+
+| | Smart (sensori) | Brute (visione) |
 |---|---|---|
-| person | 2.742 | Ottimo dataset |
-| car | 2.369 | Ottimo |
-| truck | 308 | Buono |
-| bicycle | 271 | Buono |
-| stop (da sensori) | 169 | Con segnaletica: 113 |
-| lane markings | 22.482 frame | Strisce bianche rilevate |
-| motorcycle | 55 | Sufficiente |
-| cat | 42 | OK |
-| bus | 42 | OK |
-| dog | 7 | Pochi, servono più incontri |
-| stop sign (cartello) | 0 | Non presente nei percorsi |
-| traffic light | 0 | Non presente nei percorsi |
+| Keyframe trovati | 5.636 | 18.657 |
+| Esclusivi | 1.474 (7%) | 14.495 (72%) |
+| Trovati da entrambi | 4.162 (21%) | 4.162 (21%) |
+| Forza | frenate, curve, stop | persone, segnaletica, oggetti |
+| Debolezza | non vede ostacoli | non vede decelerazione |
+
+Il brute trova 10x più keyframe perché rileva oggetti visivi. Lo smart trova eventi che solo i sensori catturano (frenata, sterzata). **Servono entrambi.**
 
 ## Sensori
 
@@ -146,12 +167,23 @@ Aggiornato: 2026-05-05. Estratti da 23 sessioni, 263.345 frame, 3.690 eventi.
 
 ---
 
+## Steering-Vision Correlation
+
+4.824 frame-pairs analizzati con optical flow + vanishing point vs encoder.
+
+| Correlazione | Valore | Significato |
+|---|---|---|
+| encoder ↔ gyro_z | -0.66 to -0.83 (per sessione) | Forte — stessa misura, segni opposti |
+| encoder ↔ optical_flow | 0.01 | Debole — flow grezzo non basta |
+| encoder ↔ vanishing_point | 0.03 | Debole — linee irregolari nei vicoli |
+
+Il modello Asmile deve imparare la relazione visione→sterzata che l'optical flow semplice non cattura.
+
 ## Cosa manca
 
-- **Semafori**: 0 rilevamenti. Servono giri in zona urbana con incroci semaforizzati
-- **Cartelli stop verticali**: 0 rilevamenti YOLO. I percorsi hanno solo segnaletica orizzontale
-- **Cani**: solo 7. Incontri casuali, verranno col tempo
 - **Condizioni diverse**: pioggia, crepuscolo, controsole — serve variare orari e meteo
+- **Più percorsi urbani**: abbiamo semafori e stop ma servono più esempi
+- **Frenate documentate con decel**: solo 8 con speed_before>1m/s + accel_x>0.2g
 
 ## Note
 
