@@ -1,6 +1,23 @@
 # Asmile Driving Patterns & Anti-patterns
 
-Patterns estratti dai dati reali di guida (19 sessioni, 671 frame, 6752+ righe sensori).
+Aggiornato: 2026-05-05. Estratti da 23 sessioni, 263.345 frame, 3.690 eventi.
+
+## Dataset
+
+| Categoria | Rilevamenti | Note |
+|---|---|---|
+| person | 2.742 | Ottimo dataset |
+| car | 2.369 | Ottimo |
+| truck | 308 | Buono |
+| bicycle | 271 | Buono |
+| stop (da sensori) | 169 | Con segnaletica: 113 |
+| lane markings | 22.482 frame | Strisce bianche rilevate |
+| motorcycle | 55 | Sufficiente |
+| cat | 42 | OK |
+| bus | 42 | OK |
+| dog | 7 | Pochi, servono più incontri |
+| stop sign (cartello) | 0 | Non presente nei percorsi |
+| traffic light | 0 | Non presente nei percorsi |
 
 ## Sensori
 
@@ -26,7 +43,6 @@ Patterns estratti dai dati reali di guida (19 sessioni, 671 frame, 6752+ righe s
 - **Encoder**: scende (2750 → 2550, delta -200)
 - **Gyro_z**: positivo (+15 a +45°/s)
 - **Speed**: rallenta (3 → 1.5 m/s)
-- **Esempio**: sessione 20260501_161106, t=16:21:45
 
 ### P2: Curva a destra
 - **Vede**: muro/edificio a sinistra, strada curva a destra
@@ -39,33 +55,46 @@ Patterns estratti dai dati reali di guida (19 sessioni, 671 frame, 6752+ righe s
 - **Accel_x**: positivo (decelerazione, fino a +0.4g)
 - **Speed**: scende rapidamente
 - **Encoder**: stabile (frena dritto)
-- **Dataset**: 17% dei frame sono frenate
+- **Dataset**: rider rallenta 81%, frena 6% vicino a persone
 
 ### P4: Passaggio stretto (narrow)
 - **Vede**: muri su entrambi i lati, gap < 150 cm
 - **Margini laterali**: < 20 cm per lato
 - **Speed**: rallenta a < 1.5 m/s
 - **Encoder**: micro-correzioni (delta ±5)
-- **Dataset**: 18% dei frame sono "narrow"
 
 ### P5: Strada libera (clear)
 - **Vede**: strada aperta, nessun ostacolo < 5m
 - **Speed**: mantiene o accelera (2-5 m/s)
 - **Encoder**: stabile attorno a 2750
 - **Gyro_z**: < ±5°/s
-- **Dataset**: 54% dei frame sono "clear"
 
 ### P6: Raddrizzamento dopo curva
 - **Encoder**: torna verso 2750 (centro)
 - **Gyro_z**: torna verso 0
 - **Speed**: risale gradualmente
-- **Esempio**: sessione 20260501_161106, t=16:25:00
 
-### P7: Stop/fermata
-- **Vede**: incrocio, stop, persona ferma davanti
-- **Speed**: scende a 0
+### P7: Stop a segnaletica orizzontale
+- **Vede**: riga bianca perpendicolare sulla strada, scritta STOP per terra
+- **Speed**: scende a 0 m/s
 - **Accel_x**: positivo costante poi 0
-- **Encoder**: stabile
+- **Durata fermata**: 1.9-613s (mediana ~5s)
+- **White marking**: 1-47% del frame (soglia >1.5% = stop line rilevata)
+- **Dataset**: 169 stop totali, 113 con segnaletica (67%)
+- **8 stop con decelerazione chiara** (speed_before > 1 m/s + accel_x > 0.2g)
+
+### P8: Lane keeping
+- **Vede**: strisce bianche verticali (parallele alla direzione)
+- **Encoder**: stabile, micro-correzioni
+- **Dataset**: 22.482 frame con lane markings rilevate
+
+### P9: Comportamento vicino a persone
+- **Vede**: persona nel frame
+- **Persona al centro**: 1.198 volte (44%)
+- **Persona vicina**: 1.181 volte (43%)
+- **Rider rallenta**: 81% dei casi
+- **Rider frena attivamente**: 6%
+- **Rider prosegue**: 16% (persona lontana o ai lati)
 
 ---
 
@@ -95,6 +124,10 @@ Patterns estratti dai dati reali di guida (19 sessioni, 671 frame, 6752+ righe s
 - Persona rilevata a < 5m e speed in aumento
 - MAI accelerare verso una persona
 
+### A7: Non fermarsi allo stop
+- Riga bianca perpendicolare rilevata e speed > 0.5 m/s
+- Deve rallentare e fermarsi completamente
+
 ---
 
 ## Soglie operative
@@ -108,12 +141,22 @@ Patterns estratti dai dati reali di guida (19 sessioni, 671 frame, 6752+ righe s
 | Passaggio < 120cm | qualsiasi | stop | 0 (non ci passa!) |
 | Curva | inizio | rallenta | 2 m/s |
 | Strada libera | > 5m | normale | 5 m/s |
+| Stop line rilevata | approccio | rallenta | 1 m/s |
+| Stop line sotto | 0m | stop completo | 0 |
 
 ---
+
+## Cosa manca
+
+- **Semafori**: 0 rilevamenti. Servono giri in zona urbana con incroci semaforizzati
+- **Cartelli stop verticali**: 0 rilevamenti YOLO. I percorsi hanno solo segnaletica orizzontale
+- **Cani**: solo 7. Incontri casuali, verranno col tempo
+- **Condizioni diverse**: pioggia, crepuscolo, controsole — serve variare orari e meteo
 
 ## Note
 
 - Centro encoder (dritto) = ~2750 — da calibrare per ogni bici
 - Gyro_z positivo = rotazione antioraria (curva a sinistra vista dall'alto)
 - Accel_x positivo = decelerazione (frenata), negativo = accelerazione
+- Stop line detection: soglia white > 1.5% nel road zone, confermata con Hough horizontal lines
 - I pattern migliorano con ogni sessione di guida aggiunta al dataset
