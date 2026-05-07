@@ -299,7 +299,10 @@ def sensor_logger(csv_path, imu_bus):
 
         while running:
             ts = datetime.now().isoformat(timespec="milliseconds")
-            imu = read_imu(imu_bus)
+            try:
+                imu = read_imu(imu_bus)
+            except OSError:
+                imu = {"ax": 0, "ay": 0, "az": 0, "gx": 0, "gy": 0, "gz": 0}
             with gps_lock:
                 gps = gps_data.copy()
             enc = read_encoder()
