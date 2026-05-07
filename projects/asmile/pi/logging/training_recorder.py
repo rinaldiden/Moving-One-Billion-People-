@@ -274,8 +274,7 @@ def start_video(output_path):
         "--profile", "baseline",
         "--timeout", "0",       # unlimited recording
         "--nopreview",
-        "--vflip",              # cameras mounted upside down
-        "--hflip",              # 180° rotation = vflip + hflip
+        *(["--vflip", "--hflip"] if not os.path.isfile(ARDUCAM_FIX) else []),
         "-o", output_path,
     ]
 
