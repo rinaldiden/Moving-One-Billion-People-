@@ -86,11 +86,27 @@ class MasterSwitch:
         print("[SWITCH] camera zombies cleaned")
 
     def _start_recorder(self):
-        """Start dual camera recorder, return the Popen object."""
-        recorder = f"{HOME_DIR}/wip/Moving-One-Billion-People-/projects/asmile/pi/camera/dual_cam_recorder.py"
-        proc = subprocess.Popen(
-            ["sudo", "-u", ASMILE_USER,
-             "python3", "-u", recorder],
+        """Start recorder. Uses training_recorder (Camarray) or dual_cam_recorder
+        depending on which exists. training_recorder is the default for asmile2."""
+        base = f"{HOME_DIR}/wip/Moving-One-Billion-People-/projects/asmile/pi"
+        # Camarray HAT (asmile2): training_recorder with LD_PRELOAD
+        camarray_recorder = f"{base}/logging/training_recorder.py"
+        # Dual separate cams (asmile ID001): dual_cam_recorder
+        dualcam_recorder = f"{base}/camera/dual_cam_recorder.py"
+
+        # Check if arducam_fix.so exists = Camarray HAT present
+        arducam_fix = f"{HOME_DIR}/streaming/arducam_fix.so"
+        if os.path.isfile(arducam_fix):
+            recorder = camarray_recorder
+            cmd = ["sudo", "-u", ASMILE_USER,
+                   "env", f"LD_PRELOAD={arducam_fix}",
+                   "python3", "-u", recorder]
+        else:
+            recorder = dualcam_recorder
+            cmd = ["sudo", "-u", ASMILE_USER,
+                   "python3", "-u", recorder]
+
+        proc = subprocess.Popen(cmd,
             stdout=open("/tmp/recorder.log", "w"),
             stderr=subprocess.STDOUT)
         return proc
