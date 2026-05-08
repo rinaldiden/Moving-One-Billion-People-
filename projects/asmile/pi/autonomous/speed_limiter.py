@@ -43,6 +43,14 @@ CONTROL_HZ = 10
 BRAKE_MIN_ANGLE = 0
 BRAKE_MAX_ANGLE = 95
 
+# Servo GPIO — direct PWM, no API
+GPIO_CHIP = 4
+SERVO_PIN = 12
+SERVO_FREQ = 330
+PULSE_MIN_US = 500
+PULSE_MAX_US = 2500
+PERIOD_US = 1_000_000 / SERVO_FREQ
+
 # Braking PID
 BRAKE_KP = 30.0     # degrees per m/s over limit
 BRAKE_KI = 5.0      # integral term
@@ -79,17 +87,35 @@ def read_imu_accel_x():
         return 0
 
 
-def set_brake(angle, dry_run=False):
-    """Set brake servo angle. 0=released, 95=full brake."""
+def _angle_to_duty(angle):
+    """Convert servo angle (0-180°) to PWM duty cycle %."""
+    pulse_us = PULSE_MIN_US + (angle / 180.0) * (PULSE_MAX_US - PULSE_MIN_US)
+    return (pulse_us / PERIOD_US) * 100.0
+
+
+def set_brake(angle, dry_run=False, gpio_handle=None):
+    """Set brake servo angle. GPIO direct if available, fallback to API."""
     angle = max(BRAKE_MIN_ANGLE, min(BRAKE_MAX_ANGLE, int(angle)))
     if dry_run:
         return angle
-    import urllib.request
-    try:
-        urllib.request.urlopen(
-            f"http://localhost:5000/brake?angle={angle}", timeout=1)
-    except Exception:
-        pass
+
+    # GPIO direct — faster, no network dependency
+    if gpio_handle is not None:
+        import lgpio
+        if angle > 0:
+            lgpio.tx_pwm(gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(angle))
+        else:
+            lgpio.tx_pwm(gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(0))
+            time.sleep(0.3)
+            lgpio.tx_pwm(gpio_handle, SERVO_PIN, 0, 0)
+    else:
+        # Fallback: API via servofreno_server
+        import urllib.request
+        try:
+            urllib.request.urlopen(
+                f"http://localhost:5000/brake?angle={angle}", timeout=1)
+        except Exception:
+            pass
     return angle
 
 
@@ -107,6 +133,15 @@ class SpeedLimiter:
 
         # Decel monitor
         self.decel_boost = 0
+
+        # GPIO for servo
+        self.gpio_handle = None
+        if not dry_run:
+            try:
+                import lgpio
+                self.gpio_handle = lgpio.gpiochip_open(GPIO_CHIP)
+            except Exception as e:
+                print(f"WARNING: GPIO init failed: {e} — brake won't work")
 
         # Log
         self.log_file = None
@@ -144,14 +179,14 @@ class SpeedLimiter:
                 self.decel_boost += DECEL_BOOST_STEP * dt
                 self.decel_boost = min(self.decel_boost, 30)
 
-            self.current_brake = set_brake(brake_angle, self.dry_run)
+            self.current_brake = set_brake(brake_angle, self.dry_run, self.gpio_handle)
             self.brake_active = True
 
         elif error < -0.5:
             # Well under limit — release brake gradually
             if self.brake_active:
                 self.current_brake = max(0, self.current_brake - 10 * dt)
-                set_brake(self.current_brake, self.dry_run)
+                set_brake(self.current_brake, self.dry_run, self.gpio_handle)
                 if self.current_brake <= 0:
                     self.brake_active = False
                     self.integral = 0
@@ -190,7 +225,7 @@ class SpeedLimiter:
             time.sleep(1.0 / CONTROL_HZ)
 
         # Release brake on exit
-        set_brake(0, self.dry_run)
+        set_brake(0, self.dry_run, self.gpio_handle)
         if self.log_file:
             self.log_file.close()
         print(f"\n\nSpeed limiter stopped.")
