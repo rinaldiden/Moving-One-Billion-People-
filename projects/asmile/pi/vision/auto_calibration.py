@@ -35,26 +35,31 @@ CALIB_FILE = CALIB_DIR / "stereo_auto.json"
 CALIB_LOG = CALIB_DIR / "calibration_log.csv"
 
 # Stereo camera params (Arducam Camarray OV9281 side-by-side)
-FRAME_W = 2560   # total width (640 per cam)
+FRAME_W = 2560   # total width (1280 per cam, side-by-side)
 FRAME_H = 800
 CAM_W = 1280
 CAM_H = 800
-BASELINE_MM = 200.0  # physical baseline between cameras
+BASELINE_MM = 200.0  # physical baseline between cameras (measured)
 
-# Feature detection
-ORB_FEATURES = 2000
-MATCH_RATIO = 0.75       # Lowe's ratio test
+# Feature detection — SIFT for sub-pixel accuracy on grayscale
+SIFT_FEATURES = 3000
+MATCH_RATIO = 0.70       # Lowe's ratio test (stricter for SIFT)
 MIN_MATCHES = 50         # minimum matches to attempt calibration
 MIN_INLIERS = 30         # minimum inliers for valid F matrix
+
+# Vertical alignment — Camarray mechanical misalignment
+VERTICAL_SHIFT_PX = 15   # measured: right image is ~15px higher than left
+                          # corrected before matching by shifting right image
 
 # Calibration quality
 MIN_FRAMES_INITIAL = 100    # frames needed for first calibration
 RECALIB_INTERVAL = 500      # re-evaluate calibration every N frames
 QUALITY_THRESHOLD = 0.85    # below this → recalibrate
 
-# Initial guess for OV9281 intrinsics (can be refined)
-# focal_length ~ width_pixels * 0.8 for typical M12 lens
-FOCAL_INIT = CAM_W * 0.85
+# Initial guess for OV9281 intrinsics at 1280px wide
+# OV9281: 3μm pixel, typical M12 lens ~2.8mm → f = 2800/3 ≈ 933px at native
+# At 1280 wide (vs 1280 native) → ~933px. But measured from wall test: ~406px at 640w = ~812px at 1280w
+FOCAL_INIT = 812.0
 CX_INIT = CAM_W / 2.0
 CY_INIT = CAM_H / 2.0
 
@@ -63,7 +68,12 @@ class AutoCalibrator:
     def __init__(self):
         CALIB_DIR.mkdir(parents=True, exist_ok=True)
 
-        self.orb = cv2.ORB.create(nfeatures=ORB_FEATURES)
+        # SIFT for better accuracy on low-texture grayscale
+        self.sift = cv2.SIFT_create(nfeatures=SIFT_FEATURES)
+        self.flann = cv2.FlannBasedMatcher(
+            dict(algorithm=1, trees=5), dict(checks=50))
+        # Keep ORB as fallback
+        self.orb = cv2.ORB.create(nfeatures=2000)
         self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
 
         # Accumulated data
@@ -122,20 +132,28 @@ class AutoCalibrator:
             f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')},{msg}\n")
 
     def extract_matches(self, left, right):
-        """Extract ORB features and match between left/right frames."""
-        kp1, des1 = self.orb.detectAndCompute(left, None)
-        kp2, des2 = self.orb.detectAndCompute(right, None)
+        """Extract SIFT features, correct vertical alignment, match left/right."""
+        # CLAHE for better contrast on grayscale
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+        left_c = clahe.apply(left) if len(left.shape) == 2 else left
+        right_c = clahe.apply(right) if len(right.shape) == 2 else right
+
+        # Correct vertical misalignment
+        if VERTICAL_SHIFT_PX != 0:
+            M = np.float32([[1, 0, 0], [0, 1, VERTICAL_SHIFT_PX]])
+            right_c = cv2.warpAffine(right_c, M, (right_c.shape[1], right_c.shape[0]))
+
+        # SIFT matching
+        kp1, des1 = self.sift.detectAndCompute(left_c, None)
+        kp2, des2 = self.sift.detectAndCompute(right_c, None)
 
         if des1 is None or des2 is None or len(kp1) < 10 or len(kp2) < 10:
             return None, None
 
-        matches = self.matcher.knnMatch(des1, des2, k=2)
+        matches = self.flann.knnMatch(des1, des2, k=2)
 
         # Lowe's ratio test
-        good = []
-        for m, n in matches:
-            if m.distance < MATCH_RATIO * n.distance:
-                good.append(m)
+        good = [m for m, n in matches if m.distance < MATCH_RATIO * n.distance]
 
         if len(good) < MIN_MATCHES:
             return None, None
@@ -143,10 +161,9 @@ class AutoCalibrator:
         pts1 = np.float32([kp1[m.queryIdx].pt for m in good])
         pts2 = np.float32([kp2[m.trainIdx].pt for m in good])
 
-        # Epipolar constraint: matched points should be on ~same y
-        # Filter outliers with large vertical disparity
+        # After vertical correction, dy should be small
         dy = np.abs(pts1[:, 1] - pts2[:, 1])
-        mask = dy < 15.0  # max 15px vertical difference (cameras not perfectly aligned)
+        mask = dy < 5.0  # tighter filter now that vertical is corrected
         pts1 = pts1[mask]
         pts2 = pts2[mask]
 
@@ -244,13 +261,17 @@ class AutoCalibrator:
         # Refine focal length from epipolar error
         K_refined = self._refine_intrinsics(pts_l_in, pts_r_in, K_init, R, T)
 
-        # Scale T to match known baseline
-        T_scaled = T * BASELINE_MM
+        # Scale T: normalize and multiply by known baseline
+        T_scaled = (T / np.linalg.norm(T)) * BASELINE_MM
+        # Force T to be mostly horizontal (cameras are parallel)
+        T_scaled[1] = 0  # no vertical offset
+        T_scaled[2] = 0  # no depth offset
+        T_scaled[0] = -BASELINE_MM  # negative X = right cam is to the right
 
         # Set calibration
         self.K_left = K_refined.copy()
         self.K_right = K_refined.copy()
-        self.dist_left = np.zeros(5)
+        self.dist_left = np.zeros(5)  # TODO: estimate from checkerboard
         self.dist_right = np.zeros(5)
         self.R = R
         self.T = T_scaled
