@@ -148,8 +148,9 @@ class MasterSwitch:
     def activate(self, follow_me=False):
         """Switch turned ON — start servofreno and logging.
         If follow_me=True, also start follow-me cone tracking."""
-        if self.active:
-            return
+        if self.active and self._recorder_is_alive():
+            return  # already running and healthy
+        # If active but recorder dead, force restart
         self.active = True
         self.follow_me = follow_me
         self.recorder_retries = 0
@@ -263,33 +264,11 @@ def main():
                     last_change = now
 
                     if current:
-                        # ON detected — wait to see if it's a double-tap
-                        # (ON now, need to see OFF then ON within DOUBLE_TAP_WINDOW)
-                        double_tap = False
-                        deadline = time.monotonic() + DOUBLE_TAP_WINDOW
-                        while time.monotonic() < deadline:
-                            time.sleep(CHECK_INTERVAL)
-                            s = sw.read_switch()
-                            if not s:
-                                # OFF detected — now wait for second ON
-                                while time.monotonic() < deadline:
-                                    time.sleep(CHECK_INTERVAL)
-                                    s2 = sw.read_switch()
-                                    if s2:
-                                        double_tap = True
-                                        break
-                                break
-
-                        if double_tap:
-                            sw.activate(follow_me=True)
-                        else:
-                            # Check switch is still ON after the wait
-                            if sw.read_switch():
-                                sw.activate(follow_me=False)
-                            # else: switch went OFF during wait, deactivate
-                            else:
-                                sw.deactivate()
-                        last_state = sw.read_switch()
+                        # ON detected — always activate immediately
+                        # Double-tap detection removed: caused missed activations
+                        print(f"[SWITCH] ON detected — activating")
+                        sw.activate(follow_me=False)
+                        last_state = True
                         last_change = time.monotonic()
                     else:
                         sw.deactivate()
