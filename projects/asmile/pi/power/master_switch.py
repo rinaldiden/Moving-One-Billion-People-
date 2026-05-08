@@ -24,6 +24,7 @@ import subprocess
 import sys
 import os
 import pwd
+from datetime import datetime
 
 # --- Config ---
 GPIO_CHIP = 4          # Pi 5 = gpiochip4
@@ -239,11 +240,21 @@ def main():
     print(f"ON-OFF-ON  = follow-me mode (within 1s)")
     print(f"OFF        = brake locked at {BRAKE_ANGLE}°, all stopped")
 
-    DOUBLE_TAP_WINDOW = 1.0  # seconds to detect ON-OFF-ON
+    # Switch state log
+    SWITCH_LOG = "/tmp/asmile_switch.csv"
+    with open(SWITCH_LOG, "a") as f:
+        if os.path.getsize(SWITCH_LOG) == 0:
+            f.write("timestamp,event,state\n")
+
+    def log_switch(event, state):
+        ts = datetime.now().isoformat(timespec="milliseconds")
+        with open(SWITCH_LOG, "a") as f:
+            f.write(f"{ts},{event},{state}\n")
+        print(f"[SWITCH] {ts} {event} → {state}")
 
     # Read initial state
     initial = sw.read_switch()
-    print(f"Initial state: {'ON' if initial else 'OFF'}")
+    log_switch("boot", "ON" if initial else "OFF")
 
     if initial:
         sw.activate()
@@ -264,13 +275,12 @@ def main():
                     last_change = now
 
                     if current:
-                        # ON detected — always activate immediately
-                        # Double-tap detection removed: caused missed activations
-                        print(f"[SWITCH] ON detected — activating")
+                        log_switch("switch_on", "ON")
                         sw.activate(follow_me=False)
                         last_state = True
                         last_change = time.monotonic()
                     else:
+                        log_switch("switch_off", "OFF")
                         sw.deactivate()
 
             # Watchdog: check recorder is alive while switch is ON
