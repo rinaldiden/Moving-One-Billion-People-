@@ -1,0 +1,36 @@
+{
+  "_status": "PRIMA PROVA — DA RIVEDERE",
+  "_date": "2026-05-08",
+  "_notes": [
+    "Calibrazione scacchiera 2560x800 RMS 0.086px",
+    "SGBM compute(right_rect, left_rect) — left/right swappati nel Camarray",
+    "Focale P1=1048px corretta a 1183px dal muro a 3.92m",
+    "Muro 3.92m reale → 3.94m stereo (errore 1%)",
+    "Persona 2.0m reale → 2.03m media (errore 1.5%)",
+    "Bug: depth 1.24m su alcuni frame (artefatto SGBM)",
+    "DA VERIFICARE: focale 1183 vs P1 1048 — 13% di differenza inspiegato"
+  ],
+  "calibration_file": "stereo_calibration_2560x800.yaml",
+  "focal_corrected_px": 1183,
+  "focal_P1_px": 1048,
+  "baseline_mm": 200,
+  "sgbm_order": "compute(right_rect, left_rect)",
+  "sgbm_params": {
+    "minDisparity": 0,
+    "numDisparities": 192,
+    "blockSize": 9,
+    "P1_formula": "8*3*9*9",
+    "P2_formula": "32*3*9*9",
+    "disp12MaxDiff": 1,
+    "uniquenessRatio": 5,
+    "speckleWindowSize": 200,
+    "speckleRange": 2,
+    "preFilterCap": 63,
+    "mode": "STEREO_SGBM_MODE_SGBM_3WAY"
+  },
+  "test_results": {
+    "wall_3.92m": {"measured": 3.94, "error_pct": 1},
+    "person_2.0m": {"measured_avg": 2.03, "error_pct": 1.5},
+    "known_bugs": ["depth stuck at 1.24m on some frames"]
+  }
+}
