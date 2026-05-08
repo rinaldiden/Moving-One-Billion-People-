@@ -35,10 +35,10 @@ CALIB_FILE = CALIB_DIR / "stereo_auto.json"
 CALIB_LOG = CALIB_DIR / "calibration_log.csv"
 
 # Stereo camera params (Arducam Camarray OV9281 side-by-side)
-FRAME_W = 1280   # total width (640 per cam)
-FRAME_H = 400
-CAM_W = 640
-CAM_H = 400
+FRAME_W = 2560   # total width (640 per cam)
+FRAME_H = 800
+CAM_W = 1280
+CAM_H = 800
 BASELINE_MM = 200.0  # physical baseline between cameras
 
 # Feature detection

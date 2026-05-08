@@ -7,7 +7,7 @@ Complete hardware list for the autonomous bicycle guidance system.
 | # | Component | Model | Qty | Notes |
 |---|---|---|---|---|
 | 1 | Single Board Computer | Raspberry Pi 5 Model B | 1 | 8GB RAM recommended |
-| 2 | Stereo Camera | Arducam Camarray HAT (2x OV9281 mono) | 1 | Global shutter, 1280x400 stereo |
+| 2 | Stereo Camera | Arducam Camarray HAT (2x OV9281 mono) | 1 | Global shutter, 2560x800 stereo (native) |
 
 ## Steering
 

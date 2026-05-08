@@ -34,8 +34,8 @@ def test_capture(cam_id):
     cmd = [
         "rpicam-vid",
         "--camera", str(cam_id),
-        "--width", "640",
-        "--height", "400",
+        "--width", "1280",
+        "--height", "800",
         "--framerate", "15",
         "--codec", "h264",
         "--timeout", "3000",  # 3 seconds
@@ -71,7 +71,7 @@ def test_simultaneous():
         cmd = [
             "rpicam-vid",
             "--camera", str(cam_id),
-            "--width", "640", "--height", "400",
+            "--width", "1280", "--height", "800",
             "--framerate", "15",
             "--codec", "h264",
             "--timeout", "3000",

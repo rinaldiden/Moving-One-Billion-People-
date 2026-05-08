@@ -45,7 +45,7 @@ def load_stereo_calib(calib_path):
     R = np.array(data["R"])
     T = np.array(data["T"])
 
-    w, h = 640, 400
+    w, h = 1280, 800
     R1, R2, P1, P2, Q, _, _ = cv2.stereoRectify(
         K_left, dist_left, K_right, dist_right,
         (w, h), R, T, alpha=0

@@ -76,7 +76,7 @@ gst-launch produces very dark frames (brightness ~36) while rpicam-vid exposes c
 
 ```bash
 # CORRECT — good exposure
-LD_PRELOAD=~/streaming/arducam_fix.so rpicam-vid --width 1280 --height 400 \
+LD_PRELOAD=~/streaming/arducam_fix.so rpicam-vid --width 2560 --height 800 \
   --framerate 15 --bitrate 500000 --codec h264 --profile baseline \
   --timeout 0 --nopreview --vflip --hflip -o output.h264
 
@@ -89,7 +89,7 @@ Camera notes:
 - LD_PRELOAD of arducam_fix.so is required for Camarray HAT
 - First ~2 seconds of recording are warm-up (exposure stabilizing), skip frame 0-30
 - OV9281 global shutter mono — poor low-light performance, record in daylight
-- Stereo side-by-side: 1280x400 total, left 640x400 | right 640x400
+- Stereo side-by-side: 2560x800 total, left 1280x800 | right 1280x800
 
 ## Running the brake server
 

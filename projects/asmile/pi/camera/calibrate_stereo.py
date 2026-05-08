@@ -2,7 +2,7 @@
 """
 Stereo calibration for Arducam Camarray (dual OV9281, side-by-side).
 
-The camera outputs a single 1280x400 frame: left 640x400 | right 640x400.
+The camera outputs a single 2560x800 frame: left 1280x800 | right 1280x800.
 This script:
   1. Captures frames from the RTSP stream (or saved images)
   2. Splits each frame into left/right

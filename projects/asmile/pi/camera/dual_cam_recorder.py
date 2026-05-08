@@ -20,7 +20,7 @@ Usage:
 
 Output:
   ~/training_sessions/session_YYYYMMDD_HHMMSS/
-    video_stereo.h264    — side-by-side stereo (1280x400)
+    video_stereo.h264    — side-by-side stereo (2560x800)
     video_left.h264      — left camera raw
     video_right.h264     — right camera raw
     sync_log.csv         — frame timestamps for both cameras
@@ -43,8 +43,8 @@ from pathlib import Path
 SESSIONS_DIR = Path.home() / "training_sessions"
 
 # Camera settings (match Arducam Camarray output)
-CAM_WIDTH = 640
-CAM_HEIGHT = 400
+CAM_WIDTH = 1280
+CAM_HEIGHT = 800
 FPS = 15
 BITRATE = 500_000  # 500kbps per camera
 

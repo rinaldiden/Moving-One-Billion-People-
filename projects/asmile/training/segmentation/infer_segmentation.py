@@ -46,7 +46,7 @@ def load_calibration(calib_path):
     focal = P1[0, 0]
     baseline = abs(T[0, 0])
 
-    w, h = 640, 400
+    w, h = 1280, 800
     map1l, map2l = cv2.initUndistortRectifyMap(K1, D1, R1, P1, (w, h), cv2.CV_32FC1)
     map1r, map2r = cv2.initUndistortRectifyMap(K2, D2, R2, P2, (w, h), cv2.CV_32FC1)
 

@@ -7,8 +7,8 @@ asmile:
 
 stereo:
   calibration_file: "../config/stereo_calibration.yaml"
-  frame_width: 1280
-  frame_height: 400
+  frame_width: 2560
+  frame_height: 800
 
 gpio:
   buzzer_pin: 13        # PWM1 hardware

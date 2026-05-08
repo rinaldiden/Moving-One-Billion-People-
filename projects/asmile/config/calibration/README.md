@@ -23,7 +23,7 @@ No checkerboard needed.
 
 ### Camera info
 - Arducam Camarray OV9281 (stereo side-by-side)
-- 1280x400 total (640x400 per camera)
+- 2560x800 total (1280x800 per camera)
 - Global shutter, monochrome
 - Baseline: 200mm
 - Mounted upside down (vflip + hflip in software)
@@ -48,9 +48,9 @@ d2 = np.array(cal["dist_right"])
 R = np.array(cal["R"])
 T = np.array(cal["T"])
 
-R1, R2, P1, P2, Q, _, _ = cv2.stereoRectify(K1, d1, K2, d2, (640, 400), R, T, alpha=0)
-map1x, map1y = cv2.initUndistortRectifyMap(K1, d1, R1, P1, (640, 400), cv2.CV_32FC1)
-map2x, map2y = cv2.initUndistortRectifyMap(K2, d2, R2, P2, (640, 400), cv2.CV_32FC1)
+R1, R2, P1, P2, Q, _, _ = cv2.stereoRectify(K1, d1, K2, d2, (1280, 800), R, T, alpha=0)
+map1x, map1y = cv2.initUndistortRectifyMap(K1, d1, R1, P1, (1280, 800), cv2.CV_32FC1)
+map2x, map2y = cv2.initUndistortRectifyMap(K2, d2, R2, P2, (1280, 800), cv2.CV_32FC1)
 
 # Rectify
 left_rect = cv2.remap(left, map1x, map1y, cv2.INTER_LINEAR)

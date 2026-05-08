@@ -373,7 +373,7 @@ def main():
         write_labels_csv(all_samples,
                          os.path.join(args.output, "all_labels.csv"))
         print(f"\nDataset ready at: {args.output}")
-        print(f"  frames/  — grayscale left camera frames (640x400)")
+        print(f"  frames/  — grayscale left camera frames (1280x800)")
         print(f"  depth/   — depth maps in mm (uint16 PNG)")
         print(f"  train_labels.csv, val_labels.csv, all_labels.csv")
 

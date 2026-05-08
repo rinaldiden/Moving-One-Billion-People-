@@ -26,7 +26,7 @@ Single 48V battery (13S Li-ion) powers everything:
 
 ## Roadmap
 
-1. ✅ Stereo cam streaming (RTSP 1280x400@15fps)
+1. ✅ Stereo cam streaming (RTSP 2560x800@15fps)
 2. ✅ Brake servo remote control (Flask :5000 + master switch ON/OFF)
 3. ✅ IMU + GPS + Encoder + VESC — all connected and working
 4. ✅ Training data logging (10Hz CSV + stereo H264 video, synchronized)
@@ -70,7 +70,7 @@ The stereo camera is operational with pipeline:
 ```
 libcamera → GStreamer → H.264 (500kbps) → MediaMTX RTSP
 Stream: rtsp://<PI_IP>:8554/stream
-Resolution: 1280x400 @ 15fps (stereo side-by-side)
+Resolution: 2560x800 @ 15fps (stereo side-by-side)
 CPU: ~28%
 ```
 

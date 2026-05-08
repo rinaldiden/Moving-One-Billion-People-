@@ -25,7 +25,7 @@ rpicam-hello --list-cameras
 |--|---|---|
 | Sync | Hardware (HAT) | Software (timestamp matching) |
 | Connection | 1 CSI port via HAT | 2 CSI ports direct |
-| Output | Side-by-side 1280x400 | 2 separate streams |
+| Output | Side-by-side 2560x800 | 2 separate streams |
 | LD_PRELOAD | arducam_fix.so needed | Not needed |
 | Max frame drift | 0ms (hardware sync) | ~1-5ms (software) |
 

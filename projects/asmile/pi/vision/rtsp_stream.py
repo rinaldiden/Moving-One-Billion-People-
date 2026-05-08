@@ -2,7 +2,7 @@
 """
 RTSP Streaming — Arducam Camarray dual OV9281 on Raspberry Pi 5
 
-Stereo side-by-side 1280x400 GREY → H264 → RTSP via MediaMTX
+Stereo side-by-side 2560x800 GREY → H264 → RTSP via MediaMTX
 
 Manual start:  python3 rtsp_stream.py
 Stop:          Ctrl+C

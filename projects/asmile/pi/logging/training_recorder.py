@@ -46,10 +46,10 @@ SESSIONS_DIR = os.path.join(_HOME, "wip/recorder")
 ARDUCAM_FIX = os.path.join(_HOME, "streaming/arducam_fix.so")
 
 # Video
-WIDTH = 1280
-HEIGHT = 400
+WIDTH = 2560
+HEIGHT = 800
 FPS = 15
-BITRATE = 500_000  # 500kbps — ~3.5MB/min
+BITRATE = 2_000_000  # 500kbps — ~3.5MB/min
 
 # Sensors
 SENSOR_HZ = 10

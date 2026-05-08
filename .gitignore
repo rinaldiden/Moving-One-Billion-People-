@@ -55,3 +55,7 @@ training/data/
 # Asmile deploy pipeline
 keys/
 /tmp/asmile_ota/
+projects/asmile/segmentazione/
+projects/asmile/training/dataset*.csv
+projects/asmile/segmentazione/
+projects/asmile/training/dataset*.csv

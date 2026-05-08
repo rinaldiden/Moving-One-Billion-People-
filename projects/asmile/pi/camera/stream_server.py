@@ -17,8 +17,8 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import io
 
 PORT = 8080
-CAM_WIDTH = 640
-CAM_HEIGHT = 400
+CAM_WIDTH = 1280
+CAM_HEIGHT = 800
 FPS = 15
 
 # Global frame buffers

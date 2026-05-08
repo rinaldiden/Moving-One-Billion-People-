@@ -2,7 +2,7 @@
 """
 behavioral_cloning.py — Simple behavioral cloning model for autonomous driving.
 
-Input:  left camera frame (640x400 grayscale) + depth map (640x400) +
+Input:  left camera frame (1280x800 grayscale) + depth map (1280x800) +
         speed (normalized) + road_quality (az variance)
 Output: steering (encoder normalized -1..+1), brake (0..1)
 

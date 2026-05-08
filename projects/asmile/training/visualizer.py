@@ -50,7 +50,7 @@ from training_dataset import (
 CANVAS_W = 960
 CANVAS_H = 540
 FRAME_W = 640
-FRAME_H = 400
+FRAME_H = 800
 PANEL_X = FRAME_W + 10  # Right panel start
 FONT = cv2.FONT_HERSHEY_SIMPLEX
 FONT_SMALL = 0.45

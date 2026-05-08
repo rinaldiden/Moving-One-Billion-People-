@@ -103,7 +103,7 @@ def create_stereo_matcher(num_disparities: int = 192,
     return matcher
 
 
-def build_rectify_maps(calib: dict, image_size: tuple[int, int] = (640, 400)):
+def build_rectify_maps(calib: dict, image_size: tuple[int, int] = (1280, 800)):
     """Pre-compute rectification maps for left and right cameras."""
     map_left_x, map_left_y = cv2.initUndistortRectifyMap(
         calib["camera_matrix_left"], calib["dist_coeffs_left"],

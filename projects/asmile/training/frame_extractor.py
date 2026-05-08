@@ -2,7 +2,7 @@
 """
 frame_extractor.py — Extract video frames synchronized with sensor CSV timestamps.
 
-Splits stereo side-by-side frames (1280x400) into left/right (640x400 each).
+Splits stereo side-by-side frames (2560x800) into left/right (1280x800 each).
 Maps sensor timestamps to frame indices assuming video starts at first CSV timestamp.
 
 Usage:
@@ -34,7 +34,7 @@ VIDEO_FPS = 15
 STEREO_WIDTH = 1280
 STEREO_HEIGHT = 400
 FRAME_WIDTH = 640
-FRAME_HEIGHT = 400
+FRAME_HEIGHT = 800
 
 TIMESTAMP_FORMATS = [
     "%Y-%m-%dT%H:%M:%S.%f",
