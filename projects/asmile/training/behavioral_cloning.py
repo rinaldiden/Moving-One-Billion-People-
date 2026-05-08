@@ -432,7 +432,7 @@ def export_numpy_weights(model, output_path: str):
 # ---------------------------------------------------------------------------
 
 def infer(model_path: str, frame_path: str,
-          depth_path: str | None = None,
+          depth_path=None,
           speed: float = 0.0,
           road_quality: float = 0.0) -> dict:
     """Run inference on a single frame."""
