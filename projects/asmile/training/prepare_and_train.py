@@ -31,7 +31,7 @@ ENCODER_RANGE = 500  # ±500 from center = ±1.0 normalized
 SPEED_MAX = 6.0  # m/s
 
 # Braking threshold
-BRAKE_ACCEL_THRESHOLD = 0.2  # accel_x > 0.2 = braking
+BRAKE_ACCEL_THRESHOLD = 0.10  # accel_x > 0.2 = braking
 
 
 def load_sensors(csv_path):
@@ -121,7 +121,7 @@ def prepare_dataset(sessions_dir, output_dir, val_split=0.15):
             steering = np.clip(enc_delta / ENCODER_RANGE, -1.0, 1.0)
 
             # Brake: 1 if decelerating, 0 otherwise
-            brake = 1.0 if accel_x > BRAKE_ACCEL_THRESHOLD else 0.0
+            brake = min(1.0, max(0.0, accel_x / 0.3)) if accel_x > BRAKE_ACCEL_THRESHOLD or speed < 0.5 else 0.0
 
             # Speed normalized
             speed_norm = min(speed / SPEED_MAX, 1.0)
