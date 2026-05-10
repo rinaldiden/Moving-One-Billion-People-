@@ -193,9 +193,9 @@ class MasterSwitch:
         else:
             print("[SWITCH] Normal logging mode")
 
-    def deactivate(self):
+    def deactivate(self, force=False):
         """Switch turned OFF — stop speed_limiter, lock brake."""
-        if not self.active:
+        if not self.active and not force:
             return
         self.active = False
         self.recorder_proc = None
@@ -254,23 +254,14 @@ def main():
             f.write(f"{ts},{event},{state}\n")
         print(f"[SWITCH] {ts} {event} → {state}")
 
-    # On boot: immediately set servo to 0° (known position)
-    h_boot = lgpio.gpiochip_open(GPIO_CHIP)
-    lgpio.gpio_claim_output(h_boot, PIN_SERVO)
-    lgpio.tx_pwm(h_boot, PIN_SERVO, SERVO_FREQ, angle_to_duty(0))
-    print("[BOOT] Servo → 0° (home position)")
-    time.sleep(1)
-    lgpio.tx_pwm(h_boot, PIN_SERVO, 0, 0)
-    lgpio.gpiochip_close(h_boot)
-
-    # Read initial state
+    # Read initial state and act
     initial = sw.read_switch()
     log_switch("boot", "ON" if initial else "OFF")
 
     if initial:
         sw.activate()
     else:
-        sw.deactivate()
+        sw.deactivate(force=True)
 
     last_state = initial
     last_change = time.monotonic()
