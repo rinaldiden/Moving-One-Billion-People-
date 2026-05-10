@@ -41,7 +41,7 @@ signal.signal(signal.SIGTERM, signal_handler)
 DEFAULT_MAX_KMH = 10.0
 CONTROL_HZ = 10
 BRAKE_MIN_ANGLE = 0
-BRAKE_MAX_ANGLE = 130
+BRAKE_MAX_ANGLE = 50
 
 # Servo GPIO — direct PWM, no API
 GPIO_CHIP = 4
