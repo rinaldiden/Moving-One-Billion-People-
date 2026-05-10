@@ -38,7 +38,7 @@ os.makedirs(LOG_TRAINING_DIR, exist_ok=True)
 # ═══════════════════════════════════════════════════════════
 GPIO_CHIP = 4
 PIN_SERVO = 12          # GPIO 12 = hardware PWM0
-SERVO_FREQ = 330        # PDI-6221MG native frequency
+SERVO_FREQ = 50         # Miuzei standard servo frequency
 PULSE_MIN_US = 500
 PULSE_MAX_US = 2500
 PERIOD_US = 1_000_000 / SERVO_FREQ  # ~3030us
