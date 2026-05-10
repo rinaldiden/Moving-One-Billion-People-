@@ -367,24 +367,13 @@ def brake_loop():
         braking = True
         brake_event = "FRENATA"
 
-    SNAP_ANGLE = 85       # fast phase: grab the disc
-    PROGRESSIVE_STEP = 1  # degrees per step in progressive phase
-    PROGRESSIVE_DELAY = 0.05  # 50ms between steps
+    BRAKE_ANGLE = 30  # fixed emergency brake angle from phone
 
-    print(f"[BRAKE] Start — snap to {SNAP_ANGLE}° then progressive to {MEDIUM_TRAVEL}°")
-    log_servo("INIZIO_FRENATA", 0, 0, SNAP_ANGLE)
+    print(f"[BRAKE] Emergency brake → {BRAKE_ANGLE}°")
+    log_servo("INIZIO_FRENATA", 0, 0, BRAKE_ANGLE)
 
     try:
-        # Phase 1: fast snap to grab the disc
-        servo.write(SNAP_ANGLE)
-        time.sleep(0.1)
-
-        # Phase 2: progressive from SNAP to MEDIUM_TRAVEL
-        angle = SNAP_ANGLE
-        while angle < MEDIUM_TRAVEL and braking:
-            angle = min(angle + PROGRESSIVE_STEP, MEDIUM_TRAVEL)
-            servo.write(angle)
-            time.sleep(PROGRESSIVE_DELAY)
+        servo.write(BRAKE_ANGLE)
 
         while braking:
             imu = read_imu(i2c_bus)
@@ -392,11 +381,11 @@ def brake_loop():
             decel_g = -imu["ax"]
             speed_ms = gps["speed_ms"]
 
-            log_servo("LOOP", speed_ms, decel_g, angle)
+            log_servo("LOOP", speed_ms, decel_g, BRAKE_ANGLE)
             time.sleep(LOOP_INTERVAL)
 
     except Exception as e:
-        log_servo("ERRORE", 0, 0, angle, str(e))
+        log_servo("ERRORE", 0, 0, BRAKE_ANGLE, str(e))
         print(f"[BRAKE] Error: {e}")
     finally:
         release_servo()
@@ -521,6 +510,17 @@ def frena():
 def rilascia():
     release_servo()
     return jsonify({"status": "released"})
+
+
+@app.route("/angolo", methods=["POST"])
+def set_angolo():
+    """Set servo to a specific angle. Used by speed_limiter via API."""
+    data = request.get_json(silent=True) or {}
+    angle = data.get("angolo", 0)
+    angle = max(0, min(95, int(angle)))
+    if servo:
+        servo.write(angle)
+    return jsonify({"status": "ok", "angolo": angle})
 
 
 @app.route("/stato", methods=["GET"])

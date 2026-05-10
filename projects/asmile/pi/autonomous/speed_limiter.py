@@ -94,28 +94,22 @@ def _angle_to_duty(angle):
 
 
 def set_brake(angle, dry_run=False, gpio_handle=None):
-    """Set brake servo angle. GPIO direct if available, fallback to API."""
+    """Set brake servo angle via servofreno API."""
     angle = max(BRAKE_MIN_ANGLE, min(BRAKE_MAX_ANGLE, int(angle)))
     if dry_run:
         return angle
 
-    # GPIO direct — faster, no network dependency
-    if gpio_handle is not None:
-        import lgpio
-        if angle > 0:
-            lgpio.tx_pwm(gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(angle))
-        else:
-            lgpio.tx_pwm(gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(0))
-            time.sleep(0.3)
-            lgpio.tx_pwm(gpio_handle, SERVO_PIN, 0, 0)
-    else:
-        # Fallback: API via servofreno_server
-        import urllib.request
-        try:
-            urllib.request.urlopen(
-                f"http://localhost:5000/brake?angle={angle}", timeout=1)
-        except Exception:
-            pass
+    import urllib.request
+    try:
+        data = json.dumps({"angolo": angle}).encode()
+        req = urllib.request.Request(
+            "http://localhost:5000/angolo",
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST")
+        urllib.request.urlopen(req, timeout=1)
+    except Exception:
+        pass
     return angle
 
 
@@ -134,14 +128,7 @@ class SpeedLimiter:
         # Decel monitor
         self.decel_boost = 0
 
-        # GPIO for servo
-        self.gpio_handle = None
-        if not dry_run:
-            try:
-                import lgpio
-                self.gpio_handle = lgpio.gpiochip_open(GPIO_CHIP)
-            except Exception as e:
-                print(f"WARNING: GPIO init failed: {e} — brake won't work")
+        self.gpio_handle = None  # not used, brake via API
 
         # Log
         self.log_file = None
