@@ -247,8 +247,7 @@ class SpeedLimiter:
 
             time.sleep(1.0 / CONTROL_HZ)
 
-        # Release brake on exit
-        set_brake(0, self.dry_run, self.gpio_handle)
+        # Do NOT release brake on exit — master_switch handles brake after stop
         if self.log_file:
             self.log_file.close()
         print(f"\n\nSpeed limiter stopped.")
