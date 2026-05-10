@@ -147,7 +147,7 @@ class MasterSwitch:
             print("[WATCHDOG] recorder failed to start")
 
     def activate(self, follow_me=False):
-        """Switch turned ON — start servofreno and logging.
+        """Switch turned ON — start speed_limiter (owns servo GPIO) and logging.
         If follow_me=True, also start follow-me cone tracking."""
         if self.active and self._recorder_is_alive():
             return  # already running and healthy
@@ -156,15 +156,16 @@ class MasterSwitch:
         self.follow_me = follow_me
         self.recorder_retries = 0
 
-        # Release servo GPIO if we were holding it
+        # Release servo GPIO if we were holding it (from deactivate)
         if hasattr(self, 'servo_handle') and self.servo_handle:
             lgpio.tx_pwm(self.servo_handle, PIN_SERVO, 0, 0)
             lgpio.gpiochip_close(self.servo_handle)
             self.servo_handle = None
             time.sleep(0.3)
 
-        subprocess.run(["systemctl", "start", "servofreno.service"])
-        print("[SWITCH] servofreno started — brake released")
+        # Start speed_limiter (owns GPIO 12, controls servo)
+        subprocess.run(["systemctl", "start", "speed_limiter.service"])
+        print("[SWITCH] speed_limiter started — servo under PID control")
 
         # Clean up any zombie camera processes
         self._kill_camera_zombies()
@@ -193,12 +194,12 @@ class MasterSwitch:
             print("[SWITCH] Normal logging mode")
 
     def deactivate(self):
-        """Switch turned OFF — stop servofreno, lock brake."""
+        """Switch turned OFF — stop speed_limiter, lock brake."""
         if not self.active:
             return
         self.active = False
         self.recorder_proc = None
-        print("[SWITCH] OFF — stopping servofreno, locking brake")
+        print("[SWITCH] OFF — stopping speed_limiter, locking brake")
 
         # Stop follow-me if running
         subprocess.run(["pkill", "-f", "follow_me/main.py"], capture_output=True)
@@ -206,13 +207,14 @@ class MasterSwitch:
         self._kill_camera_zombies()
         print("[SWITCH] services stopped")
 
-        # Stop servofreno (releases GPIO 12)
-        subprocess.run(["systemctl", "stop", "servofreno.service"],
+        # Stop speed_limiter (releases GPIO 12)
+        subprocess.run(["systemctl", "stop", "speed_limiter.service"],
                         capture_output=True)
         time.sleep(0.5)
 
         # Now we can take GPIO 12 and lock brake
         h2 = lgpio.gpiochip_open(GPIO_CHIP)
+        lgpio.gpio_claim_output(h2, PIN_SERVO)
         lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, angle_to_duty(BRAKE_ANGLE))
         print(f"[SWITCH] Brake locked at {BRAKE_ANGLE}°")
         # Wait for servo to reach position, then cut PWM to avoid burnout
