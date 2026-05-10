@@ -66,6 +66,7 @@ def read_gps():
     try:
         resp = urllib.request.urlopen("http://localhost:5000/stato", timeout=1)
         data = json.loads(resp.read())
+        resp.close()
         gps = data.get("gps", {})
         return gps.get("speed_ms", 0), gps.get("fix", False)
     except Exception:
@@ -149,11 +150,13 @@ class SpeedLimiter:
 
     def _check_emergency(self):
         """Check if phone requested emergency brake via flag file."""
+        if not os.path.exists("/tmp/emergency_brake"):
+            return 0
         try:
             with open("/tmp/emergency_brake") as f:
                 angle = int(f.read().strip())
                 return max(0, min(BRAKE_MAX_ANGLE, angle))
-        except (FileNotFoundError, ValueError):
+        except (ValueError, OSError):
             return 0
 
     def step(self):
