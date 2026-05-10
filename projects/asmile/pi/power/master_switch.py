@@ -200,10 +200,9 @@ class MasterSwitch:
         self.active = False
         self.recorder_proc = None
 
-        # BRAKE IMMEDIATELY — kill speed_limiter and take GPIO
-        subprocess.run(["systemctl", "kill", "-s", "KILL", "speed_limiter.service"],
+        # Stop speed_limiter (stop prevents restart, then kill for speed)
+        subprocess.run(["systemctl", "stop", "speed_limiter.service"],
                         capture_output=True)
-        time.sleep(0.1)
 
         # Lock brake NOW
         h2 = lgpio.gpiochip_open(GPIO_CHIP)
@@ -216,7 +215,7 @@ class MasterSwitch:
         self.servo_handle = None
         print("[SWITCH] Servo PWM off (holds mechanically)")
 
-        # Now clean up the rest (not urgent)
+        # Clean up the rest
         subprocess.run(["pkill", "-f", "follow_me/main.py"], capture_output=True)
         self._kill_camera_zombies()
         print("[SWITCH] services stopped")
