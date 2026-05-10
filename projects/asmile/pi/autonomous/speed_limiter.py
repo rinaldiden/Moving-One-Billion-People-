@@ -41,7 +41,7 @@ signal.signal(signal.SIGTERM, signal_handler)
 DEFAULT_MAX_KMH = 10.0
 CONTROL_HZ = 10
 BRAKE_MIN_ANGLE = 0
-BRAKE_MAX_ANGLE = 95
+BRAKE_MAX_ANGLE = 140
 
 # Servo GPIO — direct PWM, no API
 GPIO_CHIP = 4
@@ -152,7 +152,7 @@ class SpeedLimiter:
         try:
             with open("/tmp/emergency_brake") as f:
                 angle = int(f.read().strip())
-                return max(0, min(95, angle))
+                return max(0, min(BRAKE_MAX_ANGLE, angle))
         except (FileNotFoundError, ValueError):
             return 0
 
