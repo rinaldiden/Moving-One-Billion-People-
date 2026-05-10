@@ -38,7 +38,7 @@ signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
 # Default config
-DEFAULT_MAX_KMH = 12.0
+DEFAULT_MAX_KMH = 10.0
 CONTROL_HZ = 10
 BRAKE_MIN_ANGLE = 0
 BRAKE_MAX_ANGLE = 95
