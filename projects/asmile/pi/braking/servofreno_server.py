@@ -44,7 +44,7 @@ PULSE_MAX_US = 2500
 PERIOD_US = 1_000_000 / SERVO_FREQ  # ~3030us
 
 CENTER = 0              # release angle
-MEDIUM_TRAVEL = 40      # max braking angle
+MEDIUM_TRAVEL = 45      # max braking angle
 
 # ═══════════════════════════════════════════════════════════
 # IMU CONFIG — from imu_mpu6050.py (exact values)
@@ -514,7 +514,7 @@ def set_angolo():
     """Set servo to a specific angle. Used by speed_limiter via API."""
     data = request.get_json(silent=True) or {}
     angle = data.get("angolo", 0)
-    angle = max(0, min(40, int(angle)))
+    angle = max(0, min(45, int(angle)))
     if servo:
         servo.write(angle)
     return jsonify({"status": "ok", "angolo": angle})
