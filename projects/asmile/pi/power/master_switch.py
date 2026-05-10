@@ -254,6 +254,15 @@ def main():
             f.write(f"{ts},{event},{state}\n")
         print(f"[SWITCH] {ts} {event} → {state}")
 
+    # On boot: immediately set servo to 0° (known position)
+    h_boot = lgpio.gpiochip_open(GPIO_CHIP)
+    lgpio.gpio_claim_output(h_boot, PIN_SERVO)
+    lgpio.tx_pwm(h_boot, PIN_SERVO, SERVO_FREQ, angle_to_duty(0))
+    print("[BOOT] Servo → 0° (home position)")
+    time.sleep(1)
+    lgpio.tx_pwm(h_boot, PIN_SERVO, 0, 0)
+    lgpio.gpiochip_close(h_boot)
+
     # Read initial state
     initial = sw.read_switch()
     log_switch("boot", "ON" if initial else "OFF")
