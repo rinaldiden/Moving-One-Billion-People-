@@ -163,6 +163,16 @@ class SpeedLimiter:
         if emergency > 0:
             self.current_brake = set_brake(emergency, self.dry_run, self.gpio_handle)
             self.brake_active = True
+            self._emergency_was_active = True
+            return speed, speed_kmh, self.current_brake
+
+        # Emergency just released — snap to 0 immediately
+        if getattr(self, '_emergency_was_active', False):
+            self._emergency_was_active = False
+            self.current_brake = set_brake(0, self.dry_run, self.gpio_handle)
+            self.brake_active = False
+            self.integral = 0
+            self.decel_boost = 0
             return speed, speed_kmh, self.current_brake
 
         # Speed error: positive = over limit
