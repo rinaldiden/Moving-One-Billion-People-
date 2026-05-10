@@ -132,6 +132,9 @@ class SpeedLimiter:
                 import lgpio
                 self.gpio_handle = lgpio.gpiochip_open(GPIO_CHIP)
                 lgpio.gpio_claim_output(self.gpio_handle, SERVO_PIN)
+                # Release brake on startup
+                set_brake(0, False, self.gpio_handle)
+                print("Servo released to 0°")
             except Exception as e:
                 print(f"WARNING: GPIO init failed: {e} — brake won't work")
 
