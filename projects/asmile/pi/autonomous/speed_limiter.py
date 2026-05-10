@@ -94,22 +94,19 @@ def _angle_to_duty(angle):
 
 
 def set_brake(angle, dry_run=False, gpio_handle=None):
-    """Set brake servo angle via servofreno API."""
+    """Set brake servo angle. GPIO direct — fast, no dependency."""
     angle = max(BRAKE_MIN_ANGLE, min(BRAKE_MAX_ANGLE, int(angle)))
     if dry_run:
         return angle
 
-    import urllib.request
-    try:
-        data = json.dumps({"angolo": angle}).encode()
-        req = urllib.request.Request(
-            "http://localhost:5000/angolo",
-            data=data,
-            headers={"Content-Type": "application/json"},
-            method="POST")
-        urllib.request.urlopen(req, timeout=1)
-    except Exception:
-        pass
+    if gpio_handle is not None:
+        import lgpio
+        if angle > 0:
+            lgpio.tx_pwm(gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(angle))
+        else:
+            lgpio.tx_pwm(gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(0))
+            time.sleep(0.3)
+            lgpio.tx_pwm(gpio_handle, SERVO_PIN, 0, 0)
     return angle
 
 
@@ -128,7 +125,15 @@ class SpeedLimiter:
         # Decel monitor
         self.decel_boost = 0
 
-        self.gpio_handle = None  # not used, brake via API
+        # GPIO direct for servo — fast, no API dependency
+        self.gpio_handle = None
+        if not dry_run:
+            try:
+                import lgpio
+                self.gpio_handle = lgpio.gpiochip_open(GPIO_CHIP)
+                lgpio.gpio_claim_output(self.gpio_handle, SERVO_PIN)
+            except Exception as e:
+                print(f"WARNING: GPIO init failed: {e} — brake won't work")
 
         # Log
         self.log_file = None
@@ -139,10 +144,26 @@ class SpeedLimiter:
         self.log_file.write("timestamp,speed_ms,speed_kmh,error_ms,"
                             "brake_angle,accel_x,decel_boost\n")
 
+    def _check_emergency(self):
+        """Check if phone requested emergency brake via flag file."""
+        try:
+            with open("/tmp/emergency_brake") as f:
+                angle = int(f.read().strip())
+                return max(0, min(95, angle))
+        except (FileNotFoundError, ValueError):
+            return 0
+
     def step(self):
         speed, fix = read_gps()
         accel_x = read_imu_accel_x()
         speed_kmh = speed * 3.6
+
+        # Emergency brake from phone overrides everything
+        emergency = self._check_emergency()
+        if emergency > 0:
+            self.current_brake = set_brake(emergency, self.dry_run, self.gpio_handle)
+            self.brake_active = True
+            return speed, speed_kmh, self.current_brake
 
         # Speed error: positive = over limit
         error = speed - self.max_speed_ms

@@ -358,8 +358,10 @@ def training_logger_thread():
 # ═══════════════════════════════════════════════════════════
 # BRAKE LOOP
 # ═══════════════════════════════════════════════════════════
+EMERGENCY_BRAKE_FILE = "/tmp/emergency_brake"
+
 def brake_loop():
-    global braking, brake_event, servo, i2c_bus, gps_reader
+    global braking, brake_event, i2c_bus, gps_reader
 
     with brake_lock:
         if braking:
@@ -367,41 +369,36 @@ def brake_loop():
         braking = True
         brake_event = "FRENATA"
 
-    BRAKE_ANGLE = 30  # fixed emergency brake angle from phone
-
-    print(f"[BRAKE] Emergency brake → {BRAKE_ANGLE}°")
-    log_servo("INIZIO_FRENATA", 0, 0, BRAKE_ANGLE)
+    # Write flag file — speed_limiter reads this and brakes via GPIO
+    with open(EMERGENCY_BRAKE_FILE, "w") as f:
+        f.write("30")
+    print(f"[BRAKE] Emergency brake requested (flag written)")
+    log_servo("INIZIO_FRENATA", 0, 0, 30)
 
     try:
-        servo.write(BRAKE_ANGLE)
-
         while braking:
-            imu = read_imu(i2c_bus)
-            gps = gps_reader.get()
-            decel_g = -imu["ax"]
-            speed_ms = gps["speed_ms"]
-
-            log_servo("LOOP", speed_ms, decel_g, BRAKE_ANGLE)
             time.sleep(LOOP_INTERVAL)
-
     except Exception as e:
-        log_servo("ERRORE", 0, 0, BRAKE_ANGLE, str(e))
+        log_servo("ERRORE", 0, 0, 30, str(e))
         print(f"[BRAKE] Error: {e}")
     finally:
         release_servo()
 
 
 def release_servo():
-    global braking, brake_event, servo
+    global braking, brake_event
     was_braking = braking
     braking = False
     brake_event = ""
 
-    if servo:
-        servo.write(CENTER)
-        if was_braking:
-            log_servo("FINE_FRENATA", 0, 0, CENTER, "rilascio")
-            print(f"[BRAKE] Released → {CENTER}°")
+    # Remove flag file — speed_limiter releases brake
+    try:
+        os.remove(EMERGENCY_BRAKE_FILE)
+    except FileNotFoundError:
+        pass
+    if was_braking:
+        log_servo("FINE_FRENATA", 0, 0, 0, "rilascio")
+        print(f"[BRAKE] Released (flag removed)")
 
 
 # ═══════════════════════════════════════════════════════════
@@ -552,12 +549,12 @@ def main():
     print("  ASMILE SERVOFRENO SERVER")
     print("=" * 50)
 
-    # GPIO + Servo
-    gpio_handle = lgpio.gpiochip_open(GPIO_CHIP)
-    servo = Servo(gpio_handle, PIN_SERVO)
-    servo.write(CENTER)
-    print(f"[SERVO] GPIO {PIN_SERVO}, freq {SERVO_FREQ}Hz")
-    print(f"[SERVO] CENTER={CENTER}°, MAX_BRAKE={MEDIUM_TRAVEL}°")
+    # Servo controlled by speed_limiter via GPIO — not by this server
+    # This server only writes /tmp/emergency_brake flag for phone braking
+    servo = None
+    gpio_handle = None
+    print(f"[SERVO] Controlled by speed_limiter via GPIO {PIN_SERVO}")
+    print(f"[SERVO] Phone brake → /tmp/emergency_brake flag")
 
     # IMU
     try:
