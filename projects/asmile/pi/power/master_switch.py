@@ -194,35 +194,32 @@ class MasterSwitch:
             print("[SWITCH] Normal logging mode")
 
     def deactivate(self, force=False):
-        """Switch turned OFF — stop speed_limiter, lock brake."""
+        """Switch turned OFF — BRAKE FIRST, then stop services."""
         if not self.active and not force:
             return
         self.active = False
         self.recorder_proc = None
-        print("[SWITCH] OFF — stopping speed_limiter, locking brake")
 
-        # Stop follow-me if running
-        subprocess.run(["pkill", "-f", "follow_me/main.py"], capture_output=True)
-        # Stop training recorder and ALL video processes
-        self._kill_camera_zombies()
-        print("[SWITCH] services stopped")
-
-        # Stop speed_limiter (releases GPIO 12)
-        subprocess.run(["systemctl", "stop", "speed_limiter.service"],
+        # BRAKE IMMEDIATELY — kill speed_limiter and take GPIO
+        subprocess.run(["systemctl", "kill", "-s", "KILL", "speed_limiter.service"],
                         capture_output=True)
-        time.sleep(0.5)
+        time.sleep(0.1)
 
-        # Now we can take GPIO 12 and lock brake
+        # Lock brake NOW
         h2 = lgpio.gpiochip_open(GPIO_CHIP)
         lgpio.gpio_claim_output(h2, PIN_SERVO)
         lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, angle_to_duty(BRAKE_ANGLE))
         print(f"[SWITCH] Brake locked at {BRAKE_ANGLE}°")
-        # Wait for servo to reach position, then cut PWM to avoid burnout
         time.sleep(0.5)
         lgpio.tx_pwm(h2, PIN_SERVO, 0, 0)
         lgpio.gpiochip_close(h2)
         self.servo_handle = None
         print("[SWITCH] Servo PWM off (holds mechanically)")
+
+        # Now clean up the rest (not urgent)
+        subprocess.run(["pkill", "-f", "follow_me/main.py"], capture_output=True)
+        self._kill_camera_zombies()
+        print("[SWITCH] services stopped")
 
     def cleanup(self):
         if hasattr(self, 'servo_handle') and self.servo_handle:
