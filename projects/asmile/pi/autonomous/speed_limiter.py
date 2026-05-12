@@ -249,15 +249,21 @@ class SpeedLimiter:
 
         elif speed_kmh > self.hyst_start_kmh:
             # HYSTERESIS ZONE — adjust based on trend
-            if accel_x < -0.03:
-                # Accelerating — increase brake
+            if accel_x < -0.05:
+                # Accelerating hard — increase brake
                 self.brake_angle += 1.0
-            elif accel_x > 0.03:
-                # Decelerating — hold or ease slightly
-                self.brake_angle -= 0.3
+            elif accel_x < -0.02:
+                # Accelerating slightly — small increase
+                self.brake_angle += 0.3
+            elif accel_x > 0.05:
+                # Decelerating — release faster
+                self.brake_angle -= 2.0
+            elif accel_x > 0.02:
+                # Slowing slightly or stable — release
+                self.brake_angle -= 1.0
             else:
-                # Steady — small increase to push speed down toward hyst_start
-                self.brake_angle += 0.2
+                # Steady speed — ease off slowly
+                self.brake_angle -= 0.5
 
             self.brake_angle = max(1, min(BRAKE_MAX_ANGLE, self.brake_angle))
             self.current_brake = set_brake(int(self.brake_angle), self.dry_run, self.gpio_handle)
