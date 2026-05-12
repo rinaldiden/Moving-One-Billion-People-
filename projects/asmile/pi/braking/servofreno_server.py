@@ -509,17 +509,6 @@ def rilascia():
     return jsonify({"status": "released"})
 
 
-@app.route("/angolo", methods=["POST"])
-def set_angolo():
-    """Set servo to a specific angle. Used by speed_limiter via API."""
-    data = request.get_json(silent=True) or {}
-    angle = data.get("angolo", 0)
-    angle = max(0, min(45, int(angle)))
-    if servo:
-        servo.write(angle)
-    return jsonify({"status": "ok", "angolo": angle})
-
-
 @app.route("/stato", methods=["GET"])
 def stato():
     gps = gps_reader.get() if gps_reader else {}
