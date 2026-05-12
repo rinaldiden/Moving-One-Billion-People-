@@ -147,8 +147,8 @@ class SpeedLimiter:
         self.brake_active = False
         self._emergency_was_active = False
 
-        # PI controller: accumulates brake while over limit
-        self.integral = 0.0
+        # Adaptive controller state
+        self.brake_angle = 0.0  # current commanded angle (float for smooth increments)
 
         # Speed smoothing (GPS is noisy)
         self.speed_history = []
@@ -177,7 +177,7 @@ class SpeedLimiter:
         log_path = os.path.join(log_dir, f"limiter_{ts}.csv")
         self.log_file = open(log_path, "w")
         self.log_file.write("timestamp,speed_ms,speed_kmh,smoothed_kmh,"
-                            "brake_angle,accel_x,zone,fix,integral\n")
+                            "brake_angle,accel_x,zone,fix\n")
         print(f"Log: {log_path}")
 
     def _smooth_speed(self, speed_ms):
@@ -233,35 +233,49 @@ class SpeedLimiter:
 
         dt = 1.0 / CONTROL_HZ
 
-        # PI controller
+        # Adaptive controller: adjusts brake_angle based on speed feedback
+        # - Speed too high → increase angle
+        # - Speed dropping → hold or decrease angle
+        # - Speed OK → decrease angle
+        # No fixed mapping — learns from the effect of braking
+
         if speed_kmh > self.max_kmh:
-            # OVER LIMIT
-            excess = speed_kmh - self.max_kmh
-            self.integral += excess * dt * 5
-            self.integral = min(self.integral, BRAKE_MAX_ANGLE)
-            brake_angle = 20 * excess + self.integral
-            brake_angle = max(5, min(BRAKE_MAX_ANGLE, int(brake_angle)))
-            self.current_brake = set_brake(brake_angle, self.dry_run, self.gpio_handle)
+            # OVER LIMIT — increase brake until speed drops
+            self.brake_angle += 2.0  # +2° every 100ms until it works
+            self.brake_angle = min(self.brake_angle, BRAKE_MAX_ANGLE)
+            self.current_brake = set_brake(int(self.brake_angle), self.dry_run, self.gpio_handle)
             self.brake_active = True
             zone = "OVER"
 
         elif speed_kmh > self.hyst_start_kmh:
-            # HYSTERESIS ZONE (8-12) — stronger proportional
-            ratio = (speed_kmh - self.hyst_start_kmh) / HYSTERESIS_KMH
-            self.integral = max(0, self.integral - 3.0 * dt)
-            # 0° at 8, 5° at 9, 10° at 10, 15° at 11, 20° at 12
-            brake_angle = int(20 * ratio + self.integral)
-            brake_angle = max(1, min(BRAKE_MAX_ANGLE, brake_angle))
-            self.current_brake = set_brake(brake_angle, self.dry_run, self.gpio_handle)
+            # HYSTERESIS ZONE — adjust based on trend
+            if accel_x < -0.03:
+                # Accelerating — increase brake
+                self.brake_angle += 1.0
+            elif accel_x > 0.03:
+                # Decelerating — hold or ease slightly
+                self.brake_angle -= 0.3
+            else:
+                # Steady — small increase to push speed down toward hyst_start
+                self.brake_angle += 0.2
+
+            self.brake_angle = max(1, min(BRAKE_MAX_ANGLE, self.brake_angle))
+            self.current_brake = set_brake(int(self.brake_angle), self.dry_run, self.gpio_handle)
             self.brake_active = True
             zone = "HYST"
 
         else:
-            # UNDER — release, reset integral
-            self.integral = 0
-            if self.brake_active:
-                self.current_brake = set_brake(0, self.dry_run, self.gpio_handle)
-                self.brake_active = False
+            # UNDER — reduce brake
+            if self.brake_angle > 0:
+                self.brake_angle -= 1.0
+                self.brake_angle = max(0, self.brake_angle)
+                self.current_brake = set_brake(int(self.brake_angle), self.dry_run, self.gpio_handle)
+                if self.brake_angle <= 0:
+                    self.brake_active = False
+            else:
+                if self.brake_active:
+                    self.current_brake = set_brake(0, self.dry_run, self.gpio_handle)
+                    self.brake_active = False
             zone = "FREE"
 
         self._log(speed_raw, speed_kmh, accel_x, zone, fix)
@@ -273,8 +287,7 @@ class SpeedLimiter:
             smoothed_kmh = speed_kmh
             self.log_file.write(
                 f"{ts},{speed_raw:.2f},{speed_raw*3.6:.1f},{smoothed_kmh:.1f},"
-                f"{self.current_brake:.0f},{accel_x:.3f},{zone},{1 if fix else 0},"
-                f"{self.integral:.1f}\n")
+                f"{self.current_brake:.0f},{accel_x:.3f},{zone},{1 if fix else 0}\n")
             self.log_file.flush()
 
     def run(self):
@@ -286,7 +299,7 @@ class SpeedLimiter:
         print(f"{'='*50}")
         print(f"Max speed: {self.max_kmh:.0f} km/h ({self.max_speed_ms:.1f} m/s)")
         print(f"Hysteresis: {self.hyst_start_kmh:.0f}-{self.max_kmh:.0f} km/h")
-        print(f"PI controller: P=10 deg/kmh, I accumulates")
+        print(f"Adaptive controller: adjusts brake from GPS+IMU feedback")
         print(f"{'DRY RUN' if self.dry_run else 'ACTIVE'}")
         print(f"Ctrl+C to stop\n")
 
