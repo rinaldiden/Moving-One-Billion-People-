@@ -92,7 +92,10 @@ def set_brake(angle, dry_run=False, gpio_handle=None):
 
     if gpio_handle is not None:
         import lgpio
-        lgpio.tx_pwm(gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(angle))
+        if angle > 0:
+            lgpio.tx_pwm(gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(angle))
+        else:
+            lgpio.tx_pwm(gpio_handle, SERVO_PIN, 0, 0)  # no PWM when released
     return angle
 
 
@@ -124,8 +127,11 @@ class SpeedLimiter:
                 import lgpio
                 self.gpio_handle = lgpio.gpiochip_open(GPIO_CHIP)
                 lgpio.gpio_claim_output(self.gpio_handle, SERVO_PIN)
-                set_brake(0, False, self.gpio_handle)
-                print("Servo released to 0°")
+                # Go to 0°, hold 1.5s for servo to arrive, then cut PWM
+                lgpio.tx_pwm(self.gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(0))
+                time.sleep(1.5)
+                lgpio.tx_pwm(self.gpio_handle, SERVO_PIN, 0, 0)
+                print("Servo released to 0°, PWM off")
             except Exception as e:
                 print(f"WARNING: GPIO init failed: {e} — brake won't work")
 
