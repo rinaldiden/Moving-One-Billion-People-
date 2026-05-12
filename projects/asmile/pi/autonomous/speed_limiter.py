@@ -96,7 +96,7 @@ def set_brake(angle, dry_run=False, gpio_handle=None):
             lgpio.tx_pwm(gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(angle))
         else:
             lgpio.tx_pwm(gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(0))
-            time.sleep(0.3)
+            time.sleep(1.5)  # servo needs time to reach 0 from max
             lgpio.tx_pwm(gpio_handle, SERVO_PIN, 0, 0)
     return angle
 
