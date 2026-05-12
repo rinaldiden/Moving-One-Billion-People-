@@ -227,41 +227,36 @@ class SpeedLimiter:
 
         dt = 1.0 / CONTROL_HZ
 
-        # PI controller: proportional + integral that keeps increasing until speed drops
+        # PI controller: aggressive P for instant response, I for sustained braking
         if speed_kmh > self.max_kmh:
-            # OVER LIMIT — P + I that accumulates
+            # OVER LIMIT
             excess = speed_kmh - self.max_kmh  # km/h over
-            self.integral += excess * dt
-            self.integral = min(self.integral, BRAKE_MAX_ANGLE)  # cap
-            brake_angle = 10 * excess + self.integral  # P=10 deg per km/h + accumulated I
-            brake_angle = max(3, min(BRAKE_MAX_ANGLE, int(brake_angle)))
+            self.integral += excess * dt * 5   # fast accumulation
+            self.integral = min(self.integral, BRAKE_MAX_ANGLE)
+            # P=20 deg per km/h over: 0.5 over = 10°, 1 over = 20°, 2 over = 40°
+            brake_angle = 20 * excess + self.integral
+            brake_angle = max(5, min(BRAKE_MAX_ANGLE, int(brake_angle)))
             self.current_brake = set_brake(brake_angle, self.dry_run, self.gpio_handle)
             self.brake_active = True
             zone = "OVER"
 
         elif speed_kmh > self.hyst_start_kmh:
-            # HYSTERESIS ZONE (8-10) — light proportional, drain integral slowly
+            # HYSTERESIS ZONE (8-10) — proportional, reset integral
             ratio = (speed_kmh - self.hyst_start_kmh) / HYSTERESIS_KMH
-            self.integral = max(0, self.integral - 0.5 * dt)  # slowly drain
-            brake_angle = int(5 * ratio + self.integral)
+            self.integral = max(0, self.integral - 5.0 * dt)  # drain fast
+            brake_angle = int(10 * ratio)  # 0° at 8, 10° at 10
             brake_angle = max(1, min(BRAKE_MAX_ANGLE, brake_angle))
             self.current_brake = set_brake(brake_angle, self.dry_run, self.gpio_handle)
             self.brake_active = True
             zone = "HYST"
 
         else:
-            # UNDER — release gradually
-            self.integral = max(0, self.integral - 2.0 * dt)  # drain faster
-            if self.integral > 1:
-                brake_angle = int(self.integral)
-                self.current_brake = set_brake(brake_angle, self.dry_run, self.gpio_handle)
-                zone = "EASE"
-            else:
-                if self.brake_active:
-                    self.current_brake = set_brake(0, self.dry_run, self.gpio_handle)
-                    self.brake_active = False
-                self.integral = 0
-                zone = "FREE"
+            # UNDER — release, reset integral
+            self.integral = 0
+            if self.brake_active:
+                self.current_brake = set_brake(0, self.dry_run, self.gpio_handle)
+                self.brake_active = False
+            zone = "FREE"
 
         self._log(speed_raw, speed_kmh, accel_x, zone, fix)
         return speed, speed_kmh, self.current_brake

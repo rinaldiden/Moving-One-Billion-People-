@@ -1,0 +1,146 @@
+=== config.txt ===
+# For more options and information see
+# http://rptl.io/configtxt
+# Some settings may impact device functionality. See link above for details
+
+# Uncomment some or all of these to enable the optional hardware interfaces
+dtparam=i2c_arm=on
+#dtparam=i2s=on
+#dtparam=spi=on
+
+# Enable audio (loads snd_bcm2835)
+dtparam=audio=on
+
+# Additional overlays and parameters are documented
+# /boot/firmware/overlays/README
+
+# Automatically load overlays for detected cameras
+camera_auto_detect=1
+
+# Automatically load overlays for detected DSI displays
+display_auto_detect=1
+
+# Automatically load initramfs files, if found
+auto_initramfs=1
+
+# Enable DRM VC4 V3D driver
+dtoverlay=vc4-kms-v3d
+max_framebuffers=2
+
+# Don't have the firmware create an initial video= setting in cmdline.txt.
+# Use the kernel's default instead.
+disable_fw_kms_setup=1
+
+# Run in 64-bit mode
+arm_64bit=1
+
+# Disable compensation for displays with overscan
+disable_overscan=1
+
+# Run as fast as firmware / board allows
+arm_boost=1
+
+[cm4]
+# Enable host mode on the 2711 built-in XHCI USB controller.
+# This line should be removed if the legacy DWC2 controller is required
+# (e.g. for USB device mode) or if USB support is not required.
+otg_mode=1
+
+[cm5]
+dtoverlay=dwc2,dr_mode=host
+
+[all]
+
+# Asmile: UART3 for GPS NEO-M10
+dtoverlay=uart3
+
+# Asmile: Arducam Camarray HAT (dual OV9281)
+dtoverlay=arducam-pivariety
+
+# Asmile: SPI1 for SSI Encoder (via RS-485 modules)
+dtoverlay=spi1-1cs
+=== services ===
+[Unit]
+Description=Asmile Master Switch — GPIO toggle controls brake and logging
+After=multi-user.target
+Before=servofreno.service
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -u /home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/pi/power/master_switch.py
+Restart=on-failure
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target
+---
+[Unit]
+Description=Asmile Speed Limiter — max 10 km/h with hysteresis braking
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -u /home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/pi/autonomous/speed_limiter.py
+Restart=on-failure
+RestartSec=2
+User=root
+WorkingDirectory=/home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/pi/autonomous
+
+[Install]
+WantedBy=multi-user.target
+---
+[Unit]
+Description=Asmile Servofreno Server (Flask :5000)
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/pi/braking/servofreno_server.py
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+User=root
+WorkingDirectory=/home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/pi/braking
+
+[Install]
+WantedBy=multi-user.target
+---
+[Unit]
+Description=SSI Encoder Reader (SPI1)
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -u /home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/pi/steering/encoder_spi_daemon.py --quiet
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+User=root
+
+[Install]
+WantedBy=multi-user.target
+---
+[Unit]
+Description=Asmile Safe Shutdown — monitors power loss via GPIO
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/asmile2/wip/Moving-One-Billion-People-/projects/asmile/pi/power/safe_shutdown.py
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+User=root
+
+[Install]
+WantedBy=multi-user.target
+=== enabled ===
+encoder-ssi.service                enabled enabled
+master_switch.service              enabled enabled
+safe_shutdown.service              enabled enabled
+servofreno.service                 enabled enabled
