@@ -204,7 +204,13 @@ class SpeedLimiter:
         accel_x = read_imu_accel_x()
         speed = self._smooth_speed(speed_raw)
         speed_kmh = speed * 3.6
-        hyst_start_kmh = self.max_kmh - HYSTERESIS_KMH
+
+        # IMU-based speed estimation between GPS updates
+        # accel_x negative = accelerating forward (bike orientation)
+        # If accelerating and already in zone, predict speed is higher than GPS says
+        if accel_x < -0.05 and speed_kmh > 6:
+            # Accelerating: estimate speed increase since last GPS update
+            speed_kmh += abs(accel_x) * 9.81 * 0.5 * 3.6  # ~0.5s of accel
 
         # Emergency brake from phone overrides everything
         emergency = self._check_emergency()
@@ -227,13 +233,12 @@ class SpeedLimiter:
 
         dt = 1.0 / CONTROL_HZ
 
-        # PI controller: aggressive P for instant response, I for sustained braking
+        # PI controller
         if speed_kmh > self.max_kmh:
             # OVER LIMIT
-            excess = speed_kmh - self.max_kmh  # km/h over
-            self.integral += excess * dt * 5   # fast accumulation
+            excess = speed_kmh - self.max_kmh
+            self.integral += excess * dt * 5
             self.integral = min(self.integral, BRAKE_MAX_ANGLE)
-            # P=20 deg per km/h over: 0.5 over = 10°, 1 over = 20°, 2 over = 40°
             brake_angle = 20 * excess + self.integral
             brake_angle = max(5, min(BRAKE_MAX_ANGLE, int(brake_angle)))
             self.current_brake = set_brake(brake_angle, self.dry_run, self.gpio_handle)
@@ -241,10 +246,11 @@ class SpeedLimiter:
             zone = "OVER"
 
         elif speed_kmh > self.hyst_start_kmh:
-            # HYSTERESIS ZONE (8-10) — proportional, reset integral
+            # HYSTERESIS ZONE (8-12) — stronger proportional
             ratio = (speed_kmh - self.hyst_start_kmh) / HYSTERESIS_KMH
-            self.integral = max(0, self.integral - 5.0 * dt)  # drain fast
-            brake_angle = int(10 * ratio)  # 0° at 8, 10° at 10
+            self.integral = max(0, self.integral - 3.0 * dt)
+            # 0° at 8, 5° at 9, 10° at 10, 15° at 11, 20° at 12
+            brake_angle = int(20 * ratio + self.integral)
             brake_angle = max(1, min(BRAKE_MAX_ANGLE, brake_angle))
             self.current_brake = set_brake(brake_angle, self.dry_run, self.gpio_handle)
             self.brake_active = True
