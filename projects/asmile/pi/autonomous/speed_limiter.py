@@ -84,18 +84,22 @@ def _angle_to_duty(angle):
     return (pulse_us / PERIOD_US) * 100.0
 
 
+_last_angle = -1  # track last sent angle to avoid re-sending
+
 def set_brake(angle, dry_run=False, gpio_handle=None):
-    """Set brake servo angle. GPIO direct — fast, no dependency."""
+    """Set brake servo angle. GPIO direct — only sends PWM when angle changes."""
+    global _last_angle
     angle = max(BRAKE_MIN_ANGLE, min(BRAKE_MAX_ANGLE, int(angle)))
     if dry_run:
         return angle
 
-    if gpio_handle is not None:
+    if gpio_handle is not None and angle != _last_angle:
         import lgpio
         if angle > 0:
             lgpio.tx_pwm(gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(angle))
         else:
             lgpio.tx_pwm(gpio_handle, SERVO_PIN, 0, 0)  # no PWM when released
+        _last_angle = angle
     return angle
 
 
