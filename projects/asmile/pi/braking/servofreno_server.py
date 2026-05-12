@@ -371,7 +371,7 @@ def brake_loop():
 
     # Write flag file — speed_limiter reads this and brakes via GPIO
     with open(EMERGENCY_BRAKE_FILE, "w") as f:
-        f.write("30")
+        f.write("40")
     print(f"[BRAKE] Emergency brake requested (flag written)")
     log_servo("INIZIO_FRENATA", 0, 0, 30)
 
