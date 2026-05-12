@@ -147,10 +147,8 @@ class SpeedLimiter:
         self.brake_active = False
         self._emergency_was_active = False
 
-        # Auto-calibration: learn how much brake angle produces how much decel
-        self.brake_gain = 3.0   # initial guess: 3 degrees per km/h over limit
-        self.last_speed_kmh = 0
-        self.gain_learn_rate = 0.1
+        # PI controller: accumulates brake while over limit
+        self.integral = 0.0
 
         # Speed smoothing (GPS is noisy)
         self.speed_history = []
@@ -179,7 +177,7 @@ class SpeedLimiter:
         log_path = os.path.join(log_dir, f"limiter_{ts}.csv")
         self.log_file = open(log_path, "w")
         self.log_file.write("timestamp,speed_ms,speed_kmh,smoothed_kmh,"
-                            "brake_angle,accel_x,zone,fix,brake_gain\n")
+                            "brake_angle,accel_x,zone,fix,integral\n")
         print(f"Log: {log_path}")
 
     def _smooth_speed(self, speed_ms):
@@ -227,56 +225,43 @@ class SpeedLimiter:
             self._log(speed_raw, speed_kmh, accel_x, zone, fix)
             return speed, speed_kmh, self.current_brake
 
-        # Auto-calibration: observe effect of braking on speed
-        if self.brake_active and self.last_speed_kmh > 0:
-            speed_delta = speed_kmh - self.last_speed_kmh  # negative = slowing
-            if self.current_brake > 2:
-                if speed_delta > 0.2:
-                    # Braking but speed still rising → need more brake
-                    self.brake_gain += self.gain_learn_rate
-                elif speed_delta < -1.0:
-                    # Braking too hard, slowing too fast → need less brake
-                    self.brake_gain -= self.gain_learn_rate
-                self.brake_gain = max(1.0, min(15.0, self.brake_gain))
+        dt = 1.0 / CONTROL_HZ
 
-        self.last_speed_kmh = speed_kmh
-
-        # Hysteresis braking — auto-calibrated, smooth transitions
+        # PI controller: proportional + integral that keeps increasing until speed drops
         if speed_kmh > self.max_kmh:
-            # OVER LIMIT — brake proportional to excess
-            excess = speed_kmh - self.max_kmh
-            brake_angle = excess * self.brake_gain
-            brake_angle = max(2, min(BRAKE_MAX_ANGLE, brake_angle))
+            # OVER LIMIT — P + I that accumulates
+            excess = speed_kmh - self.max_kmh  # km/h over
+            self.integral += excess * dt
+            self.integral = min(self.integral, BRAKE_MAX_ANGLE)  # cap
+            brake_angle = 10 * excess + self.integral  # P=10 deg per km/h + accumulated I
+            brake_angle = max(3, min(BRAKE_MAX_ANGLE, int(brake_angle)))
             self.current_brake = set_brake(brake_angle, self.dry_run, self.gpio_handle)
             self.brake_active = True
             zone = "OVER"
 
         elif speed_kmh > self.hyst_start_kmh:
-            # HYSTERESIS ZONE (8-10 km/h) — gentle proportional
+            # HYSTERESIS ZONE (8-10) — light proportional, drain integral slowly
             ratio = (speed_kmh - self.hyst_start_kmh) / HYSTERESIS_KMH
-            brake_angle = ratio * self.brake_gain * 0.5
-            brake_angle = max(1, int(brake_angle))
+            self.integral = max(0, self.integral - 0.5 * dt)  # slowly drain
+            brake_angle = int(5 * ratio + self.integral)
+            brake_angle = max(1, min(BRAKE_MAX_ANGLE, brake_angle))
             self.current_brake = set_brake(brake_angle, self.dry_run, self.gpio_handle)
             self.brake_active = True
             zone = "HYST"
 
-        elif speed_kmh > self.hyst_start_kmh - 1.0 and self.brake_active:
-            # RELEASE ZONE (7-8 km/h) — gradually reduce, don't snap to 0
-            ratio = (speed_kmh - (self.hyst_start_kmh - 1.0)) / 1.0
-            brake_angle = max(0, int(self.current_brake * ratio))
-            if brake_angle > 0:
-                self.current_brake = set_brake(brake_angle, self.dry_run, self.gpio_handle)
-            else:
-                self.current_brake = set_brake(0, self.dry_run, self.gpio_handle)
-                self.brake_active = False
-            zone = "EASE"
-
         else:
-            # WELL UNDER — release
-            if self.brake_active:
-                self.current_brake = set_brake(0, self.dry_run, self.gpio_handle)
-                self.brake_active = False
-            zone = "FREE"
+            # UNDER — release gradually
+            self.integral = max(0, self.integral - 2.0 * dt)  # drain faster
+            if self.integral > 1:
+                brake_angle = int(self.integral)
+                self.current_brake = set_brake(brake_angle, self.dry_run, self.gpio_handle)
+                zone = "EASE"
+            else:
+                if self.brake_active:
+                    self.current_brake = set_brake(0, self.dry_run, self.gpio_handle)
+                    self.brake_active = False
+                self.integral = 0
+                zone = "FREE"
 
         self._log(speed_raw, speed_kmh, accel_x, zone, fix)
         return speed, speed_kmh, self.current_brake
@@ -288,7 +273,7 @@ class SpeedLimiter:
             self.log_file.write(
                 f"{ts},{speed_raw:.2f},{speed_raw*3.6:.1f},{smoothed_kmh:.1f},"
                 f"{self.current_brake:.0f},{accel_x:.3f},{zone},{1 if fix else 0},"
-                f"{self.brake_gain:.2f}\n")
+                f"{self.integral:.1f}\n")
             self.log_file.flush()
 
     def run(self):
@@ -300,7 +285,7 @@ class SpeedLimiter:
         print(f"{'='*50}")
         print(f"Max speed: {self.max_kmh:.0f} km/h ({self.max_speed_ms:.1f} m/s)")
         print(f"Hysteresis: {self.hyst_start_kmh:.0f}-{self.max_kmh:.0f} km/h")
-        print(f"Auto-calibration: gain starts at {self.brake_gain:.1f} deg/kmh")
+        print(f"PI controller: P=10 deg/kmh, I accumulates")
         print(f"{'DRY RUN' if self.dry_run else 'ACTIVE'}")
         print(f"Ctrl+C to stop\n")
 
