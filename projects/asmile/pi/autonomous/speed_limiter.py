@@ -36,8 +36,8 @@ signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
 # Default config
-DEFAULT_MAX_KMH = 10.0
-HYSTERESIS_KMH = 2.0      # start monitoring 2 km/h before limit
+DEFAULT_MAX_KMH = 12.0
+HYSTERESIS_KMH = 4.0      # start monitoring at 8 km/h, limit at 12
 CONTROL_HZ = 10
 BRAKE_MIN_ANGLE = 0
 BRAKE_MAX_ANGLE = 45
