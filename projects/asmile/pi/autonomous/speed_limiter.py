@@ -86,8 +86,35 @@ def _angle_to_duty(angle):
 
 _last_angle = -1  # track last sent angle to avoid re-sending
 
+# INA219 servo current sensor (I2C 0x40) — checks servo is powered before sending PWM
+INA219_ADDR = 0x40
+_ina219_bus = None
+_servo_powered = True  # assume powered if no INA219
+
+
+def _check_servo_power():
+    """Read INA219 to verify servo has voltage. Returns True if powered or no sensor."""
+    global _ina219_bus, _servo_powered
+    try:
+        if _ina219_bus is None:
+            import smbus2
+            _ina219_bus = smbus2.SMBus(1)
+            # Init INA219: calibration register
+            _ina219_bus.write_word_data(INA219_ADDR, 0x05, 0x1000)
+        # Read bus voltage register (reg 0x02)
+        raw = _ina219_bus.read_word_data(INA219_ADDR, 0x02)
+        raw = ((raw & 0xFF) << 8) | ((raw >> 8) & 0xFF)
+        voltage = (raw >> 3) * 0.004  # 4mV per LSB
+        _servo_powered = voltage > 3.0  # servo should be at ~6V
+        return _servo_powered
+    except Exception:
+        _servo_powered = True  # no INA219 = assume powered
+        return True
+
+
 def set_brake(angle, dry_run=False, gpio_handle=None):
-    """Set brake servo angle. GPIO direct — only sends PWM when angle changes."""
+    """Set brake servo angle. GPIO direct — only sends PWM when angle changes.
+    Checks INA219 first: no PWM if servo not powered."""
     global _last_angle
     angle = max(BRAKE_MIN_ANGLE, min(BRAKE_MAX_ANGLE, int(angle)))
     if dry_run:
@@ -96,9 +123,14 @@ def set_brake(angle, dry_run=False, gpio_handle=None):
     if gpio_handle is not None and angle != _last_angle:
         import lgpio
         if angle > 0:
-            lgpio.tx_pwm(gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(angle))
+            if _check_servo_power():
+                lgpio.tx_pwm(gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(angle))
+            else:
+                lgpio.tx_pwm(gpio_handle, SERVO_PIN, 0, 0)  # no power = no PWM
+                print("WARNING: servo not powered (INA219 < 3V), PWM blocked")
+                angle = 0
         else:
-            lgpio.tx_pwm(gpio_handle, SERVO_PIN, 0, 0)  # no PWM when released
+            lgpio.tx_pwm(gpio_handle, SERVO_PIN, 0, 0)
         _last_angle = angle
     return angle
 
