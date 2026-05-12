@@ -241,9 +241,9 @@ class SpeedLimiter:
 
         self.last_speed_kmh = speed_kmh
 
-        # Hysteresis braking — auto-calibrated
+        # Hysteresis braking — auto-calibrated, smooth transitions
         if speed_kmh > self.max_kmh:
-            # OVER LIMIT — brake to bring speed back to max
+            # OVER LIMIT — brake proportional to excess
             excess = speed_kmh - self.max_kmh
             brake_angle = excess * self.brake_gain
             brake_angle = max(2, min(BRAKE_MAX_ANGLE, brake_angle))
@@ -252,20 +252,27 @@ class SpeedLimiter:
             zone = "OVER"
 
         elif speed_kmh > self.hyst_start_kmh:
-            # HYSTERESIS ZONE (8-10 km/h) — gentle, proportional
+            # HYSTERESIS ZONE (8-10 km/h) — gentle proportional
             ratio = (speed_kmh - self.hyst_start_kmh) / HYSTERESIS_KMH
-            brake_angle = ratio * self.brake_gain * 0.5  # half strength in zone
-            if brake_angle > 1:
-                self.current_brake = set_brake(brake_angle, self.dry_run, self.gpio_handle)
-                self.brake_active = True
-            else:
-                if self.brake_active:
-                    self.current_brake = set_brake(0, self.dry_run, self.gpio_handle)
-                    self.brake_active = False
+            brake_angle = ratio * self.brake_gain * 0.5
+            brake_angle = max(1, int(brake_angle))
+            self.current_brake = set_brake(brake_angle, self.dry_run, self.gpio_handle)
+            self.brake_active = True
             zone = "HYST"
 
+        elif speed_kmh > self.hyst_start_kmh - 1.0 and self.brake_active:
+            # RELEASE ZONE (7-8 km/h) — gradually reduce, don't snap to 0
+            ratio = (speed_kmh - (self.hyst_start_kmh - 1.0)) / 1.0
+            brake_angle = max(0, int(self.current_brake * ratio))
+            if brake_angle > 0:
+                self.current_brake = set_brake(brake_angle, self.dry_run, self.gpio_handle)
+            else:
+                self.current_brake = set_brake(0, self.dry_run, self.gpio_handle)
+                self.brake_active = False
+            zone = "EASE"
+
         else:
-            # UNDER — release brake
+            # WELL UNDER — release
             if self.brake_active:
                 self.current_brake = set_brake(0, self.dry_run, self.gpio_handle)
                 self.brake_active = False
