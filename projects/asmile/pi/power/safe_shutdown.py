@@ -71,26 +71,26 @@ def fast_shutdown():
     # Sync filesystem
     subprocess.run(["sync"], timeout=1)
 
-    # Buzzer shutdown sound — beeps that die
+    print("[safe_shutdown] Services killed. Shutting down NOW.")
+    subprocess.Popen(["shutdown", "-h", "now"])
+
+    # Buzzer shutdown sound — beeps that die (plays DURING shutdown)
     try:
         h_buzz = lgpio.gpiochip_open(GPIO_CHIP)
-        freq = 400
-        on_t = 0.08
-        off_t = 0.08
-        while freq > 80:
+        freq = 500
+        on_t = 0.15
+        off_t = 0.15
+        while freq > 100:
             lgpio.tx_pwm(h_buzz, 4, freq, 50)
             time.sleep(on_t)
             lgpio.tx_pwm(h_buzz, 4, 0, 0)
             time.sleep(off_t)
-            freq -= 30
-            on_t += 0.02
-            off_t += 0.04
+            freq -= 50
+            on_t += 0.03
+            off_t += 0.05
         lgpio.gpiochip_close(h_buzz)
     except Exception:
-        pass  # don't let buzzer failure prevent shutdown
-
-    print("[safe_shutdown] Services killed. Shutting down NOW.")
-    subprocess.run(["shutdown", "-h", "now"])
+        pass
 
 
 def main():
