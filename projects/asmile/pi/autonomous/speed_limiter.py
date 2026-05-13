@@ -63,18 +63,25 @@ def read_gps():
         return 0, False
 
 
+_imu_bus = None
+
 def read_imu_accel_x():
-    """Read longitudinal acceleration from IMU."""
+    """Read longitudinal acceleration from IMU. Direct I2C, not via API."""
+    global _imu_bus
     try:
-        import smbus2
-        bus = smbus2.SMBus(1)
-        h = bus.read_byte_data(0x68, 0x3B)
-        l = bus.read_byte_data(0x68, 0x3C)
+        if _imu_bus is None:
+            import smbus2
+            _imu_bus = smbus2.SMBus(1)
+            _imu_bus.write_byte_data(0x68, 0x6B, 0x00)  # wake up MPU6050
+            import time; time.sleep(0.01)
+        h = _imu_bus.read_byte_data(0x68, 0x3B)
+        l = _imu_bus.read_byte_data(0x68, 0x3C)
         v = (h << 8) | l
         if v >= 0x8000:
             v -= 0x10000
         return v / 16384.0  # ±2g scale
     except Exception:
+        _imu_bus = None  # retry init next time
         return 0
 
 

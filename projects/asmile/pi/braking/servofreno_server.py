@@ -250,10 +250,24 @@ class GPSReader:
         while self._running:
             try:
                 ser = serial.Serial(GPS_PORT, GPS_BAUD, timeout=1.0)
+                ser.reset_input_buffer()  # flush stale data
                 print(f"[GPS] Reading on {GPS_PORT} @ {GPS_BAUD} baud")
+                empty_count = 0
 
                 while self._running:
                     line = ser.readline().decode("ascii", errors="ignore").strip()
+                    if not line:
+                        empty_count += 1
+                        if empty_count > 10:
+                            # Serial stuck — reopen
+                            print("[GPS] Serial stuck (10 empty reads) — reopening")
+                            ser.close()
+                            time.sleep(0.5)
+                            ser = serial.Serial(GPS_PORT, GPS_BAUD, timeout=1.0)
+                            ser.reset_input_buffer()
+                            empty_count = 0
+                        continue
+                    empty_count = 0
                     if not line.startswith("$"):
                         continue
 
