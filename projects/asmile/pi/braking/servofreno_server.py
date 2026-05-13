@@ -221,6 +221,7 @@ class GPSReader:
         self.fix = False
         self._lock = threading.Lock()
         self._running = False
+        self._last_valid = 0  # timestamp of last valid RMC
 
     def start(self):
         self._running = True
@@ -232,6 +233,13 @@ class GPSReader:
 
     def get(self) -> dict:
         with self._lock:
+            # If no valid GPS for >3 seconds, report no fix
+            if time.monotonic() - self._last_valid > 3.0:
+                return {
+                    "lat": self.lat, "lon": self.lon,
+                    "speed_ms": 0.0, "heading": self.heading,
+                    "fix": False,
+                }
             return {
                 "lat": self.lat, "lon": self.lon,
                 "speed_ms": self.speed_ms, "heading": self.heading,
@@ -239,40 +247,46 @@ class GPSReader:
             }
 
     def _run(self):
-        try:
-            ser = serial.Serial(GPS_PORT, GPS_BAUD, timeout=1.0)
-        except Exception as e:
-            print(f"[GPS] Cannot open {GPS_PORT}: {e}")
-            return
+        while self._running:
+            try:
+                ser = serial.Serial(GPS_PORT, GPS_BAUD, timeout=1.0)
+                print(f"[GPS] Reading on {GPS_PORT} @ {GPS_BAUD} baud")
 
-        print(f"[GPS] Reading on {GPS_PORT} @ {GPS_BAUD} baud")
-        try:
-            while self._running:
-                line = ser.readline().decode("ascii", errors="ignore").strip()
-                if not line.startswith("$"):
-                    continue
+                while self._running:
+                    line = ser.readline().decode("ascii", errors="ignore").strip()
+                    if not line.startswith("$"):
+                        continue
 
-                if "GGA" in line:
-                    parts = line.split(",")
-                    if len(parts) >= 15 and parts[2] and parts[4]:
-                        with self._lock:
-                            self.lat = nmea_to_decimal(parts[2], parts[3])
-                            self.lon = nmea_to_decimal(parts[4], parts[5])
-                            self.fix = int(parts[6]) > 0 if parts[6] else False
+                    if "GGA" in line:
+                        parts = line.split(",")
+                        if len(parts) >= 15 and parts[2] and parts[4]:
+                            with self._lock:
+                                self.lat = nmea_to_decimal(parts[2], parts[3])
+                                self.lon = nmea_to_decimal(parts[4], parts[5])
+                                self.fix = int(parts[6]) > 0 if parts[6] else False
 
-                elif "RMC" in line:
-                    parts = line.split(",")
-                    if len(parts) >= 12 and parts[2] == "A":
-                        speed_knots = float(parts[7]) if parts[7] else 0.0
-                        heading = float(parts[8]) if parts[8] else 0.0
-                        with self._lock:
-                            self.speed_ms = speed_knots * 1.852 / 3.6  # knots → m/s
-                            self.heading = heading
-                            self.fix = True
-        except Exception as e:
-            print(f"[GPS] Error: {e}")
-        finally:
-            ser.close()
+                    elif "RMC" in line:
+                        parts = line.split(",")
+                        if len(parts) >= 12:
+                            if parts[2] == "A":
+                                speed_knots = float(parts[7]) if parts[7] else 0.0
+                                heading = float(parts[8]) if parts[8] else 0.0
+                                with self._lock:
+                                    self.speed_ms = speed_knots * 1.852 / 3.6
+                                    self.heading = heading
+                                    self.fix = True
+                                    self._last_valid = time.monotonic()
+                            else:
+                                # Status V = void, GPS lost fix
+                                with self._lock:
+                                    self.speed_ms = 0.0
+                                    self.fix = False
+
+                ser.close()
+            except Exception as e:
+                print(f"[GPS] Error: {e} — retrying in 2s")
+                time.sleep(2)
+        print("[GPS] Reader stopped")
 
 
 # ═══════════════════════════════════════════════════════════

@@ -202,15 +202,32 @@ class SpeedLimiter:
     def step(self):
         speed_raw, fix = read_gps()
         accel_x = read_imu_accel_x()
-        speed = self._smooth_speed(speed_raw)
+
+        # IMU-integrated speed as backup when GPS is down
+        dt = 1.0 / CONTROL_HZ
+        if not hasattr(self, '_imu_speed'):
+            self._imu_speed = 0.0
+        # Integrate acceleration (accel_x negative = forward accel on this bike)
+        self._imu_speed += -accel_x * 9.81 * dt
+        self._imu_speed = max(0, self._imu_speed)  # can't go negative
+        # Decay IMU speed slowly (drift correction)
+        self._imu_speed *= 0.98
+
+        if fix and speed_raw > 0.1:
+            # GPS available: use GPS, sync IMU estimate
+            speed = self._smooth_speed(speed_raw)
+            self._imu_speed = speed  # reset IMU to GPS
+        elif self._imu_speed > 1.0:
+            # No GPS fix but IMU says we're moving
+            speed = self._imu_speed
+        else:
+            speed = self._smooth_speed(speed_raw)
+
         speed_kmh = speed * 3.6
 
-        # IMU-based speed estimation between GPS updates
-        # accel_x negative = accelerating forward (bike orientation)
-        # If accelerating and already in zone, predict speed is higher than GPS says
+        # IMU boost: if accelerating and already in zone, predict higher
         if accel_x < -0.05 and speed_kmh > 6:
-            # Accelerating: estimate speed increase since last GPS update
-            speed_kmh += abs(accel_x) * 9.81 * 0.5 * 3.6  # ~0.5s of accel
+            speed_kmh += abs(accel_x) * 9.81 * 0.5 * 3.6
 
         # Emergency brake from phone overrides everything
         emergency = self._check_emergency()
