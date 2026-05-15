@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 """
-Asmile Speed Limiter — maintains speed at max 10 km/h with hysteresis braking.
+Asmile Speed Limiter v2 — GPS direct + 50Hz loop + slew rate + feed-forward.
 
-Hysteresis band: 8-10 km/h
-- Below 8 km/h: no braking, free ride
-- 8-10 km/h: gentle progressive braking to prevent exceeding 10
-- Above 10 km/h: stronger braking to bring speed back down
-- Never locks the wheel — goal is to MAINTAIN 10 km/h, not stop
-
-Reads GPS speed from servofreno API, controls servo via GPIO direct.
+Reads GPS directly from UART (no HTTP), IMU from I2C.
+50Hz control loop for smooth servo response.
+Slew rate limits servo movement for fluid braking.
+Feed-forward estimates natural deceleration to avoid oscillation.
 
 Usage:
   python3 speed_limiter.py                    # default 10 km/h
@@ -22,6 +19,7 @@ import sys
 import time
 import signal
 import argparse
+import threading
 from datetime import datetime
 
 running = True
@@ -37,10 +35,13 @@ signal.signal(signal.SIGTERM, signal_handler)
 
 # Default config
 DEFAULT_MAX_KMH = 10.0
-HYSTERESIS_KMH = 3.0      # start monitoring at 7 km/h, limit at 10
-CONTROL_HZ = 10
+HYSTERESIS_KMH = 3.0       # start monitoring at 7 km/h, limit at 10
+CONTROL_HZ = 50             # 50Hz control loop (20ms per tick)
 BRAKE_MIN_ANGLE = 0
 BRAKE_MAX_ANGLE = 45
+
+# Slew rate: max servo movement per second (degrees)
+MAX_SLEW_RATE = 200.0       # deg/s — at 50Hz = 4 deg/tick
 
 # Servo GPIO — direct PWM
 GPIO_CHIP = 4
@@ -50,98 +51,187 @@ PULSE_MIN_US = 500
 PULSE_MAX_US = 2500
 PERIOD_US = 1_000_000 / SERVO_FREQ
 
-
-def read_gps():
-    import urllib.request
-    try:
-        resp = urllib.request.urlopen("http://localhost:5000/stato", timeout=1)
-        data = json.loads(resp.read())
-        resp.close()
-        gps = data.get("gps", {})
-        return gps.get("speed_ms", 0), gps.get("fix", False)
-    except Exception:
-        return 0, False
+# GPS UART direct
+GPS_PORT = "/dev/ttyAMA3"
+GPS_BAUD = 38400
 
 
+# ═══════════════════════════════════════════════════════════
+# GPS READER — direct UART, background thread
+# ═══════════════════════════════════════════════════════════
+class GPSDirectReader:
+    """Reads GPS NMEA from UART directly. No HTTP."""
+
+    def __init__(self):
+        self.speed_ms = 0.0
+        self.lat = 0.0
+        self.lon = 0.0
+        self.heading = 0.0
+        self.fix = False
+        self._lock = threading.Lock()
+        self._running = False
+        self._last_valid = 0
+
+    def start(self):
+        self._running = True
+        t = threading.Thread(target=self._run, daemon=True)
+        t.start()
+
+    def stop(self):
+        self._running = False
+
+    def get_speed(self):
+        """Returns (speed_ms, fix). Non-blocking."""
+        with self._lock:
+            if time.monotonic() - self._last_valid > 3.0:
+                return 0.0, False
+            return self.speed_ms, self.fix
+
+    def _nmea_to_decimal(self, value, direction):
+        if not value:
+            return 0.0
+        d = int(float(value) / 100)
+        m = float(value) - d * 100
+        result = d + m / 60.0
+        if direction in ('S', 'W'):
+            result = -result
+        return result
+
+    def _run(self):
+        import serial
+        while self._running:
+            try:
+                ser = serial.Serial(GPS_PORT, GPS_BAUD, timeout=0.1)
+                ser.reset_input_buffer()
+                empty_count = 0
+
+                while self._running:
+                    line = ser.readline().decode("ascii", errors="ignore").strip()
+                    if not line:
+                        empty_count += 1
+                        if empty_count > 50:  # 5 seconds at 0.1s timeout
+                            ser.close()
+                            time.sleep(0.5)
+                            ser = serial.Serial(GPS_PORT, GPS_BAUD, timeout=0.1)
+                            ser.reset_input_buffer()
+                            empty_count = 0
+                        continue
+                    empty_count = 0
+
+                    if not line.startswith("$"):
+                        continue
+
+                    try:
+                        if "RMC" in line:
+                            parts = line.split(",")
+                            if len(parts) >= 12:
+                                if parts[2] == "A":
+                                    speed_knots = float(parts[7]) if parts[7] else 0.0
+                                    heading = float(parts[8]) if parts[8] else 0.0
+                                    with self._lock:
+                                        self.speed_ms = speed_knots * 0.514444
+                                        self.heading = heading
+                                        self.fix = True
+                                        self._last_valid = time.monotonic()
+                                else:
+                                    with self._lock:
+                                        self.speed_ms = 0.0
+                                        self.fix = False
+
+                        elif "GGA" in line:
+                            parts = line.split(",")
+                            if len(parts) >= 15 and parts[2] and parts[4]:
+                                with self._lock:
+                                    self.lat = self._nmea_to_decimal(parts[2], parts[3])
+                                    self.lon = self._nmea_to_decimal(parts[4], parts[5])
+                                    self.fix = int(parts[6]) > 0 if parts[6] else False
+                    except (ValueError, IndexError):
+                        pass
+
+                ser.close()
+            except Exception as e:
+                print(f"[GPS] Error: {e} — retrying in 1s")
+                time.sleep(1)
+
+
+# ═══════════════════════════════════════════════════════════
+# IMU READER — direct I2C
+# ═══════════════════════════════════════════════════════════
 _imu_bus = None
 
+
 def read_imu_accel_x():
-    """Read longitudinal acceleration from IMU. Direct I2C, not via API."""
+    """Read longitudinal acceleration from IMU. Direct I2C."""
     global _imu_bus
     try:
         if _imu_bus is None:
             import smbus2
             _imu_bus = smbus2.SMBus(1)
-            _imu_bus.write_byte_data(0x68, 0x6B, 0x00)  # wake up MPU6050
-            import time; time.sleep(0.01)
+            _imu_bus.write_byte_data(0x68, 0x6B, 0x00)
+            time.sleep(0.01)
         h = _imu_bus.read_byte_data(0x68, 0x3B)
         l = _imu_bus.read_byte_data(0x68, 0x3C)
         v = (h << 8) | l
         if v >= 0x8000:
             v -= 0x10000
-        return v / 16384.0  # ±2g scale
+        return v / 16384.0
     except Exception:
-        _imu_bus = None  # retry init next time
+        _imu_bus = None
         return 0
 
 
+# ═══════════════════════════════════════════════════════════
+# SERVO CONTROL
+# ═══════════════════════════════════════════════════════════
 def _angle_to_duty(angle):
-    """Convert servo angle (0-180) to PWM duty cycle %."""
     pulse_us = PULSE_MIN_US + (angle / 180.0) * (PULSE_MAX_US - PULSE_MIN_US)
     return (pulse_us / PERIOD_US) * 100.0
 
 
-_last_angle = -1  # track last sent angle to avoid re-sending
+_last_sent_angle = -1
 
-# INA219 servo current sensor (I2C 0x40) — checks servo is powered before sending PWM
+# INA219 servo current sensor
 INA219_ADDR = 0x40
 _ina219_bus = None
-_servo_powered = True  # assume powered if no INA219
 
 
 def _check_servo_power():
-    """Read INA219 to verify servo has voltage. Returns True if powered or no sensor."""
-    global _ina219_bus, _servo_powered
+    global _ina219_bus
     try:
         if _ina219_bus is None:
             import smbus2
             _ina219_bus = smbus2.SMBus(1)
-            # Init INA219: calibration register
             _ina219_bus.write_word_data(INA219_ADDR, 0x05, 0x1000)
-        # Read bus voltage register (reg 0x02)
         raw = _ina219_bus.read_word_data(INA219_ADDR, 0x02)
         raw = ((raw & 0xFF) << 8) | ((raw >> 8) & 0xFF)
-        voltage = (raw >> 3) * 0.004  # 4mV per LSB
-        _servo_powered = voltage > 3.0  # servo should be at ~6V
-        return _servo_powered
+        voltage = (raw >> 3) * 0.004
+        return voltage > 3.0
     except Exception:
-        _servo_powered = True  # no INA219 = assume powered
-        return True
+        return True  # no INA219 = assume powered
 
 
-def set_brake(angle, dry_run=False, gpio_handle=None):
-    """Set brake servo angle. GPIO direct — only sends PWM when angle changes.
-    Checks INA219 first: no PWM if servo not powered."""
-    global _last_angle
+def send_servo(angle, gpio_handle):
+    """Send angle to servo. Only sends if changed."""
+    global _last_sent_angle
     angle = max(BRAKE_MIN_ANGLE, min(BRAKE_MAX_ANGLE, int(angle)))
-    if dry_run:
-        return angle
 
-    if gpio_handle is not None and angle != _last_angle:
+    if gpio_handle is not None and angle != _last_sent_angle:
         import lgpio
         if angle > 0:
             if _check_servo_power():
                 lgpio.tx_pwm(gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(angle))
             else:
-                lgpio.tx_pwm(gpio_handle, SERVO_PIN, 0, 0)  # no power = no PWM
-                print("WARNING: servo not powered (INA219 < 3V), PWM blocked")
+                lgpio.tx_pwm(gpio_handle, SERVO_PIN, 0, 0)
                 angle = 0
         else:
             lgpio.tx_pwm(gpio_handle, SERVO_PIN, 0, 0)
-        _last_angle = angle
+        _last_sent_angle = angle
     return angle
 
 
+# ═══════════════════════════════════════════════════════════
+# SPEED LIMITER
+# ═══════════════════════════════════════════════════════════
 class SpeedLimiter:
     def __init__(self, max_kmh=DEFAULT_MAX_KMH, dry_run=False):
         self.max_kmh = max_kmh
@@ -150,31 +240,39 @@ class SpeedLimiter:
         self.dry_run = dry_run
 
         # Brake state
-        self.current_brake = 0
+        self.brake_cmd = 0.0        # commanded angle (float, smooth)
         self.brake_active = False
         self._emergency_was_active = False
 
-        # Adaptive controller state
-        self.brake_angle = 0.0  # current commanded angle (float for smooth increments)
-
-        # Speed smoothing (GPS is noisy)
+        # Speed smoothing
         self.speed_history = []
-        self.SMOOTH_WINDOW = 3  # median of last 3 readings
+        self.SMOOTH_WINDOW = 5      # median of last 5 at 50Hz
 
-        # GPIO direct for servo
+        # Feed-forward: estimate natural deceleration
+        self.natural_decel = 0.0    # m/s² deceleration without brake
+        self.prev_speed = 0.0
+        self.decel_samples = []     # collect decel when brake=0
+
+        # IMU speed backup
+        self._imu_speed = 0.0
+
+        # GPS direct reader
+        self.gps = GPSDirectReader()
+        self.gps.start()
+
+        # GPIO
         self.gpio_handle = None
         if not dry_run:
             try:
                 import lgpio
                 self.gpio_handle = lgpio.gpiochip_open(GPIO_CHIP)
                 lgpio.gpio_claim_output(self.gpio_handle, SERVO_PIN)
-                # Go to 0°, hold 1.5s for servo to arrive, then cut PWM
                 lgpio.tx_pwm(self.gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(0))
                 time.sleep(1.5)
                 lgpio.tx_pwm(self.gpio_handle, SERVO_PIN, 0, 0)
                 print("Servo released to 0°, PWM off")
             except Exception as e:
-                print(f"WARNING: GPIO init failed: {e} — brake won't work")
+                print(f"WARNING: GPIO init failed: {e}")
 
         # Log
         self.log_file = None
@@ -183,12 +281,12 @@ class SpeedLimiter:
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         log_path = os.path.join(log_dir, f"limiter_{ts}.csv")
         self.log_file = open(log_path, "w")
-        self.log_file.write("timestamp,speed_ms,speed_kmh,smoothed_kmh,"
-                            "brake_angle,accel_x,zone,fix\n")
+        self.log_file.write("timestamp,speed_ms,speed_kmh,"
+                            "brake_cmd,accel_x,zone,fix,natural_decel\n")
+        self._log_counter = 0  # log every 5th tick (10Hz logging at 50Hz loop)
         print(f"Log: {log_path}")
 
     def _smooth_speed(self, speed_ms):
-        """Median filter on GPS speed to reduce noise."""
         self.speed_history.append(speed_ms)
         if len(self.speed_history) > self.SMOOTH_WINDOW:
             self.speed_history.pop(0)
@@ -196,7 +294,6 @@ class SpeedLimiter:
         return statistics.median(self.speed_history)
 
     def _check_emergency(self):
-        """Check if phone requested emergency brake via flag file."""
         if not os.path.exists("/tmp/emergency_brake"):
             return 0
         try:
@@ -206,134 +303,150 @@ class SpeedLimiter:
         except (ValueError, OSError):
             return 0
 
-    def step(self):
-        speed_raw, fix = read_gps()
-        accel_x = read_imu_accel_x()
+    def _update_natural_decel(self, speed_ms, accel_x, dt):
+        """Estimate natural deceleration when brake is not active."""
+        if self.brake_cmd < 1 and speed_ms > 1.0:
+            # No brake applied and moving — measure natural decel
+            decel = (self.prev_speed - speed_ms) / dt if dt > 0 else 0
+            if 0 < decel < 2.0:  # sane range
+                self.decel_samples.append(decel)
+                if len(self.decel_samples) > 50:
+                    self.decel_samples.pop(0)
+                self.natural_decel = sum(self.decel_samples) / len(self.decel_samples)
 
-        # IMU-integrated speed as backup when GPS is down
+    def _apply_slew_rate(self, target, dt):
+        """Limit how fast brake_cmd can change."""
+        max_delta = MAX_SLEW_RATE * dt
+        delta = target - self.brake_cmd
+        if delta > max_delta:
+            delta = max_delta
+        elif delta < -max_delta:
+            delta = -max_delta
+        self.brake_cmd += delta
+        self.brake_cmd = max(0, min(BRAKE_MAX_ANGLE, self.brake_cmd))
+
+    def step(self):
+        speed_raw, fix = self.gps.get_speed()
+        accel_x = read_imu_accel_x()
         dt = 1.0 / CONTROL_HZ
-        if not hasattr(self, '_imu_speed'):
-            self._imu_speed = 0.0
-        # Integrate acceleration (accel_x negative = forward accel on this bike)
+
+        # IMU backup speed
         self._imu_speed += -accel_x * 9.81 * dt
-        self._imu_speed = max(0, self._imu_speed)  # can't go negative
-        # Decay IMU speed slowly (drift correction)
-        self._imu_speed *= 0.98
+        self._imu_speed = max(0, self._imu_speed)
+        self._imu_speed *= 0.99
 
         if fix and speed_raw > 0.1:
-            # GPS available: use GPS, sync IMU estimate
             speed = self._smooth_speed(speed_raw)
-            self._imu_speed = speed  # reset IMU to GPS
+            self._imu_speed = speed
         elif self._imu_speed > 1.0:
-            # No GPS fix but IMU says we're moving
             speed = self._imu_speed
         else:
             speed = self._smooth_speed(speed_raw)
 
         speed_kmh = speed * 3.6
 
-        # IMU boost: if accelerating and already in zone, predict higher
-        if accel_x < -0.05 and speed_kmh > 6:
-            speed_kmh += abs(accel_x) * 9.81 * 0.5 * 3.6
+        # Update natural deceleration estimate
+        self._update_natural_decel(speed, accel_x, dt)
 
-        # Emergency brake from phone overrides everything
+        # Emergency brake
         emergency = self._check_emergency()
         if emergency > 0:
-            self.current_brake = set_brake(emergency, self.dry_run, self.gpio_handle)
+            self._apply_slew_rate(emergency, dt)
+            send_servo(int(self.brake_cmd), self.gpio_handle)
             self.brake_active = True
             self._emergency_was_active = True
             zone = "EMERGENCY"
-            self._log(speed_raw, speed_kmh, accel_x, zone, fix)
-            return speed, speed_kmh, self.current_brake
+            self._maybe_log(speed_raw, speed_kmh, accel_x, zone, fix)
+            self.prev_speed = speed
+            return speed, speed_kmh, self.brake_cmd
 
-        # Emergency just released — snap to 0 immediately
         if self._emergency_was_active:
             self._emergency_was_active = False
-            self.current_brake = set_brake(0, self.dry_run, self.gpio_handle)
+            self._apply_slew_rate(0, dt)
+            send_servo(int(self.brake_cmd), self.gpio_handle)
             self.brake_active = False
             zone = "RELEASE"
-            self._log(speed_raw, speed_kmh, accel_x, zone, fix)
-            return speed, speed_kmh, self.current_brake
+            self._maybe_log(speed_raw, speed_kmh, accel_x, zone, fix)
+            self.prev_speed = speed
+            return speed, speed_kmh, self.brake_cmd
 
-        dt = 1.0 / CONTROL_HZ
+        # Feed-forward: how much is the bike already decelerating naturally?
+        # If natural decel is enough to bring speed down, reduce brake demand
+        natural_brake_effect = self.natural_decel * 3.6  # convert to km/h/s
+        speed_trend = speed_kmh - self.prev_speed * 3.6  # positive = accelerating
 
-        # Adaptive controller: adjusts brake_angle based on speed feedback
-        # - Speed too high → increase angle
-        # - Speed dropping → hold or decrease angle
-        # - Speed OK → decrease angle
-        # No fixed mapping — learns from the effect of braking
-
+        # Controller
         if speed_kmh > self.max_kmh:
-            # OVER LIMIT — increase brake until speed drops
-            self.brake_angle += 2.0  # +2° every 100ms until it works
-            self.brake_angle = min(self.brake_angle, BRAKE_MAX_ANGLE)
-            self.current_brake = set_brake(int(self.brake_angle), self.dry_run, self.gpio_handle)
+            # OVER — target proportional to excess, minus natural decel
+            excess = speed_kmh - self.max_kmh
+            target = 5.0 + excess * 8.0  # base 5° + 8° per km/h over
+            # Feed-forward: reduce if already decelerating
+            if speed_trend < -0.1:
+                target *= 0.5  # halve if already slowing
+            self._apply_slew_rate(target, dt)
             self.brake_active = True
             zone = "OVER"
 
         elif speed_kmh > self.hyst_start_kmh:
-            # HYSTERESIS ZONE — adjust based on trend
-            if accel_x < -0.05:
-                # Accelerating hard — increase brake
-                self.brake_angle += 1.0
-            elif accel_x < -0.02:
-                # Accelerating slightly — small increase
-                self.brake_angle += 0.3
-            elif accel_x > 0.05:
-                # Decelerating — release faster
-                self.brake_angle -= 2.0
-            elif accel_x > 0.02:
-                # Slowing slightly or stable — release
-                self.brake_angle -= 1.0
-            else:
-                # Steady speed — ease off slowly
-                self.brake_angle -= 0.5
+            # HYSTERESIS — gentle, with feed-forward
+            ratio = (speed_kmh - self.hyst_start_kmh) / HYSTERESIS_KMH
+            target = ratio * 10.0  # 0° at 7, 10° at 10
 
-            self.brake_angle = max(1, min(BRAKE_MAX_ANGLE, self.brake_angle))
-            self.current_brake = set_brake(int(self.brake_angle), self.dry_run, self.gpio_handle)
-            self.brake_active = True
+            # Feed-forward: if decelerating naturally, reduce or skip brake
+            if speed_trend < -0.05:
+                target = max(0, target - natural_brake_effect * 2)
+
+            # If accelerating in zone, increase
+            if accel_x < -0.03:
+                target += 3.0
+
+            self._apply_slew_rate(target, dt)
+            self.brake_active = True if self.brake_cmd > 0.5 else False
             zone = "HYST"
 
         else:
-            # UNDER — reduce brake
-            if self.brake_angle > 0:
-                self.brake_angle -= 1.0
-                self.brake_angle = max(0, self.brake_angle)
-                self.current_brake = set_brake(int(self.brake_angle), self.dry_run, self.gpio_handle)
-                if self.brake_angle <= 0:
-                    self.brake_active = False
-            else:
-                if self.brake_active:
-                    self.current_brake = set_brake(0, self.dry_run, self.gpio_handle)
-                    self.brake_active = False
+            # FREE — release
+            self._apply_slew_rate(0, dt)
+            if self.brake_cmd < 0.5:
+                self.brake_active = False
             zone = "FREE"
 
-        self._log(speed_raw, speed_kmh, accel_x, zone, fix)
-        return speed, speed_kmh, self.current_brake
+        send_servo(int(self.brake_cmd), self.gpio_handle)
 
-    def _log(self, speed_raw, speed_kmh, accel_x, zone, fix):
+        self._maybe_log(speed_raw, speed_kmh, accel_x, zone, fix)
+        self.prev_speed = speed
+        return speed, speed_kmh, self.brake_cmd
+
+    def _maybe_log(self, speed_raw, speed_kmh, accel_x, zone, fix):
+        """Log at 10Hz (every 5th tick at 50Hz loop)."""
+        self._log_counter += 1
+        if self._log_counter < 5:
+            return
+        self._log_counter = 0
         if self.log_file:
             ts = datetime.now().isoformat(timespec="milliseconds")
-            smoothed_kmh = speed_kmh
             self.log_file.write(
-                f"{ts},{speed_raw:.2f},{speed_raw*3.6:.1f},{smoothed_kmh:.1f},"
-                f"{self.current_brake:.0f},{accel_x:.3f},{zone},{1 if fix else 0}\n")
+                f"{ts},{speed_raw:.2f},{speed_kmh:.1f},"
+                f"{self.brake_cmd:.1f},{accel_x:.3f},{zone},"
+                f"{1 if fix else 0},{self.natural_decel:.3f}\n")
             self.log_file.flush()
 
     def run(self):
         global running
-        hyst_start_kmh = self.max_kmh - HYSTERESIS_KMH
 
         print(f"{'='*50}")
-        print(f"  ASMILE SPEED LIMITER")
+        print(f"  ASMILE SPEED LIMITER v2")
         print(f"{'='*50}")
-        print(f"Max speed: {self.max_kmh:.0f} km/h ({self.max_speed_ms:.1f} m/s)")
+        print(f"Max speed: {self.max_kmh:.0f} km/h")
         print(f"Hysteresis: {self.hyst_start_kmh:.0f}-{self.max_kmh:.0f} km/h")
-        print(f"Adaptive controller: adjusts brake from GPS+IMU feedback")
+        print(f"Loop: {CONTROL_HZ} Hz, slew rate: {MAX_SLEW_RATE}°/s")
+        print(f"GPS: direct UART {GPS_PORT}")
+        print(f"Feed-forward: natural decel estimation")
         print(f"{'DRY RUN' if self.dry_run else 'ACTIVE'}")
         print(f"Ctrl+C to stop\n")
 
         while running:
+            t0 = time.monotonic()
             speed, kmh, brake = self.step()
 
             if self.brake_active:
@@ -341,20 +454,24 @@ class SpeedLimiter:
             elif speed > 0.3:
                 print(f"\r  {kmh:.1f} km/h | OK           ", end="", flush=True)
 
-            time.sleep(1.0 / CONTROL_HZ)
+            # Precise timing for 50Hz
+            elapsed = time.monotonic() - t0
+            sleep_time = (1.0 / CONTROL_HZ) - elapsed
+            if sleep_time > 0:
+                time.sleep(sleep_time)
 
-        # Do NOT release brake on exit — master_switch handles brake after stop
+        self.gps.stop()
         if self.log_file:
             self.log_file.close()
         print(f"\n\nSpeed limiter stopped.")
 
     def __del__(self):
-        if self.log_file:
+        if hasattr(self, 'log_file') and self.log_file:
             self.log_file.close()
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Asmile Speed Limiter")
+    parser = argparse.ArgumentParser(description="Asmile Speed Limiter v2")
     parser.add_argument("--max-speed", type=float, default=DEFAULT_MAX_KMH,
                         help=f"Max speed in km/h (default: {DEFAULT_MAX_KMH})")
     parser.add_argument("--dry-run", action="store_true")
