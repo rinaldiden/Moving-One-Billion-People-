@@ -447,15 +447,12 @@ class SpeedLimiter:
         self._imu_speed = max(0, self._imu_speed)
         self._imu_speed *= 0.99
 
-        # Priorità: GPS (con fix) > BLE bike sensor > IMU integration > smoothed GPS=0
+        # Priorità: GPS (con fix) > IMU integration > smoothed GPS=0
+        # BLE NON entra mai nel controllo, è solo loggato per confronto.
         if fix and speed_raw > 0.1:
             speed = self._smooth_speed(speed_raw)
             self._imu_speed = speed
             chosen_source = "gps"
-        elif bike_ble_ok:
-            speed = self._smooth_speed(bike_ble_speed)
-            self._imu_speed = speed   # resetta IMU per evitare drift
-            chosen_source = "ble"
         elif self._imu_speed > 1.0:
             speed = self._imu_speed
             chosen_source = "imu"
