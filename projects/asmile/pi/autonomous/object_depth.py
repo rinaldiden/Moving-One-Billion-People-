@@ -130,10 +130,21 @@ class ObjectDepthEstimator:
             return (self.cam_height * self.focal) / y_below
         return None
 
+    def _is_own_bike(self, name, x1, y1, x2, y2, w, h):
+        """Filter out our own bike — large bicycle bbox touching right edge."""
+        if name != "bicycle":
+            return False
+        bbox_area = (x2 - x1) * (y2 - y1)
+        frame_area = w * h
+        touches_right = x2 > w * 0.9
+        too_large = bbox_area > frame_area * 0.15
+        return touches_right and too_large
+
     def process_frame(self, frame, conf_threshold=0.25):
         """Detect all objects and estimate distance for each.
 
-        Returns list of dicts: {name, confidence, distance_m, method, bbox, zone}
+        Returns list of dicts with distance, uncertainty, method, zone, danger.
+        Uses mask height (S2) when segmentation available, bbox otherwise.
         """
         self._load_yolo()
 
@@ -145,6 +156,7 @@ class ObjectDepthEstimator:
             return objects
 
         h, w = frame.shape[:2]
+        has_masks = r.masks is not None
 
         for i, box in enumerate(r.boxes):
             cls_id = int(box.cls[0])
@@ -152,12 +164,31 @@ class ObjectDepthEstimator:
             name = self.yolo.names[cls_id]
             x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().astype(int)
 
+            # Filter own bike
+            if self._is_own_bike(name, x1, y1, x2, y2, w, h):
+                continue
+
             bbox_h = y2 - y1
             bbox_w = x2 - x1
             cx = (x1 + x2) / 2
 
-            # Estimate distance
-            dist, method = self.estimate_distance(name, bbox_h, bbox_w)
+            # S2: Use mask height if available (more precise than bbox)
+            mask_h = bbox_h
+            mask_bottom_y = y2
+            if has_masks and i < len(r.masks.data):
+                mask = r.masks.data[i].cpu().numpy()
+                mask_rows = np.where(mask.any(axis=1))[0]
+                if len(mask_rows) > 0:
+                    mask_h = mask_rows[-1] - mask_rows[0]
+                    mask_bottom_y = mask_rows[-1]
+
+            # Estimate distance using mask height
+            dist, method = self.estimate_distance(name, mask_h, bbox_w)
+
+            # S3: Ground plane from mask bottom for walls/buildings
+            if dist is None and mask_bottom_y > CAM_HEIGHT_PX / 2 + 10:
+                dist = self.ground_plane_distance(mask_bottom_y)
+                method = "ground_boundary"
 
             # Zone: left / center / right
             if cx < w * 0.33:
@@ -182,13 +213,26 @@ class ObjectDepthEstimator:
             lateral_offset_m = (lateral_offset_px / self.focal) * (dist if dist else 5.0)
             margin_m = lateral_offset_m - ASMILE_WIDTH_M / 2
 
+            # S4: Uncertainty range
+            uncertainty = None
+            if dist is not None and mask_h > 0:
+                margin = max(mask_h * 0.05, 3)  # 5% of mask height, min 3px
+                if name in OBJECT_HEIGHTS:
+                    real_h = OBJECT_HEIGHTS[name]
+                    dist_min = (real_h * self.focal) / (mask_h + margin)
+                    dist_max = (real_h * self.focal) / max(mask_h - margin, 1)
+                    uncertainty = (dist_max - dist_min) / 2
+                elif method == "ground_boundary":
+                    uncertainty = dist * 0.15  # 15% for ground plane
+
             obj = {
                 "name": name,
                 "confidence": round(conf, 2),
                 "distance_m": round(dist, 2) if dist else None,
+                "uncertainty_m": round(uncertainty, 2) if uncertainty else None,
                 "method": method,
                 "bbox": (int(x1), int(y1), int(x2), int(y2)),
-                "bbox_h": bbox_h,
+                "mask_h": mask_h,
                 "bbox_w": bbox_w,
                 "zone": zone,
                 "danger": danger,

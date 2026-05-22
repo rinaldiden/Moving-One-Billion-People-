@@ -11,6 +11,7 @@ Motor: Flipsky 6354 140KV, FOC + Hall, via VESC UART.
 Telemetria VESC loggata in ~/wip/logging/vesc/
 """
 
+import json
 import serial
 import struct
 import time
@@ -28,6 +29,16 @@ TELEMETRY_LATEST = "/tmp/steering_telemetry.csv"
 # Encoder
 ENCODER_STEPS_PER_REV = 4096
 DEG_PER_STEP = 360.0 / ENCODER_STEPS_PER_REV  # 0.0879°
+
+# Finecorsa HW (misurati su asmile2 2026-05-17)
+# Caricati da steering_limits.json se presente
+STEERING_LIMITS_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "..", "..", "config", "steering_limits.json"
+)
+HW_CENTER_RAW = 3800
+HW_SX_MAX_RAW = 3565
+HW_DX_MAX_RAW = 4046
 
 # Direzione assistenza (misurato dai log):
 # Dopo ricalibrazione FOC 2026-04-01: direzione invertita

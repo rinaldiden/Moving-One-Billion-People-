@@ -137,27 +137,32 @@ def nmea_to_decimal(coord, direction):
     return decimal
 
 
+GPS_STATE_FILE = "/tmp/gps_state.json"
+
+
 def gps_thread():
-    """Read GPS from servofreno server API (avoids serial port conflict)."""
+    """Read GPS from /tmp/gps_state.json (published by speed_limiter v2).
+
+    Avoids UART port contention. speed_limiter owns ttyAMA3 and publishes
+    NMEA-parsed state to a shared file at up to 10Hz.
+    """
     global gps_data, running
-    import urllib.request
     import json as _json
 
-    print("[GPS] Reading from servofreno API (localhost:5000)")
+    print(f"[GPS] Reading from {GPS_STATE_FILE} (published by speed_limiter)")
     while running:
         try:
-            resp = urllib.request.urlopen("http://localhost:5000/stato", timeout=2)
-            data = _json.loads(resp.read())
-            gps = data.get("gps", {})
+            with open(GPS_STATE_FILE) as f:
+                gps = _json.load(f)
             with gps_lock:
                 gps_data["lat"] = gps.get("lat", 0)
                 gps_data["lon"] = gps.get("lon", 0)
                 gps_data["speed_ms"] = gps.get("speed_ms", 0)
                 gps_data["heading"] = gps.get("heading", 0)
                 gps_data["fix"] = gps.get("fix", False)
-        except Exception:
+        except (FileNotFoundError, ValueError, OSError):
             pass
-        time.sleep(0.5)
+        time.sleep(0.2)
 
 
 # ═══════════════════════════════════════════════════════════

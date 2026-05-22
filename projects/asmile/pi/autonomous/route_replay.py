@@ -124,13 +124,14 @@ def read_encoder():
         return -1
 
 
+GPS_STATE_FILE = "/tmp/gps_state.json"
+
+
 def read_gps():
-    """Read GPS from servofreno API."""
-    import urllib.request
+    """Read GPS state published by speed_limiter v2 to /tmp/gps_state.json."""
     try:
-        resp = urllib.request.urlopen("http://localhost:5000/stato", timeout=1)
-        data = json.loads(resp.read())
-        gps = data.get("gps", {})
+        with open(GPS_STATE_FILE) as f:
+            gps = json.load(f)
         return {
             "lat": gps.get("lat", 0),
             "lon": gps.get("lon", 0),
@@ -138,7 +139,7 @@ def read_gps():
             "heading": gps.get("heading", 0),
             "fix": gps.get("fix", False),
         }
-    except Exception:
+    except (FileNotFoundError, ValueError, OSError):
         return {"lat": 0, "lon": 0, "speed": 0, "heading": 0, "fix": False}
 
 
