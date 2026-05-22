@@ -335,6 +335,10 @@ class SpeedLimiter:
         # IMU speed backup
         self._imu_speed = 0.0
 
+        # GPS anti-spike (NEO-M10 cold start può sparare velocità false)
+        self._prev_gps_speed_raw = 0.0
+        self._spike_count = 0
+
         # Per logging: ultima fonte velocità + raw values
         self._last_chosen_source = "init"
         self._last_gps_speed = 0.0
@@ -422,6 +426,21 @@ class SpeedLimiter:
         bike_ble_speed, bike_ble_ok = read_bike_ble_speed()
         accel_x = read_imu_accel_x()
         dt = 1.0 / CONTROL_HZ
+
+        # ANTI-SPIKE GPS: scarta letture con accelerazione impossibile (>2.5g)
+        # tra due tick. Tipico di NEO-M10 cold start o multipath: sample che
+        # saltano a velocità irreali e fanno scattare il freno a vuoto.
+        if fix:
+            jump = abs(speed_raw - self._prev_gps_speed_raw)
+            if jump > 2.5:  # 2.5 m/s in 100ms = 25 m/s² = ~2.5g, irrealistico bici
+                self._spike_count += 1
+                print(f"[GPS-SPIKE] rejected {self._prev_gps_speed_raw:.2f}→{speed_raw:.2f} m/s "
+                      f"(count={self._spike_count})", flush=True)
+                speed_raw = self._prev_gps_speed_raw   # usa precedente
+                # NON aggiorno _prev_gps_speed_raw così uno spike sostenuto resta filtrato
+            else:
+                self._prev_gps_speed_raw = speed_raw
+                self._spike_count = 0
 
         # IMU backup speed
         self._imu_speed += -accel_x * 9.81 * dt
