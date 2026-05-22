@@ -59,6 +59,10 @@ PERIOD_US = 1_000_000 / SERVO_FREQ
 GPS_PORT = "/dev/ttyAMA3"
 GPS_BAUD = 38400
 
+# Bike BLE speed sensor (CooSpo BK467) — file scritto da bike_speed_reader.py
+BIKE_SPEED_FILE = "/tmp/bike_speed"
+BIKE_SPEED_MAX_AGE = 3.0   # secondi prima di considerare stale
+
 
 # ═══════════════════════════════════════════════════════════
 # GPS READER — direct UART, background thread
@@ -189,6 +193,23 @@ class GPSDirectReader:
             except Exception as e:
                 print(f"[GPS] Error: {e} — retrying in 1s")
                 time.sleep(1)
+
+
+# ═══════════════════════════════════════════════════════════
+# BIKE BLE SPEED READER — file polling (daemon writes /tmp/bike_speed)
+# ═══════════════════════════════════════════════════════════
+def read_bike_ble_speed():
+    """Returns (speed_ms, ok). Non-blocking. ok=False se file mancante/stale/illeggibile."""
+    try:
+        st = os.stat(BIKE_SPEED_FILE)
+        if time.time() - st.st_mtime > BIKE_SPEED_MAX_AGE:
+            return 0.0, False
+        with open(BIKE_SPEED_FILE) as f:
+            line = f.readline().strip()
+        speed_ms = float(line.split()[0])
+        return speed_ms, True
+    except (FileNotFoundError, ValueError, IndexError, OSError):
+        return 0.0, False
 
 
 # ═══════════════════════════════════════════════════════════
@@ -391,6 +412,7 @@ class SpeedLimiter:
 
     def step(self):
         speed_raw, fix = self.gps.get_speed()
+        bike_ble_speed, bike_ble_ok = read_bike_ble_speed()
         accel_x = read_imu_accel_x()
         dt = 1.0 / CONTROL_HZ
 
@@ -399,9 +421,13 @@ class SpeedLimiter:
         self._imu_speed = max(0, self._imu_speed)
         self._imu_speed *= 0.99
 
+        # Priorità: GPS (con fix) > BLE bike sensor > IMU integration > smoothed GPS=0
         if fix and speed_raw > 0.1:
             speed = self._smooth_speed(speed_raw)
             self._imu_speed = speed
+        elif bike_ble_ok:
+            speed = self._smooth_speed(bike_ble_speed)
+            self._imu_speed = speed   # resetta IMU per evitare drift
         elif self._imu_speed > 1.0:
             speed = self._imu_speed
         else:
