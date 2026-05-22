@@ -1,0 +1,29 @@
+{
+  "_comment": "Calibrazione completa sterzata VESC asmile2. Finecorsa: 2026-05-17. Direzioni: 2026-05-18.",
+
+  "encoder_bits": 12,
+  "encoder_steps_per_rev": 4096,
+  "deg_per_step": 0.0879,
+
+  "encoder_center_raw": 3800,
+  "encoder_sx_max_raw": 3565,
+  "encoder_dx_max_raw": 4046,
+  "delta_sx_steps": -235,
+  "delta_dx_steps": 246,
+  "delta_sx_deg": -20.66,
+  "delta_dx_deg": 21.63,
+
+  "direction_calibration_date": "2026-05-18",
+  "_direction_note": "Verificato con doppio check encoder colonna + tach VESC (hall sensor).",
+  "encoder_pos_increases_to": "DX (destra)",
+  "encoder_pos_decreases_to": "SX (sinistra)",
+  "vesc_tach_increases_with": "encoder pos (stessa direzione)",
+  "tach_per_encoder_step": 0.105,
+  "_tach_note": "Misurato: 220 step encoder = 24 tach, 234 step = 22 tach (sx)",
+
+  "vesc_duty_sign_for_return": 1,
+  "_duty_sign_note": "AGGIORNATO 2026-05-22 dopo Detect Hall Sensors (che ha rimappato phase↔hall). Era -1 fino al 18/05. Ora: target_duty = DUTY_SIGN * RETURN_DUTY * sign(error). error>0 (sterzo a dx) → duty negativo (DUTY_SIGN*+1)*((-1)*1) per andare a sx. VERIFICATO con vesc_return_to_center.py.",
+
+  "vesc_current_sign_for_hold": 1,
+  "_current_sign_note": "AGGIORNATO 2026-05-22: invertito insieme a duty_sign dopo Detect Hall Sensors. Vecchio valore -1 dal 2026-05-18."
+}
