@@ -19,6 +19,7 @@ Lancia come daemon:
 """
 import argparse
 import asyncio
+import csv
 import os
 import sys
 import time
@@ -30,9 +31,11 @@ from bleak import BleakClient, BleakScanner
 CSC_SERVICE = "00001816-0000-1000-8000-00805f9b34fb"
 CSC_MEASUREMENT = "00002a5b-0000-1000-8000-00805f9b34fb"
 
-# Output file (atomico via rename non necessario: una sola riga)
+# Output file (valore corrente, per consumer come speed_limiter)
 OUT_FILE = "/tmp/bike_speed"
-STATE_FILE = "/tmp/bike_speed_state"   # debug verbose: rev count, raw event time
+
+# Logging CSV per analisi/confronto con GPS
+LOG_DIR = os.path.expanduser("~/wip/logging/bike_speed")
 
 # Defaults
 DEFAULT_NAME_PREFIX = "BK6LS"
@@ -64,9 +67,10 @@ def write_speed(speed_ms: float):
 
 
 class SpeedTracker:
-    def __init__(self, circ_m: float, probe: bool):
+    def __init__(self, circ_m: float, probe: bool, log_writer=None):
         self.circ = circ_m
         self.probe = probe
+        self.log_writer = log_writer
         self.prev_rev = None
         self.prev_time = None
         self.last_speed = 0.0
@@ -113,6 +117,17 @@ class SpeedTracker:
         self.prev_time = wheel_time
         write_speed(speed_ms)
 
+        if self.log_writer:
+            try:
+                self.log_writer.writerow([
+                    datetime.now().isoformat(timespec="milliseconds"),
+                    f"{speed_ms:.3f}",
+                    wheel_rev, wheel_time,
+                    d_rev, f"{d_t_s:.4f}",
+                ])
+            except Exception:
+                pass
+
         if self.probe:
             print(f"[PROBE] rev={wheel_rev} t={wheel_time}  Δrev={d_rev} Δt={d_t_s:.3f}s  "
                   f"speed={speed_ms:.2f} m/s ({speed_ms * 3.6:.1f} km/h)  raw={data.hex()}")
@@ -130,8 +145,8 @@ async def find_device(name_prefix: str):
     return None
 
 
-async def run(address: str, circ: float, probe: bool):
-    tracker = SpeedTracker(circ, probe)
+async def run(address: str, circ: float, probe: bool, log_writer=None):
+    tracker = SpeedTracker(circ, probe, log_writer)
     print(f"[INFO] connecting to {address}...", file=sys.stderr)
     try:
         async with BleakClient(address, timeout=15.0) as client:
@@ -180,24 +195,37 @@ async def main():
     ap.add_argument("--once", action="store_true", help="esce dopo prima disconnessione (no auto-reconnect)")
     args = ap.parse_args()
 
+    # CSV log per analisi/confronto con GPS (un file per sessione daemon)
+    os.makedirs(LOG_DIR, exist_ok=True)
+    log_path = os.path.join(LOG_DIR, f"bike_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
+    log_f = open(log_path, "w", newline="")
+    log_writer = csv.writer(log_f)
+    log_writer.writerow(["timestamp_iso", "speed_ms", "wheel_rev", "wheel_time_units", "d_rev", "d_t_s"])
+    log_f.flush()
+    print(f"[INFO] log: {log_path}", file=sys.stderr)
+
     address = args.address
-    while True:
-        if not address:
-            address = await find_device(args.name)
+    try:
+        while True:
             if not address:
-                if args.once:
-                    return 1
-                await asyncio.sleep(10)
-                continue
+                address = await find_device(args.name)
+                if not address:
+                    if args.once:
+                        return 1
+                    await asyncio.sleep(10)
+                    continue
 
-        ok = await run(address, args.circ, args.probe)
-        if args.once:
-            return 0 if ok else 1
+            ok = await run(address, args.circ, args.probe, log_writer)
+            log_f.flush()  # garantisce dati su disco anche se crashia
+            if args.once:
+                return 0 if ok else 1
 
-        # auto-reconnect
-        write_speed(0.0)
-        print("[INFO] reconnecting in 5s...", file=sys.stderr)
-        await asyncio.sleep(5)
+            # auto-reconnect
+            write_speed(0.0)
+            print("[INFO] reconnecting in 5s...", file=sys.stderr)
+            await asyncio.sleep(5)
+    finally:
+        log_f.close()
 
 
 if __name__ == "__main__":

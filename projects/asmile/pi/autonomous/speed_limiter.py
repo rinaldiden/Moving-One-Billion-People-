@@ -335,6 +335,12 @@ class SpeedLimiter:
         # IMU speed backup
         self._imu_speed = 0.0
 
+        # Per logging: ultima fonte velocità + raw values
+        self._last_chosen_source = "init"
+        self._last_gps_speed = 0.0
+        self._last_ble_speed = 0.0
+        self._last_ble_ok = False
+
         # GPS direct reader
         self.gps = GPSDirectReader()
         self.gps.start()
@@ -364,7 +370,8 @@ class SpeedLimiter:
         log_path = os.path.join(log_dir, f"limiter_{ts}.csv")
         self.log_file = open(log_path, "w")
         self.log_file.write("timestamp,speed_ms,speed_kmh,"
-                            "brake_cmd,accel_x,zone,fix,natural_decel\n")
+                            "brake_cmd,accel_x,zone,fix,natural_decel,"
+                            "gps_speed_ms,ble_speed_ms,ble_ok,chosen_source\n")
         self._log_counter = 0  # log every 5th tick (10Hz logging at 50Hz loop)
         print(f"Log: {log_path}")
 
@@ -425,13 +432,21 @@ class SpeedLimiter:
         if fix and speed_raw > 0.1:
             speed = self._smooth_speed(speed_raw)
             self._imu_speed = speed
+            chosen_source = "gps"
         elif bike_ble_ok:
             speed = self._smooth_speed(bike_ble_speed)
             self._imu_speed = speed   # resetta IMU per evitare drift
+            chosen_source = "ble"
         elif self._imu_speed > 1.0:
             speed = self._imu_speed
+            chosen_source = "imu"
         else:
             speed = self._smooth_speed(speed_raw)
+            chosen_source = "gps_zero"
+        self._last_chosen_source = chosen_source
+        self._last_gps_speed = speed_raw
+        self._last_ble_speed = bike_ble_speed
+        self._last_ble_ok = bike_ble_ok
 
         speed_kmh = speed * 3.6
 
@@ -518,7 +533,9 @@ class SpeedLimiter:
             self.log_file.write(
                 f"{ts},{speed_raw:.2f},{speed_kmh:.1f},"
                 f"{self.brake_cmd:.1f},{accel_x:.3f},{zone},"
-                f"{1 if fix else 0},{self.natural_decel:.3f}\n")
+                f"{1 if fix else 0},{self.natural_decel:.3f},"
+                f"{self._last_gps_speed:.3f},{self._last_ble_speed:.3f},"
+                f"{1 if self._last_ble_ok else 0},{self._last_chosen_source}\n")
             self.log_file.flush()
 
     def run(self):
