@@ -38,7 +38,7 @@ DEFAULT_MAX_KMH = 10.0
 HYSTERESIS_KMH = 3.0       # start monitoring at 7 km/h, limit at 10
 CONTROL_HZ = 50             # 50Hz control loop (20ms per tick)
 BRAKE_MIN_ANGLE = 0
-BRAKE_MAX_ANGLE = 65
+BRAKE_MAX_ANGLE = 60
 
 # Slew rate asimmetrico: engagement dolce, release pronto
 MAX_SLEW_RATE_ENGAGE = 100.0   # deg/s — frenata che entra in ~0.6s (no inchioda)

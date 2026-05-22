@@ -55,7 +55,7 @@ SERVO_FREQ = 50
 PULSE_MIN_US = 500
 PULSE_MAX_US = 2500
 PERIOD_US = 1_000_000 / SERVO_FREQ
-BRAKE_ANGLE = 65       # brake lock when OFF (gradi "logici")
+BRAKE_ANGLE = 60       # brake lock when OFF (gradi "logici")
 RELEASE_ANGLE = 0      # released when ON (gradi "logici" = raw 180°)
 
 
