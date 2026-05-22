@@ -151,8 +151,7 @@ class MasterSwitch:
             print("[WATCHDOG] recorder failed to start")
 
     def activate(self, follow_me=False):
-        """Switch turned ON — start speed_limiter (owns servo GPIO) and logging.
-        If follow_me=True, also start follow-me cone tracking."""
+        """Switch turned ON — release servo + logging. No speed_limiter (deleted 2026-05-22)."""
         if self.active and self._recorder_is_alive():
             return  # already running and healthy
         # If active but recorder dead, force restart
@@ -171,9 +170,8 @@ class MasterSwitch:
             self.servo_handle = None
             print("[SWITCH] PWM off, servo libero")
 
-        # Start speed_limiter (owns GPIO 12, controls servo)
-        subprocess.run(["systemctl", "start", "speed_limiter.service"])
-        print("[SWITCH] speed_limiter started — servo under PID control")
+        # speed_limiter rimosso 2026-05-22 — nessun controllo software del freno.
+        # La bici è guidata solo dalla leva freno meccanica.
 
         # Clean up any zombie camera processes
         self._kill_camera_zombies()
@@ -208,9 +206,7 @@ class MasterSwitch:
         self.active = False
         self.recorder_proc = None
 
-        # Stop speed_limiter (stop prevents restart, then kill for speed)
-        subprocess.run(["systemctl", "stop", "speed_limiter.service"],
-                        capture_output=True)
+        # speed_limiter rimosso — niente da fermare.
 
         # Brake: pulse a 60° per 1.5s (porta servo a freno tirato), poi PWM OFF.
         # Il servo resta a 60° per attrito meccanico del freno (auto-mantenuto).
