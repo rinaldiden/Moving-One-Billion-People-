@@ -67,10 +67,11 @@ def write_speed(speed_ms: float):
 
 
 class SpeedTracker:
-    def __init__(self, circ_m: float, probe: bool, log_writer=None):
+    def __init__(self, circ_m: float, probe: bool, log_writer=None, log_file=None):
         self.circ = circ_m
         self.probe = probe
         self.log_writer = log_writer
+        self.log_file = log_file
         self.prev_rev = None
         self.prev_time = None
         self.last_speed = 0.0
@@ -125,6 +126,8 @@ class SpeedTracker:
                     wheel_rev, wheel_time,
                     d_rev, f"{d_t_s:.4f}",
                 ])
+                if self.log_file:
+                    self.log_file.flush()   # garantisce disco riga per riga
             except Exception:
                 pass
 
@@ -145,45 +148,65 @@ async def find_device(name_prefix: str):
     return None
 
 
-async def run(address: str, circ: float, probe: bool, log_writer=None):
-    tracker = SpeedTracker(circ, probe, log_writer)
+async def run(address: str, circ: float, probe: bool, log_writer=None, log_file=None):
+    """Connect, subscribe, watchdog. Returns True if disconnect/error pulito, False per riscan."""
+    tracker = SpeedTracker(circ, probe, log_writer, log_file)
     print(f"[INFO] connecting to {address}...", file=sys.stderr)
+    client = BleakClient(address, timeout=10.0)
+
+    # Connect con timeout esplicito (evita hang silenzioso di bleak)
     try:
-        async with BleakClient(address, timeout=15.0) as client:
-            if not client.is_connected:
-                print("[ERR] not connected", file=sys.stderr)
-                return False
-            print(f"[INFO] connected. Discovering services...", file=sys.stderr)
-
-            if probe:
-                for service in client.services:
-                    print(f"  service {service.uuid}: {service.description}")
-                    for ch in service.characteristics:
-                        print(f"    char  {ch.uuid}  props={ch.properties}")
-
-            # Subscribe a CSC Measurement
-            try:
-                await client.start_notify(CSC_MEASUREMENT, tracker.on_notification)
-            except Exception as e:
-                print(f"[ERR] start_notify {CSC_MEASUREMENT}: {e}", file=sys.stderr)
-                return False
-
-            print(f"[INFO] subscribed to CSC, writing speed to {OUT_FILE}", file=sys.stderr)
-
-            # Loop: monitoriamo timeout sulle notifiche
-            while client.is_connected:
-                await asyncio.sleep(2.0)
-                age = time.monotonic() - tracker.last_notification
-                if age > 10:
-                    # Sensore sembra silenzioso: forza speed=0
-                    write_speed(0.0)
-                if age > 30:
-                    print(f"[WARN] no notification for {age:.0f}s, riconnetto", file=sys.stderr)
-                    return False
-            return True
-    except Exception as e:
-        print(f"[ERR] connection: {e}", file=sys.stderr)
+        await asyncio.wait_for(client.connect(), timeout=20.0)
+    except asyncio.TimeoutError:
+        print("[ERR] connect timeout 20s — sensore in deep sleep?", file=sys.stderr)
         return False
+    except Exception as e:
+        print(f"[ERR] connect: {e}", file=sys.stderr)
+        return False
+
+    if not client.is_connected:
+        print("[ERR] not connected after connect()", file=sys.stderr)
+        return False
+    print("[INFO] connected. Discovering services...", file=sys.stderr)
+
+    if probe:
+        for service in client.services:
+            print(f"  service {service.uuid}: {service.description}")
+            for ch in service.characteristics:
+                print(f"    char  {ch.uuid}  props={ch.properties}")
+
+    try:
+        await asyncio.wait_for(
+            client.start_notify(CSC_MEASUREMENT, tracker.on_notification),
+            timeout=15.0,
+        )
+    except Exception as e:
+        print(f"[ERR] start_notify: {e}", file=sys.stderr)
+        try:
+            await asyncio.wait_for(client.disconnect(), timeout=5.0)
+        except Exception:
+            pass
+        return False
+
+    print(f"[INFO] subscribed to CSC, writing speed to {OUT_FILE}", file=sys.stderr)
+
+    # Watchdog: se nessuna notification per 25s → force reconnect.
+    # Se 8s senza dati → scrivi 0 in /tmp/bike_speed (consumer sa che è "ferma").
+    try:
+        while client.is_connected:
+            await asyncio.sleep(2.0)
+            age = time.monotonic() - tracker.last_notification
+            if age > 8:
+                write_speed(0.0)
+            if age > 25:
+                print(f"[WARN] no notification for {age:.0f}s, forcing reconnect", file=sys.stderr)
+                break
+    finally:
+        try:
+            await asyncio.wait_for(client.disconnect(), timeout=5.0)
+        except Exception:
+            pass
+    return False  # always rescan dopo il watchdog break → ricomincia da find_device
 
 
 async def main():
@@ -205,25 +228,37 @@ async def main():
     print(f"[INFO] log: {log_path}", file=sys.stderr)
 
     address = args.address
+    fail_streak = 0
     try:
         while True:
-            if not address:
-                address = await find_device(args.name)
-                if not address:
+            # Ri-scan periodicamente per beccare il sensore quando esce da deep sleep
+            need_rescan = (not address) or fail_streak >= 2
+            if need_rescan:
+                addr = await find_device(args.name)
+                if addr:
+                    address = addr
+                    fail_streak = 0
+                else:
                     if args.once:
                         return 1
-                    await asyncio.sleep(10)
+                    await asyncio.sleep(5)
                     continue
 
-            ok = await run(address, args.circ, args.probe, log_writer)
-            log_f.flush()  # garantisce dati su disco anche se crashia
+            ok = await run(address, args.circ, args.probe, log_writer, log_f)
+            log_f.flush()
             if args.once:
                 return 0 if ok else 1
 
-            # auto-reconnect
+            if ok:
+                fail_streak = 0
+            else:
+                fail_streak += 1
+
             write_speed(0.0)
-            print("[INFO] reconnecting in 5s...", file=sys.stderr)
-            await asyncio.sleep(5)
+            # backoff progressivo, ma corto per non perdere il risveglio
+            wait = min(10, 2 + fail_streak)
+            print(f"[INFO] reconnecting in {wait}s (fail_streak={fail_streak})...", file=sys.stderr)
+            await asyncio.sleep(wait)
     finally:
         log_f.close()
 
