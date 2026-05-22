@@ -73,7 +73,22 @@ e aggiorna `pos_prev`/`t_prev` ad ogni iter.
 
 **Perché**: una finestra mobile temporale (es. ultimi 100ms) viene svuotata da blocchi I/O occasionali (es. `query_telemetry` che dorme 40-80ms su read seriale). Risultato: `actual_vel = 0` proprio nel ciclo in cui logghi o decidi — bug silenzioso. Il sample-pair + EWMA è robusto a slip del loop.
 
-### P8 — CSV separato per ogni run di test
+### P8a — Zero-crossing detection per fermare l'arrivo senza rimbalzi
+
+**Cosa**: oltre all'exit su deadband, anche se il segno di `error` si inverte tra due iterazioni consecutive del loop → STOP + EXIT immediato.
+
+```python
+if prev_error is not None and (error * prev_error) < 0:
+    send_current(ser, 0)
+    break
+prev_error = error
+```
+
+**Perché**: a velocità elevata (motore a 100+ step/s su cavalletto) l'inerzia fa attraversare il centro tra un iter e l'altro (20ms a 50Hz). Il deadband ±10 può essere "saltato": un iter `err=+30`, prossimo iter `err=-25` — non entrato mai in deadband. Senza zero-crossing detection, il controller vede il nuovo errore di segno opposto e comanda corrente nella direzione opposta → rimbalzo. Detect del cambio segno = "abbiamo passato il centro, qualunque comando ulteriore peggiora". STOP e lascia che l'inerzia residua si esaurisca naturalmente.
+
+Risultato pratico misurato 2026-05-22: pos 3970 → 3798 in 0.72s, error -2, **0 overshoot**. Prima senza zero-crossing: 1.20s con 1 overshoot a ±25 step.
+
+### P9 — CSV separato per ogni run di test
 
 **Cosa**: ogni invocazione di uno script di controllo scrive un CSV in `~/wip/logging/vesc/<scopo>_<YYYYMMDD_HHMMSS>.csv` con timestamp ISO + tutte le colonne sensori e comandi a 50 Hz.
 
