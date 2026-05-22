@@ -160,15 +160,20 @@ class MasterSwitch:
         self.recorder_retries = 0
 
         # Release: pulse a 0° per 1.5s (porta servo a release), poi PWM OFF
-        # (servo libero, zero corrente). La molla del freno bici lo tiene aperto.
-        if hasattr(self, 'servo_handle') and self.servo_handle is not None:
-            lgpio.tx_pwm(self.servo_handle, PIN_SERVO, SERVO_FREQ, angle_to_duty(RELEASE_ANGLE))
-            print(f"[SWITCH] Servo → {RELEASE_ANGLE}° (release, 1.5s di pulse)")
-            time.sleep(1.5)
-            lgpio.gpio_write(self.servo_handle, PIN_SERVO, 0)
-            lgpio.gpiochip_close(self.servo_handle)
-            self.servo_handle = None
-            print("[SWITCH] PWM off, servo libero")
+        # (servo libero, zero corrente). Apri un handle fresco — deactivate()
+        # lascia servo_handle=None, quindi va sempre riaperto qui.
+        h = lgpio.gpiochip_open(GPIO_CHIP)
+        try:
+            lgpio.gpio_claim_output(h, PIN_SERVO)
+        except lgpio.error:
+            pass
+        lgpio.tx_pwm(h, PIN_SERVO, SERVO_FREQ, angle_to_duty(RELEASE_ANGLE))
+        print(f"[SWITCH] Servo → {RELEASE_ANGLE}° (release, 1.5s di pulse)")
+        time.sleep(1.5)
+        lgpio.gpio_write(h, PIN_SERVO, 0)
+        lgpio.gpiochip_close(h)
+        self.servo_handle = None
+        print("[SWITCH] PWM off, servo libero")
 
         # speed_limiter rimosso 2026-05-22 — nessun controllo software del freno.
         # La bici è guidata solo dalla leva freno meccanica.
