@@ -38,12 +38,16 @@ DEFAULT_MAX_KMH = 10.0
 HYSTERESIS_KMH = 3.0       # start monitoring at 7 km/h, limit at 10
 CONTROL_HZ = 50             # 50Hz control loop (20ms per tick)
 BRAKE_MIN_ANGLE = 0
-BRAKE_MAX_ANGLE = 45
+BRAKE_MAX_ANGLE = 60
 
-# Slew rate: max servo movement per second (degrees)
-MAX_SLEW_RATE = 200.0       # deg/s — at 50Hz = 4 deg/tick
+# Slew rate asimmetrico: engagement dolce, release pronto
+MAX_SLEW_RATE_ENGAGE = 100.0   # deg/s — frenata che entra in ~0.6s (no inchioda)
+MAX_SLEW_RATE_RELEASE = 400.0  # deg/s — rilascio rapido (< 0.2s)
 
-# Servo GPIO — direct PWM
+# Servo GPIO — direct PWM (DFRobot SER0062: 6-8.4V, pulse 500-2500us, dead 1us)
+# IMPORTANTE: 50Hz è lo standard servo. Il datasheet NON dichiara compatibilità
+# con frequenze > 50Hz. 333Hz può causare jitter, corrente media alta, burnout
+# (stall current = 5A @ 6V).
 GPIO_CHIP = 4
 SERVO_PIN = 12
 SERVO_FREQ = 50
@@ -59,8 +63,15 @@ GPS_BAUD = 38400
 # ═══════════════════════════════════════════════════════════
 # GPS READER — direct UART, background thread
 # ═══════════════════════════════════════════════════════════
+GPS_STATE_FILE = "/tmp/gps_state.json"
+
+
 class GPSDirectReader:
-    """Reads GPS NMEA from UART directly. No HTTP."""
+    """Reads GPS NMEA from UART directly. No HTTP.
+
+    Publishes state to /tmp/gps_state.json so other processes
+    (e.g. training_recorder) can consume GPS without UART contention.
+    """
 
     def __init__(self):
         self.speed_ms = 0.0
@@ -71,6 +82,29 @@ class GPSDirectReader:
         self._lock = threading.Lock()
         self._running = False
         self._last_valid = 0
+        self._last_publish = 0
+
+    def _publish_state(self):
+        # Throttle: publish at most 10Hz
+        now = time.monotonic()
+        if now - self._last_publish < 0.1:
+            return
+        self._last_publish = now
+        state = {
+            "lat": self.lat,
+            "lon": self.lon,
+            "speed_ms": self.speed_ms,
+            "heading": self.heading,
+            "fix": bool(self.fix),
+            "ts": now,
+        }
+        try:
+            tmp = GPS_STATE_FILE + ".tmp"
+            with open(tmp, "w") as f:
+                json.dump(state, f)
+            os.replace(tmp, GPS_STATE_FILE)
+        except OSError:
+            pass
 
     def start(self):
         self._running = True
@@ -133,10 +167,12 @@ class GPSDirectReader:
                                         self.heading = heading
                                         self.fix = True
                                         self._last_valid = time.monotonic()
+                                        self._publish_state()
                                 else:
                                     with self._lock:
                                         self.speed_ms = 0.0
                                         self.fix = False
+                                        self._publish_state()
 
                         elif "GGA" in line:
                             parts = line.split(",")
@@ -145,6 +181,7 @@ class GPSDirectReader:
                                     self.lat = self._nmea_to_decimal(parts[2], parts[3])
                                     self.lon = self._nmea_to_decimal(parts[4], parts[5])
                                     self.fix = int(parts[6]) > 0 if parts[6] else False
+                                    self._publish_state()
                     except (ValueError, IndexError):
                         pass
 
@@ -184,11 +221,14 @@ def read_imu_accel_x():
 # SERVO CONTROL
 # ═══════════════════════════════════════════════════════════
 def _angle_to_duty(angle):
-    pulse_us = PULSE_MIN_US + (angle / 180.0) * (PULSE_MAX_US - PULSE_MIN_US)
+    # Servo montato invertito: raw 180° = rilasciato, raw 0° = freno pieno.
+    # angle "logico": 0 = release, +N = N° di frenata.
+    raw = 180.0 - angle
+    pulse_us = PULSE_MIN_US + (raw / 180.0) * (PULSE_MAX_US - PULSE_MIN_US)
     return (pulse_us / PERIOD_US) * 100.0
 
 
-_last_sent_angle = -1
+_last_sent_angle = -1   # sentinel: nessun comando inviato ancora
 
 # INA219 servo current sensor
 INA219_ADDR = 0x40
@@ -211,21 +251,39 @@ def _check_servo_power():
 
 
 def send_servo(angle, gpio_handle):
-    """Send angle to servo. Only sends if changed."""
+    """Pattern pulse-and-free: PWM solo quando serve coppia.
+
+    - angle > 0 (frena): claim pin + tx_pwm continuo → servo tiene posizione
+    - angle = 0 (release): gpio_write(0) + gpio_free → pin in hi-Z, servo
+      non riceve nessun signal e resta fermo (zero corrente, zero microagg).
+
+    NB: il SER0062 con signal LOW continuo (pin claimed output LOW) NON va
+    in free-wheel — interpreta LOW come "pulse 0µs" e fa microaggiustamenti
+    cercando posizione di fail-safe. Solo con pin hi-Z (free) è davvero libero.
+    """
     global _last_sent_angle
     angle = max(BRAKE_MIN_ANGLE, min(BRAKE_MAX_ANGLE, int(angle)))
 
-    if gpio_handle is not None and angle != _last_sent_angle:
-        import lgpio
-        if angle > 0:
-            if _check_servo_power():
-                lgpio.tx_pwm(gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(angle))
-            else:
-                lgpio.tx_pwm(gpio_handle, SERVO_PIN, 0, 0)
-                angle = 0
-        else:
-            lgpio.tx_pwm(gpio_handle, SERVO_PIN, 0, 0)
-        _last_sent_angle = angle
+    if gpio_handle is None or angle == _last_sent_angle:
+        return angle
+
+    import lgpio
+    if angle > 0 and _check_servo_power():
+        # Claim pin if currently released (gpio_free'd)
+        try:
+            lgpio.gpio_claim_output(gpio_handle, SERVO_PIN)
+        except lgpio.error:
+            pass  # already claimed
+        lgpio.tx_pwm(gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(angle))
+    else:
+        # Release: cut PWM, free the pin (hi-Z = servo davvero scollegato)
+        try:
+            lgpio.gpio_write(gpio_handle, SERVO_PIN, 0)
+            lgpio.gpio_free(gpio_handle, SERVO_PIN)
+        except lgpio.error:
+            pass
+        angle = 0
+    _last_sent_angle = angle
     return angle
 
 
@@ -267,10 +325,13 @@ class SpeedLimiter:
                 import lgpio
                 self.gpio_handle = lgpio.gpiochip_open(GPIO_CHIP)
                 lgpio.gpio_claim_output(self.gpio_handle, SERVO_PIN)
+                # Pulse 0° per 1.5s (porta il servo a release anche da 60°),
+                # poi PWM off + gpio_free → pin hi-Z, servo davvero libero.
                 lgpio.tx_pwm(self.gpio_handle, SERVO_PIN, SERVO_FREQ, _angle_to_duty(0))
                 time.sleep(1.5)
-                lgpio.tx_pwm(self.gpio_handle, SERVO_PIN, 0, 0)
-                print("Servo released to 0°, PWM off")
+                lgpio.gpio_write(self.gpio_handle, SERVO_PIN, 0)
+                lgpio.gpio_free(self.gpio_handle, SERVO_PIN)
+                print("Servo @ 0° release (PWM off, pin free, servo davvero libero)")
             except Exception as e:
                 print(f"WARNING: GPIO init failed: {e}")
 
@@ -315,13 +376,16 @@ class SpeedLimiter:
                 self.natural_decel = sum(self.decel_samples) / len(self.decel_samples)
 
     def _apply_slew_rate(self, target, dt):
-        """Limit how fast brake_cmd can change."""
-        max_delta = MAX_SLEW_RATE * dt
+        """Limit how fast brake_cmd can change. Asymmetric: engage slow, release fast."""
         delta = target - self.brake_cmd
-        if delta > max_delta:
-            delta = max_delta
-        elif delta < -max_delta:
-            delta = -max_delta
+        if delta > 0:
+            max_delta = MAX_SLEW_RATE_ENGAGE * dt
+            if delta > max_delta:
+                delta = max_delta
+        else:
+            max_delta = MAX_SLEW_RATE_RELEASE * dt
+            if delta < -max_delta:
+                delta = -max_delta
         self.brake_cmd += delta
         self.brake_cmd = max(0, min(BRAKE_MAX_ANGLE, self.brake_cmd))
 
@@ -439,7 +503,7 @@ class SpeedLimiter:
         print(f"{'='*50}")
         print(f"Max speed: {self.max_kmh:.0f} km/h")
         print(f"Hysteresis: {self.hyst_start_kmh:.0f}-{self.max_kmh:.0f} km/h")
-        print(f"Loop: {CONTROL_HZ} Hz, slew rate: {MAX_SLEW_RATE}°/s")
+        print(f"Loop: {CONTROL_HZ} Hz, slew engage: {MAX_SLEW_RATE_ENGAGE}°/s, release: {MAX_SLEW_RATE_RELEASE}°/s")
         print(f"GPS: direct UART {GPS_PORT}")
         print(f"Feed-forward: natural decel estimation")
         print(f"{'DRY RUN' if self.dry_run else 'ACTIVE'}")
@@ -463,6 +527,14 @@ class SpeedLimiter:
         self.gps.stop()
         if self.log_file:
             self.log_file.close()
+        # Cleanup GPIO: rilascia il chip così master_switch può subentrare
+        # rapidamente. NON metto LOW: master_switch riprende con PWM continuo.
+        if self.gpio_handle is not None:
+            try:
+                import lgpio
+                lgpio.gpiochip_close(self.gpio_handle)
+            except Exception as e:
+                print(f"[CLEANUP] GPIO close error: {e}")
         print(f"\n\nSpeed limiter stopped.")
 
     def __del__(self):

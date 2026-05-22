@@ -48,18 +48,22 @@ if not ASMILE_USER:
     ASMILE_USER = "asmile"
 HOME_DIR = f"/home/{ASMILE_USER}"
 
-# Servo (for brake lock)
+# Servo (for brake lock) — DFRobot SER0062 brushless waterproof, 6-8.4V
+# 50Hz è lo standard servo. Pulse 500-2500us, dead zone 1us. Stall 5A.
 PIN_SERVO = 12
 SERVO_FREQ = 50
 PULSE_MIN_US = 500
 PULSE_MAX_US = 2500
 PERIOD_US = 1_000_000 / SERVO_FREQ
-BRAKE_ANGLE = 40       # brake lock when OFF
-RELEASE_ANGLE = 0      # released when ON
+BRAKE_ANGLE = 60       # brake lock when OFF (gradi "logici")
+RELEASE_ANGLE = 0      # released when ON (gradi "logici" = raw 180°)
 
 
 def angle_to_duty(angle: float) -> float:
-    pulse_us = PULSE_MIN_US + (angle / 180.0) * (PULSE_MAX_US - PULSE_MIN_US)
+    # Servo montato invertito: raw 180° = rilasciato, raw 0° = freno pieno.
+    # angle "logico": 0 = release, +N = N° di frenata.
+    raw = 180.0 - angle
+    pulse_us = PULSE_MIN_US + (raw / 180.0) * (PULSE_MAX_US - PULSE_MIN_US)
     return (pulse_us / PERIOD_US) * 100.0
 
 
@@ -156,12 +160,16 @@ class MasterSwitch:
         self.follow_me = follow_me
         self.recorder_retries = 0
 
-        # Release servo GPIO if we were holding it (from deactivate)
-        if hasattr(self, 'servo_handle') and self.servo_handle:
-            lgpio.tx_pwm(self.servo_handle, PIN_SERVO, 0, 0)
+        # Release: pulse a 0° per 1.5s (porta servo a release), poi PWM OFF
+        # (servo libero, zero corrente). La molla del freno bici lo tiene aperto.
+        if hasattr(self, 'servo_handle') and self.servo_handle is not None:
+            lgpio.tx_pwm(self.servo_handle, PIN_SERVO, SERVO_FREQ, angle_to_duty(RELEASE_ANGLE))
+            print(f"[SWITCH] Servo → {RELEASE_ANGLE}° (release, 1.5s di pulse)")
+            time.sleep(1.5)
+            lgpio.gpio_write(self.servo_handle, PIN_SERVO, 0)
             lgpio.gpiochip_close(self.servo_handle)
             self.servo_handle = None
-            time.sleep(0.3)
+            print("[SWITCH] PWM off, servo libero")
 
         # Start speed_limiter (owns GPIO 12, controls servo)
         subprocess.run(["systemctl", "start", "speed_limiter.service"])
@@ -204,16 +212,21 @@ class MasterSwitch:
         subprocess.run(["systemctl", "stop", "speed_limiter.service"],
                         capture_output=True)
 
-        # Lock brake NOW
+        # Brake: pulse a 60° per 1.5s (porta servo a freno tirato), poi PWM OFF.
+        # Il servo resta a 60° per attrito meccanico del freno (auto-mantenuto).
+        # Zero corrente in steady state.
         h2 = lgpio.gpiochip_open(GPIO_CHIP)
-        lgpio.gpio_claim_output(h2, PIN_SERVO)
+        try:
+            lgpio.gpio_claim_output(h2, PIN_SERVO)
+        except lgpio.error:
+            pass
         lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, angle_to_duty(BRAKE_ANGLE))
-        print(f"[SWITCH] Brake locked at {BRAKE_ANGLE}°")
-        time.sleep(0.5)
-        lgpio.tx_pwm(h2, PIN_SERVO, 0, 0)
+        print(f"[SWITCH] Brake → {BRAKE_ANGLE}° (1.5s di pulse)")
+        time.sleep(1.5)
+        lgpio.gpio_write(h2, PIN_SERVO, 0)
         lgpio.gpiochip_close(h2)
         self.servo_handle = None
-        print("[SWITCH] Servo PWM off (holds mechanically)")
+        print("[SWITCH] PWM off, servo tenuto da attrito meccanico")
 
         # Clean up the rest
         subprocess.run(["pkill", "-f", "follow_me/main.py"], capture_output=True)
@@ -222,8 +235,10 @@ class MasterSwitch:
 
     def cleanup(self):
         if hasattr(self, 'servo_handle') and self.servo_handle:
-            lgpio.tx_pwm(self.servo_handle, PIN_SERVO, 0, 0)
-            lgpio.gpiochip_close(self.servo_handle)
+            try:
+                lgpio.gpiochip_close(self.servo_handle)
+            except Exception:
+                pass
         lgpio.gpiochip_close(self.h)
 
 
