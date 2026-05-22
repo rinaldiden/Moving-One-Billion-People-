@@ -15,9 +15,12 @@
 
 ## Hardware parameters (do not change without testing)
 
-### Servo freno (PDI-6221MG)
-- GPIO 12, PWM at 330Hz (NOT 50Hz)
-- Pulse 500-2500us, CENTER=0°, MAX_BRAKE=85°
+### Servo freno (DFRobot SER0062 brushless waterproof)
+- GPIO 12, PWM **50Hz** (NOT 330Hz — il SER0062 brusha se >50Hz)
+- Pulse 500-2500us, RELEASE_ANGLE=0° (raw 180°), BRAKE_ANGLE=60° (raw 120°)
+- Pattern: pulse durante movimento (1.5s), poi PWM off + gpio_free → pin hi-Z
+- Sistema **idraulico MTB**: servo → camma eccentrica → master piston → caliper
+- NON superare 60° (a 65° l'idraulico inchioda meccanicamente, vedi feedback_brake_angle_hydraulic)
 - Via level shifter 3.3V→6V (Pololu D24V55F6)
 
 ### IMU (MPU6050)
