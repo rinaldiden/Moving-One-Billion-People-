@@ -77,6 +77,10 @@ GPS_STATE_FILE = "/tmp/gps_state.json"   # condiviso con altri consumer
 GPS_FIX_TIMEOUT_S = 3.0
 GPS_SPIKE_MAX_DELTA_MS = 2.5
 
+# ─── BLE Coospo (solo logging, non controllo) ─────────────────────────
+BLE_SPEED_FILE = "/tmp/bike_speed"
+BLE_FRESH_S = 3.0
+
 # ─── IMU ──────────────────────────────────────────────────────────────
 IMU_BUS = 1
 IMU_ADDR = 0x68
@@ -158,6 +162,21 @@ class GPSReader:
                         pass
                     ser = None
                 time.sleep(0.5)
+
+
+# ══════════════════════════════════════════════════════════════════════
+# BLE Coospo speed reader (file polling, log-only)
+# ══════════════════════════════════════════════════════════════════════
+def _read_ble_speed():
+    """Returns (speed_ms, fresh_bool). False se file mancante o stale."""
+    try:
+        st = os.stat(BLE_SPEED_FILE)
+        if time.time() - st.st_mtime > BLE_FRESH_S:
+            return 0.0, False
+        with open(BLE_SPEED_FILE) as f:
+            return float(f.readline().strip().split()[0]), True
+    except (FileNotFoundError, ValueError, IndexError, OSError):
+        return 0.0, False
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -305,6 +324,7 @@ class SpeedLimiter:
             "fix", "source", "accel_x_g", "natural_decel_ms2",
             "error_ms", "pid_p", "pid_i", "pid_d", "ff_brake_deg",
             "target_brake_deg", "brake_cmd_deg", "zone",
+            "ble_speed_ms", "ble_fresh",
         ])
         print(f"[LIMITER] log: {log_path}", flush=True)
 
@@ -413,6 +433,7 @@ class SpeedLimiter:
 
                 gps_speed, fix = self._read_speed()
                 accel_x = self.imu.accel_x()
+                ble_speed, ble_fresh = _read_ble_speed()
                 speed, source = self._fuse(gps_speed, fix, accel_x)
 
                 # Controller adattivo: aggiorna brake_cmd direttamente
@@ -436,6 +457,7 @@ class SpeedLimiter:
                         f"{error:.3f}", f"{p:.2f}", f"{i:.2f}", f"{d:.2f}",
                         f"{ff_brake:.2f}",
                         f"{target:.2f}", f"{self.brake_cmd:.2f}", zone,
+                        f"{ble_speed:.3f}", 1 if ble_fresh else 0,
                     ])
                     self.log_f.flush()
 
