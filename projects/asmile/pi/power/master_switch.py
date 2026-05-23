@@ -232,20 +232,24 @@ class MasterSwitch:
             self.speed_limiter_proc = None
             print("[SWITCH] speed_limiter stopped")
 
-        # Switch OFF: chiudi il freno, tieni 1.5s, poi PWM off (servo
-        # mantiene la posizione meccanicamente). Comportamento originale.
+        # Switch OFF: pulse brake 60° per 1.5s (servo raggiunge posizione),
+        # poi STOP TUTTO → tx_pwm(0) + gpio_free → pin hi-Z. Stesso pattern
+        # del limiter in FREE zone: niente LOW continuo che il SER0062 odia.
         h2 = lgpio.gpiochip_open(GPIO_CHIP)
         try:
-            lgpio.gpio_claim_output(h2, PIN_SERVO)
+            lgpio.gpio_free(h2, PIN_SERVO)
         except lgpio.error:
             pass
+        lgpio.gpio_claim_output(h2, PIN_SERVO)
         lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, angle_to_duty(BRAKE_ANGLE))
-        print(f"[SWITCH] Brake → {BRAKE_ANGLE}° (1.5s di pulse)")
+        print(f"[SWITCH] Brake → {BRAKE_ANGLE}° (1.5s di pulse @ {SERVO_FREQ}Hz)")
         time.sleep(1.5)
-        lgpio.gpio_write(h2, PIN_SERVO, 0)
+        lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, 0)
+        time.sleep(0.05)
+        lgpio.gpio_free(h2, PIN_SERVO)
         lgpio.gpiochip_close(h2)
         self.servo_handle = None
-        print("[SWITCH] PWM off, servo tenuto da attrito meccanico")
+        print("[SWITCH] PWM stopped, pin freed (hi-Z) — servo libero, niente segnale")
 
         # Clean up the rest
         subprocess.run(["pkill", "-f", "follow_me/main.py"], capture_output=True)
