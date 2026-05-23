@@ -352,46 +352,44 @@ class SpeedLimiter:
     # ─── Controller adattivo ──────────────────────────────────────────
     def _compute_target(self, speed, accel_x):
         """Aggiorna brake_cmd in base a velocità + decel misurata.
-        Ritorna (new_brake_cmd, error_dummy, components, zone)."""
-        # decel misurata dall'IMU (positivo = sto rallentando in direzione marcia)
-        imu_decel = -accel_x * 9.81
+        PRIORITÀ: appena la bici sta rallentando (decel positiva O velocità
+        in calo) → rilascia veloce. Solo se non rallenta E sono sopra target
+        → costruisce il freno."""
+        imu_decel = -accel_x * 9.81  # m/s² positivo = sto rallentando
         self.decel_filtered = (1.0 - DECEL_EWMA) * self.decel_filtered + DECEL_EWMA * imu_decel
 
-        step_up = STEP_UP_DEG_S * DT     # per tick (50Hz → 0.24°)
-        step_down = STEP_DOWN_DEG_S * DT # per tick (50Hz → 0.50°)
+        # Trend velocità tra tick (m/s²)
+        speed_trend = (speed - self.prev_speed) / DT   # negativo = sto calando
+
+        step_up = STEP_UP_DEG_S * DT
+        step_down = STEP_DOWN_DEG_S * DT
         speed_kmh = speed * 3.6
+
+        speed_dropping = speed_trend < -0.05      # 0.05 m/s² in 20ms = ~0.5 km/h al secondo
+        decel_positive = self.decel_filtered > 0.10   # decel sensibile su IMU
 
         if speed_kmh < ACTIVATE_KMH:
             # FREE: rilascia velocemente
             new = max(0.0, self.brake_cmd - step_down * 2.0)
             zone = "FREE"
+        elif speed_dropping or decel_positive:
+            # PRIORITÀ ASSOLUTA: la bici sta già rallentando → rilascia
+            # (più aggressivo se decel più forte)
+            release_scale = 1.0 + max(0.0, self.decel_filtered / DECEL_OK_MS2)
+            new = max(0.0, self.brake_cmd - step_down * release_scale)
+            zone = "RELEASE"
         elif speed_kmh > TARGET_KMH:
-            # OVER target: voglio decel ≥ DECEL_OK_MS2
-            if self.decel_filtered < DECEL_OK_MS2:
-                # Non sto decelerando abbastanza → freno di più
-                # Scala il passo con quanto sono sopra target (max 3x)
-                scale = min(3.0, 1.0 + (speed_kmh - TARGET_KMH) / 2.0)
-                new = self.brake_cmd + step_up * scale
-            else:
-                # Decelerando bene → rilascia un po' (smussa l'arrivo)
-                new = self.brake_cmd - step_down * 0.3
+            # Sopra target E NON sta rallentando → costruisci freno
+            scale = min(3.0, 1.0 + (speed_kmh - TARGET_KMH) / 2.0)
+            new = self.brake_cmd + step_up * scale
             zone = "OVER"
         else:
-            # HYST band 7-10 km/h: mantieni decel positiva ma gentile
-            if self.decel_filtered < 0:
-                # sto accelerando → un pochino più di freno
-                new = self.brake_cmd + step_up * 0.5
-            elif self.decel_filtered > DECEL_OK_MS2:
-                # decelero bene → rilascia
-                new = self.brake_cmd - step_down
-            else:
-                # decel piccola positiva → mantieni
-                new = self.brake_cmd
+            # HYST band 7-10 km/h, non sta rallentando → un pochino di freno
+            new = self.brake_cmd + step_up * 0.5
             zone = "HYST"
 
         new = max(0.0, min(BRAKE_MAX_ANGLE, new))
-        # components per il log: (decel_misurata, scaling, step_up_used)
-        return new, self.decel_filtered, (self.decel_filtered, 0.0, 0.0), zone
+        return new, self.decel_filtered, (self.decel_filtered, speed_trend, 0.0), zone
 
     # ─── Slew rate sul comando servo ──────────────────────────────────
     def _slew(self, target):

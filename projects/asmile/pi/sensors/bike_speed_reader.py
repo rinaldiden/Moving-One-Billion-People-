@@ -39,7 +39,7 @@ LOG_DIR = os.path.expanduser("~/wip/logging/bike_speed")
 
 # Defaults
 DEFAULT_NAME_PREFIX = "BK6LS"
-DEFAULT_CIRC = 2.10  # m — road/MTB tipico ~2.05-2.13. Calibra se serve precisione.
+DEFAULT_CIRC = 1.476  # m — ruota 20" Asmile2 (raggio 235mm × 2 × π). MAI 2.10 per questa bici.
 
 
 def parse_csc(data: bytes):
