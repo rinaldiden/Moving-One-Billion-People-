@@ -31,8 +31,9 @@ import serial
 import smbus2
 
 # ─── Target ───────────────────────────────────────────────────────────
-TARGET_KMH = 10.0       # ceiling: sopra → PID + FF
-ACTIVATE_KMH = 8.0      # sotto → FREE, nessun comando freno
+TARGET_KMH = 10.0       # ceiling: sopra → PID + FF + base ramp
+ACTIVATE_KMH = 7.0      # sotto → FREE. Sopra → rampa lineare fino a HYST_MAX_DEG
+HYST_MAX_DEG = 10.0     # angolo del freno raggiunto a TARGET_KMH (rampa lineare)
 
 # ─── Servo (DFRobot SER0062, 50Hz pulse-and-free) ────────────────────
 GPIO_CHIP = 0
@@ -356,43 +357,46 @@ class SpeedLimiter:
                 self.natural_decel_buf.append(d)
                 self.natural_decel = sum(self.natural_decel_buf) / len(self.natural_decel_buf)
 
-    # ─── PID + FF ─────────────────────────────────────────────────────
+    # ─── Soft ramp + PID + FF ─────────────────────────────────────────
     def _compute_target(self, speed):
         # Zona FREE: sotto activate, nessun comando
         if speed < self.activate_ms:
             self.integral *= 0.9   # decadimento integratore
+            self.prev_speed_for_d = speed
             return 0.0, 0.0, (0.0, 0.0, 0.0), "FREE"
 
-        # Error in m/s (positivo = troppo veloce)
+        # Rampa lineare 0→HYST_MAX_DEG da ACTIVATE a TARGET (sempre attiva sopra activate)
+        ramp_progress = min(1.0, (speed - self.activate_ms) / max(0.001, self.target_ms - self.activate_ms))
+        soft_brake = HYST_MAX_DEG * ramp_progress
+
+        # Sotto target: solo rampa soft, niente PID/FF
+        if speed <= self.target_ms:
+            self.integral *= 0.95   # integratore lento decadimento
+            self.prev_speed_for_d = speed
+            target = max(0.0, min(BRAKE_MAX_ANGLE, soft_brake))
+            return target, 0.0, (0.0, 0.0, 0.0), "HYST"
+
+        # OVER: rampa soft (saturata a HYST_MAX_DEG) + PID + FF
         error = speed - self.target_ms
 
-        # PID
         self.integral += error * DT
         self.integral = max(-INTEGRAL_LIMIT, min(INTEGRAL_LIMIT, self.integral))
-        # derivative su measurement (più stabile)
         d_meas = (speed - self.prev_speed_for_d) / DT
         self.prev_speed_for_d = speed
 
         p = KP * error
         i = KI * self.integral
         d = KD * d_meas
+        pid_out = max(0.0, p + i + d)
 
-        pid_out = p + i + d
-        pid_out = max(0.0, pid_out)   # solo contributo frenante
+        # Feed-forward: extra decel richiesta per tornare a target in FF_HORIZON_S
+        needed_decel = (speed - self.target_ms) / FF_HORIZON_S
+        extra = max(0.0, needed_decel - self.natural_decel)
+        ff = FF_GAIN * extra
 
-        # Feed-forward: quanta decel "extra" oltre natural serve per tornare a target in FF_HORIZON_S?
-        if speed > self.target_ms:
-            needed_decel = (speed - self.target_ms) / FF_HORIZON_S
-            extra = max(0.0, needed_decel - self.natural_decel)
-            ff = FF_GAIN * extra
-        else:
-            ff = 0.0
-
-        target = pid_out + ff
+        target = soft_brake + pid_out + ff
         target = max(0.0, min(BRAKE_MAX_ANGLE, target))
-
-        zone = "OVER" if speed > self.target_ms else "HYST"
-        return target, error, (p, i, d), zone
+        return target, error, (p, i, d), "OVER"
 
     # ─── Slew rate sul comando servo ──────────────────────────────────
     def _slew(self, target):
