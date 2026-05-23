@@ -308,7 +308,10 @@ class SpeedLimiter:
         # Stato controller adattivo
         self.brake_cmd = 0.0       # gradi attualmente comandati al servo
         self.decel_filtered = 0.0  # m/s² (positivo = sto rallentando), EWMA da IMU
-        self.natural_decel = 0.0   # placeholder, non più usato in controllo
+        self.natural_decel = 0.0   # placeholder
+        # Storia velocità BLE per trend (finestra mobile ~1s)
+        self.ble_history = deque(maxlen=30)   # (t_monotonic, speed_ms)
+        self.last_ble_for_trend = 0.0
 
         # Loop state
         self.prev_speed = 0.0
@@ -375,47 +378,64 @@ class SpeedLimiter:
         smoothed = sorted(self.speed_history)[len(self.speed_history) // 2]
         return smoothed, source
 
+    # ─── Trend velocità dal BLE su finestra mobile ────────────────────
+    def _update_ble_trend(self, ble_speed, ble_fresh, t_now):
+        """Aggiorna storia BLE. Ritorna trend m/s² (negativo = sto calando).
+        Ignora sample con velocità 0 (può essere sensore sleep, non vero stop)."""
+        if ble_fresh and ble_speed > 0.3:   # ignora 0 spurio
+            self.ble_history.append((t_now, ble_speed))
+        # Trend su finestra 1s
+        if len(self.ble_history) < 2:
+            return 0.0
+        cutoff = t_now - 1.0
+        recent = [(t, s) for t, s in self.ble_history if t >= cutoff]
+        if len(recent) < 2:
+            return 0.0
+        t0, s0 = recent[0]
+        t1, s1 = recent[-1]
+        dt = t1 - t0
+        if dt < 0.3:    # finestra troppo corta
+            return 0.0
+        return (s1 - s0) / dt
+
     # ─── Controller adattivo ──────────────────────────────────────────
-    def _compute_target(self, speed, accel_x):
-        """Aggiorna brake_cmd in base a velocità + decel misurata.
-        PRIORITÀ: appena la bici sta rallentando (decel positiva O velocità
-        in calo) → rilascia veloce. Solo se non rallenta E sono sopra target
-        → costruisce il freno."""
+    def _compute_target(self, speed, accel_x, ble_speed, ble_fresh):
+        """Aggiorna brake_cmd in base a velocità + trend BLE + decel IMU.
+        Priorità: se la bici STA GIÀ RALLENTANDO → rilascia (no insistere)."""
         imu_decel = -accel_x * 9.81  # m/s² positivo = sto rallentando
         self.decel_filtered = (1.0 - DECEL_EWMA) * self.decel_filtered + DECEL_EWMA * imu_decel
 
-        # Trend velocità tra tick (m/s²)
-        speed_trend = (speed - self.prev_speed) / DT   # negativo = sto calando
+        t_now = time.monotonic()
+        ble_trend = self._update_ble_trend(ble_speed, ble_fresh, t_now)
+        # ble_trend in m/s² (negativo = velocità in calo)
 
         step_up = STEP_UP_DEG_S * DT
         step_down = STEP_DOWN_DEG_S * DT
         speed_kmh = speed * 3.6
 
-        speed_dropping = speed_trend < -0.05      # 0.05 m/s² in 20ms = ~0.5 km/h al secondo
-        decel_positive = self.decel_filtered > 0.10   # decel sensibile su IMU
+        # Detect rallentamento: BLE in calo (primario) o IMU decel (backup)
+        speed_dropping = ble_trend < -0.15   # ~ -0.5 km/h al secondo
+        decel_positive = self.decel_filtered > 0.10
 
         if speed_kmh < ACTIVATE_KMH:
-            # FREE: rilascia velocemente
             new = max(0.0, self.brake_cmd - step_down * 2.0)
             zone = "FREE"
         elif speed_dropping or decel_positive:
-            # PRIORITÀ ASSOLUTA: la bici sta già rallentando → rilascia
-            # (più aggressivo se decel più forte)
-            release_scale = 1.0 + max(0.0, self.decel_filtered / DECEL_OK_MS2)
+            # Bici sta già rallentando → RILASCIA proporzionale al rallentamento
+            slow_intensity = max(abs(ble_trend), self.decel_filtered)
+            release_scale = 1.0 + slow_intensity / 0.3   # +1 ogni 0.3 m/s² di rallentamento
             new = max(0.0, self.brake_cmd - step_down * release_scale)
             zone = "RELEASE"
         elif speed_kmh > TARGET_KMH:
-            # Sopra target E NON sta rallentando → costruisci freno
             scale = min(3.0, 1.0 + (speed_kmh - TARGET_KMH) / 2.0)
             new = self.brake_cmd + step_up * scale
             zone = "OVER"
         else:
-            # HYST band 7-10 km/h, non sta rallentando → un pochino di freno
             new = self.brake_cmd + step_up * 0.5
             zone = "HYST"
 
         new = max(0.0, min(BRAKE_MAX_ANGLE, new))
-        return new, self.decel_filtered, (self.decel_filtered, speed_trend, 0.0), zone
+        return new, self.decel_filtered, (self.decel_filtered, ble_trend, 0.0), zone
 
     # ─── Slew rate sul comando servo ──────────────────────────────────
     def _slew(self, target):
@@ -444,7 +464,7 @@ class SpeedLimiter:
 
                 # Controller adattivo: aggiorna brake_cmd direttamente
                 # (no slew separato — il rate limiting è dentro al controller)
-                new_brake, decel_meas, (df, _, _), zone = self._compute_target(speed, accel_x)
+                new_brake, decel_meas, (df, _, _), zone = self._compute_target(speed, accel_x, ble_speed, ble_fresh)
                 self.brake_cmd = new_brake
                 self.servo.tick(self.brake_cmd)
                 # Alias per log (riusa colonne esistenti)
