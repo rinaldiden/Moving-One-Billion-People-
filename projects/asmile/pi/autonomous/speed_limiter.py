@@ -31,9 +31,15 @@ import serial
 import smbus2
 
 # ─── Target ───────────────────────────────────────────────────────────
-TARGET_KMH = 10.0       # ceiling: sopra → PID + FF + base ramp
-ACTIVATE_KMH = 7.0      # sotto → FREE. Sopra → rampa lineare fino a HYST_MAX_DEG
-HYST_MAX_DEG = 10.0     # angolo del freno raggiunto a TARGET_KMH (rampa lineare)
+TARGET_KMH = 10.0       # ceiling: sopra → adattivo per riportare a target
+ACTIVATE_KMH = 7.0      # sotto → FREE, brake rilasciato
+
+# ─── Controller adattivo (no mappa fissa angolo) ─────────────────────
+# Brake_cmd cresce/cala in base alla decelerazione MISURATA dall'IMU.
+STEP_UP_DEG_S = 12.0    # quanto cresce il brake/sec se NON sto decelerando
+STEP_DOWN_DEG_S = 25.0  # quanto rilascio il brake/sec se decel OK o speed cala
+DECEL_OK_MS2 = 0.30     # decel "sufficiente" (m/s² positivi)
+DECEL_EWMA = 0.20       # smoothing accel_x dell'IMU (alpha)
 
 # ─── Servo (DFRobot SER0062, 50Hz pulse-and-free) ────────────────────
 GPIO_CHIP = 0
@@ -280,16 +286,10 @@ class SpeedLimiter:
         self.imu_speed = 0.0   # integratore IMU per fallback senza fix
         self.speed_history = deque(maxlen=5)   # median smoothing
 
-        # PID state
-        self.integral = 0.0
-        self.prev_speed_for_d = 0.0   # derivative on measurement (no setpoint kick)
-
-        # Feed-forward natural decel estimator
-        self.natural_decel = 0.15   # m/s² start (piano, no pendenza)
-        self.natural_decel_buf = deque(maxlen=50)   # ~1s a 50Hz
-
-        # Slew rate state
-        self.brake_cmd = 0.0   # gradi applicati
+        # Stato controller adattivo
+        self.brake_cmd = 0.0       # gradi attualmente comandati al servo
+        self.decel_filtered = 0.0  # m/s² (positivo = sto rallentando), EWMA da IMU
+        self.natural_decel = 0.0   # placeholder, non più usato in controllo
 
         # Loop state
         self.prev_speed = 0.0
@@ -349,54 +349,49 @@ class SpeedLimiter:
         smoothed = sorted(self.speed_history)[len(self.speed_history) // 2]
         return smoothed, source
 
-    # ─── Stima decel naturale (online) ────────────────────────────────
-    def _update_natural_decel(self, speed):
-        if self.brake_cmd < 0.5 and speed > 1.0:
-            d = (self.prev_speed - speed) / DT
-            if 0.0 < d < 2.0:   # range sano (no spike, no accel positiva)
-                self.natural_decel_buf.append(d)
-                self.natural_decel = sum(self.natural_decel_buf) / len(self.natural_decel_buf)
+    # ─── Controller adattivo ──────────────────────────────────────────
+    def _compute_target(self, speed, accel_x):
+        """Aggiorna brake_cmd in base a velocità + decel misurata.
+        Ritorna (new_brake_cmd, error_dummy, components, zone)."""
+        # decel misurata dall'IMU (positivo = sto rallentando in direzione marcia)
+        imu_decel = -accel_x * 9.81
+        self.decel_filtered = (1.0 - DECEL_EWMA) * self.decel_filtered + DECEL_EWMA * imu_decel
 
-    # ─── Soft ramp + PID + FF ─────────────────────────────────────────
-    def _compute_target(self, speed):
-        # Zona FREE: sotto activate, nessun comando
-        if speed < self.activate_ms:
-            self.integral *= 0.9   # decadimento integratore
-            self.prev_speed_for_d = speed
-            return 0.0, 0.0, (0.0, 0.0, 0.0), "FREE"
+        step_up = STEP_UP_DEG_S * DT     # per tick (50Hz → 0.24°)
+        step_down = STEP_DOWN_DEG_S * DT # per tick (50Hz → 0.50°)
+        speed_kmh = speed * 3.6
 
-        # Rampa lineare 0→HYST_MAX_DEG da ACTIVATE a TARGET (sempre attiva sopra activate)
-        ramp_progress = min(1.0, (speed - self.activate_ms) / max(0.001, self.target_ms - self.activate_ms))
-        soft_brake = HYST_MAX_DEG * ramp_progress
+        if speed_kmh < ACTIVATE_KMH:
+            # FREE: rilascia velocemente
+            new = max(0.0, self.brake_cmd - step_down * 2.0)
+            zone = "FREE"
+        elif speed_kmh > TARGET_KMH:
+            # OVER target: voglio decel ≥ DECEL_OK_MS2
+            if self.decel_filtered < DECEL_OK_MS2:
+                # Non sto decelerando abbastanza → freno di più
+                # Scala il passo con quanto sono sopra target (max 3x)
+                scale = min(3.0, 1.0 + (speed_kmh - TARGET_KMH) / 2.0)
+                new = self.brake_cmd + step_up * scale
+            else:
+                # Decelerando bene → rilascia un po' (smussa l'arrivo)
+                new = self.brake_cmd - step_down * 0.3
+            zone = "OVER"
+        else:
+            # HYST band 7-10 km/h: mantieni decel positiva ma gentile
+            if self.decel_filtered < 0:
+                # sto accelerando → un pochino più di freno
+                new = self.brake_cmd + step_up * 0.5
+            elif self.decel_filtered > DECEL_OK_MS2:
+                # decelero bene → rilascia
+                new = self.brake_cmd - step_down
+            else:
+                # decel piccola positiva → mantieni
+                new = self.brake_cmd
+            zone = "HYST"
 
-        # Sotto target: solo rampa soft, niente PID/FF
-        if speed <= self.target_ms:
-            self.integral *= 0.95   # integratore lento decadimento
-            self.prev_speed_for_d = speed
-            target = max(0.0, min(BRAKE_MAX_ANGLE, soft_brake))
-            return target, 0.0, (0.0, 0.0, 0.0), "HYST"
-
-        # OVER: rampa soft (saturata a HYST_MAX_DEG) + PID + FF
-        error = speed - self.target_ms
-
-        self.integral += error * DT
-        self.integral = max(-INTEGRAL_LIMIT, min(INTEGRAL_LIMIT, self.integral))
-        d_meas = (speed - self.prev_speed_for_d) / DT
-        self.prev_speed_for_d = speed
-
-        p = KP * error
-        i = KI * self.integral
-        d = KD * d_meas
-        pid_out = max(0.0, p + i + d)
-
-        # Feed-forward: extra decel richiesta per tornare a target in FF_HORIZON_S
-        needed_decel = (speed - self.target_ms) / FF_HORIZON_S
-        extra = max(0.0, needed_decel - self.natural_decel)
-        ff = FF_GAIN * extra
-
-        target = soft_brake + pid_out + ff
-        target = max(0.0, min(BRAKE_MAX_ANGLE, target))
-        return target, error, (p, i, d), "OVER"
+        new = max(0.0, min(BRAKE_MAX_ANGLE, new))
+        # components per il log: (decel_misurata, scaling, step_up_used)
+        return new, self.decel_filtered, (self.decel_filtered, 0.0, 0.0), zone
 
     # ─── Slew rate sul comando servo ──────────────────────────────────
     def _slew(self, target):
@@ -422,11 +417,15 @@ class SpeedLimiter:
                 accel_x = self.imu.accel_x()
                 speed, source = self._fuse(gps_speed, fix, accel_x)
 
-                self._update_natural_decel(speed)
-                target, error, (p, i, d), zone = self._compute_target(speed)
-                ff_brake = max(0.0, target - max(0.0, p + i + d))
-                self._slew(target)
+                # Controller adattivo: aggiorna brake_cmd direttamente
+                # (no slew separato — il rate limiting è dentro al controller)
+                new_brake, decel_meas, (df, _, _), zone = self._compute_target(speed, accel_x)
+                self.brake_cmd = new_brake
                 self.servo.tick(self.brake_cmd)
+                # Alias per log
+                p = i = d = 0.0
+                ff_brake = 0.0
+                error = decel_meas
 
                 # Log a 10Hz
                 if self.tick % LOG_EVERY == 0:
