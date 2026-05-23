@@ -37,7 +37,7 @@ ACTIVATE_KMH = 7.0      # sotto → FREE, brake rilasciato
 # ─── Controller adattivo (no mappa fissa angolo) ─────────────────────
 # Brake_cmd cresce/cala in base alla decelerazione MISURATA dall'IMU.
 STEP_UP_DEG_S = 12.0    # quanto cresce il brake/sec se NON sto decelerando
-STEP_DOWN_DEG_S = 25.0  # quanto rilascio il brake/sec se decel OK o speed cala
+STEP_DOWN_DEG_S = 60.0  # quanto rilascio il brake/sec (più aggressivo che up)
 DECEL_OK_MS2 = 0.30     # decel "sufficiente" (m/s² positivi)
 DECEL_EWMA = 0.20       # smoothing accel_x dell'IMU (alpha)
 
@@ -458,7 +458,10 @@ class SpeedLimiter:
             new = self.brake_cmd + step_up * scale
             zone = "OVER"
         else:
-            new = self.brake_cmd + step_up * 0.5
+            # HYST band 7-10 km/h: rampa progressiva, più veloce vicino al target
+            # 7 km/h → 0×, 8 km/h → 0.33×, 9 km/h → 0.67×, 10 km/h → 1.0× step_up
+            hyst_progress = (speed_kmh - ACTIVATE_KMH) / max(0.1, TARGET_KMH - ACTIVATE_KMH)
+            new = self.brake_cmd + step_up * hyst_progress
             zone = "HYST"
 
         new = max(0.0, min(BRAKE_MAX_ANGLE, new))
