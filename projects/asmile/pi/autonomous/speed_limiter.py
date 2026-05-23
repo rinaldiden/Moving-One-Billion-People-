@@ -422,7 +422,8 @@ class SpeedLimiter:
                 new_brake, decel_meas, (df, _, _), zone = self._compute_target(speed, accel_x)
                 self.brake_cmd = new_brake
                 self.servo.tick(self.brake_cmd)
-                # Alias per log
+                # Alias per log (riusa colonne esistenti)
+                target = new_brake
                 p = i = d = 0.0
                 ff_brake = 0.0
                 error = decel_meas
