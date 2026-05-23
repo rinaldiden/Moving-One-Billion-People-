@@ -184,18 +184,48 @@ def angle_to_duty(angle: float) -> float:
 
 
 class Servo:
+    """
+    Pilota DFRobot SER0062 con pattern PULSE-AND-FREE corretto:
+
+      - Quando l'angolo target CAMBIA di >= PULSE_TRIGGER_DEG → invia un nuovo pulse
+        (claim_output se necessario + tx_pwm @ 50Hz con la nuova duty)
+      - Mantiene il PWM attivo per PULSE_HOLD_S (tempo per il servo di raggiungere
+        la posizione comandata)
+      - Poi tx_pwm(0) + gpio_free → pin hi-Z. Il servo brushless ha pulse-lock
+        interno e mantiene meccanicamente la posizione.
+      - Se l'angolo cambia ancora prima dei 150ms, ri-tira il pulse con la
+        nuova duty (non blocca, NO time.sleep nel loop).
+
+    Logga su stdout OGNI azione GPIO: claim, tx_pwm (con duty/angle/freq), free.
+    """
+
+    PULSE_TRIGGER_DEG = 1.0    # delta angolo che fa scattare nuovo pulse
+    PULSE_HOLD_S = 0.15        # quanto tengo il PWM attivo (servo raggiunge target)
+    REFRESH_INTERVAL_S = 3.0   # ri-pulse periodico contro drift anche se stabile
+
     def __init__(self):
-        self._chip = None
+        self._chip = lgpio.gpiochip_open(GPIO_CHIP)
+        self._log(f"chip_open(chip={GPIO_CHIP})")
         self._claimed = False
-        self._last_angle = -1.0
+        self._pulse_start = 0.0
+        self._last_pulsed_angle = -999.0
 
-    def apply(self, angle: float):
-        """Pilota servo se angle > soglia; altrimenti free pin (hi-Z)."""
+    def _log(self, msg):
+        print(f"[SERVO {datetime.now().strftime('%H:%M:%S.%f')[:-3]}] {msg}",
+              flush=True)
+
+    def tick(self, angle: float):
+        """Chiamato dal control loop a 50Hz con l'angolo TARGET.
+        Decide se serve un nuovo pulse o se rilasciare il pin."""
         angle = max(0.0, min(BRAKE_MAX_ANGLE, angle))
+        now = time.monotonic()
 
-        if angle >= BRAKE_PWM_ON_THRESHOLD:
-            if self._chip is None:
-                self._chip = lgpio.gpiochip_open(GPIO_CHIP)
+        delta = abs(angle - self._last_pulsed_angle)
+        refresh_due = (now - self._pulse_start) > self.REFRESH_INTERVAL_S \
+                      and self._last_pulsed_angle >= 0
+
+        # 1) Trigger nuovo pulse se angolo cambia o serve refresh
+        if delta >= self.PULSE_TRIGGER_DEG or refresh_due:
             if not self._claimed:
                 try:
                     lgpio.gpio_free(self._chip, SERVO_PIN)
@@ -203,16 +233,23 @@ class Servo:
                     pass
                 lgpio.gpio_claim_output(self._chip, SERVO_PIN)
                 self._claimed = True
+                self._log(f"claim_output(pin={SERVO_PIN})")
             duty = angle_to_duty(angle)
             lgpio.tx_pwm(self._chip, SERVO_PIN, SERVO_FREQ, duty)
-        else:
-            if self._claimed and self._chip is not None:
-                lgpio.tx_pwm(self._chip, SERVO_PIN, SERVO_FREQ, 0.0)
-                time.sleep(0.02)
-                lgpio.gpio_free(self._chip, SERVO_PIN)
-                self._claimed = False
+            tag = "refresh" if refresh_due else f"Δ{delta:+.1f}°"
+            self._log(f"tx_pwm(pin={SERVO_PIN}, freq={SERVO_FREQ}Hz, "
+                      f"duty={duty:.2f}%, angle={angle:.2f}°) [{tag}]")
+            self._last_pulsed_angle = angle
+            self._pulse_start = now
+            return
 
-        self._last_angle = angle
+        # 2) Se sto ancora pulsando ma il tempo di hold è scaduto → free pin
+        if self._claimed and (now - self._pulse_start) >= self.PULSE_HOLD_S:
+            lgpio.tx_pwm(self._chip, SERVO_PIN, SERVO_FREQ, 0.0)
+            self._log(f"tx_pwm(pin={SERVO_PIN}, duty=0%) — stop PWM (hold done @ {angle:.2f}°)")
+            lgpio.gpio_free(self._chip, SERVO_PIN)
+            self._claimed = False
+            self._log(f"gpio_free(pin={SERVO_PIN}) — pin hi-Z, servo mantiene posizione")
 
     def shutdown(self):
         if self._chip is not None:
@@ -387,7 +424,7 @@ class SpeedLimiter:
                 target, error, (p, i, d), zone = self._compute_target(speed)
                 ff_brake = max(0.0, target - max(0.0, p + i + d))
                 self._slew(target)
-                self.servo.apply(self.brake_cmd)
+                self.servo.tick(self.brake_cmd)
 
                 # Log a 10Hz
                 if self.tick % LOG_EVERY == 0:
@@ -418,10 +455,11 @@ class SpeedLimiter:
     def shutdown(self):
         print("[LIMITER] shutdown", flush=True)
         self.gps.stop()
-        # rilascia il freno prima di uscire
+        # rilascia il freno prima di uscire (un pulse a 0° = release massimo)
         try:
-            self.servo.apply(0.0)
-            time.sleep(0.05)
+            self.servo.tick(0.0)
+            time.sleep(self.servo.PULSE_HOLD_S + 0.05)
+            self.servo.tick(0.0)   # secondo tick → trigger free pin
             self.servo.shutdown()
         except Exception:
             pass

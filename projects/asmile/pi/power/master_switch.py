@@ -232,9 +232,8 @@ class MasterSwitch:
             self.speed_limiter_proc = None
             print("[SWITCH] speed_limiter stopped")
 
-        # Brake: pulse a 60° per 1.5s (porta servo a freno tirato), poi PWM OFF.
-        # Il servo resta a 60° per attrito meccanico del freno (auto-mantenuto).
-        # Zero corrente in steady state.
+        # Switch OFF: chiudi il freno, tieni 1.5s, poi PWM off (servo
+        # mantiene la posizione meccanicamente). Comportamento originale.
         h2 = lgpio.gpiochip_open(GPIO_CHIP)
         try:
             lgpio.gpio_claim_output(h2, PIN_SERVO)
