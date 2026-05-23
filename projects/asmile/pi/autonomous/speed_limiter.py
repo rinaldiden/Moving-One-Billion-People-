@@ -183,27 +183,37 @@ def _read_ble_speed():
 # IMU (sync)
 # ══════════════════════════════════════════════════════════════════════
 class IMU:
+    """Lettura accel_x MPU6050. Stessa identica strategia del training_recorder
+    (byte-by-byte read), così possiamo girare in parallelo senza confliggere sul bus."""
+
     def __init__(self):
         self._bus = smbus2.SMBus(IMU_BUS)
+        # Init esatto come training_recorder
         self._bus.write_byte_data(IMU_ADDR, IMU_PWR_MGMT_1, 0x00)  # wake
+        time.sleep(0.05)
+        self._bus.write_byte_data(IMU_ADDR, 0x1C, 0x00)            # ACCEL_CONFIG ±2g
+        self._bus.write_byte_data(IMU_ADDR, 0x1B, 0x00)            # GYRO_CONFIG ±250°/s
         time.sleep(0.02)
-        # verifica WHO_AM_I per essere certi che il sensore risponde
+        # WHO_AM_I + test read accel_z (gravità ~1g)
         try:
             who = self._bus.read_byte_data(IMU_ADDR, 0x75)
-            print(f"[IMU] init WHO_AM_I=0x{who:02x} (atteso 0x68)", flush=True)
+            zh = self._bus.read_byte_data(IMU_ADDR, 0x3F)
+            zl = self._bus.read_byte_data(IMU_ADDR, 0x40)
+            az_raw = struct.unpack(">h", bytes([zh, zl]))[0]
+            az = az_raw / IMU_ACCEL_SCALE
+            print(f"[IMU] init WHO_AM_I=0x{who:02x} az={az:.2f}g", flush=True)
         except OSError as e:
-            print(f"[IMU] init failed: {e}", flush=True)
+            print(f"[IMU] init self-test FAIL: {e}", flush=True)
         self._last_good = 0.0
         self._err_count = 0
         self._last_err_print = 0.0
 
     def accel_x(self):
-        """Returns longitudinal accel in g. Asse X = direzione marcia (-decel).
-        Su errore I2C mantiene l'ultimo valore noto + logga ogni 5s."""
+        """Returns longitudinal accel in g. Pattern byte-by-byte come recorder."""
         try:
-            # block read 2 byte = 1 sola transazione I2C (atomica)
-            data = self._bus.read_i2c_block_data(IMU_ADDR, IMU_ACCEL_XOUT_H, 2)
-            raw = struct.unpack(">h", bytes(data))[0]
+            h = self._bus.read_byte_data(IMU_ADDR, IMU_ACCEL_XOUT_H)
+            l = self._bus.read_byte_data(IMU_ADDR, IMU_ACCEL_XOUT_H + 1)
+            raw = struct.unpack(">h", bytes([h, l]))[0]
             self._last_good = raw / IMU_ACCEL_SCALE
             self._err_count = 0
             return self._last_good
@@ -213,7 +223,7 @@ class IMU:
             if now - self._last_err_print > 5.0:
                 print(f"[IMU] OSError ({self._err_count} since last print): {e}", flush=True)
                 self._last_err_print = now
-            return self._last_good   # mantieni ultimo valido invece di 0
+            return self._last_good
 
 
 # ══════════════════════════════════════════════════════════════════════
