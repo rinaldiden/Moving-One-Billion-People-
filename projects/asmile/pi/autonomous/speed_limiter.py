@@ -349,12 +349,18 @@ class SpeedLimiter:
 
         return gps_raw, fix
 
-    def _fuse(self, gps_speed, fix, accel_x):
+    def _fuse(self, gps_speed, fix, accel_x, ble_speed=0.0, ble_fresh=False):
         # Integrazione IMU come backup
         self.imu_speed += -accel_x * 9.81 * DT
         self.imu_speed = max(0.0, self.imu_speed * 0.995)   # damping leggero
 
-        if fix:
+        # Priorità: BLE Coospo (preciso e immediato) > GPS (sotto-legge se Pi
+        # undervolted) > IMU integration > zero
+        if ble_fresh:
+            self.imu_speed = ble_speed
+            self.speed_history.append(ble_speed)
+            source = "ble"
+        elif fix:
             self.imu_speed = gps_speed   # ri-sincronizza
             self.speed_history.append(gps_speed)
             source = "gps"
@@ -434,7 +440,7 @@ class SpeedLimiter:
                 gps_speed, fix = self._read_speed()
                 accel_x = self.imu.accel_x()
                 ble_speed, ble_fresh = _read_ble_speed()
-                speed, source = self._fuse(gps_speed, fix, accel_x)
+                speed, source = self._fuse(gps_speed, fix, accel_x, ble_speed, ble_fresh)
 
                 # Controller adattivo: aggiorna brake_cmd direttamente
                 # (no slew separato — il rate limiting è dentro al controller)
