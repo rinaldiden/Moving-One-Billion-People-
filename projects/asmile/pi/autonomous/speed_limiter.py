@@ -201,7 +201,8 @@ class Servo:
 
     PULSE_TRIGGER_DEG = 1.0    # delta angolo che fa scattare nuovo pulse
     PULSE_HOLD_S = 0.15        # quanto tengo il PWM attivo (servo raggiunge target)
-    REFRESH_INTERVAL_S = 3.0   # ri-pulse periodico contro drift anche se stabile
+    # NIENTE refresh periodico: il SER0062 ha pulse-lock interno,
+    # ri-pulsare a parità di angolo lo fa "twitchare" inutilmente
 
     def __init__(self):
         self._chip = lgpio.gpiochip_open(GPIO_CHIP)
@@ -221,11 +222,9 @@ class Servo:
         now = time.monotonic()
 
         delta = abs(angle - self._last_pulsed_angle)
-        refresh_due = (now - self._pulse_start) > self.REFRESH_INTERVAL_S \
-                      and self._last_pulsed_angle >= 0
 
-        # 1) Trigger nuovo pulse se angolo cambia o serve refresh
-        if delta >= self.PULSE_TRIGGER_DEG or refresh_due:
+        # 1) Trigger nuovo pulse SOLO se l'angolo cambia significativamente
+        if delta >= self.PULSE_TRIGGER_DEG:
             if not self._claimed:
                 try:
                     lgpio.gpio_free(self._chip, SERVO_PIN)
@@ -236,9 +235,8 @@ class Servo:
                 self._log(f"claim_output(pin={SERVO_PIN})")
             duty = angle_to_duty(angle)
             lgpio.tx_pwm(self._chip, SERVO_PIN, SERVO_FREQ, duty)
-            tag = "refresh" if refresh_due else f"Δ{delta:+.1f}°"
             self._log(f"tx_pwm(pin={SERVO_PIN}, freq={SERVO_FREQ}Hz, "
-                      f"duty={duty:.2f}%, angle={angle:.2f}°) [{tag}]")
+                      f"duty={duty:.2f}%, angle={angle:.2f}°) [Δ{delta:+.1f}°]")
             self._last_pulsed_angle = angle
             self._pulse_start = now
             return
