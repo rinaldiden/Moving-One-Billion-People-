@@ -159,24 +159,32 @@ class MasterSwitch:
         self.follow_me = follow_me
         self.recorder_retries = 0
 
-        # Release: pulse a 0° per 1.5s (porta servo a release), poi PWM OFF
-        # (servo libero, zero corrente). Apri un handle fresco — deactivate()
-        # lascia servo_handle=None, quindi va sempre riaperto qui.
+        # Release: pulse a 0° per 1.5s, poi PWM stop + gpio_free → pin hi-Z.
+        # SER0062 brushless: MAI gpio_write LOW continuo dopo PWM (memory:
+        # feedback_dfrobot_pulse_lock). Solo pulse-and-free.
         h = lgpio.gpiochip_open(GPIO_CHIP)
         try:
-            lgpio.gpio_claim_output(h, PIN_SERVO)
+            lgpio.gpio_free(h, PIN_SERVO)   # pulisci stato precedente
         except lgpio.error:
             pass
+        lgpio.gpio_claim_output(h, PIN_SERVO)
         lgpio.tx_pwm(h, PIN_SERVO, SERVO_FREQ, angle_to_duty(RELEASE_ANGLE))
-        print(f"[SWITCH] Servo → {RELEASE_ANGLE}° (release, 1.5s di pulse)")
+        print(f"[SWITCH] Servo → {RELEASE_ANGLE}° (release, 1.5s di pulse @ {SERVO_FREQ}Hz)")
         time.sleep(1.5)
-        lgpio.gpio_write(h, PIN_SERVO, 0)
+        lgpio.tx_pwm(h, PIN_SERVO, SERVO_FREQ, 0)  # ferma PWM (duty 0)
+        lgpio.gpio_free(h, PIN_SERVO)              # rilascia pin → hi-Z
         lgpio.gpiochip_close(h)
         self.servo_handle = None
-        print("[SWITCH] PWM off, servo libero")
+        print("[SWITCH] PWM stopped, pin freed (hi-Z) — servo libero")
 
-        # speed_limiter rimosso 2026-05-22 — nessun controllo software del freno.
-        # La bici è guidata solo dalla leva freno meccanica.
+        # Lancia speed_limiter (subprocess root) DOPO il release del servo.
+        sl_path = f"{HOME_DIR}/wip/Moving-One-Billion-People-/projects/asmile/pi/autonomous/speed_limiter.py"
+        self.speed_limiter_proc = subprocess.Popen(
+            ["python3", "-u", sl_path],
+            stdout=open("/tmp/speed_limiter.log", "w"),
+            stderr=subprocess.STDOUT,
+        )
+        print(f"[SWITCH] speed_limiter started PID={self.speed_limiter_proc.pid}")
 
         # Clean up any zombie camera processes
         self._kill_camera_zombies()
@@ -211,7 +219,18 @@ class MasterSwitch:
         self.active = False
         self.recorder_proc = None
 
-        # speed_limiter rimosso — niente da fermare.
+        # Ferma speed_limiter PRIMA del pulse di parking (gli evita di combattere col servo)
+        if hasattr(self, "speed_limiter_proc") and self.speed_limiter_proc is not None:
+            try:
+                self.speed_limiter_proc.terminate()
+                self.speed_limiter_proc.wait(timeout=2)
+            except Exception:
+                try:
+                    self.speed_limiter_proc.kill()
+                except Exception:
+                    pass
+            self.speed_limiter_proc = None
+            print("[SWITCH] speed_limiter stopped")
 
         # Brake: pulse a 60° per 1.5s (porta servo a freno tirato), poi PWM OFF.
         # Il servo resta a 60° per attrito meccanico del freno (auto-mantenuto).
