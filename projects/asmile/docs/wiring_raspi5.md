@@ -13,8 +13,8 @@ Full setup for the Asmile project: steering, braking, GPS, IMU.
 | GPS NEO-M10 | UART3 | /dev/ttyAMA3 |
 | MPU6050 IMU | I2C1 | 0x68 |
 | Brake servo | Hardware PWM0 | GPIO 12 |
-| Buzzer KY-006 (passive) | PWM via Level Shifter #2 ch4 | GPIO 5 |
-| Supercap discharge MOSFET | GPIO direct (IRL540N gate) | GPIO 6 |
+| Buzzer (safe_shutdown) | PWM via 2N2222 driver + 1kΩ | GPIO 4 |
+| Power sense (safe shutdown) | Level Shifter #2 ch3 → input | GPIO 26 |
 | Arducam Camarray HAT | CSI + I2C1 | Camera port |
 
 ## Complete Pin Map
@@ -32,8 +32,7 @@ Full setup for the Asmile project: steering, braking, GPS, IMU.
 | GPIO 19 | Pin 35 | SSI Encoder | SPI1 MISO ← DATA (via RS-485 #2) | IN |
 | GPIO 21 | Pin 40 | SSI Encoder | SPI1 SCLK → CLOCK (via RS-485 #1) | OUT |
 | GPIO 26 | Pin 37 | Power sense | Battery detect (via Level Shifter #2 ch3) | IN |
-| GPIO 5 | Pin 29 | Buzzer KY-006 | PWM signal (via Level Shifter #2 ch4) | OUT |
-| GPIO 6 | Pin 31 | Supercap discharge | MOSFET gate control (LOW=off, float=discharge) | OUT |
+| GPIO 4 | Pin 7 | Buzzer (safe_shutdown) | PWM signal (via 2N2222 driver) | OUT |
 
 ## 40-Pin Header — Final View (from top of Camarray HAT)
 
@@ -44,7 +43,7 @@ Full setup for the Asmile project: steering, braking, GPS, IMU.
     ║  3V3  RS485+GPS+IMU  [ 1] [ 2]  5V   Pololu F5 + HAT    ║
     ║  GPIO 2  I2C SDA     [ 3] [ 4]  5V   Encoder VCC        ║
     ║  GPIO 3  I2C SCL     [ 5] [ 6]  GND  HAT                ║
-    ║  (free)              [ 7] [ 8]  GPIO 14 TX → VESC       ║
+    ║  GPIO 4 BUZZER PWM   [ 7] [ 8]  GPIO 14 TX → VESC       ║
     ║  GND  VESC           [ 9] [10]  GPIO 15 RX ← VESC       ║
     ║  (free)              [11] [12]  GPIO 18 SPI1_CE0 (enc)    ║
     ║  (free)              [13] [14]  GND                      ║
@@ -55,11 +54,11 @@ Full setup for the Asmile project: steering, braking, GPS, IMU.
     ║  (free)              [23] [24]  GPIO 8  GPS TX            ║
     ║  GND  MPU6050        [25] [26]  (free)                   ║
     ║  (free)              [27] [28]  (free)                    ║
-    ║  GPIO 5  BUZZER PWM   [29] [30]  GND  RS485+Encoder        ║
-    ║  GPIO 6  MOSFET GATE [31] [32]  GPIO 12 SERVO PWM         ║
+    ║  (free)              [29] [30]  GND  RS485+Encoder        ║
+    ║  (free)              [31] [32]  GPIO 12 SERVO PWM         ║
     ║  (free)              [33] [34]  GND  Servo                ║
     ║  GPIO 19 SPI1_MISO   [35] [36]  (free)                    ║
-    ║  (free)              [37] [38]  GPIO 20 (SPI1_MOSI free)  ║
+    ║  GPIO 26 POWER SENSE [37] [38]  GPIO 20 (SPI1_MOSI free)  ║
     ║  GND                 [39] [40]  GPIO 21 SPI1_SCLK (enc)   ║
     ╚═══════════════════════════════════════════════════════════╝
 ```
@@ -122,18 +121,21 @@ Level Shifter (bidirectional):
 
   LV1 ← GPIO 21 (Pin 40) SPI1_SCLK →  HV1 → DI of RS-485 #1
   LV2 ← GPIO 19 (Pin 35) SPI1_MISO ←  HV2 ← RO of RS-485 #2
-  LV3 ← GPIO 26 (Pin 37) power sense ← HV3 ← jumper to HV (same 5V)
-  LV4 ← GPIO 5  (Pin 29) buzzer PWM  →  HV4 → Buzzer KY-006 signal (S)
+  LV3 ← GPIO 26 (Pin 37) power sense ← HV3 ← Pololu F5 VOUT  + [10kΩ bleed → GND]
+  LV4 (free)
 ```
 
-> **Wiring note:** HV and HV3 are jumpered together on the board (same 5V from
-> Pololu F5 VOUT, before the Schottky diode). GND pins jumpered together, one
-> wire from either GND pad to the common GND terminal block.
+> **Wiring note (HV3 — power sense):** HV3 is fed directly from Pololu F5 VOUT
+> (before the LM74700 ideal diode of the hold-up circuit — see §8).
+> A **10kΩ bleed resistor between Pololu VOUT and GND is essential**: it
+> discharges the Pololu output cap within ms when battery is removed, so the
+> level shifter dies fast and GPIO 26 goes LOW before the Pi browns out.
+> Without the bleed, HV3 stays alive on the Pololu's residual output cap for
+> several seconds, the Pi runs from supercap during that window, and may
+> enter brownout before the shutdown script ever sees the LOW edge.
 >
-> When battery is cut: Pololu VOUT drops → shifter loses power → LV3 goes LOW
-> → GPIO 26 reads LOW → safe_shutdown triggers. Raspi stays alive via supercap.
->
-> Channel 3 replaces the 2x 10kΩ resistor divider for power-loss detection.
+> HV (alimentazione HV side dello shifter) jumpered to HV3. GND pins jumpered
+> together to the common GND terminal block.
 
 **RS-485 Module #1 — CLOCK (transmit to encoder)**
 
@@ -215,31 +217,59 @@ Pololu D24V55F6:
 
 > **IMPORTANT:** GND must be common between Raspi, servo, level shifter, and Pololu F6.
 
-### 7. Buzzer KY-006 (passive) — via Level Shifter #2 ch4
+### 7. Buzzer (safe_shutdown audio) — GPIO 4 via 2N2222 driver
 
 ```
-Raspi GPIO 5  (Pin 29) → LV4 of Level Shifter #2
-                          HV4 → Buzzer S (signal)
-Raspi GND     (Pin 30)   ─── Buzzer - (GND)
+Raspi GPIO 4 (Pin 7) ──[1kΩ]── Base 2N2222 (centro)
+                                Emitter (sx) ──→ GND
+                                Collector (dx) ──→ Buzzer "−"
+Raspi 5V (Pin 2 o 4)         ──→ Buzzer "+"
 ```
 
-> Buzzer needs 5V signal to produce audible sound. 3.3V GPIO is too weak.
-> Level Shifter #2 converts 3.3V PWM → 5V PWM on channel 4.
-> Middle pin (+/VCC) of KY-006 is NOT connected on the PCB — ignore it.
+> Il 2N2222 amplifica la corrente: il GPIO 3.3V satura la base via 1kΩ
+> (Ib ≈ 2.6mA), il collector tira fino a centinaia di mA sul buzzer da 5V.
+> Risolve il problema "KY-006 troppo basso" del direct-drive precedente.
+> Niente level shifter necessario.
 
-### 8. Supercap 2.2F Auto-Discharge — IRL540N MOSFET
+### 8. Hold-up + safe shutdown — supercap 10F + 2× LM74700 + drain
+
+Architettura: pre-charge limita inrush al power-on, ideal-diode bypass per
+discharge a bassa caduta, drain post-shutdown via 2N2222 sensing del Pololu.
 
 ```
-Supercap + ──→ Resistenza 22Ω ──→ Drain IRL540N
-                                   Source ──→ GND
-                                   Gate ──┬── pull-up 10kΩ ──→ Supercap +
-                                          └── GPIO 6 (Pin 31)
+Pololu VOUT ── LM74700_1 ──┬── Pi 5V (Pin 2/4) = Node A
+                            │
+                          [6.8Ω 5W]   in serie tra Node A e Node B
+                            │
+                            ├── LM74700_2 (VIN su B, VOUT su A — parallelo alla 6.8Ω)
+                            │
+                            Node B = Supercap+ (10F 5.5V)
+                            │
+                          Supercap− ──→ GND
+                            │
+                          [22Ω 5W] ──→ Drain IRFZ44N
+                                       Source ──→ GND
+                                       Gate ──┬── [10kΩ pull-up] ──→ Supercap+
+                                              └── Collector 2N2222
+                            
+2N2222 sense Pololu:
+  Emitter (Pin 1, sx) ──→ GND
+  Base    (Pin 2, ce) ──[10kΩ]── Pololu VOUT
+  Collector (Pin 3, dx) ──→ Gate IRFZ44N
 ```
 
-> Pi ON: GPIO 6 held LOW → MOSFET off → zero drain on supercap.
-> Pi OFF: GPIO floats → pull-up pulls gate HIGH from supercap → MOSFET on → discharge via 22Ω.
-> Discharge time: ~48 seconds (τ = 22 × 2.2). After discharge, supercap ready for next power cycle.
-> IRL540N is logic-level: 5V gate is enough to fully saturate.
+**Comportamento:**
+
+| Fase | Cosa accade |
+|---|---|
+| Power-on supercap empty | Pololu→LM74700_1 alimenta Pi (5V immediato). Supercap carica via 6.8Ω, inrush max 735mA. LM74700_2 reverse blocked. τ=68s, full charge ~5.7 min. |
+| Steady state | Tutto a 5V, nessuna corrente, niente dissipazione. |
+| Battery cut (Pi alive) | Bleed 10kΩ su Pololu VOUT scarica cap → GPIO 26 LOW. LM74700_2 forward conduce (Rds×I ≈ 5mV drop), supercap alimenta Pi via bypass della 6.8Ω. Hold-up ~13s. Script triggera shutdown -h. |
+| Post-shutdown | Pololu off → 2N2222 off → gate IRFZ44N salta HIGH via pull-up → drain MOSFET ON → supercap scarica via 22Ω. Dura ~6 min fino a Vsc~2V (sotto Vgs threshold IRFZ44N). |
+
+> **Upgrade futuro**: IRFZ44N → IRL540N (logic-level). Drain stays on fino a
+> Vsc ~1V invece di ~2V → PMIC Pi vede residuo più basso → boot al primo colpo
+> dopo discharge senza il workaround on-off-on.
 
 ### 9. INA219 Current Sensor (when available) — I2C1
 

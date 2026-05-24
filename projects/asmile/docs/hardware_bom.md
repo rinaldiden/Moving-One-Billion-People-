@@ -41,6 +41,21 @@ Complete hardware list for the autonomous bicycle guidance system.
 | 12 | 5V step-down | Pololu D24V55F5 | 1 | 48V→5V, for Raspberry Pi + peripherals |
 | 13 | 6V step-down | Pololu D24V55F6 | 1 | 48V→6V, for brake servo PDI-6221MG |
 
+## Safe shutdown + hold-up
+
+| # | Component | Model | Qty | Notes |
+|---|---|---|---|---|
+| 14 | Ideal diode controller module | LM74700 module (3-pin VIN/VOUT/GND) | 2 | #1 charge path Pololu→Pi, #2 discharge path Supercap→Pi (parallel to pre-charge R) |
+| 15 | Supercapacitor | 10F 5.5V (radial) | 1 | Hold-up storage, ~13s of Pi shutdown time |
+| 16 | Pre-charge resistor | 6.8Ω 5W (or 10Ω 5W) | 1 | In series between Pi 5V and Supercap+, limits inrush to 735mA peak |
+| 17 | Drain resistor | 22Ω 5W (TBD: smaller for faster discharge) | 1 | Supercap discharge path, ~6 min to discharge after shutdown |
+| 18 | Drain MOSFET | IRFZ44N (TBD: upgrade to IRL540N logic-level) | 1 | N-channel, TO-220, controlled by 2N2222 inverter |
+| 19 | Bias transistor | 2N2222 (TO-92) | 1 | Sense Pololu+, inverts for drain MOSFET gate |
+| 20 | Pull-up + bleed resistors | 10kΩ 1/4W | 3 | Drain gate pull-up, 2N2222 base, Pololu bleed |
+| 21 | Buzzer | Active or passive piezo | 1 | Safe shutdown audio (replace KY-006: too quiet for direct-drive) |
+| 22 | Buzzer driver | 2N2222 (TO-92) + 1kΩ 1/4W | 1 | Amplifica corrente da GPIO 4 al buzzer |
+| 23 | Level shifter (shared w/ encoder) | Bidirectional 4-channel (BSS138) | 1 | Channel 3 used for power sense (GPIO 26 ← HV3 ← Pololu VOUT) |
+
 ## Planned / Future
 
 | # | Component | Notes |
@@ -57,7 +72,9 @@ UART0 (/dev/ttyAMA0)  → VESC (steering)
 UART3 (/dev/ttyAMA3)  → GPS NEO-M10
 I2C1  (bus 1, 0x68)   → MPU6050 IMU
 PWM0  (GPIO 12)       → Brake servo PDI-6221MG
-GPIO  (bit-bang SSI)   → Briter encoder (via RS-485)
+GPIO 4  (Pin 7)        → Buzzer safe_shutdown (via 2N2222 driver)
+GPIO 26 (Pin 37)       → Power sense (via level shifter ch3, see safe_shutdown.py)
+SPI1  (GPIO 19/21)     → Briter SSI encoder (via 2x RS-485)
 CSI   (camera port)    → Arducam Camarray HAT
 ```
 
