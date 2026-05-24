@@ -53,6 +53,13 @@
 - safe_shutdown.py usa edge detection (lgpio.callback BOTH_EDGES) + backup poll 50ms + debounce 200ms
 - Log persistente: /var/log/safe_shutdown.log + tombstone /var/lib/asmile/last_shutdown.txt
 
+### Hold-up circuit (supercap + pre-charge)
+- Supercap 10F 5.5V tra Node B e GND
+- LM74700_1 in carica: Pololu VOUT → LM74700_1.VIN, LM74700_1.VOUT = Node A = Pi 5V (Pin 2)
+- **6.8Ω 5W in serie tra Node A e Node B** (limita inrush al power-on a 735mA peak quando supercap scarico)
+- **LM74700_2 in scarica** in parallelo alla 6.8Ω: VIN su B (Supercap+), VOUT su A (Pi 5V). Conduce solo da B→A in scarica con ~5mV drop (Rds(on)×I), bypassa la 6.8Ω → hold-up massimo
+- Drain post-shutdown: 2N2222 sensing Pololu+ → IRFZ44N gate → Drain → 22Ω 5W → GND. Pololu ON = drain off (zero consumo), Pololu OFF = drain on (scarica supercap in ~6 min sotto 2V dove Vgs del MOSFET scende sotto soglia)
+
 ### VESC (steering motor)
 - UART0 /dev/ttyAMA0, 115200 baud
 - Serial console disabled in cmdline.txt
