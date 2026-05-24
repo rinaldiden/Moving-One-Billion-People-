@@ -45,10 +45,13 @@
 
 ### Power sense (safe shutdown)
 - GPIO 26 (Pin 37) via Level Shifter #2 channel 3 (same shifter as encoder)
-- Shifter powered from Pololu F5 VOUT (before Schottky diode)
+- Shifter HV powered from Pololu F5 VOUT (before LM74700)
+- **Bleed resistor 10kΩ tra Pololu VOUT e GND** (essenziale: scarica il cap di uscita del Pololu in <2ms quando stacchi batteria, altrimenti shifter resta alive per secondi e Pi va in brownout prima di vedere il LOW)
 - HV jumpered to HV3 on the board, GND pins jumpered with one wire to common terminal
-- Battery ON → shifter alive → LV3=3.3V → GPIO HIGH
-- Battery OFF → shifter dies → LV3=0V → GPIO LOW → shutdown
+- Battery ON → shifter alive → LV3=2.7V (partitore pull-up shifter + pull-down interno Pi) → GPIO HIGH
+- Battery OFF → bleed scarica cap → shifter muore in ms → LV3=0V → GPIO LOW → shutdown
+- safe_shutdown.py usa edge detection (lgpio.callback BOTH_EDGES) + backup poll 50ms + debounce 200ms
+- Log persistente: /var/log/safe_shutdown.log + tombstone /var/lib/asmile/last_shutdown.txt
 
 ### VESC (steering motor)
 - UART0 /dev/ttyAMA0, 115200 baud

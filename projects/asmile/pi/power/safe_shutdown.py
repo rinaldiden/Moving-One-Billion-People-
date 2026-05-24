@@ -2,37 +2,22 @@
 """
 Asmile Safe Shutdown — Raspberry Pi 5
 
-Monitors a GPIO pin connected to the 48V battery line (via voltage divider).
-When battery power is cut, the supercapacitor keeps the Raspi alive for ~5-10s,
-during which this script detects the power loss and triggers a clean shutdown.
-
-This prevents SD card corruption from sudden power loss.
-
-How it works:
-  1. GPIO pin reads HIGH when 48V battery is connected (via voltage divider)
-  2. When battery switch is turned off, GPIO goes LOW
-  3. Script detects LOW → triggers immediate 'shutdown -h now'
-  4. Supercap provides enough energy to complete the shutdown (~5s)
+Monitors GPIO 26 (power-sense via level shifter from Pololu VOUT).
+When battery is cut, GPIO transitions HIGH→LOW. Detection uses
+hardware edge events (lgpio alert + callback) — more robust than
+polling, because the BCM2712 event-detect register latches the edge
+even if the CPU is briefly throttled during brownout.
 
 Wiring:
-  Battery 48V+ → 10kΩ → GPIO_PIN → 1kΩ → GND
-  (voltage divider: ~4.36V when battery is at 48V, safe for 3.3V GPIO with clamping)
-  NOTE: Use Raspi internal pull-down or external 1kΩ to GND
+  Pololu VOUT → HV3 of level shifter
+  LV3 of level shifter → GPIO 26 (Pin 37)
+  Pi 3.3V → LV of level shifter
+  Recommended: bleed resistor 1kΩ on Pololu VOUT → GND so the
+  shifter input drops within ms when battery is removed (otherwise
+  the Pololu output cap can keep HV3 alive for seconds).
 
-  Alternative (simpler, from 5V Pololu output):
-  Pololu 5V VOUT → 10kΩ → GPIO_PIN → 10kΩ → GND  (gives ~2.5V = HIGH)
-
-Supercap wiring:
-  Pololu D24V55F5 VOUT (5V) → supercap + → Raspi 5V (Pin 2/4)
-  Pololu D24V55F5 GND       → supercap − → Raspi GND
-
-Dependencies:
-  sudo apt install python3-lgpio
-
-Install as service:
-  sudo cp safe_shutdown.service /etc/systemd/system/
-  sudo systemctl daemon-reload
-  sudo systemctl enable --now safe_shutdown.service
+  Pololu VOUT → LM74700 → supercap+ = Pi 5V (Pin 2/4)
+  Pololu GND  → supercap− = Pi GND
 """
 
 import lgpio
@@ -40,23 +25,103 @@ import time
 import subprocess
 import sys
 import os
+import threading
+from datetime import datetime
 
 # --- Config ---
-GPIO_CHIP = 4          # Pi 5 = gpiochip4
-POWER_SENSE_PIN = 26   # GPIO 26 — change to your wiring
-# SUPERCAP_DISCHARGE_PIN removed — discharge circuit not used
-DEBOUNCE_MS = 500      # ignore glitches shorter than this
-CHECK_INTERVAL = 0.2   # seconds between checks
+GPIO_CHIP = 4
+POWER_SENSE_PIN = 26
+BUZZER_PIN = 4
+DEBOUNCE_MS = 200       # confirm POWER LOSS only if LOW persists for this long
+POLL_INTERVAL = 0.05    # backup poll cadence (edge callback is primary)
 HEALTH_LOG = "/tmp/asmile_health.csv"
-HEALTH_INTERVAL = 10   # log health every 10s
+HEALTH_INTERVAL = 5     # log Pi health to CSV every Ns
+LOG_FILE = "/var/log/safe_shutdown.log"
+TOMBSTONE = "/var/lib/asmile/last_shutdown.txt"
+
+
+# ---- Shared state (between callback thread and main loop) ----
+_lock = threading.Lock()
+_armed = False
+_low_since = None       # set when falling edge or LOW poll → time.monotonic()
+_glitch_count = 0
+
+
+def log(msg):
+    """Print (flushed) + append to persistent log file."""
+    ts = datetime.now().isoformat(timespec="milliseconds")
+    line = f"{ts} {msg}"
+    print(line, flush=True)
+    try:
+        with open(LOG_FILE, "a") as f:
+            f.write(line + "\n")
+    except Exception:
+        pass
+
+
+def write_tombstone(event, extra=""):
+    """Append to tombstone file — survives reboot, post-mortem record."""
+    try:
+        os.makedirs(os.path.dirname(TOMBSTONE), exist_ok=True)
+        ts = datetime.now().isoformat(timespec="milliseconds")
+        with open(TOMBSTONE, "a") as f:
+            f.write(f"{ts} {event} {extra}\n")
+    except Exception:
+        pass
+
+
+def short_beep(freq=2500, duration=0.08):
+    try:
+        h = lgpio.gpiochip_open(GPIO_CHIP)
+        lgpio.tx_pwm(h, BUZZER_PIN, freq, 50)
+        time.sleep(duration)
+        lgpio.tx_pwm(h, BUZZER_PIN, 0, 0)
+        lgpio.gpiochip_close(h)
+    except Exception:
+        pass
 
 
 def fast_shutdown():
-    """Kill all Asmile services first, then shutdown.
-    With 2.2F supercap we have ~1.3s — every ms counts."""
-    print("[safe_shutdown] Fast shutdown — killing services...")
+    log("FAST_SHUTDOWN — morente beep + spawn detached buzzer + shutdown -h")
+    write_tombstone("FAST_SHUTDOWN_BEGIN")
 
-    # Kill heavy processes first (video, recorder, flask)
+    # 5 beep morenti (~700ms) — eseguiti nel processo principale prima di
+    # qualsiasi cosa che possa essere uccisa.
+    try:
+        h_buzz = lgpio.gpiochip_open(GPIO_CHIP)
+        for f in (1500, 1200, 900, 600, 400):
+            lgpio.tx_pwm(h_buzz, BUZZER_PIN, f, 50)
+            time.sleep(0.10)
+            lgpio.tx_pwm(h_buzz, BUZZER_PIN, 0, 0)
+            time.sleep(0.04)
+        lgpio.gpiochip_close(h_buzz)
+    except Exception:
+        pass
+
+    # Buzzer detached: nuovo session ID + ignora SIGTERM, sopravvive al kill
+    # di safe_shutdown.service e suona finché systemd-shutdown manda SIGKILL
+    # finale (giusto prima dell'halt). Effetto: tono continuo fino allo spegnimento.
+    buzz_code = (
+        "import lgpio, signal, time\n"
+        "signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+        "signal.signal(signal.SIGINT, signal.SIG_IGN)\n"
+        "try:\n"
+        "    h = lgpio.gpiochip_open(4)\n"
+        "    lgpio.tx_pwm(h, 4, 1500, 50)\n"
+        "    time.sleep(120)\n"
+        "except Exception: pass\n"
+    )
+    try:
+        subprocess.Popen(
+            [sys.executable, "-c", buzz_code],
+            start_new_session=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except Exception:
+        pass
+
     kills = [
         ["killall", "-9", "gst-launch-1.0"],
         ["pkill", "-9", "-f", "training_recorder.py"],
@@ -68,122 +133,168 @@ def fast_shutdown():
     for cmd in kills:
         subprocess.run(cmd, capture_output=True, timeout=1)
 
-    # Sync filesystem
     subprocess.run(["sync"], timeout=1)
-
-    print("[safe_shutdown] Services killed. Shutting down NOW.")
+    log("services killed + sync done — calling shutdown -h now")
+    write_tombstone("SHUTDOWN_HALT_CALLED")
     subprocess.Popen(["shutdown", "-h", "now"])
 
-    # Buzzer shutdown sound — beeps that die (plays DURING shutdown)
-    try:
-        h_buzz = lgpio.gpiochip_open(GPIO_CHIP)
-        freq = 500
-        on_t = 0.15
-        off_t = 0.15
-        while freq > 100:
-            lgpio.tx_pwm(h_buzz, 4, freq, 50)
-            time.sleep(on_t)
-            lgpio.tx_pwm(h_buzz, 4, 0, 0)
-            time.sleep(off_t)
-            freq -= 50
-            on_t += 0.03
-            off_t += 0.05
-        lgpio.gpiochip_close(h_buzz)
-    except Exception:
-        pass
+
+def gpio_edge_callback(chip, gpio, level, tick):
+    """Called by lgpio thread on any edge of GPIO 26.
+
+    level: 0 = falling, 1 = rising, 2 = watchdog (ignored).
+    The BCM2712 latches edges in hardware so events queued during
+    a brief CPU throttle event are still delivered.
+    """
+    global _armed, _low_since, _glitch_count
+
+    if level == 2:
+        return
+
+    now = time.monotonic()
+    with _lock:
+        if level == 1:  # RISING — went HIGH
+            if not _armed:
+                _armed = True
+                log("ARMED — rising edge")
+                write_tombstone("ARMED")
+            else:
+                if _low_since is not None:
+                    dur = (now - _low_since) * 1000
+                    log(f"GPIO_BACK_HIGH after {dur:.0f}ms (glitch, edge)")
+                _low_since = None
+            return
+
+        # level == 0 → FALLING
+        if not _armed:
+            return  # ignore until we've seen at least one HIGH
+
+        if _low_since is None:
+            _low_since = now
+            _glitch_count += 1
+            log(f"GPIO_LOW_DETECTED #{_glitch_count} (edge)")
+            write_tombstone(f"LOW_EDGE_{_glitch_count}")
+            short_beep(freq=2500, duration=0.08)
 
 
-def main():
-    h = lgpio.gpiochip_open(GPIO_CHIP)
-    lgpio.gpio_claim_input(h, POWER_SENSE_PIN, lgpio.SET_PULL_DOWN)
-
-    print(f"[safe_shutdown] Monitoring GPIO {POWER_SENSE_PIN} for power loss...")
-    print(f"[safe_shutdown] Waiting for battery HIGH signal before arming...")
-
-    # Safety: do NOT trigger shutdown until we've seen the pin HIGH at least once.
-    # This prevents spurious shutdowns when hardware is not yet connected
-    # (pin floats LOW with pull-down → would immediately trigger shutdown).
-    armed = False
-    low_since = None
-    last_health = 0
-    glitch_count = 0
-
-    # Try to init INA219 for current monitoring
+def health_logger(h, stop_event):
+    """Background thread: write health row every HEALTH_INTERVAL seconds."""
     ina219 = None
     try:
         import smbus2
         ina_bus = smbus2.SMBus(1)
-        ina_bus.write_word_data(0x40, 0x05, 0x1000)  # calibration register
+        ina_bus.write_word_data(0x40, 0x05, 0x1000)
         ina219 = ina_bus
-        print("[safe_shutdown] INA219 current sensor detected")
+        log("INA219 detected")
     except Exception:
-        print("[safe_shutdown] INA219 not found, logging without current")
+        log("INA219 not found")
 
-    # Init health log
     with open(HEALTH_LOG, "w") as f:
         f.write("timestamp,temp_c,throttled,voltage_ok,current_mA,gpio26,glitches\n")
 
+    while not stop_event.is_set():
+        try:
+            level = lgpio.gpio_read(h, POWER_SENSE_PIN)
+            temp = subprocess.run(["vcgencmd", "measure_temp"],
+                                  capture_output=True, text=True, timeout=2)
+            temp_c = temp.stdout.strip().replace("temp=", "").replace("'C", "")
+            throt = subprocess.run(["vcgencmd", "get_throttled"],
+                                   capture_output=True, text=True, timeout=2)
+            throt_val = throt.stdout.strip().split("=")[1] if "=" in throt.stdout else "?"
+            volt_ok = "1" if throt_val == "0x0" else "0"
+            current_mA = -1
+            if ina219:
+                try:
+                    raw = ina219.read_word_data(0x40, 0x04)
+                    raw = ((raw & 0xFF) << 8) | ((raw >> 8) & 0xFF)
+                    if raw > 32767:
+                        raw -= 65536
+                    current_mA = raw * 0.1
+                except Exception:
+                    current_mA = -1
+            ts = time.strftime("%Y-%m-%dT%H:%M:%S")
+            with open(HEALTH_LOG, "a") as f:
+                f.write(f"{ts},{temp_c},{throt_val},{volt_ok},{current_mA:.1f},{level},{_glitch_count}\n")
+        except Exception:
+            pass
+        stop_event.wait(HEALTH_INTERVAL)
+
+
+def main():
+    global _armed, _low_since
+
+    log("=" * 50)
+    log(f"safe_shutdown START — DEBOUNCE_MS={DEBOUNCE_MS} POLL={POLL_INTERVAL}s edge+poll")
+    write_tombstone("SERVICE_START")
+
+    h = lgpio.gpiochip_open(GPIO_CHIP)
+    # Claim as input with pull-down AND alert on both edges
+    lgpio.gpio_claim_alert(h, POWER_SENSE_PIN, lgpio.BOTH_EDGES, lgpio.SET_PULL_DOWN)
+    cb = lgpio.callback(h, POWER_SENSE_PIN, lgpio.BOTH_EDGES, gpio_edge_callback)
+    log(f"Edge callback registered on GPIO {POWER_SENSE_PIN}")
+
+    # Prime armed state from current level (in case we're already HIGH)
+    initial = lgpio.gpio_read(h, POWER_SENSE_PIN)
+    if initial == 1:
+        with _lock:
+            _armed = True
+        log("ARMED — initial GPIO HIGH at startup")
+        write_tombstone("ARMED_AT_STARTUP")
+    else:
+        log("Waiting for GPIO HIGH to arm...")
+
+    # Start health logger in background
+    stop_event = threading.Event()
+    hl_thread = threading.Thread(target=health_logger, args=(h, stop_event), daemon=True)
+    hl_thread.start()
+
     try:
         while True:
-            level = lgpio.gpio_read(h, POWER_SENSE_PIN)
             now = time.monotonic()
 
-            # Health logging
-            if now - last_health >= HEALTH_INTERVAL:
-                last_health = now
-                try:
-                    temp = subprocess.run(["vcgencmd", "measure_temp"],
-                                         capture_output=True, text=True, timeout=2)
-                    temp_c = temp.stdout.strip().replace("temp=", "").replace("'C", "")
-                    throt = subprocess.run(["vcgencmd", "get_throttled"],
-                                          capture_output=True, text=True, timeout=2)
-                    throt_val = throt.stdout.strip().split("=")[1] if "=" in throt.stdout else "?"
-                    volt_ok = "1" if throt_val == "0x0" else "0"
-                    # Read current from INA219 if available
-                    current_mA = -1
-                    if ina219:
-                        try:
-                            raw = ina219.read_word_data(0x40, 0x04)
-                            raw = ((raw & 0xFF) << 8) | ((raw >> 8) & 0xFF)
-                            if raw > 32767:
-                                raw -= 65536
-                            current_mA = raw * 0.1  # 0.1mA per LSB
-                        except Exception:
-                            current_mA = -1
-                    ts = time.strftime("%Y-%m-%dT%H:%M:%S")
-                    with open(HEALTH_LOG, "a") as f:
-                        f.write(f"{ts},{temp_c},{throt_val},{volt_ok},{current_mA:.1f},{level},{glitch_count}\n")
-                except Exception:
-                    pass
+            # Backup poll — in case edge callback missed an event
+            current = lgpio.gpio_read(h, POWER_SENSE_PIN)
+            with _lock:
+                if not _armed and current == 1:
+                    _armed = True
+                    log("ARMED — rising via poll")
+                    write_tombstone("ARMED_VIA_POLL")
+                if _armed and current == 0 and _low_since is None:
+                    _low_since = now
+                    _glitch_count_local = _glitch_count + 1
+                    # Use a separate inc so we don't conflict with callback
+                    log(f"GPIO_LOW_DETECTED via poll (backup, callback may have missed)")
+                    write_tombstone("LOW_VIA_POLL")
+                    short_beep(freq=2500, duration=0.08)
+                if _armed and current == 1 and _low_since is not None:
+                    dur = (now - _low_since) * 1000
+                    log(f"GPIO_BACK_HIGH via poll after {dur:.0f}ms (glitch)")
+                    _low_since = None
 
-            if not armed:
-                if level == 1:
-                    armed = True
-                    print("[safe_shutdown] Battery detected (GPIO HIGH). Armed.")
+                # Confirm power loss after debounce
+                if _low_since is not None and (now - _low_since) * 1000 >= DEBOUNCE_MS:
+                    log(f"POWER_LOSS_CONFIRMED after {DEBOUNCE_MS}ms — fast_shutdown()")
+                    write_tombstone("POWER_LOSS_CONFIRMED")
+                    # Release lock before triggering shutdown
+                    confirm_shutdown = True
                 else:
-                    time.sleep(CHECK_INTERVAL)
-                    continue
+                    confirm_shutdown = False
 
-            if level == 0:
-                if low_since is None:
-                    low_since = now
-                    glitch_count += 1
-                    print(f"[safe_shutdown] GPIO LOW detected (glitch #{glitch_count})")
-                elif (now - low_since) * 1000 >= DEBOUNCE_MS:
-                    print(f"[safe_shutdown] Power loss confirmed after {DEBOUNCE_MS}ms!")
-                    fast_shutdown()
-                    sys.exit(0)
-            else:
-                if low_since is not None:
-                    duration = (now - low_since) * 1000
-                    print(f"[safe_shutdown] GPIO back HIGH after {duration:.0f}ms (glitch)")
-                low_since = None
+            if confirm_shutdown:
+                fast_shutdown()
+                stop_event.set()
+                sys.exit(0)
 
-            time.sleep(CHECK_INTERVAL)
+            time.sleep(POLL_INTERVAL)
 
     except KeyboardInterrupt:
-        print("[safe_shutdown] Stopped.")
+        log("Stopped (KeyboardInterrupt)")
     finally:
+        stop_event.set()
+        try:
+            cb.cancel()
+        except Exception:
+            pass
         lgpio.gpiochip_close(h)
 
 
