@@ -58,6 +58,23 @@ PERIOD_US = 1_000_000 / SERVO_FREQ
 BRAKE_ANGLE = 60       # brake lock when OFF (gradi "logici")
 RELEASE_ANGLE = 0      # released when ON (gradi "logici" = raw 180°)
 
+# Buzzer (shared con safe_shutdown — GPIO 4 via 2N2222 driver)
+BUZZER_PIN = 4
+
+
+def buzzer_sweep(start_freq: int, end_freq: int, step: int = 50, step_time: float = 0.025):
+    """Play a frequency sweep on BUZZER_PIN. Auto-detects ascending/descending."""
+    try:
+        h = lgpio.gpiochip_open(GPIO_CHIP)
+        s = -step if start_freq > end_freq else step
+        for f in range(start_freq, end_freq, s):
+            lgpio.tx_pwm(h, BUZZER_PIN, f, 50)
+            time.sleep(step_time)
+        lgpio.tx_pwm(h, BUZZER_PIN, 0, 0)
+        lgpio.gpiochip_close(h)
+    except Exception:
+        pass
+
 
 def angle_to_duty(angle: float) -> float:
     # Servo montato invertito: raw 180° = rilasciato, raw 0° = freno pieno.
@@ -159,6 +176,9 @@ class MasterSwitch:
         self.follow_me = follow_me
         self.recorder_retries = 0
 
+        # Audio cue: switch ON → sweep ascendente 800→1500Hz
+        buzzer_sweep(800, 1500)
+
         # Release: pulse a 0° per 1.5s, poi PWM stop + gpio_free → pin hi-Z.
         # SER0062 brushless: MAI gpio_write LOW continuo dopo PWM (memory:
         # feedback_dfrobot_pulse_lock). Solo pulse-and-free.
@@ -217,6 +237,9 @@ class MasterSwitch:
         if not self.active and not force:
             return
         self.active = False
+
+        # Audio cue: switch OFF → sweep discendente 1500→800Hz
+        buzzer_sweep(1500, 800)
         self.recorder_proc = None
 
         # Ferma speed_limiter PRIMA del pulse di parking (gli evita di combattere col servo)
