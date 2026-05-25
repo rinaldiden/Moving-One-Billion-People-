@@ -454,16 +454,16 @@ class SpeedLimiter:
             new = max(0.0, self.brake_cmd - step_down * release_scale)
             zone = "RELEASE"
         elif speed_kmh > TARGET_KMH:
-            # OVER (>10 km/h): rampa aggressiva per cap intorno a 11-12
-            # scale @11 = 3, @12 = 4 (sat 5) → build fino a 60°/s
-            scale = min(5.0, 2.0 + (speed_kmh - TARGET_KMH))
+            # OVER (>10 km/h): build moderato per evitare overshoot sotto 8
+            # scale @11 = 1.67, @12 = 2.33, sat a 3 (era 5 con +2 base, troppo)
+            scale = min(3.0, 1.0 + (speed_kmh - TARGET_KMH) / 1.5)
             new = self.brake_cmd + step_up * scale
             zone = "OVER"
         else:
-            # HYST band 8-10 km/h: rampa progressiva con boost ×2
-            # 8 km/h → 0×, 9 km/h → 1.0×, 10 km/h → 2.0× step_up
-            hyst_progress = (speed_kmh - ACTIVATE_KMH) / max(0.1, TARGET_KMH - ACTIVATE_KMH)
-            new = self.brake_cmd + step_up * hyst_progress * 2.0
+            # HYST band 8-10 km/h: HOLD — tieni il freno corrente, no boost.
+            # Lascia decel naturale + freno residuo portare la bici nel range.
+            # Aggiungere freno qui causava overshoot sotto 8 km/h.
+            new = self.brake_cmd
             zone = "HYST"
 
         new = max(0.0, min(BRAKE_MAX_ANGLE, new))
