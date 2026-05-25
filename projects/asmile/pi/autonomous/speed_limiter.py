@@ -414,7 +414,7 @@ class SpeedLimiter:
         # Trend su finestra 1s
         if len(self.ble_history) < 2:
             return 0.0
-        cutoff = t_now - 1.0
+        cutoff = t_now - 2.0
         recent = [(t, s) for t, s in self.ble_history if t >= cutoff]
         if len(recent) < 2:
             return 0.0
