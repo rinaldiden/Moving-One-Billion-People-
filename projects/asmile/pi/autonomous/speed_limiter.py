@@ -32,7 +32,7 @@ import smbus2
 
 # ─── Target ───────────────────────────────────────────────────────────
 TARGET_KMH = 10.0       # ceiling: sopra → adattivo per riportare a target
-ACTIVATE_KMH = 7.0      # sotto → FREE, brake rilasciato
+ACTIVATE_KMH = 8.0      # sotto → FREE, brake rilasciato (alzato da 7 a 8: cap puntato a 12)
 
 # ─── Controller adattivo (no mappa fissa angolo) ─────────────────────
 # Brake_cmd cresce/cala in base alla decelerazione MISURATA dall'IMU.
@@ -454,14 +454,16 @@ class SpeedLimiter:
             new = max(0.0, self.brake_cmd - step_down * release_scale)
             zone = "RELEASE"
         elif speed_kmh > TARGET_KMH:
-            scale = min(3.0, 1.0 + (speed_kmh - TARGET_KMH) / 2.0)
+            # OVER (>10 km/h): rampa aggressiva per cap intorno a 11-12
+            # scale @11 = 3, @12 = 4 (sat 5) → build fino a 60°/s
+            scale = min(5.0, 2.0 + (speed_kmh - TARGET_KMH))
             new = self.brake_cmd + step_up * scale
             zone = "OVER"
         else:
-            # HYST band 7-10 km/h: rampa progressiva, più veloce vicino al target
-            # 7 km/h → 0×, 8 km/h → 0.33×, 9 km/h → 0.67×, 10 km/h → 1.0× step_up
+            # HYST band 8-10 km/h: rampa progressiva con boost ×2
+            # 8 km/h → 0×, 9 km/h → 1.0×, 10 km/h → 2.0× step_up
             hyst_progress = (speed_kmh - ACTIVATE_KMH) / max(0.1, TARGET_KMH - ACTIVATE_KMH)
-            new = self.brake_cmd + step_up * hyst_progress
+            new = self.brake_cmd + step_up * hyst_progress * 2.0
             zone = "HYST"
 
         new = max(0.0, min(BRAKE_MAX_ANGLE, new))
