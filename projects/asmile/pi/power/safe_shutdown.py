@@ -32,7 +32,10 @@ from datetime import datetime
 GPIO_CHIP = 4
 POWER_SENSE_PIN = 26
 BUZZER_PIN = 4
-DEBOUNCE_MS = 200       # confirm POWER LOSS only if LOW persists for this long
+DEBOUNCE_MS = 0         # 0 = trigger sul PRIMO edge LOW. Era 200ms, ma con
+                        # brownout cycling sul supercap il GPIO oscilla e il
+                        # debounce non si completa mai. Meglio fidarsi del
+                        # primo LOW (rare false positives da rumore).
 POLL_INTERVAL = 0.05    # backup poll cadence (edge callback is primary)
 HEALTH_LOG = "/tmp/asmile_health.csv"
 HEALTH_INTERVAL = 5     # log Pi health to CSV every Ns
@@ -158,11 +161,12 @@ def gpio_edge_callback(chip, gpio, level, tick):
                 _armed = True
                 log("ARMED — rising edge")
                 write_tombstone("ARMED")
-            else:
-                if _low_since is not None:
-                    dur = (now - _low_since) * 1000
-                    log(f"GPIO_BACK_HIGH after {dur:.0f}ms (glitch, edge)")
-                _low_since = None
+            elif _low_since is not None:
+                # ARMED + abbiamo già visto un LOW: NON resettare _low_since.
+                # Brownout cycling causa rising edge spuri che annullerebbero
+                # lo shutdown. Una volta visto LOW, ci impegniamo a spegnere.
+                dur = (now - _low_since) * 1000
+                log(f"GPIO_BACK_HIGH after {dur:.0f}ms (ignored — committed to shutdown)")
             return
 
         # level == 0 → FALLING
@@ -266,10 +270,11 @@ def main():
                     log(f"GPIO_LOW_DETECTED via poll (backup, callback may have missed)")
                     write_tombstone("LOW_VIA_POLL")
                     short_beep(freq=2500, duration=0.08)
+                # NOTE: rising edge NON resetta _low_since — committed to shutdown
+                # (vedi nota in gpio_edge_callback). Solo log.
                 if _armed and current == 1 and _low_since is not None:
                     dur = (now - _low_since) * 1000
-                    log(f"GPIO_BACK_HIGH via poll after {dur:.0f}ms (glitch)")
-                    _low_since = None
+                    log(f"GPIO_BACK_HIGH via poll after {dur:.0f}ms (ignored — committed)")
 
                 # Confirm power loss after debounce
                 if _low_since is not None and (now - _low_since) * 1000 >= DEBOUNCE_MS:
