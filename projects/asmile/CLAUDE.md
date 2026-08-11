@@ -120,3 +120,6 @@ cd projects/asmile/config
 sudo bash setup_new_raspi.sh
 # Then reboot to activate I2C, UART3, SPI1 overlays
 ```
+
+## Voce email (ereditata da Moving One Billion People)
+Se scrivi/invii email per conto di Daniele, segui la voce in `../../shared/email-voce-daniele.md` (copia di `council/voce/email-pattern-antipattern.md`). Regole dure: no "FOUNDER&CEO"/Rinaldi Telai srl (liquidata); default daniele@movingonebillionpeople.org; firma "Con profonda gratitudine 🙏 Daniele MM"; niente invio autonomo su denaro/numeri/nuove relazioni/immagini di persone senza ok.
