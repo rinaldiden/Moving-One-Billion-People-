@@ -1,0 +1,343 @@
+{
+  "generated_by": "asmile-log-harvester (stage 1)",
+  "roots": [
+    "/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare"
+  ],
+  "sessions": [
+    {
+      "session": "session_20260416_192317",
+      "moving_seconds": 184.4,
+      "move_fraction": 0.385,
+      "duration_s": 478.5,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260417_172512",
+      "moving_seconds": 82.7,
+      "move_fraction": 0.909,
+      "duration_s": 90.9,
+      "flags": [
+        "no_gps_fix"
+      ],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260417_181452",
+      "moving_seconds": 534.9,
+      "move_fraction": 0.454,
+      "duration_s": 1177.2,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260417_183442",
+      "moving_seconds": 407.2,
+      "move_fraction": 0.949,
+      "duration_s": 429.2,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260418_153216",
+      "moving_seconds": 324.2,
+      "move_fraction": 0.94,
+      "duration_s": 344.9,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260418_153745",
+      "moving_seconds": 295.2,
+      "move_fraction": 0.936,
+      "duration_s": 315.3,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260418_154344",
+      "moving_seconds": 127.4,
+      "move_fraction": 0.899,
+      "duration_s": 141.8,
+      "flags": [
+        "no_gps_fix"
+      ],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260418_155054",
+      "moving_seconds": 299.1,
+      "move_fraction": 0.802,
+      "duration_s": 373.0,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260420_083232",
+      "moving_seconds": 9.2,
+      "move_fraction": 0.249,
+      "duration_s": 37.2,
+      "flags": [
+        "dropout",
+        "no_gps_fix"
+      ],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260421_132434",
+      "moving_seconds": 247.4,
+      "move_fraction": 0.363,
+      "duration_s": 680.8,
+      "flags": [
+        "dropout"
+      ],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260421_141734",
+      "moving_seconds": 55.3,
+      "move_fraction": 0.091,
+      "duration_s": 609.9,
+      "flags": [
+        "dropout"
+      ],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260421_142017",
+      "moving_seconds": 16.6,
+      "move_fraction": 0.165,
+      "duration_s": 100.4,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260421_144000",
+      "moving_seconds": 559.1,
+      "move_fraction": 0.383,
+      "duration_s": 1461.3,
+      "flags": [
+        "dropout"
+      ],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260421_144106",
+      "moving_seconds": 2.9,
+      "move_fraction": 0.087,
+      "duration_s": 32.6,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260422_162914",
+      "moving_seconds": 14.2,
+      "move_fraction": 0.059,
+      "duration_s": 241.7,
+      "flags": [
+        "dropout"
+      ],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260501_111937",
+      "moving_seconds": 401.8,
+      "move_fraction": 0.981,
+      "duration_s": 409.6,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260501_112439",
+      "moving_seconds": 363.6,
+      "move_fraction": 0.965,
+      "duration_s": 376.9,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260501_161106",
+      "moving_seconds": 535.3,
+      "move_fraction": 0.748,
+      "duration_s": 715.9,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260501_162715",
+      "moving_seconds": 165.7,
+      "move_fraction": 0.994,
+      "duration_s": 166.8,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260502_203623",
+      "moving_seconds": 427.4,
+      "move_fraction": 0.574,
+      "duration_s": 744.1,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260503_090454",
+      "moving_seconds": 1067.5,
+      "move_fraction": 0.448,
+      "duration_s": 2380.9,
+      "flags": [
+        "dropout"
+      ],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260505_093113",
+      "moving_seconds": 590.1,
+      "move_fraction": 0.832,
+      "duration_s": 709.4,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260505_094915",
+      "moving_seconds": 573.4,
+      "move_fraction": 0.935,
+      "duration_s": 612.9,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260505_101238",
+      "moving_seconds": 143.9,
+      "move_fraction": 0.689,
+      "duration_s": 208.8,
+      "flags": [
+        "no_gps_fix"
+      ],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260505_102748",
+      "moving_seconds": 199.1,
+      "move_fraction": 0.974,
+      "duration_s": 204.5,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260505_103315",
+      "moving_seconds": 110.6,
+      "move_fraction": 0.993,
+      "duration_s": 111.3,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260505_104231",
+      "moving_seconds": 95.9,
+      "move_fraction": 0.975,
+      "duration_s": 98.3,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260505_105014",
+      "moving_seconds": 66.7,
+      "move_fraction": 0.978,
+      "duration_s": 68.2,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260507_172809",
+      "moving_seconds": 66.1,
+      "move_fraction": 0.855,
+      "duration_s": 77.2,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260507_173209",
+      "moving_seconds": 18.4,
+      "move_fraction": 0.593,
+      "duration_s": 31.0,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260507_174100",
+      "moving_seconds": 3.2,
+      "move_fraction": 0.078,
+      "duration_s": 40.7,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260507_175349",
+      "moving_seconds": 3.7,
+      "move_fraction": 0.9,
+      "duration_s": 4.1,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260508_105732",
+      "moving_seconds": 0.8,
+      "move_fraction": 0.022,
+      "duration_s": 39.0,
+      "flags": [
+        "no_gps_fix"
+      ],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260508_162323",
+      "moving_seconds": 7.9,
+      "move_fraction": 1.0,
+      "duration_s": 7.9,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260508_164054",
+      "moving_seconds": 49.7,
+      "move_fraction": 1.0,
+      "duration_s": 49.7,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260508_164515",
+      "moving_seconds": 1111.8,
+      "move_fraction": 1.0,
+      "duration_s": 1111.8,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260508_191226",
+      "moving_seconds": 296.0,
+      "move_fraction": 0.624,
+      "duration_s": 474.0,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    },
+    {
+      "session": "session_20260508_205916",
+      "moving_seconds": 1208.2,
+      "move_fraction": 0.908,
+      "duration_s": 1330.8,
+      "flags": [],
+      "decision": "ammetti_al_corpus"
+    }
+  ],
+  "totals": {
+    "sessions": 38,
+    "admitted_to_corpus": 38,
+    "static_rig": 0,
+    "low_light": 0,
+    "dropout": 6,
+    "total_recorded_seconds": 16488.5,
+    "moving_seconds_admitted": 10666.6,
+    "moving_hours_admitted": 2.96
+  }
+}

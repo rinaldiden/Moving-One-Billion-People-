@@ -41,3 +41,32 @@ qui. Il validator propone go/no-go; non decide.
 velocità/decel). Principio guida del doppio: "in dubbio, non ottimizzare, aspetta".
 
 **Firma:** ______________________  **Data:** __________
+
+---
+
+## D003 — Rendere ESEGUIBILE la pipeline e avviare lo stadio 1 sui video locali
+**Data proposta:** 2026-08-29 · **Autore:** doppio di Daniele (Claude) · **Stato:** DA FIRMARE
+
+**Scelta proposta.** La pipeline non resta un disegno: aggiungere un **runner eseguibile**
+(`training/sim2real/pipeline.py` + `harvest.py`) che replica la ricetta sim2real di Microduck e
+**avvia da solo lo stadio 1 (harvester)** sui video di guida gia' in locale sul Mac. Lo stadio 1 e'
+l'unico che il runner esegue in autonomia — e' data-processing puro e additivo (indicizza, non tocca
+strada / hardware / denaro / grezzi). Gli stadi 2–7 restano lavoro di agente dietro i gate (Q1–Q6 +
+firma D001); la strada resta dietro D002. Il runner li elenca e li gaterizza, non li lancia.
+
+**Evidenza (primo run, 2026-08-29).** Harvester girato su `segmentazione/da_segmentare/`:
+**38/38 sessioni ammesse**, 0 static_rig, 5 low_light, 6 dropout, molte con sync_drift.
+**~2.96 h in movimento** su 4.58 h registrate → `training/sim2real/corpus/corpus_index.json`
+(+ manifest per sessione). Implicazione **Q1**: sopra la soglia per il **BC**, sotto ~5 h per un
+**PPO** fedele → servono altre ore in movimento prima di fidarsi della fase 2. Mappatura completa
+Microduck→runner in `docs/microduck_to_asmile_runner.md`.
+
+**Deroghe/limiti.** Nessuno stadio oltre l'1 e' stato eseguito. Nessun modello addestrato, nessuna
+policy prodotta, nessun test su strada. I gate 4–7 dipendono ancora da D001 non firmata e da
+Q2 (MuJoCo/Mac), Q3 (frenate forti), Q4 (Speed PID), Q5 (stereo).
+
+**Cosa serve per firmare.** Daniele conferma: (a) che lo stadio 1 possa girare in autonomia sui log
+locali a ogni nuova sessione (zero costo marginale); (b) da quale stadio far ripartire la catena
+(proposta: `asmile-event-miner` + `asmile-scene-reconstructor` sul corpus appena prodotto).
+
+**Firma:** ______________________  **Data:** __________

@@ -74,3 +74,10 @@ successivo e scrive il proprio output indicizzato. Gli stadi 2 e 3 girano in par
 Pipeline **progettata e definita** (agenti + doc + casa progetto). **Da firmare** da Daniele prima
 dell'esecuzione reale e prima di qualsiasi test su strada. Prerequisiti aperti in
 `.collegio/QUESTIONI_APERTE.md` (Speed PID VESC, ricalibrazione stereo, MuJoCo su Mac, ~10h dati).
+
+## Aggiornamento (2026-08-29) — la pipeline diventa ESEGUIBILE
+La catena ha ora un **runner** in `training/sim2real/` (`pipeline.py` orchestratore + `harvest.py`
+stadio 1). Lo **stadio 1 e' stato girato** sui 38 log locali del Mac (`segmentazione/da_segmentare/`):
+**38/38 ammesse, ~2.96 h in movimento**, marcate 5 low_light + 6 dropout + varie sync_drift →
+`training/sim2real/corpus/corpus_index.json`. Gli stadi 2–7 restano dietro i gate (Q1–Q6) e la firma
+D001. Vedi `training/sim2real/README.md`, `docs/microduck_to_asmile_runner.md` e `DECISION_LOG.md` D003.

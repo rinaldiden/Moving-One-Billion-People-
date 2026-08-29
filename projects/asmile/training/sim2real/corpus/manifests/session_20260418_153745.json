@@ -1,0 +1,29 @@
+{
+  "session": "session_20260418_153745",
+  "path": "/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260418_153745",
+  "raw": {
+    "sensors_csv": "/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260418_153745/sensors.csv",
+    "video_h264": "/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260418_153745/video.h264",
+    "video_mp4": "/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260418_153745/video.mp4"
+  },
+  "sensors": {
+    "rows": 2979,
+    "duration_s": 315.3,
+    "sample_hz": 9.45,
+    "move_fraction": 0.936,
+    "moving_seconds": 295.2,
+    "speed_avg_ms": 3.212,
+    "speed_max_ms": 5.138,
+    "gps_fix_fraction": 0.888,
+    "dropouts": 0,
+    "dropout_seconds": 0.0,
+    "ts_start": "2026-04-18T15:37:48",
+    "usable": true
+  },
+  "flags": [],
+  "video": {
+    "present": true,
+    "probe": false
+  },
+  "decision": "ammetti_al_corpus"
+}
