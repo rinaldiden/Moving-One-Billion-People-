@@ -64,6 +64,7 @@ Complete hardware list for the autonomous bicycle guidance system.
 | 15 | Wheel encoder | Speed/odometry |
 | 16 | Kill switch / E-stop | Emergency switch on 48V line |
 | 17 | Second Raspberry Pi 5 | Redundancy with failover |
+| 18 | Inductive proximity sensor | LJ8A3-2-Z/BX M8, NPN NO, 2mm range, 12-24VDC — **da valutare** ([Link Amazon](https://amzn.eu/d/0dW2BKb2)). Candidato wheel speed/odometry (rileva metallo: bulloni disco/raggi) <!-- nota 2026-08-29: link Amazon da valutare --> |
 
 ## Raspi 5 Interfaces Used
 
