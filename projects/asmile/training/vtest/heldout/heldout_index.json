@@ -1,0 +1,111 @@
+{
+  "generated_by": "asmile-vtest-curator (stadio 1 banco virtuale)",
+  "corpus_index": "/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/training/sim2real/corpus/corpus_index.json",
+  "model_under_test": "/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/training/training_data/asmile_model_v4.pth",
+  "split": {
+    "level": "session",
+    "frac_target": 0.2,
+    "deterministic": "md5(session) % round(1/frac) == 0"
+  },
+  "warnings": [
+    "leakage_status=non_verificato su tutte: v4 e' stato addestrato prima di questo split, non possiamo provare l'esclusione. Il gap misurato e' un LIMITE INFERIORE dell'errore reale (ottimistico). Per un held-out pulito: ri-addestrare tracciando le sessioni usate, poi ri-lanciare qui."
+  ],
+  "totals": {
+    "held_out_sessions": 9,
+    "train_pool_sessions": 29,
+    "held_out_moving_hours": 0.6,
+    "train_pool_moving_hours": 2.36,
+    "stress_conditions_covered": [
+      "dropout",
+      "no_gps_fix"
+    ]
+  },
+  "held_out": [
+    {
+      "session": "session_20260416_192317",
+      "moving_seconds": 184.4,
+      "move_fraction": 0.385,
+      "duration_s": 478.5,
+      "flags": [],
+      "raw_dir": "/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260416_192317",
+      "leakage_status": "non_verificato"
+    },
+    {
+      "session": "session_20260417_172512",
+      "moving_seconds": 82.7,
+      "move_fraction": 0.909,
+      "duration_s": 90.9,
+      "flags": [
+        "no_gps_fix"
+      ],
+      "raw_dir": "/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260417_172512",
+      "leakage_status": "non_verificato"
+    },
+    {
+      "session": "session_20260417_181452",
+      "moving_seconds": 534.9,
+      "move_fraction": 0.454,
+      "duration_s": 1177.2,
+      "flags": [],
+      "raw_dir": "/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260417_181452",
+      "leakage_status": "non_verificato"
+    },
+    {
+      "session": "session_20260420_083232",
+      "moving_seconds": 9.2,
+      "move_fraction": 0.249,
+      "duration_s": 37.2,
+      "flags": [
+        "dropout",
+        "no_gps_fix"
+      ],
+      "raw_dir": "/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260420_083232",
+      "leakage_status": "non_verificato"
+    },
+    {
+      "session": "session_20260421_142017",
+      "moving_seconds": 16.6,
+      "move_fraction": 0.165,
+      "duration_s": 100.4,
+      "flags": [],
+      "raw_dir": "/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260421_142017",
+      "leakage_status": "non_verificato"
+    },
+    {
+      "session": "session_20260421_144106",
+      "moving_seconds": 2.9,
+      "move_fraction": 0.087,
+      "duration_s": 32.6,
+      "flags": [],
+      "raw_dir": "/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260421_144106",
+      "leakage_status": "non_verificato"
+    },
+    {
+      "session": "session_20260505_104231",
+      "moving_seconds": 95.9,
+      "move_fraction": 0.975,
+      "duration_s": 98.3,
+      "flags": [],
+      "raw_dir": "/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260505_104231",
+      "leakage_status": "non_verificato"
+    },
+    {
+      "session": "session_20260507_173209",
+      "moving_seconds": 18.4,
+      "move_fraction": 0.593,
+      "duration_s": 31.0,
+      "flags": [],
+      "raw_dir": "/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260507_173209",
+      "leakage_status": "non_verificato"
+    },
+    {
+      "session": "session_20260508_205916",
+      "moving_seconds": 1208.2,
+      "move_fraction": 0.908,
+      "duration_s": 1330.8,
+      "flags": [],
+      "raw_dir": "/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260508_205916",
+      "leakage_status": "non_verificato"
+    }
+  ]
+}

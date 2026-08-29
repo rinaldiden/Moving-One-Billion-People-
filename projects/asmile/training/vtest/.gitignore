@@ -1,0 +1,6 @@
+# ambiente virtuale locale (cv2/torch/matplotlib) — pesante, per-macchina
+.venv/
+__pycache__/
+
+# output rigenerabili del banco: report shadow, video annotati, grafici
+reports/

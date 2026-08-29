@@ -120,7 +120,12 @@ def analyze_session(model_path: str, session_dir: str, output_path: str,
     rows = load_sensor_csv(str(session / "sensors.csv"))
     first_ts = rows[0]["_ts"]
 
-    cap = open_video(str(session / "video.h264"))
+    # Preferisci il .mp4 muxato (seekable, frame_count valido) al .h264 grezzo
+    # (elementary stream: cv2 non lo apre / non ci si posiziona). Fallback a .h264.
+    video_file = session / "video.mp4"
+    if not video_file.is_file():
+        video_file = session / "video.h264"
+    cap = open_video(str(video_file))
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     depth_ext = DepthExtractor(calib_path)

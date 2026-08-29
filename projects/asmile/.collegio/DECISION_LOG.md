@@ -70,3 +70,39 @@ locali a ogni nuova sessione (zero costo marginale); (b) da quale stadio far rip
 (proposta: `asmile-event-miner` + `asmile-scene-reconstructor` sul corpus appena prodotto).
 
 **Firma:** ______________________  **Data:** __________
+
+---
+
+## D004 — Banco di prova virtuale: rigiocare il modello sui video reali held-out
+**Data proposta:** 2026-08-29 · **Autore:** doppio di Daniele (Claude) · **Stato:** DA FIRMARE
+
+**Scelta proposta.** Aggiungere un **banco di prova virtuale** (`training/vtest/`) che rigioca in
+OPEN-LOOP il modello di guida che abbiamo gia' (`asmile_model_v4`) sui video di logging gia'
+registrati e misura, frame per frame, quanto diverge dal guidatore umano. E' l'anello di
+validazione che a Microduck **manca**: loro chiudono il sim2real gap a occhio (eval video,
+rehearsal), senza metrica sim-vs-real; noi abbiamo video+sensori sincronizzati e possiamo
+misurarlo. Catena di 4 agenti (`.claude/agents/asmile-vtest-*`): curator (held-out) → replayer
+(shadow) → scorer (scheda P1-P9/A1-A7) → critic (verdetto go/no-go PROPOSTO). Complementare, non
+alternativo, alla pipeline di training a 7 stadi (D001): quella costruisce il modello nel
+simulatore, questo prova un modello gia' fatto contro la realta'.
+
+**Evidenza (primo run, 2026-08-29).** Stadio 1 (curator) girato sul corpus: **9 sessioni held-out**,
+~**0.6 h in movimento** tenute da parte, split per sessione deterministico, condizioni scarse
+(`no_gps_fix`, `dropout`) incluse a forza. Stadio 2 (replayer) riusa `shadow_analyzer.py`, gira su
+CPU senza torch (fallback numpy), in attesa di `cv2` sul Mac (comandi gia' stampati). Mappatura
+Microduck→banco in `docs/microduck_vtest_banco_virtuale.md`; runbook: skill
+`asmile-vtest-banco-virtuale`.
+
+**Deroghe/limiti (dichiarati, non nascosti).** (1) **Leakage:** v4 e' stato addestrato prima dello
+split → held-out `non_verificato` → il gap misurato e' un **limite inferiore** (ottimistico); per
+un held-out pulito serve ri-addestrare tracciando le sessioni. (2) **Poche ore held-out** (~0.6 h):
+statistiche fragili sui pattern rari. (3) **Depth grossolana** finche' non si ricalibra lo stereo
+(Q5). Il banco e' OFFLINE: legge video, scrive report, **non pilota niente**.
+
+**Cosa serve per firmare.** Daniele conferma: (a) che il banco possa girare in autonomia (curator +
+replayer) su ogni modello candidato, essendo puro data-processing; (b) che il verdetto del critic
+resti una PROPOSTA che alimenta D002 (strada) — nessuna policy esce dal banco alla strada senza
+firma umana. **Linea rossa invariata:** una violazione non verificata (freno >60°, envelope
+velocita'/decel, comando GPIO diretto) = no-go automatico.
+
+**Firma:** ______________________  **Data:** __________
