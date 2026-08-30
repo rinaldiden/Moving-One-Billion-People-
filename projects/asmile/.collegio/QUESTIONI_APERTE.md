@@ -36,3 +36,13 @@ socket-owner ispirato ai daemon microduck — vedi playbook passo 3). Non ancora
 driving_patterns segnala che mancano. La domain randomization aiuta ma non sostituisce dati reali.
 **Aperto:** pianificare sessioni in condizioni diverse prima di dichiarare la policy pronta per la
 strada in quelle condizioni.
+
+## Q8 — MicroDuck NON è hardware open (verificato 2026-08-30)
+Ispezione del repo `pollen-robotics/microduck`: contiene SOLO software ("This repo is the duck's
+brain"). **Nessun BOM, nessun STL, nessun CAD/disegno, nessuno schema/PCB.** L'hardware è prodotto
+commerciale (preorder $399 su pollen-robotics.com), non file da costruire. Quindi la direzione
+"replicare il modello microDAC" NON può significare stampare/replicare la papera: da MicroDuck si
+prende solo il **metodo software** (control loop 50Hz a daemon, policy ONNX, stack sim2real/RL).
+**Aperto:** l'open-hardware low-cost stampa-3D+biobased è ruolo di Asmile stessa — MicroDuck non offre
+la base meccanica open. Da decidere se e come pubblicare BOM+STL+schemi di Asmile per chiuderla come
+progetto davvero open (il pezzo che manca a MicroDuck).
