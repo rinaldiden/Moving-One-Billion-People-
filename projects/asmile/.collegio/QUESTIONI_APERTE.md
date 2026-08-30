@@ -46,3 +46,13 @@ prende solo il **metodo software** (control loop 50Hz a daemon, policy ONNX, sta
 **Aperto:** l'open-hardware low-cost stampa-3D+biobased è ruolo di Asmile stessa — MicroDuck non offre
 la base meccanica open. Da decidere se e come pubblicare BOM+STL+schemi di Asmile per chiuderla come
 progetto davvero open (il pezzo che manca a MicroDuck).
+
+### Conferma 2026-08-30 (tweet @MeRTcooking + fonti terze)
+Ri-verificato su richiesta di Daniele (tweet non apribile, X 402; identificato via repo + articoli).
+- **Software**: Apache-2.0, davvero aperto (leggi/forka/ri-allena il "cervello", policy ONNX, stack RL/sim2real).
+- **Hardware NON aperto**: i modelli 3D nel repo sono **CC BY-SA-NC** (non commerciale), niente BOM/STL/schemi
+  buildabili. Si vende **assemblato: $399** (+ dev pack $119 con 3 servo di ricambio, batterie, crediti HF).
+  Quindi NON è replicabile dai file, e comunque non a fini commerciali.
+- **Distinzione utile (nuova)**: il predecessore **"Open Duck Mini"** è invece genuinamente open-hardware,
+  stampabile in 3D, **~$400 in parti** (biped ~15 servo, no guida autonoma — è locomozione a zampe).
+  È DA LÌ, non da MicroDuck, che si prende una base meccanica davvero libera se si vuole replicare l'approccio.
