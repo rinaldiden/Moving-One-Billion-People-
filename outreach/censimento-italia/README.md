@@ -48,6 +48,7 @@ conto di cosa è già mappato.
 | Data | Ondata | Righe disabilità | Righe RSA | Cosa manca |
 |------|--------|------------------|-----------|------------|
 | 2026-08-30 | Seed anchor nazionali (federazioni ombrello) | 4 | 5 | Tutto il livello regionale/provinciale: 20 Regioni × entrambi i mondi. Facebook/Instagram non ancora raccolti (celle vuote) |
+| 2026-08-30 | Ondata 2 — livello regionale + provinciale prioritario (Lombardia/Sondrio) | 114 | 47 | Coperti: delegazioni FISH (9 regioni trovate), UICI regionali (8) + sezioni provinciali Lombardia (12), Anffas regionali e sezioni Lombardia + altri capoluoghi, UILDM sezioni (26), ANMIC province (19), Sol.Co. Sondrio e cooperativa Grandangolo, UNEBA regionali (15), Auser regionali (18), RSA Sondrio/Valtellina (5 strutture nominate + 2 link registro). Regioni con almeno un record: 17 disabilità / 19 RSA (su 20). Mancanti: Valle d'Aosta (entrambi), FISH (Toscana Sicilia Puglia Marche Umbria Abruzzo Molise Trentino), RSA livello struttura in tutte le regioni tranne SO, Facebook/Instagram quasi ovunque |
 
 ## DA FIRMARE / decidere (Daniele)
 1. **Priorità geografica**: partire da Lombardia/Valtellina + Poschiavo (dove il Movimento
