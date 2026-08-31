@@ -59,3 +59,7 @@ projects/asmile/segmentazione/
 projects/asmile/training/dataset*.csv
 projects/asmile/segmentazione/
 projects/asmile/training/dataset*.csv
+
+# Avvocato guida autonoma — corpus fonti e referti (locale)
+shared/legal-corpus/
+avvocatoguidaautonoma.md
