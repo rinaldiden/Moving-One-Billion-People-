@@ -106,3 +106,40 @@ firma umana. **Linea rossa invariata:** una violazione non verificata (freno >60
 velocita'/decel, comando GPIO diretto) = no-go automatico.
 
 **Firma:** ______________________  **Data:** __________
+
+---
+
+## D005 — Salvare in continuo sul Mac i logging CAN del raspi, finché è acceso
+**Data proposta:** 2026-09-11 · **Autore:** doppio di Daniele (Claude) · **Stato:** DA FIRMARE
+
+**Scelta proposta.** Aggiungere uno strumento Mac-side (`deploy/sync_can_logs.sh`) che
+**tira** (pull, sola lettura via rsync) dal raspi tutti i logging **CAN di oggi** — i CSV
+sterzo VESC in `~/wip/logging/vesc/` più eventuali `candump*.log` — e continua a salvarli
+**mentre crescono** (`--partial --inplace`, delta-transfer) in loop **finché il Pi resta
+acceso**. Quando il Pi non risponde per `OFF_THRESHOLD` cicli di fila (default 6) conclude
+"raspi spento" ed esce pulito. Filtro: percorso che contiene `vesc`/`can` **e** `mtime` di
+oggi (`find -newermt "oggi 00:00"`). Destinazione fuori dal repo
+(`~/asmile-data/can-logs/<host>/…`): sono dati del Pi, non codice, e restano fuori dai commit.
+
+**Evidenza.** "Logging CAN" = ciò che gli script sterzo scrivono oggi: `LOG_DIR =
+~/wip/logging/vesc` in `pi/steering/vesc_return_to_center_{duty,rpm}.py` (file
+`return_duty_*.csv`, `return_rpm_*.csv`). SSH del Pi da `CLAUDE.md` (`asmile@192.168.1.119`,
+"IP may change on hotspot" → autodiscovery su alias+IP). Coerente con il TODO in memoria
+(Speed PID + `vesc_return_to_center_rpm.py` deployato su asmile2). Logica verificata a secco
+sul Mac: `find -print0` → `rsync --files-from --from0` ricrea la struttura, esclude i file
+non-CAN e quelli non di oggi. Il Pi al momento non è raggiungibile da questo Mac (spento o
+rete diversa) → nessun test end-to-end contro il Pi vivo.
+
+**Deroghe/limiti (dichiarati).** (1) Solo **pull, sola lettura**: non scrive nulla sul raspi,
+non fa reboot/shutdown (regola dura `CLAUDE.md`). (2) Non lanciato in autonomia: è uno
+strumento che **Daniele avvia** quando vuole (`bash deploy/sync_can_logs.sh`, o `nohup … &`).
+(3) `--append-verify` (più rapido sui log append-only) scartato a favore di `--partial
+--inplace` (corretto anche se un file venisse riscritto). (4) Filtro CAN volutamente largo
+(`*can*`) per non perdere `candump`; se cattura troppo, `ASMILE_LOG_ROOTS` lo restringe.
+
+**Cosa serve per firmare.** Daniele conferma: (a) che il target "logging CAN" siano davvero i
+CSV `~/wip/logging/vesc/` (+ candump) e non un altro path/bus; (b) la destinazione sul Mac
+(`~/asmile-data/can-logs/`) va bene o preferisce altrove; (c) se vuole che parta da solo
+(cron/login) invece che avviato a mano.
+
+**Firma:** ______________________  **Data:** __________
