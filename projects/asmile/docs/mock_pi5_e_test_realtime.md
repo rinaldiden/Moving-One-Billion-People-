@@ -88,6 +88,41 @@ lo stesso harness diventa il benchmark G0 richiesto dal `TODO.md`. Il mock dà i
   fisico esce **solo** da G0 sul Pi. Il mock serve alla logica e all'*andamento*, non al valore.
 - Niente va in strada senza firma Daniele in `DECISION_LOG.md`.
 
+## 7. Run 2026-10-05 (b) — video GIÀ SEGMENTATO su Mac vs schema Affan nel mock
+Richiesta Daniele: prendere un video che **avevamo già segmentato** (modello PC), girarlo nel
+mock con lo schema Affan Khan, vedere se la CPU regge vision→attuatori **a 30 FPS**, e poi
+verificare che i **segmenti del Raspi == segmenti del modello PC**. Materiale usato:
+`segmentazione/da_segmentare/session_20260421_144000/` (video 1280x400 @15fps + maschere PC in
+`segmentation/masks/`, PNG class-index 640x400, classi es. 0/3/5 — modello custom 13-classi di
+`categories.yaml`).
+
+### Throughput (Part 1)
+Lo **scheduling puro** (tracker + priority + drivable + decisione + comando VESC/freno) sul video
+reale costa **~0.5 ms/frame** → irrilevante. Tutto il budget lo decide il **detector**.
+`per_frame = 0.5 ms + infer_ms/detect_every` (ammortizzato), ma la **frame di detection** paga
+l'intero `infer_ms` in un colpo perché il detector gira **inline, single-thread**.
+- Budget 15 FPS = 66.7 ms · 30 FPS = 33.3 ms.
+- Con detector inline, una singola detection (≥120–300 ms attesi sul Pi, YOLOv8n-ONNX@320) **sfora
+  sempre** sia 33 che 67 ms → spike periodico. Verdetto: **30 FPS NO; 15 FPS regge in media ma con
+  stutter sulla frame di detection**. Coincide col G0 fisico già visto sul Pi ("regge 15 non 30,
+  blocco = scheduler single-thread, detector inline").
+- Fix architetturale = esattamente Affan: detector **off-thread** (core separato/async), il tracker
+  gira ogni frame, la detection rientra quando è pronta. Senza questo nessun 30 FPS.
+- ⚠️ Caveat Mac: `time.sleep(infer_ms)` sul Mac gonfia di ~+195 ms (180→375 ms misurati) → i numeri
+  assoluti del Mac non valgono; vale il **modello** `0.5 + infer/every` e il valore fisico lo dà il Pi.
+
+### Confronto segmenti Raspi vs PC (Part 2) — NON ESEGUIBILE col banco attuale
+Fatto decisivo: sul **video reale** il `MockDetector` è un **oracolo di solo-costo** →
+`objects_now()` torna **`[]`** (ground-truth esiste solo per la scena sintetica). Misurato:
+30 chiamate al detector su 120 frame → **0 detection, 0 track, 0 segmenti** lato Raspi. Quindi:
+1. **Non c'è nulla da confrontare**: il lato Raspi non produce segmenti su frame veri. Per il
+   confronto serve innestare il **detector vero** (YOLOv8n-seg ONNX) al posto del `MockDetector` —
+   è lo **step 2 della pipeline** (`perception_priority_scheduler.md` §7), non ancora fatto.
+2. **Mismatch di rappresentazione**: il PC produce **maschere dense per-pixel** (13 classi); lo
+   schema Affan sul Pi produce **box + tracker + priority + corridoio guidabile** (sparse, niente
+   segmentazione densa sul Pi: è il punto). Non sono lo stesso output → il confronto onesto è a
+   livello **oggetto** (il Pi trova gli oggetti che le maschere PC contengono?), non pixel-vs-pixel.
+
 ## Riferimenti
 - `pi/mock/asmile_pi5_mock.py`, `pi/autonomous/test_perception_scheduler.py`
 - `pi/autonomous/perception_scheduler.py`, `docs/perception_priority_scheduler.md`
