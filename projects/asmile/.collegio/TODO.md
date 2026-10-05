@@ -18,3 +18,15 @@
 - [ ] Priority Map: tarare pesi su pattern P1–P9.
 - [ ] Depth on-demand: object_depth (sempre) + StereoSGBM ritagliata sulle top-K ROI + cross-check.
 - [ ] Shadow mode: scheduler in parallelo alla guida, SOLO log, confronto con shadow_mode.py. Nessun attuatore finché non firmato in DECISION_LOG.
+
+## Mock del Pi 5 + test real-time della percezione — DA FIRMARE (D006)
+
+<!-- 2026-10-05 — voce di Daniele: crea test da fare sul Raspi per vedere se gira in tempo reale,
+     e un mock del Pi 5 con la nostra sensoristica su cui testare la pipeline.
+     Doc: docs/mock_pi5_e_test_realtime.md — Mock: pi/mock/asmile_pi5_mock.py
+     Test: pi/autonomous/test_perception_scheduler.py -->
+- [x] Banco HW-less creato e verde sul Mac (8 test). Ha già pescato il bug `depth_requested` mai azzerato (fix minimo applicato in perception_scheduler.py).
+- [ ] **Lanciare la suite SUL PI**: `python3 pi/autonomous/test_perception_scheduler.py` (logica) — deve restare verde anche su ARM.
+- [ ] **G0 vero sul Pi**: stesso test con `--video <sessione reale>` e detector ONNX al posto del MockDetector → FPS fisici, non simulati.
+- [ ] Tarare `--infer-ms` di default sul costo reale misurato di YOLOv8n-ONNX@320 sul Pi.
+- [ ] Opzionale: switch `ASMILE_MOCK=1` per far importare ai moduli di produzione i driver mock in modo trasparente (oggi il wiring è esplicito nei test).

@@ -267,7 +267,11 @@ class PerceptionScheduler:
             t["priority"] = priority_score(t, w, h, in_drivable)
         tracks.sort(key=lambda t: t.get("priority", 0), reverse=True)
 
-        # DEPTH on-demand — solo top-K ROI (qui marcate; il calcolo vero al passo 5)
+        # DEPTH on-demand — solo top-K ROI (qui marcate; il calcolo vero al passo 5).
+        # Il flag va azzerato ogni frame: un track che esce dalla top-K NON deve
+        # continuare a reclamare depth (altrimenti "on-demand" diventa "per sempre").
+        for t in tracks:
+            t["depth_requested"] = False
         for t in tracks[: self.topk_depth]:
             t["depth_requested"] = True
 

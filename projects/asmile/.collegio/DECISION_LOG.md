@@ -143,3 +143,37 @@ CSV `~/wip/logging/vesc/` (+ candump) e non un altro path/bus; (b) la destinazio
 (cron/login) invece che avviato a mano.
 
 **Firma:** ______________________  **Data:** __________
+
+---
+
+## D006 — Mock del Pi 5 + test real-time della percezione (banco HW-less)
+**Data proposta:** 2026-10-05 · **Autore:** doppio di Daniele (Claude) · **Stato:** DA FIRMARE
+
+**Scelta proposta.** Prima di benchmarkare il Perception Priority Scheduler sul Pi vero (G0),
+dargli un **banco di prova HW-less**: un mock del Raspberry Pi 5 (`pi/mock/asmile_pi5_mock.py`)
+con innestata la nostra sensoristica (camera stereo 2560x800 GREY @15fps, detector, IMU 0x68,
+GPS ttyAMA3, INA219 0x40, encoder /tmp, VESC ttyAMA0, servo freno GPIO12), e una suite di test
+(`pi/autonomous/test_perception_scheduler.py`) che esercita logica + tempo reale. Il mock usa la
+filosofia duck-typed di `fake-rpi`/gpiozero `MockFactory` e gli indirizzi/porte reali di
+`CLAUDE.md`. Gira con solo numpy (OpenCV opzionale). **Lo stesso file di test, puntato con
+`--video` a una sessione reale sul Pi e con un detector ONNX, È il benchmark G0.**
+
+**Evidenza (primo run, 2026-10-05, Mac senza OpenCV).** 8 test, tutti verdi. Il banco ha già
+pescato un bug nello scaffold: `depth_requested` marcato ma mai azzerato → un track fuori dalla
+top-K reclamava depth per sempre; fix minimo in `perception_scheduler.py` (azzera il flag ogni
+frame). Il test real-time con detector simulato a 180 ms e detect-every=6 stima ~16 FPS
+sostenibili (detector ammortizzato ~62 ms/frame, scheduling fisso trascurabile). Il mock del
+freno rifiuta 65° (linea rossa idraulica) → la sicurezza è nel banco, non solo nei commenti.
+
+**Deroghe/limiti (dichiarati).** (1) Il mock **non attua** nulla (VESC/servo registrano, non
+muovono). (2) Gli **FPS del mock sintetico NON sono** gli FPS del Pi: scena leggera, niente
+SGBM reale → serve a verificare logica e *andamento*, non il valore fisico. (3) Il verdetto
+real-time vero resta G0 sul Pi, con video reale e detector ONNX. (4) Nessun attuatore, nessuna
+strada: resta dietro D002 e la firma.
+
+**Cosa serve per firmare.** Daniele conferma: (a) che il banco mock sia il gate *logico* prima
+di G0 sul Pi (sì/no); (b) il profilo detector da emulare di default (ora 180 ms ≈ YOLOv8n-ONNX,
+va bene?); (c) se gradisce che il test diventi parte fissa del runbook (lanciare il mock prima
+di toccare il Pi).
+
+**Firma:** ______________________  **Data:** __________
