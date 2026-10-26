@@ -32,3 +32,28 @@ Nel repo ci sono reader + note datasheet + cablaggio, ma **non c'è un log regis
 Comando di prova: `python3 pi/steering/amt22_reader.py --test` → ruotare l'encoder, i valori devono variare 0-4095 e checkbit = OK.
 
 _Verifica cablaggio/alimentazione fatta dal doppio contro datasheet il 2026-10-19 — esito lettura da compilare da Daniele._
+
+---
+
+## DUE encoder (sterzo + ruota) — mappa GPIO (2026-10-26)
+
+Approccio attuale: `pi/steering/amt22_bitbang_dual.py` = bit-bang, bus CONDIVISO + 2 CS = **5 GPIO** (SCLK21/MISO19/MOSI20 condivisi, CS sterzo 18, CS ruota 16). Letture 0-drop come l'Arduino.
+
+### GPIO già occupati (ultimo wiring)
+`2,3` I2C (MPU6050+INA219) · `4` buzzer · `8,9` GPS UART · `12` servo freno PWM · `14,15` VESC UART · `17` master_switch · `26` power-sense. (`5` = buzzer proximity, non cablato/claimed.)
+
+### GPIO LIBERI
+`6,7,10,11,13,16,18,19,20,21,22,23,24,25,27` → **15 liberi**. Spazio abbondante.
+
+### Opzione A — split COMPLETO 4+4 = 8 GPIO (come chiesto)
+| Segnale | STERZO (invariato) | RUOTA (nuovo) |
+|---|---|---|
+| SCLK | GPIO21 / Pin40 | GPIO25 / Pin22 |
+| MISO | GPIO19 / Pin35 | GPIO24 / Pin18 |
+| MOSI | GPIO20 / Pin38 | GPIO23 / Pin16 |
+| CS   | GPIO18 / Pin12 | GPIO22 / Pin15 |
+
+Blocco 22-25 tutto libero e contiguo. +5V da Pin2/4, GND da Pin6/9/… (2×16mA = nulla sul rail). Richiede patch a `amt22_bitbang_dual.py` (SCLK/MISO/MOSI separati per encoder).
+
+### Opzione B — bus condiviso + 2 CS = 5 GPIO (già implementata, Regola n.1)
+Nessun filo nuovo oltre il 2° CS. Funziona già a 0-drop. Per l'AMT22 lo split completo non dà vantaggi funzionali (lettura alternata CS). Lo split serve solo se vuoi leggere i due encoder DAVVERO in parallelo/simultaneo o se gli harness corrono separati.
