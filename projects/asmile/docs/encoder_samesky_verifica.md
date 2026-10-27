@@ -80,3 +80,9 @@ python3 pi/steering/amt22_reader.py --test
 o direttamente il dual daemon.
 
 Questa prova l'abbiamo fatta ieri provando a leggere l'encoder via raspi dopo averlo letto da Arduino?
+
+**RISPOSTA (dal doppio, 2026-10-27 — da storia terminale Mac + git):**
+- **Arduino**: SÌ, fatta e RIUSCITA. 0 drop su 748 letture, giro completo (il guasto era il connettore con CS↔MOSI incrociati; encoder sano). Commit `745ba107`.
+- **Raspi**: gli script ci sono — `amt22_dual_daemon.py` (SPI **hardware**, spidev1.0/1.1, overlay spi1-2cs) e `amt22_bitbang_dual.py` + `amt22_bitbang_scan.py` (**bit-bang**, overlay SPI OFF) — ma **NESSUN esito registrato**: nessun log/CSV con le letture. Nella storia del terminale Mac non risulta nessun `ssh asmile`/run Python sul Pi, solo un `ping 192.168.1.108`. Quindi la lettura DAL RASPI non risulta verificata.
+- ⚠️ Contraddizione da sanare: in questo stesso doc il bit-bang è dato come "funziona già a 0-drop", ma quell'affermazione descrive il METODO (replica dell'Arduino) e **non è coperta da alcun log** → trattare come NON verificata finché non si registra una lettura sul Pi.
+- Lo scambio CS↔MOSI qui sopra è una **prova PROPOSTA per oggi**, non ancora eseguita.
