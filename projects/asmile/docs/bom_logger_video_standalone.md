@@ -18,7 +18,7 @@ pacco per fare ore.
 | 1 | SBC | Raspberry Pi 5 4GB | 1 | 4GB basta (capture-only <1GB). 8/16GB sprecati |
 | 2 | Camera stereo | Arducam Camarray HAT (2× OV9281 mono) | 1 | 2560×800 nativo, 1 porta CSI, `LD_PRELOAD arducam_fix.so` |
 | 3 | Storage | SSD USB 256GB (o microSD A2 128GB) | 1 | ~225 MB/h: lo spazio non è il problema, l'affidabilità in scrittura sì |
-| 4 | Pacco LiPo 2S | 2S 10000mAh (7.4V nom, 8.4V full) con BMS/bilanciamento + lead JST-XH 3-pin | 1 | ~74Wh → ~7h. Ogni +5000mAh ≈ +3–4h |
+| 4 | Pacco LiPo 2S | 2S ~13500–14000mAh (7.4V nom, 8.4V full) = **100Wh**, BMS/bilanciamento + lead JST-XH 3-pin. Es. 2× 2S 7000mAh in parallelo | 1 | Target 90Wh (9W×10h) arrotondato a 100Wh. Reali ~8.5–9h a 9W worst-case (buck 90% + no scarica <3.5V/cella); 10h+ se carico 7–8W. 100Wh = tetto bagaglio aereo, non superare |
 | 5 | Caricatore USB-C | Modulo carica 2S Type-C step-up 8.4V (balance, es. IP2312) | 1 | Il "facile": qualsiasi alimentatore/telefono USB-C 5V, carica bilanciata |
 | 6 | Step-down 5V | Pololu D24V50F5 (5V/5A) | 1 | 7.4V→5V. Alt. più piccolo/economico: D24V22F5 (2.2A, margine ok) |
 | 7 | Protezioni pacco | Fusibile 5A + kill switch | 1 | Sul positivo del pacco |
@@ -27,10 +27,10 @@ pacco per fare ore.
 
 ## Ricarica — due strade
 
-- **Più facile (consigliata):** modulo carica 2S step-up Type-C (#5). Carichi il
-  2S direttamente da qualsiasi caricatore USB-C 5V, zero config. Carica ~1A.
-- **Più veloce/robusta:** TP5100 (2S) + trigger USB-C PD impostato a 12V → carica
-  ~2A (10000mAh in ~5–6h). Serve alimentatore USB-C **PD** (non un 5V qualsiasi).
+- **Facile ma lento:** modulo carica 2S step-up Type-C (#5). Carichi il 2S da
+  qualsiasi caricatore USB-C 5V, zero config, ma ~1A → pacco 100Wh in ~13–14h.
+- **Più veloce/robusta (consigliata con 100Wh):** TP5100 (2S) + trigger USB-C PD
+  a 12V → ~2A, pacco 100Wh in ~7h. Serve alimentatore USB-C **PD** (non un 5V qualsiasi).
 
 ## Note
 
@@ -51,4 +51,4 @@ di controllo sullo shutdown, ma è la via più semplice e sicura.
 
 - link d'acquisto + prezzi
 - scelta default della strada di ricarica (facile vs PD veloce)
-- target ore (default ~7h con 2S 10000mAh)
+- target ore: ~10h → pacco 100Wh (2S ~13.5–14Ah)
