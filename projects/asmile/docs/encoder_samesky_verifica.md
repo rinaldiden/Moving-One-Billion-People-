@@ -57,3 +57,26 @@ Blocco 22-25 tutto libero e contiguo. +5V da Pin2/4, GND da Pin6/9/… (2×16mA 
 
 ### Opzione B — bus condiviso + 2 CS = 5 GPIO (già implementata, Regola n.1)
 Nessun filo nuovo oltre il 2° CS. Funziona già a 0-drop. Per l'AMT22 lo split completo non dà vantaggi funzionali (lettura alternata CS). Lo split serve solo se vuoi leggere i due encoder DAVVERO in parallelo/simultaneo o se gli harness corrono separati.
+
+---
+
+## PROVA DA FARE — scambia CS↔MOSI sul lato Pi (2026-10-27)
+
+Encoder AMT22 — pin Pi (prova questa):
+Pin 1 Vdd → 5V (Pin 2)
+Pin 2 SCLK → Pin 40
+Pin 3 MOSI → Pin 12 (quello che pensavi fosse CS)
+Pin 4 GND → GND
+Pin 5 MISO → Pin 35
+Pin 6 CS → Pin 38 (quello che pensavi fosse MOSI)
+
+Oppure semplicemente scambia i due fili CS e MOSI sul lato Pi e lascia tutto il resto com'è.
+
+Overlay corretto (dal dual_daemon):
+dtoverlay=spi1-2cs,cs1_pin=16
+
+Dopo aver scambiato i fili, lancia:
+python3 pi/steering/amt22_reader.py --test
+o direttamente il dual daemon.
+
+Questa prova l'abbiamo fatta ieri provando a leggere l'encoder via raspi dopo averlo letto da Arduino?
