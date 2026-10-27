@@ -54,6 +54,8 @@ BITRATE = 2_000_000  # 500kbps — ~3.5MB/min
 # Sensors
 SENSOR_HZ = 10
 ENCODER_FILE = "/tmp/encoder_position"
+ENCODER_STEER_FILE = "/tmp/encoder_steer"   # bridge Arduino USB
+ENCODER_WHEEL_FILE = "/tmp/encoder_wheel"   # bridge Arduino USB
 
 # IMU
 I2C_BUS = 1
@@ -168,11 +170,11 @@ def gps_thread():
 # ═══════════════════════════════════════════════════════════
 # ENCODER
 # ═══════════════════════════════════════════════════════════
-def read_encoder():
+def read_encoder(path=ENCODER_FILE):
     try:
-        with open(ENCODER_FILE, "r") as f:
+        with open(path, "r") as f:
             return int(f.read().strip())
-    except (FileNotFoundError, ValueError):
+    except (FileNotFoundError, ValueError, OSError):
         return -1
 
 
@@ -297,7 +299,7 @@ def sensor_logger(csv_path, imu_bus):
         f.write("timestamp,gps_lat,gps_lon,gps_speed_ms,gps_heading,"
                 "imu_accel_x,imu_accel_y,imu_accel_z,"
                 "imu_gyro_x,imu_gyro_y,imu_gyro_z,"
-                "encoder_pos,"
+                "encoder_steer,encoder_wheel,"
                 "vesc_rpm,vesc_duty,vesc_i_motor,vesc_i_input,vesc_v_in,"
                 "vesc_tach,vesc_tach_abs,vesc_temp_fet,vesc_temp_motor,vesc_fault\n")
 
@@ -309,7 +311,8 @@ def sensor_logger(csv_path, imu_bus):
                 imu = {"ax": 0, "ay": 0, "az": 0, "gx": 0, "gy": 0, "gz": 0}
             with gps_lock:
                 gps = gps_data.copy()
-            enc = read_encoder()
+            steer = read_encoder(ENCODER_STEER_FILE)
+            wheel = read_encoder(ENCODER_WHEEL_FILE)
             with vesc_lock:
                 vesc = vesc_data.copy()
 
@@ -317,7 +320,7 @@ def sensor_logger(csv_path, imu_bus):
                     f"{gps['speed_ms']:.3f},{gps['heading']:.1f},"
                     f"{imu['ax']:.4f},{imu['ay']:.4f},{imu['az']:.4f},"
                     f"{imu['gx']:.2f},{imu['gy']:.2f},{imu['gz']:.2f},"
-                    f"{enc},"
+                    f"{steer},{wheel},"
                     f"{vesc['rpm']},{vesc['duty']:.3f},"
                     f"{vesc['i_motor']:.2f},{vesc['i_input']:.2f},{vesc['v_in']:.1f},"
                     f"{vesc['tach']},{vesc['tach_abs']},"

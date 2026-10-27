@@ -1,0 +1,13 @@
+[Unit]
+Description=Asmile USB encoder bridge (Arduino AMT22 -> /tmp/encoder_steer,wheel,position)
+After=multi-user.target
+
+[Service]
+Type=simple
+User=asmile
+ExecStart=/usr/bin/python3 /home/asmile/wip/Moving-One-Billion-People-/projects/asmile/pi/steering/usb_encoder_bridge.py
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
