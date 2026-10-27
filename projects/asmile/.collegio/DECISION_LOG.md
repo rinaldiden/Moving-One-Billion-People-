@@ -177,3 +177,51 @@ va bene?); (c) se gradisce che il test diventi parte fissa del runbook (lanciare
 di toccare il Pi).
 
 **Firma:** ______________________  **Data:** __________
+
+---
+
+## D007 — Overlay FS read-only: togliere supercap + safe_shutdown alla radice (PROPOSTA 2026-10-27)
+
+**Richiesta di Daniele:** rendere la root read-only con Overlay File System (raspi-config →
+Performance → Overlay File System). Le scritture finiscono in RAM → puoi staccare la corrente
+quando vuoi senza corrompere la SD. I dati da conservare su partizione separata (montata solo
+quando serve) o in rete. Costo zero, nessun hardware. Chiede se così si leva supercap + tutto
+il sistema di safe shutdown.
+
+**Analisi (cosa scrive il Pi oggi).**
+- **OS / root** (`/var/log`, `/var/lib/asmile` tombstone, apt, systemd): scritture sparse,
+  nessuna critica durante la guida. `/tmp` ed encoder daemon sono già tmpfs (RAM).
+- **safe_shutdown.py**: esiste SOLO per evitare che un power-cut corrompa la SD → mattone, Pi
+  non boota, reflash. Scrive log/tombstone su root, uccide i recorder, `sync`, `shutdown -h`.
+  Tutta la catena HW (GPIO26 + canale level-shifter + 2×LM74700 + 6.8Ω + drain MOSFET 2N2222/
+  IRFZ44N + 22Ω + supercap 10F + buzzer-shutdown) serve a comprare ~secondi per quel sync.
+- **Il cuore di Asmile**: logging continuo video stereo + CSV sensori (`dual_cam_recorder.py` →
+  `~/training_sessions/`, `training_recorder.py` → `~/wip/recorder/`). GB/ora. **Questo NON può
+  stare in RAM** (volatile + troppo grande): è l'unico vero dato da conservare.
+
+**Verdetto.** SÌ: l'overlay elimina alla radice il motivo per cui esistono supercap +
+safe_shutdown. Il *failure mode* cambia di categoria:
+- Oggi: power-cut → rischio SD corrotta → **device morto** (catastrofico).
+- Con overlay: root ro in RAM, boota sempre; power-cut → al massimo si perde **la coda della
+  registrazione in corso** sulla partizione dati. Mai il device.
+Si può togliere tutto il blocco hold-up/shutdown (HW + `safe_shutdown.service`), accettando quel
+trade-off. È esattamente "complessità = problema mal inquadrato": un sistema HW+SW per curare un
+sintomo (SD fragile in scrittura) che l'overlay cura alla causa.
+
+**Condizione (il pezzo che resta).** La partizione dati che regge il logging va resa robusta,
+sennò un power-cut mangia l'intera sessione (oggi `rpicam-vid --timeout 0` = **un unico file**):
+1. Partizione dati separata ext4 (journal) montata rw solo per `~/wip/recorder`.
+2. **Registrazione a segmenti corti** (es. nuovo file ogni 30–60s, `rpicam-vid --segment` o
+   splitmux) + `fsync` a chiusura segmento. Power-cut → si perde solo l'ultimo segmento, il
+   resto è integro e riproducibile. CSV: `flush`+`fsync` periodico (già fa flush).
+3. Repo/codice vive su root (ro) — va bene, non cambia in guida. Deploy/OTA/git-pull: overlay
+   OFF + reboot (il workflow standard overlay), poi ON per il campo.
+
+**Guadagno:** zero rischio mattone, −supercap/−tutta la catena HW, −un service, −buzzer
+shutdown. **Costo:** segmentare il recorder (SW, piccolo) + 1 partizione dati.
+
+**Da firmare (3 scelte):** (a) ok a rimuovere supercap+safe_shutdown dopo che il recorder
+segmenta? (b) dati su 2ª partizione della stessa SD o SSD/USB o rete? (c) overlay ON sempre in
+campo, OFF solo per deploy — confermi questo workflow?
+
+**Firma:** ______________________  **Data:** __________
