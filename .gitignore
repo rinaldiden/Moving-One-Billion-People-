@@ -63,3 +63,6 @@ projects/asmile/training/dataset*.csv
 # Avvocato guida autonoma — corpus fonti e referti (locale)
 shared/legal-corpus/
 avvocatoguidaautonoma.md
+
+# dati di training pesanti (7+GB) - non su git
+projects/asmile/training/training_data/

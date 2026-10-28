@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Asmile — Circuito di spegnimento pulito (v3)</title>
+<style>
+  @page { size: A4 portrait; margin: 13mm; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; color:#1a1a1a; font-size:11px; line-height:1.4; }
+  h1 { font-size:21px; margin:0 0 2px; color:#b5179e; }
+  h2 { font-size:14px; margin:18px 0 6px; padding-bottom:3px; border-bottom:2px solid #b5179e; color:#7209b7; page-break-after:avoid; }
+  h3 { font-size:12px; margin:10px 0 4px; color:#3a0ca3; }
+  .sub { color:#555; font-size:11px; margin:0 0 4px; }
+  table { border-collapse:collapse; width:100%; margin:6px 0 10px; page-break-inside:avoid; }
+  th, td { border:1px solid #bbb; padding:4px 6px; text-align:left; vertical-align:top; }
+  th { background:#f3e8ff; font-weight:600; }
+  tr:nth-child(even) td { background:#faf7ff; }
+  .fig { page-break-inside:avoid; margin:6px 0 12px; }
+  .note { background:#fff8e1; border-left:4px solid #f4a100; padding:6px 10px; margin:6px 0; }
+  .warn { background:#ffecec; border-left:4px solid #e03131; padding:6px 10px; margin:6px 0; }
+  .ok { background:#e9fbe9; border-left:4px solid #2f9e44; padding:6px 10px; margin:6px 0; }
+  code { background:#f0f0f0; padding:0 3px; border-radius:3px; font-size:10px; }
+  .small { font-size:10px; color:#555; }
+  svg { width:100%; height:auto; border:1px solid #e3d6f5; border-radius:6px; background:#fff; }
+  .legend { font-size:10px; color:#555; margin-top:2px; }
+  .mono { font-family: "SF Mono", Menlo, monospace; font-size:10px; }
+  .chk { list-style:none; padding-left:0; }
+  .chk li { margin:3px 0; } .chk li:before { content:"☐ "; font-weight:bold; }
+</style>
+</head>
+<body>
+
+<h1>Asmile — Circuito di spegnimento pulito <span style="font-size:13px;color:#888">(v3 — baseline ultimo test + upgrade)</span></h1>
+<p class="sub">Alimentazione (Pololu) · hold-up (supercap + 2× LM74700) · safe_shutdown (power-sense GPIO26) · auto-scarica (drain autonomo) · buzzer. Per il rimontaggio sull'altra Asmile. Generato 2026-10-06.</p>
+
+<div class="warn"><b>⚠ LEGGIMI — i documenti del repo si contraddicono e sono stati aggiornati in modo NON lineare: la verità va misurata FISICAMENTE su Arianna.</b><br>
+<b>Baseline di questo PDF = l'ultimo stato "testato e funzionante" (24 mag): 10F / 22Ω / IRFZ44N + drain autonomo 2N2222.</b> Un doc più vecchio (<code>power_48v.md</code>, 4 mag) mostra 2.2F / 120Ω / IRL540N: <b>superato</b> (vedi §9). Fonte autorevole per il <b>comportamento software</b> = il codice eseguito dal service (<code>pi/power/safe_shutdown.py</code>); per l'<b>hardware</b> = la misura sul banco (checklist §10). La miglioria consigliata è lo swap <b>IRFZ44N → IRL540N</b> (pezzo già disponibile).</p>
+
+<h2>1 · Schema a blocchi — Alimentazione + Hold-up (supercap 10F)</h2>
+<div class="fig">
+<svg viewBox="0 0 1080 300" xmlns="http://www.w3.org/2000/svg" font-family="Arial" font-size="12">
+  <defs>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#333"/></marker>
+    <g id="gnd"><line x1="0" y1="0" x2="0" y2="8" stroke="#333" stroke-width="1.5"/><line x1="-9" y1="8" x2="9" y2="8" stroke="#333" stroke-width="1.5"/><line x1="-6" y1="12" x2="6" y2="12" stroke="#333" stroke-width="1.5"/><line x1="-3" y1="16" x2="3" y2="16" stroke="#333" stroke-width="1.5"/></g>
+  </defs>
+  <line x1="150" y1="270" x2="1000" y2="270" stroke="#333" stroke-width="1.5"/>
+  <use href="#gnd" x="575" y="270"/>
+  <rect x="20" y="52" width="120" height="56" rx="6" fill="#eef2ff" stroke="#333"/>
+  <text x="80" y="76" text-anchor="middle" font-weight="bold">BATTERIA</text>
+  <text x="80" y="94" text-anchor="middle">48V (13S)</text>
+  <line x1="140" y1="72" x2="190" y2="72" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="165" y="64" text-anchor="middle" font-size="10">+48V</text>
+  <line x1="140" y1="98" x2="140" y2="270" stroke="#333" stroke-width="1.5"/>
+  <rect x="190" y="46" width="155" height="68" rx="6" fill="#e9fbe9" stroke="#333"/>
+  <text x="267" y="74" text-anchor="middle" font-weight="bold">Pololu D24V55F5</text>
+  <text x="267" y="92" text-anchor="middle">48V → 5V 5A</text>
+  <line x1="267" y1="114" x2="267" y2="270" stroke="#333" stroke-width="1.5"/>
+  <text x="300" y="130" font-size="10">GND</text>
+  <line x1="345" y1="72" x2="400" y2="72" stroke="#333" stroke-width="1.5"/>
+  <circle cx="372" cy="72" r="3.5" fill="#333"/>
+  <text x="372" y="40" text-anchor="middle" font-size="10" font-weight="bold">● Pololu+ (5V, pre-diodo)</text>
+  <rect x="400" y="48" width="120" height="48" rx="6" fill="#fff" stroke="#333"/>
+  <text x="460" y="68" text-anchor="middle" font-weight="bold">LM74700 #1</text>
+  <text x="460" y="84" text-anchor="middle" font-size="10">diodo ideale</text>
+  <line x1="520" y1="72" x2="575" y2="72" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+  <rect x="575" y="44" width="120" height="60" rx="6" fill="#fff3bf" stroke="#333" stroke-width="2"/>
+  <text x="635" y="68" text-anchor="middle" font-weight="bold">NODO A</text>
+  <text x="635" y="86" text-anchor="middle" font-size="10">Pi 5V (Pin 2)</text>
+  <line x1="695" y1="72" x2="740" y2="72" stroke="#333" stroke-width="1.5"/>
+  <rect x="740" y="60" width="86" height="24" rx="3" fill="#fff" stroke="#333"/>
+  <text x="783" y="76" text-anchor="middle" font-size="10" font-weight="bold">6.8Ω 5W</text>
+  <line x1="826" y1="72" x2="870" y2="72" stroke="#333" stroke-width="1.5"/>
+  <rect x="870" y="44" width="120" height="60" rx="6" fill="#fff3bf" stroke="#333" stroke-width="2"/>
+  <text x="930" y="68" text-anchor="middle" font-weight="bold">NODO B</text>
+  <text x="930" y="86" text-anchor="middle" font-size="10">Supercap+</text>
+  <rect x="690" y="150" width="190" height="44" rx="6" fill="#fff" stroke="#333"/>
+  <text x="785" y="170" text-anchor="middle" font-weight="bold">LM74700 #2</text>
+  <text x="785" y="186" text-anchor="middle" font-size="10">bypass B→A (hold-up)</text>
+  <polyline points="690,172 635,172 635,104" fill="none" stroke="#333" stroke-width="1.5"/>
+  <polyline points="880,172 945,172 945,104" fill="none" stroke="#333" stroke-width="1.5"/>
+  <line x1="915" y1="104" x2="915" y2="214" stroke="#333" stroke-width="1.5"/>
+  <line x1="898" y1="214" x2="932" y2="214" stroke="#333" stroke-width="2.5"/>
+  <line x1="902" y1="224" x2="928" y2="224" stroke="#333" stroke-width="2.5"/>
+  <line x1="915" y1="224" x2="915" y2="270" stroke="#333" stroke-width="1.5"/>
+  <text x="945" y="222" font-size="10" font-weight="bold">Supercap 10F 5.5V</text>
+  <text x="945" y="236" font-size="9" fill="#777">hold-up ~13s</text>
+  <line x1="600" y1="104" x2="600" y2="214" stroke="#333" stroke-width="1.5"/>
+  <rect x="520" y="214" width="165" height="52" rx="6" fill="#e7f0ff" stroke="#333"/>
+  <text x="602" y="236" text-anchor="middle" font-weight="bold">Raspberry Pi 5</text>
+  <text x="602" y="252" text-anchor="middle" font-size="10">5V ← Pin 2 (NODO A)</text>
+</svg>
+<div class="legend"><b>In sintesi:</b> il Pololu alimenta il Pi via LM74700 #1. Il supercap 10F carica attraverso la 6.8Ω (limita l'inrush ≤735mA, τ≈68s, carica piena ~5.7 min). Se cade la batteria, LM74700 #2 bypassa la 6.8Ω e il supercap tiene vivo il Pi ~13s — tempo abbondante per lo shutdown pulito (<code>fast_shutdown</code> killa comunque i servizi per sicurezza, vedi §8).</div>
+</div>
+
+<h2>2 · Schema — Auto-scarica supercap (drain autonomo, senza GPIO)</h2>
+<div class="fig">
+<svg viewBox="0 0 1080 290" xmlns="http://www.w3.org/2000/svg" font-family="Arial" font-size="12">
+  <defs>
+    <marker id="arr2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#333"/></marker>
+    <g id="gnd2"><line x1="0" y1="0" x2="0" y2="8" stroke="#333" stroke-width="1.5"/><line x1="-9" y1="8" x2="9" y2="8" stroke="#333" stroke-width="1.5"/><line x1="-6" y1="12" x2="6" y2="12" stroke="#333" stroke-width="1.5"/><line x1="-3" y1="16" x2="3" y2="16" stroke="#333" stroke-width="1.5"/></g>
+  </defs>
+  <line x1="120" y1="255" x2="980" y2="255" stroke="#333" stroke-width="1.5"/>
+  <use href="#gnd2" x="550" y="255"/>
+  <rect x="820" y="30" width="130" height="50" rx="6" fill="#fff3bf" stroke="#333" stroke-width="2"/>
+  <text x="885" y="52" text-anchor="middle" font-weight="bold">NODO B</text>
+  <text x="885" y="68" text-anchor="middle" font-size="10">Supercap+</text>
+  <rect x="40" y="30" width="130" height="50" rx="6" fill="#fff" stroke="#333"/>
+  <text x="105" y="52" text-anchor="middle" font-weight="bold">● Pololu+</text>
+  <text x="105" y="68" text-anchor="middle" font-size="10">(5V reg.)</text>
+  <polyline points="885,80 885,110" fill="none" stroke="#333" stroke-width="1.5"/>
+  <rect x="852" y="110" width="66" height="24" rx="3" fill="#fff" stroke="#333"/>
+  <text x="885" y="126" text-anchor="middle" font-size="10" font-weight="bold">22Ω 5W</text>
+  <polyline points="885,134 885,175" fill="none" stroke="#333" stroke-width="1.5"/>
+  <rect x="820" y="175" width="130" height="60" rx="6" fill="#eef" stroke="#333"/>
+  <text x="885" y="196" text-anchor="middle" font-weight="bold">Q1 — IRFZ44N</text>
+  <text x="885" y="210" text-anchor="middle" font-size="9">D(alto) G(sx) S(basso)</text>
+  <text x="885" y="223" text-anchor="middle" font-size="9" fill="#e8590c">→ UPGRADE a IRL540N</text>
+  <line x1="885" y1="235" x2="885" y2="255" stroke="#333" stroke-width="1.5"/>
+  <text x="905" y="250" font-size="9">S→GND</text>
+  <polyline points="820,205 760,205 760,95" fill="none" stroke="#333" stroke-width="1.5"/>
+  <rect x="727" y="95" width="66" height="22" rx="3" fill="#fff" stroke="#333"/>
+  <text x="760" y="110" text-anchor="middle" font-size="9" font-weight="bold">10kΩ</text>
+  <polyline points="760,95 760,55 820,55" fill="none" stroke="#333" stroke-width="1.5"/>
+  <text x="688" y="135" font-size="9">pull-up gate</text>
+  <text x="688" y="147" font-size="9">↔ Supercap+</text>
+  <rect x="430" y="175" width="130" height="60" rx="6" fill="#eef" stroke="#333"/>
+  <text x="495" y="198" text-anchor="middle" font-weight="bold">Q2 — 2N2222</text>
+  <text x="495" y="214" text-anchor="middle" font-size="9">C(alto) B(sx) E(basso)</text>
+  <polyline points="495,175 495,150 760,150" fill="none" stroke="#333" stroke-width="1.5"/>
+  <text x="560" y="144" font-size="9">C → gate Q1</text>
+  <line x1="495" y1="235" x2="495" y2="255" stroke="#333" stroke-width="1.5"/>
+  <text x="515" y="250" font-size="9">E→GND</text>
+  <polyline points="105,80 105,205 360,205" fill="none" stroke="#333" stroke-width="1.5"/>
+  <rect x="360" y="193" width="66" height="22" rx="3" fill="#fff" stroke="#333"/>
+  <text x="393" y="208" text-anchor="middle" font-size="9" font-weight="bold">10kΩ</text>
+  <line x1="426" y1="205" x2="430" y2="205" stroke="#333" stroke-width="1.5" marker-end="url(#arr2)"/>
+  <text x="150" y="196" font-size="9">Pololu+ → base Q2 (sense)</text>
+</svg>
+<div class="legend"><b>Logica (autonoma, senza GPIO — il vecchio controllo GPIO6 è stato rimosso):</b> Pololu <b>ON</b> → Q2 conduce → gate di Q1 a massa → <b>drain OFF</b> (zero consumo in marcia). Pololu <b>OFF</b> (post-shutdown) → Q2 interdetto → gate sale via pull-up 10kΩ → <b>drain ON</b> → il supercap si scarica sulla 22Ω (~6 min). ⚠️ Con l'<b>IRFZ44N</b> attuale (Vgs_th 4-5V) il drain si spegne a Vsc~2V (residuo alto → possibile "non boota al primo colpo"). <b>Upgrade consigliato a IRL540N</b> (logic-level, Vgs_th ~2V): scarica fino a ~1V → boot pulito.</div>
+</div>
+
+<h2>3 · Schema — Power-sense (GPIO26) + Buzzer</h2>
+<div class="fig">
+<svg viewBox="0 0 1080 300" xmlns="http://www.w3.org/2000/svg" font-family="Arial" font-size="12">
+  <defs>
+    <marker id="arr3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#333"/></marker>
+    <g id="gnd3"><line x1="0" y1="0" x2="0" y2="8" stroke="#333" stroke-width="1.5"/><line x1="-9" y1="8" x2="9" y2="8" stroke="#333" stroke-width="1.5"/><line x1="-6" y1="12" x2="6" y2="12" stroke="#333" stroke-width="1.5"/><line x1="-3" y1="16" x2="3" y2="16" stroke="#333" stroke-width="1.5"/></g>
+  </defs>
+  <line x1="60" y1="275" x2="1020" y2="275" stroke="#333" stroke-width="1.5"/>
+  <use href="#gnd3" x="540" y="275"/>
+  <text x="20" y="30" font-weight="bold" fill="#7209b7">POWER-SENSE (rileva batteria staccata)</text>
+  <rect x="40" y="45" width="120" height="48" rx="6" fill="#fff" stroke="#333"/>
+  <text x="100" y="66" text-anchor="middle" font-weight="bold">● Pololu+</text>
+  <text x="100" y="82" text-anchor="middle" font-size="10">(5V reg.)</text>
+  <polyline points="100,93 100,140" fill="none" stroke="#333" stroke-width="1.5"/>
+  <rect x="60" y="140" width="80" height="22" rx="3" fill="#fff" stroke="#333"/>
+  <text x="100" y="155" text-anchor="middle" font-size="9" font-weight="bold">bleed 10kΩ*</text>
+  <line x1="100" y1="162" x2="100" y2="275" stroke="#333" stroke-width="1.5"/>
+  <text x="146" y="183" font-size="9">*doc 10kΩ / codice 1kΩ →</text>
+  <text x="146" y="195" font-size="9">misurare il drop di GPIO26</text>
+  <line x1="160" y1="69" x2="430" y2="69" stroke="#333" stroke-width="1.5" marker-end="url(#arr3)"/>
+  <text x="290" y="61" text-anchor="middle" font-size="10">→ HV3</text>
+  <rect x="430" y="40" width="170" height="90" rx="6" fill="#f3e8ff" stroke="#333"/>
+  <text x="515" y="63" text-anchor="middle" font-weight="bold">Level Shifter #2</text>
+  <text x="515" y="80" text-anchor="middle" font-size="9">HV←5V(Pin4) · LV←3V3(Pin17)</text>
+  <text x="515" y="94" text-anchor="middle" font-size="9">GND(Pin30)</text>
+  <text x="515" y="112" text-anchor="middle" font-size="9">ch3: HV3 ⇄ LV3</text>
+  <line x1="600" y1="85" x2="760" y2="85" stroke="#333" stroke-width="1.5" marker-end="url(#arr3)"/>
+  <text x="680" y="77" text-anchor="middle" font-size="10">LV3 → GPIO26</text>
+  <rect x="760" y="55" width="150" height="60" rx="6" fill="#e7f0ff" stroke="#333"/>
+  <text x="835" y="80" text-anchor="middle" font-weight="bold">Raspberry Pi 5</text>
+  <text x="835" y="97" text-anchor="middle" font-size="10">GPIO26 (Pin 37) IN</text>
+  <text x="20" y="210" font-weight="bold" fill="#7209b7">BUZZER (safe_shutdown audio)</text>
+  <rect x="40" y="222" width="150" height="46" rx="6" fill="#e7f0ff" stroke="#333"/>
+  <text x="115" y="242" text-anchor="middle" font-weight="bold">Pi — GPIO4</text>
+  <text x="115" y="258" text-anchor="middle" font-size="10">(Pin 7) OUT</text>
+  <line x1="190" y1="245" x2="240" y2="245" stroke="#333" stroke-width="1.5"/>
+  <rect x="240" y="233" width="56" height="22" rx="3" fill="#fff" stroke="#333"/>
+  <text x="268" y="248" text-anchor="middle" font-size="9" font-weight="bold">1kΩ</text>
+  <line x1="296" y1="245" x2="340" y2="245" stroke="#333" stroke-width="1.5" marker-end="url(#arr3)"/>
+  <rect x="340" y="222" width="120" height="50" rx="6" fill="#eef" stroke="#333"/>
+  <text x="400" y="242" text-anchor="middle" font-weight="bold">Q3 — 2N2222</text>
+  <text x="400" y="258" text-anchor="middle" font-size="9">B(sx) C(alto) E(basso)</text>
+  <line x1="400" y1="272" x2="400" y2="275" stroke="#333" stroke-width="1.5"/>
+  <text x="420" y="268" font-size="9">E→GND</text>
+  <polyline points="400,222 400,205 560,205 560,222" fill="none" stroke="#333" stroke-width="1.5"/>
+  <rect x="520" y="222" width="110" height="50" rx="6" fill="#fff" stroke="#333"/>
+  <text x="575" y="244" text-anchor="middle" font-weight="bold">BUZZER 5V</text>
+  <text x="575" y="260" text-anchor="middle" font-size="9">(−) ← C   (+) ← 5V</text>
+  <polyline points="630,235 690,235 690,205" fill="none" stroke="#333" stroke-width="1.5"/>
+  <text x="700" y="210" font-size="9">(+) → 5V (Pin 4)</text>
+</svg>
+<div class="legend"><b>Power-sense:</b> con batteria, HV3 è a 5V → GPIO26 HIGH. Staccata la batteria, la bleed scarica il cap del Pololu → GPIO26 LOW → <code>safe_shutdown.py</code> lancia lo shutdown. ⚠️ Il valore bleed va <b>misurato</b> (vedi §9): deve far scendere GPIO26 in pochi ms.</div>
+</div>
+
+<h2>4 · Lista componenti (BOM) — design corretto</h2>
+<table>
+  <tr><th>#</th><th>Componente</th><th>Sigla / valore</th><th>Q.tà</th><th>Funzione</th></tr>
+  <tr><td>1</td><td>Regolatore step-down</td><td>Pololu D24V55F5 (48V→5V 5A)</td><td>1</td><td>Alimentazione del Pi</td></tr>
+  <tr><td>2</td><td>Regolatore step-down</td><td>Pololu D24V55F6 (48V→6V 5A)</td><td>1</td><td>Alimentazione servo freno <span class="small">(ramo separato)</span></td></tr>
+  <tr><td>3</td><td>Supercondensatore</td><td><b>10F 5.5V</b> <span class="small">(⚠ verificare: doc contrastanti 10F/2.2F)</span></td><td>1</td><td>Hold-up ~13s per lo shutdown</td></tr>
+  <tr><td>4</td><td>Controller diodo ideale</td><td>LM74700 (modulo)</td><td>2</td><td>#1 carica/alimenta · #2 bypass B→A in scarica</td></tr>
+  <tr><td>5</td><td>MOSFET N-ch (drain)</td><td><b>IRFZ44N</b> montato → <b>upgrade IRL540N</b> <span class="small">(logic-level, pezzo disponibile)</span></td><td>1</td><td>Scarica il supercap post-shutdown (IRL540N → fino a ~1V = boot pulito)</td></tr>
+  <tr><td>6</td><td>Transistor NPN</td><td>2N2222</td><td>2</td><td>Q2 sense Pololu (drain autonomo) · Q3 driver buzzer</td></tr>
+  <tr><td>7</td><td>Level shifter bidirezionale</td><td>3.3V ⇄ 5V (ch3 usato)</td><td>1</td><td>Power-sense: Pololu+ → GPIO26</td></tr>
+  <tr><td>8</td><td>Buzzer attivo 5V</td><td>KY-006 <span class="small">(risonanza ~1500-2048Hz)</span></td><td>1</td><td>Allarme acustico in shutdown</td></tr>
+  <tr><td>9</td><td>Resistenze</td><td>vedi §5</td><td>6</td><td>Pre-charge, drain, pull-up, sense, bleed, base buzzer</td></tr>
+</table>
+
+<h2>5 · Resistenze — valori finali riconciliati</h2>
+<table>
+  <tr><th>Valore</th><th>Potenza</th><th>Funzione</th><th>Posizione (da → a)</th></tr>
+  <tr><td><b>6.8Ω</b></td><td><b>5W</b></td><td>Pre-charge / limite inrush (≤735 mA) del supercap</td><td>NODO A ↔ NODO B (in serie)</td></tr>
+  <tr><td><b>22Ω</b></td><td><b>5W</b></td><td>Scarica supercap post-shutdown (~6 min) <span class="small">(⚠ un doc più vecchio dice 120Ω — verificare)</span></td><td>NODO B (Supercap+) ↔ Drain Q1</td></tr>
+  <tr><td><b>10kΩ</b></td><td>¼W</td><td>Pull-up gate MOSFET drain</td><td>Gate Q1 ↔ Supercap+ (NODO B)</td></tr>
+  <tr><td><b>10kΩ</b></td><td>¼W</td><td>Base transistor sense Pololu</td><td>Pololu+ ↔ Base Q2</td></tr>
+  <tr><td><b>10kΩ*</b></td><td>¼W</td><td><b>Bleed</b>: scarica cap Pololu → GPIO26 LOW veloce <span class="small">(*codice docstring dice 1kΩ — misurare il drop e scegliere)</span></td><td>Pololu+ ↔ GND</td></tr>
+  <tr><td><b>1kΩ</b></td><td>¼W</td><td>Base transistor driver buzzer (Ib ≈ 2.6 mA)</td><td>GPIO4 (Pin7) ↔ Base Q3</td></tr>
+</table>
+
+<h2>6 · Mappa pin Raspberry Pi 5 (solo questo sottosistema)</h2>
+<table>
+  <tr><th>Header Pin</th><th>GPIO / Rail</th><th>Direzione</th><th>Collegato a</th></tr>
+  <tr><td>Pin 2</td><td>5V</td><td>IN (alim.)</td><td><b>NODO A</b> — 5V del Pi (da LM74700 #1 + supercap)</td></tr>
+  <tr><td>Pin 4</td><td>5V</td><td>OUT (alim.)</td><td>Buzzer (+) e HV del Level Shifter #2</td></tr>
+  <tr><td>Pin 17</td><td>3V3</td><td>OUT (alim.)</td><td>LV del Level Shifter #2</td></tr>
+  <tr><td>Pin 7</td><td>GPIO4</td><td>OUT</td><td>Base Q3 (via 1kΩ) → buzzer</td></tr>
+  <tr><td>Pin 37</td><td>GPIO26</td><td>IN</td><td>Power-sense ← LV3 Level Shifter #2</td></tr>
+  <tr><td>Pin 30 (+ 6/9/14/20/25/34/39)</td><td>GND</td><td>—</td><td>Massa comune (Pololu, supercap−, emettitori, shifter)</td></tr>
+</table>
+<p class="note"><b>Nota:</b> il vecchio controllo del drain via <b>GPIO6</b> (partitore 10k/10k) descritto in <code>power_48v.md</code> è stato <b>RIMOSSO</b> (commit <code>383e599f</code> "remove GPIO 6 supercap discharge — circuit not used"). Il drain attuale è <b>autonomo</b> (Q2 che sente il Pololu) — nessun GPIO coinvolto. Non ricollegare GPIO6.</p>
+
+<h2>7 · Tabella collegamenti (net-list punto-punto)</h2>
+<table>
+  <tr><th>Da</th><th>A</th><th>Via</th></tr>
+  <tr><td>Batteria +48V</td><td>Pololu D24V55F5 VIN</td><td>filo</td></tr>
+  <tr><td>Pololu VOUT (= Pololu+)</td><td>LM74700 #1 VIN</td><td>filo</td></tr>
+  <tr><td>LM74700 #1 VOUT</td><td>NODO A (Pi 5V, Pin 2)</td><td>filo</td></tr>
+  <tr><td>NODO A</td><td>NODO B (Supercap+)</td><td><b>6.8Ω 5W</b> in serie</td></tr>
+  <tr><td>NODO B</td><td>NODO A</td><td>LM74700 #2 (VIN su B, VOUT su A) — parallelo alla 6.8Ω</td></tr>
+  <tr><td>NODO B (Supercap+)</td><td>GND</td><td>Supercap 2.2F 5.5V</td></tr>
+  <tr><td>NODO B (Supercap+)</td><td>Drain Q1 (IRL540N)</td><td><b>120Ω 5W</b></td></tr>
+  <tr><td>Source Q1</td><td>GND</td><td>filo</td></tr>
+  <tr><td>Gate Q1</td><td>Supercap+ (NODO B)</td><td><b>10kΩ</b> pull-up</td></tr>
+  <tr><td>Gate Q1</td><td>Collector Q2 (2N2222)</td><td>filo</td></tr>
+  <tr><td>Base Q2</td><td>Pololu+</td><td><b>10kΩ</b></td></tr>
+  <tr><td>Emitter Q2</td><td>GND</td><td>filo</td></tr>
+  <tr><td>Pololu+</td><td>GND</td><td><b>bleed 10kΩ*</b> (misurare)</td></tr>
+  <tr><td>Pololu+</td><td>HV3 Level Shifter #2</td><td>filo</td></tr>
+  <tr><td>LV3 Level Shifter #2</td><td>GPIO26 (Pin 37)</td><td>filo</td></tr>
+  <tr><td>Level Shifter: LV / HV / GND</td><td>3V3 (Pin17) / 5V (Pin4) / GND (Pin30)</td><td>filo</td></tr>
+  <tr><td>GPIO4 (Pin 7)</td><td>Base Q3 (2N2222)</td><td><b>1kΩ</b></td></tr>
+  <tr><td>Emitter Q3 / Collector Q3</td><td>GND / Buzzer (−)</td><td>filo</td></tr>
+  <tr><td>Buzzer (+)</td><td>5V (Pin 4)</td><td>filo</td></tr>
+</table>
+
+<h2>8 · Comportamento + sequenza buzzer (dal codice eseguito)</h2>
+<table>
+  <tr><th>Fase</th><th>Cosa succede</th></tr>
+  <tr><td><b>Power-on</b></td><td>Pololu → LM74700 #1 alimenta il Pi (5V). Supercap 10F carica via 6.8Ω (τ≈68s, inrush ≤735 mA, carica piena ~5.7 min). LM74700 #2 bloccato in inverso. GPIO26 HIGH → <code>safe_shutdown</code> si arma.</td></tr>
+  <tr><td><b>Regime</b></td><td>Tutto a 5V, nessuna dissipazione nel ramo supercap. Drain OFF (Q2 ON tiene il gate basso).</td></tr>
+  <tr><td><b>Batteria staccata</b></td><td>Bleed scarica il cap Pololu → <b>GPIO26 LOW</b>. <code>safe_shutdown.py</code> scatta al <b>primo LOW edge</b> (<code>DEBOUNCE_MS=0</code>, edge-detect lgpio + poll 50ms). LM74700 #2 conduce → supercap alimenta il Pi (~13s hold-up).</td></tr>
+  <tr><td><b>fast_shutdown()</b></td><td>① <b>5 beep morenti</b> 1500→1200→900→600→400 Hz (100ms on / 40ms off, ~700ms). ② Spawna processo <b>detached</b> (ignora SIGTERM): <b>tono continuo 1500 Hz</b> fino allo spegnimento. ③ Killa <code>gst-launch</code>, <code>training_recorder</code>, <code>follow_me/main</code> + ferma <code>servofreno/master_switch/encoder-ssi</code>. ④ <code>sync</code> + <code>shutdown -h now</code>.</td></tr>
+  <tr><td><b>Post-shutdown</b></td><td>Pololu off → Q2 off → gate Q1 HIGH via pull-up → drain ON → supercap si scarica via 22Ω (~6 min). Con IRFZ44N si ferma a Vsc~2V; con l'upgrade IRL540N fino a ~1V → boot successivo al primo colpo.</td></tr>
+</table>
+<div class="ok"><b>"Bippava regolare" = questo:</b> 5 beep che calano di tono (1500→400 Hz) subito dopo lo stacco batteria, poi un <b>tono continuo</b> a 1500 Hz che dura fino allo spegnimento completo. Log su <code>/var/log/safe_shutdown.log</code> + tombstone <code>/var/lib/asmile/last_shutdown.txt</code>.<br>
+<span class="small">Nota: <code>pi/buzzer/buzzer.py:shutdown()</code> (400→80 Hz) esiste ma <b>NON</b> è usata in spegnimento — il buzzer è integrato direttamente in <code>fast_shutdown()</code>.</span></div>
+
+<h2>9 · Discrepanze nei documenti del repo (trasparenza)</h2>
+<p class="small">Attenzione: i doc sono stati aggiornati in modo NON lineare. Il più recente "testato e funzionante" è la nota del <b>24 mag</b> (= <code>wiring_raspi5.md</code>/CLAUDE.md + memoria), più nuova di <code>power_48v.md</code> (4 mag). Per questo la baseline è quella del 24 mag.</p>
+<table>
+  <tr><th>Elemento</th><th>Ultimo test <b>24 mag</b> (baseline)</th><th><code>power_48v.md</code> <b>4 mag</b> (superato)</th><th>Scelto qui + perché</th></tr>
+  <tr><td>Supercap</td><td><b>10F</b></td><td>2.2F</td><td><b>10F</b> — ultimo "testato e funzionante"; 2.2F era un piano precedente. <i>Verificare sul corpo del cap.</i></td></tr>
+  <tr><td>MOSFET drain</td><td><b>IRFZ44N</b> (+ TODO swap IRL540N)</td><td>IRL540N</td><td><b>IRFZ44N</b> montato; <b>upgrade consigliato IRL540N</b> (logic-level → boot al primo colpo). <i>Leggere la sigla sul TO-220.</i></td></tr>
+  <tr><td>Resistenza drain</td><td><b>22Ω</b></td><td>120Ω</td><td><b>22Ω</b> — valore dell'ultimo test. <i>Verificare.</i></td></tr>
+  <tr><td>Controllo drain</td><td><b>2N2222 autonomo</b></td><td>GPIO6 + partitore</td><td><b>2N2222 autonomo</b> — il GPIO6 è stato rimosso (<code>383e599f</code>).</td></tr>
+  <tr><td>Bleed</td><td>10kΩ</td><td>—</td><td>10kΩ (ma la docstring del codice dice 1kΩ). <b>Misurare</b> il drop di GPIO26; se lento, scendere a 1kΩ.</td></tr>
+</table>
+
+<h2>10 · Checklist di verifica sulla bici di Arianna</h2>
+<h3>Hardware (a bici spenta, multimetro)</h3>
+<ul class="chk">
+  <li>Leggi la sigla sul MOSFET drain (TO-220): <b>IRL540N</b> o IRFZ44N? → annota e, se IRFZ44N, valuta lo swap.</li>
+  <li>Misura la resistenza drain in serie al Drain: <b>120Ω</b> o 22Ω?</li>
+  <li>Identifica il supercap: <b>2.2F</b> o 10F (stampigliato sul corpo)?</li>
+  <li>Verifica la bleed Pololu VOUT→GND: 10kΩ o 1kΩ?</li>
+  <li>Conferma che GPIO6 NON sia collegato al gate del drain (drain autonomo via 2N2222).</li>
+</ul>
+<h3>Funzionale (dopo riaccensione)</h3>
+<ul class="chk">
+  <li>Stacca batteria → ascolta: <b>5 beep morenti</b> (1500→400 Hz) poi <b>tono continuo</b> fino a spegnimento.</li>
+  <li>Misura il tempo da stacco a GPIO26 LOW (oscilloscopio/log) → deve essere pochi ms.</li>
+  <li>Leggi <code>/var/log/safe_shutdown.log</code>: <code>GPIO_LOW_DETECTED</code> → <code>POWER_LOSS_CONFIRMED</code> → <code>FAST_SHUTDOWN</code> → <code>SHUTDOWN_HALT_CALLED</code>.</li>
+  <li>Leggi il tombstone <code>/var/lib/asmile/last_shutdown.txt</code>.</li>
+</ul>
+<h3>Post-discharge (prima del boot)</h3>
+<ul class="chk">
+  <li>Attendi 2-3 min → misura il supercap: con IRL540N deve scendere ~1V (con IRFZ44N resta ~2-5V → boot incerto).</li>
+  <li>Riaccendi: il Pi deve bootare al <b>primo colpo</b> (se serve on-off-on → MOSFET non logic-level o residuo troppo alto).</li>
+</ul>
+
+<h2>11 · Correzioni doc consigliate (opzionali)</h2>
+<ul>
+  <li><code>CLAUDE.md</code> e <code>hardware_bom.md</code>: supercap <b>10F → 2.2F</b> (se confermato montato).</li>
+  <li><code>wiring_raspi5.md</code>: drain <b>22Ω → 120Ω</b>, MOSFET <b>IRFZ44N → IRL540N</b> (se confermato).</li>
+  <li><code>pi/power/safe_shutdown.py</code> docstring: bleed <b>1kΩ → valore reale misurato</b>.</li>
+</ul>
+
+<p class="small" style="margin-top:14px; color:#888;">Asmile · Moving One Billion People — documento tecnico interno (v2). Il codice eseguito è l'autorità sul comportamento; l'hardware va misurato sul banco prima di dare tensione.</p>
+
+</body>
+</html>
