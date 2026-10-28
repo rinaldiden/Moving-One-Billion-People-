@@ -1,4 +1,4 @@
-# BOM — Logger video standalone (LiPo + USB-C)
+# BOM — Logger video standalone (Li-ion + overlay FS)
 
 Unità **staccata dalla bici**, autonoma, per raccogliere ore di video stereo da
 elaborare poi sul Mac (dataset sim2real / vtest / segmentazione / cattura di
@@ -7,59 +7,75 @@ situazioni nuove).
 ## Scopo e carico
 
 Solo **video logging**: niente UART/VESC, IMU, encoder, timestamp logging.
-Carico reale sul rail 5V = **solo Pi 5 + Camarray** ≈ **7–9 W (~1.4–1.8 A)**.
-⚠️ Da misurare con wattmetro USB. Il collo non è la corrente ma la capacità del
-pacco per fare ore.
+Carico reale sul rail 5V = **solo Pi + Camarray** ≈ **5–9 W** (Pi4 ~5–6W,
+Pi5 ~7–9W). ⚠️ Da misurare con wattmetro USB. Autonomia = scelta batteria di
+Daniele (Li-ion sua).
 
-**Target autonomia: ~6h** (9W × 6h = 54Wh al carico).
+## SBC — Pi5 vs Pi4 1GB
+
+Verificato (2026-10-28):
+
+| | Pi 5 (4GB) | Pi 4 (1GB, verifica) |
+|--|--|--|
+| Porte CSI | 2 (anche 2 cam separate) | **1** → serve per forza la Camarray |
+| H264 HW | **assente** → encode software (regge 2560@15fps) | presente **ma max 1920 px largo** (limite macroblocchi H264 L4.1) |
+| Stereo 2560 | 1 file nativo via SW encode | **non** in H264 2560: o downscale ≤1920, o **MJPEG 2560** (no limite), o 2× crop 1280/occhio |
+| RAM per capture | larga | 1GB tirato (ok, zero margine — 2GB meglio) |
+| WiFi offload | ✓ | ✓ integrato |
+| Consumo | ~7–9W | ~5–6W (meglio per autonomia) |
+
+**Pi4 1GB è usabile** per "segmentare/vedere situazioni", accettando il downscale
+a ≤1920 (H264, file piccoli) **oppure** MJPEG a 2560 pieno (file più grossi). Se
+c'è un Pi4 **2GB**, preferirlo.
 
 ## BOM
 
-| # | Componente | Modello consigliato | Qty | Note |
+| # | Componente | Modello | Qty | Note |
 |---|---|---|---|---|
-| 1 | SBC | Raspberry Pi 5 4GB | 1 | 4GB basta (capture-only <1GB). 8/16GB sprecati |
-| 2 | Camera stereo | Arducam Camarray HAT (2× OV9281 mono) | 1 | 2560×800 nativo, 1 porta CSI, `LD_PRELOAD arducam_fix.so` |
-| 3 | Storage | SSD USB 256GB (o microSD A2 128GB) | 1 | ~225 MB/h: lo spazio non è il problema, l'affidabilità in scrittura sì |
-| 4 | Pacco LiPo 2S | 2S 10000mAh (7.4V nom, 8.4V full) = **~74Wh**, BMS/bilanciamento + lead JST-XH 3-pin | 1 | Target 6h (9W×6h=54Wh). Reali ~6h a 9W worst-case (buck 90% + no scarica <3.5V/cella), di più se 7–8W. Margine sano |
-| 5 | Caricatore USB-C | Modulo carica 2S Type-C step-up 8.4V (balance, es. IP2312) | 1 | Il "facile": qualsiasi alimentatore/telefono USB-C 5V, carica bilanciata |
-| 6 | Step-down 5V | Pololu D24V50F5 (5V/5A) | 1 | 7.4V→5V. Alt. più piccolo/economico: D24V22F5 (2.2A, margine ok) |
-| 7 | Protezioni pacco | Fusibile 5A + kill switch | 1 | Sul positivo del pacco |
-| 8 | Monitor V + shutdown | ADS1115 + partitore | 1 | Legge V_pacco → beep warning + `shutdown -h`. Due soglie, vedi sotto |
-| 9 | Buzzer avviso | Buzzer piezo **attivo** (più potente del KY-006) | 1 | Beep acustico quando V_pacco scende |
-| 10 | Driver buzzer | 2N2222 (TO-92) + 1kΩ (470Ω se serve più volume) | 1 | GPIO Pi → base via R, buzzer sul collettore |
-| 11 | Interruttore 5V | Switch inline rail 5V (opzionale) | 1 | On/off rapido |
+| 1 | SBC | Raspberry Pi 5 4GB **o** Pi 4 1–2GB | 1 | Vedi tabella sopra |
+| 2 | Camera stereo | Arducam Camarray HAT (2× OV9281 mono) | 1 | 2560×800, 1 porta CSI, `rpicam-vid` + `arducam_fix.so` |
+| 3 | Storage | **SD 128GB già in possesso di Daniele** | 1 | Abbondante: ~540h in H264 500kbit, ~25–28h in MJPEG. Riusata, non si compra |
+| 4 | Batteria | **Li-ion — la fa Daniele** | 1 | Nessun acquisto qui. Determina il buck (#5) |
+| 5 | Step-down 5V | Pololu D24V50F5 / D24V22F5 (buck) se pacco 2S+; boost se 1S | 1 | Dimensionare sul n° celle in serie del pacco di Daniele |
+| 6 | Protezioni pacco | Fusibile 5A + kill switch | 1 | Sul positivo del pacco |
+| 7 | *(opz.)* Monitor V | ADS1115 + partitore | 1 | **Solo** per avviso batteria bassa (niente shutdown) |
+| 8 | *(opz.)* Buzzer avviso | **Sirena piezo 5V ~100–110 dB** (non il KY-006, troppo debole) | 1 | ~0.3A → pilotata via driver, non da GPIO diretto |
+| 9 | *(opz.)* Driver buzzer | 2N2222 (TO-92) + 1kΩ (470Ω se serve più volume) | 1 | GPIO Pi → base via R, sirena sul collettore |
 
-### Logica voltaggio (ADS1115 + buzzer)
+## Niente safe-shutdown: Overlay File System
 
-LiPo 2S, due soglie lette su V_pacco:
-- **~7.2V (3.6V/cella) → beep intermittente di avviso** "batteria bassa, sto per spegnermi"
-- **~7.0V (3.5V/cella) → `shutdown -h`** (poi beep continuo/morente durante lo spegnimento)
-- Mai scaricare sotto **3.0V/cella**. Soglie LiPo più alte del Li-ion per non rovinare il pacco da logger non presidiato.
+Verificato (2026-10-28) — **si elimina tutto l'hardware di hold-up/safe-shutdown**
+(2× LM74700, supercap 10F, R pre-charge, MOSFET drain + 2N2222, bleed, sense GPIO):
 
-## Ricarica — due strade
+- **`raspi-config → Performance → Overlay File System`**: root in sola lettura,
+  scritture in RAM → **stacchi corrente quando vuoi, zero corruzione SD. Costo zero.**
+- **Caveat:** l'overlay protegge il **sistema**, non la **partizione dati** su cui
+  scrivi i video. Se stacchi mentre registra, al massimo perdi **il file in corso**.
+- **Mitigazione:** registra a **segmenti** (`rpicam-vid --segment`, es. 1 file ogni
+  15–30s) → perdi solo l'ultimo spezzone. Per un logger è accettabile.
+- Partiziona la SD: rootfs piccola (overlay) + partizione dati grande per i video.
+- Per cambiare config: disabilita overlay → modifica → riabilita.
 
-- **Facile:** modulo carica 2S step-up Type-C (#5). Carichi il 2S da qualsiasi
-  caricatore USB-C 5V, zero config, ~1A → pacco 10000mAh in ~9h (ok da notte).
-- **Più veloce/robusta:** TP5100 (2S) + trigger USB-C PD a 12V → ~2A, pacco
-  10000mAh in ~5h. Serve alimentatore USB-C **PD** (non un 5V qualsiasi).
+Alternative valutate e **scartate** perché l'overlay le rende inutili: supercap
+2×25F/2,7V (12,5F@5,4V ≈ 126J ≈ ~27–31s a 4W — matematica corretta, ma hardware in
+più); 18650+boost / UPS HAT (più componenti, cella invecchia).
 
-## Note
+## Avviso batteria bassa (opzionale)
 
-- **LiPo = più attenzione del Li-ion:** sacca ignifuga per carica/stoccaggio, mai
-  gonfio, mai sotto 3.0V/cella. Per logger non presidiato lo shutdown a 7.0V (#8)
-  è ciò che protegge il pacco.
-- **Offload al Mac:** WiFi rsync al rientro in rete, pattern `deploy/sync_can_logs.sh`.
-- **Software:** Pi 5 non ha H264 HW → encode software (regge 2560@15fps, watt/calore
-  già contati). Camarray → `rpicam-vid` + `arducam_fix.so`.
+Se Daniele vuole sapere quando la Li-ion è quasi scarica (per ricaricare/non
+perdere ore di logging): **ADS1115** legge V_pacco e a soglia bassa fa suonare la
+**sirena piezo** (#8). Nessuno shutdown: alla fine la BMS Li-ion stacca, il Pi
+muore, e grazie all'overlay non si corrompe nulla. Soglia da fissare sul pacco
+di Daniele (regola Li-ion: non scaricare sotto ~3.0V/cella).
 
-## Alternativa idiot-proof
+## Offload video via WiFi
 
-Un **power bank USB-C PD** integra LiPo + caricatore + protezioni + boost 5V in un
-unico oggetto certificato: colleghi il Pi via USB-C e via. Perdi il DIY e un filo
-di controllo sullo shutdown, ma è la via più semplice e sicura.
+WiFi rsync al rientro in rete casa, riusando il pattern `deploy/sync_can_logs.sh`.
+A bitrate bassi (H264 500kbit ~225 MB/h) il trasferimento è banale; MJPEG pesa di
+più ma resta gestibile su WiFi domestico.
 
 ## Aperto
 
-- link d'acquisto + prezzi
-- scelta default della strada di ricarica (facile vs PD veloce)
-- target ore: ~6h → pacco 2S 10000mAh (~74Wh)
+- Pi5 vs Pi4 (1GB/2GB) + formato encode (H264 1920 downscale vs MJPEG 2560)
+- se tenere l'avviso batteria (ADS1115 + sirena) o no
+- link d'acquisto + prezzi dei pochi pezzi residui (buck + eventuale sirena/ADS1115)
