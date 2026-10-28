@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Asmile #001 — Schede di saldatura safe-shutdown</title>
+<style>
+  @page { size: A4 portrait; margin: 11mm; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; color:#1a1a1a; font-size:12px; line-height:1.45; }
+  h1 { font-size:19px; margin:0 0 4px; color:#b5179e; }
+  .sub { color:#555; font-size:11px; margin:0 0 8px; }
+  .card { border:1.5px solid #c9b6e8; border-radius:8px; padding:8px 10px; margin:8px 0; display:flex; gap:12px; page-break-inside:avoid; align-items:flex-start; }
+  .card svg { width:210px; flex:0 0 210px; border:1px solid #eee; border-radius:6px; background:#fff; }
+  .card .body { flex:1; }
+  .card h3 { margin:0 0 6px; font-size:14px; color:#3a0ca3; }
+  .leg { margin:4px 0; }
+  .leg b { display:inline-block; min-width:92px; }
+  .pill { display:inline-block; padding:1px 7px; border-radius:10px; font-weight:700; font-size:11px; border:1px solid #999; }
+  .pP { background:#d0ebff; }   /* Pololu+ */
+  .pA { background:#fff3bf; }   /* NODO A Pi5V */
+  .pB { background:#d3f9d8; }   /* NODO B supercap+ */
+  .pG { background:#dee2e6; }   /* GND */
+  .pPi{ background:#e7f0ff; }   /* Pi pin */
+  .warn { background:#ffecec; border-left:4px solid #e03131; padding:5px 9px; margin:4px 0; font-size:11px; }
+  .legend { border:1.5px solid #c9b6e8; border-radius:8px; padding:8px 10px; margin:8px 0; }
+  .legend .pill { margin-right:6px; }
+</style>
+</head>
+<body>
+
+<h1>Asmile #001 — Schede di saldatura (safe-shutdown)</h1>
+<p class="sub">Una scheda per componente: il disegno del pezzo + dove va OGNI gamba. I colori sono i 4 "punti di ritrovo" (nodi) dove più fili si incontrano.</p>
+
+<div class="legend">
+<b>I 4 nodi (dove salda più roba insieme):</b><br>
+<span class="pill pP">Pololu+</span> uscita del Pololu, PRIMA dei diodi (il filo rosso che entra in VIN del diodo #1) &nbsp;
+<span class="pill pA">NODO A</span> il 5V del Pi = Pin 2 &nbsp;
+<span class="pill pB">NODO B</span> il + del supercap &nbsp;
+<span class="pill pG">GND</span> massa (il − di tutto) &nbsp;
+<span class="pill pPi">Pi</span> un piedino del Raspberry
+</div>
+
+<!-- LM74700 #1 -->
+<div class="card">
+<svg viewBox="0 0 210 150" font-size="12">
+  <rect x="35" y="30" width="140" height="70" rx="6" fill="#1971c2" stroke="#333"/>
+  <text x="105" y="55" text-anchor="middle" fill="#fff" font-weight="bold">LM74700 #1</text>
+  <text x="105" y="72" text-anchor="middle" fill="#fff" font-size="9">(diodo che alimenta)</text>
+  <line x1="60" y1="100" x2="60" y2="130" stroke="#333" stroke-width="2"/><text x="60" y="145" text-anchor="middle" font-size="10">VIN</text>
+  <line x1="105" y1="100" x2="105" y2="130" stroke="#333" stroke-width="2"/><text x="105" y="145" text-anchor="middle" font-size="10">GND</text>
+  <line x1="150" y1="100" x2="150" y2="130" stroke="#333" stroke-width="2"/><text x="150" y="145" text-anchor="middle" font-size="10">VOUT</text>
+</svg>
+<div class="body">
+  <h3>LM74700 #1 — alimenta il Pi dal Pololu</h3>
+  <div class="leg"><b>VIN</b> → <span class="pill pP">Pololu+</span></div>
+  <div class="leg"><b>VOUT</b> → <span class="pill pA">NODO A</span> (Pin 2 del Pi)</div>
+  <div class="leg"><b>GND</b> → <span class="pill pG">GND</span></div>
+</div>
+</div>
+
+<!-- LM74700 #2 -->
+<div class="card">
+<svg viewBox="0 0 210 150" font-size="12">
+  <rect x="35" y="30" width="140" height="70" rx="6" fill="#1971c2" stroke="#e03131" stroke-width="2.5"/>
+  <text x="105" y="55" text-anchor="middle" fill="#fff" font-weight="bold">LM74700 #2</text>
+  <text x="105" y="72" text-anchor="middle" fill="#fff" font-size="9">(hold-up)</text>
+  <line x1="60" y1="100" x2="60" y2="130" stroke="#333" stroke-width="2"/><text x="60" y="145" text-anchor="middle" font-size="10">VIN</text>
+  <line x1="105" y1="100" x2="105" y2="130" stroke="#333" stroke-width="2"/><text x="105" y="145" text-anchor="middle" font-size="10">GND</text>
+  <line x1="150" y1="100" x2="150" y2="130" stroke="#333" stroke-width="2"/><text x="150" y="145" text-anchor="middle" font-size="10">VOUT</text>
+</svg>
+<div class="body">
+  <h3>LM74700 #2 — tiene vivo il Pi col supercap</h3>
+  <div class="leg"><b>VIN</b> → <span class="pill pB">NODO B</span> (+ supercap)</div>
+  <div class="leg"><b>VOUT</b> → <span class="pill pA">NODO A</span> (Pin 2 del Pi)</div>
+  <div class="leg"><b>GND</b> → <span class="pill pG">GND</span></div>
+  <div class="warn"><b>È QUESTO il pezzo sospetto.</b> VIN sul supercap, VOUT sul Pi. Se li inverti, il supercap non tiene vivo il Pi. Conduce da VIN→VOUT = da supercap→Pi.</div>
+</div>
+</div>
+
+<!-- Supercap -->
+<div class="card">
+<svg viewBox="0 0 210 150" font-size="12">
+  <rect x="70" y="25" width="70" height="80" rx="10" fill="#4263eb" stroke="#333"/>
+  <text x="105" y="70" text-anchor="middle" fill="#fff" font-size="10">10F</text>
+  <line x1="88" y1="105" x2="88" y2="130" stroke="#333" stroke-width="2"/><text x="88" y="145" text-anchor="middle" font-size="12" font-weight="bold">+</text>
+  <line x1="122" y1="105" x2="122" y2="130" stroke="#333" stroke-width="2"/><text x="122" y="145" text-anchor="middle" font-size="12" font-weight="bold">−</text>
+</svg>
+<div class="body">
+  <h3>Supercondensatore 10F</h3>
+  <div class="leg"><b>+</b> → <span class="pill pB">NODO B</span></div>
+  <div class="leg"><b>−</b> → <span class="pill pG">GND</span></div>
+</div>
+</div>
+
+<!-- 6.8 ohm -->
+<div class="card">
+<svg viewBox="0 0 210 110" font-size="12">
+  <line x1="15" y1="55" x2="55" y2="55" stroke="#333" stroke-width="2"/>
+  <rect x="55" y="40" width="100" height="30" rx="4" fill="#f5e6c8" stroke="#333"/>
+  <rect x="68" y="40" width="5" height="30" fill="#d9480f"/><rect x="80" y="40" width="5" height="30" fill="#000"/><rect x="92" y="40" width="5" height="30" fill="#e8a000"/>
+  <text x="105" y="30" text-anchor="middle" font-size="11" font-weight="bold">6.8Ω 5W</text>
+  <line x1="155" y1="55" x2="195" y2="55" stroke="#333" stroke-width="2"/>
+</svg>
+<div class="body">
+  <h3>Resistenza 6.8Ω 5W (pre-carica)</h3>
+  <div class="leg"><b>un capo</b> → <span class="pill pA">NODO A</span></div>
+  <div class="leg"><b>altro capo</b> → <span class="pill pB">NODO B</span></div>
+  <div class="leg" style="color:#666;font-size:11px">(il diodo #2 è in parallelo a questa resistenza)</div>
+</div>
+</div>
+
+<!-- IRL540N -->
+<div class="card">
+<svg viewBox="0 0 210 160" font-size="12">
+  <rect x="75" y="15" width="60" height="14" rx="2" fill="#bbb" stroke="#333"/><text x="105" y="12" text-anchor="middle" font-size="8">aletta=Drain</text>
+  <rect x="75" y="29" width="60" height="45" rx="3" fill="#333"/><text x="105" y="55" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">IRL540N</text>
+  <line x1="88" y1="74" x2="88" y2="120" stroke="#333" stroke-width="2"/><text x="88" y="135" text-anchor="middle" font-size="11" font-weight="bold">G</text><text x="88" y="148" text-anchor="middle" font-size="8">Pin1</text>
+  <line x1="105" y1="74" x2="105" y2="120" stroke="#333" stroke-width="2"/><text x="105" y="135" text-anchor="middle" font-size="11" font-weight="bold">D</text><text x="105" y="148" text-anchor="middle" font-size="8">Pin2</text>
+  <line x1="122" y1="74" x2="122" y2="120" stroke="#333" stroke-width="2"/><text x="122" y="135" text-anchor="middle" font-size="11" font-weight="bold">S</text><text x="122" y="148" text-anchor="middle" font-size="8">Pin3</text>
+</svg>
+<div class="body">
+  <h3>IRL540N — MOSFET del drain</h3>
+  <div class="leg"><b>G (Pin1)</b> → resistenza <b>10kΩ</b> → <span class="pill pB">NODO B</span> &nbsp;E&nbsp; → filo → <b>Collector del 2N2222A</b></div>
+  <div class="leg"><b>D (Pin2)</b> → resistenza <b>22Ω 5W</b> → <span class="pill pB">NODO B</span></div>
+  <div class="leg"><b>S (Pin3)</b> → <span class="pill pG">GND</span></div>
+  <div class="leg" style="color:#666;font-size:11px">scritta verso di te: sx=G, centro=D(=aletta), dx=S</div>
+</div>
+</div>
+
+<!-- 2N2222A Q2 -->
+<div class="card">
+<svg viewBox="0 0 210 160" font-size="12">
+  <path d="M75,40 a30,30 0 0 1 60,0 l0,30 l-60,0 z" fill="#333"/><text x="105" y="58" text-anchor="middle" fill="#fff" font-size="9">2N2222A</text>
+  <line x1="88" y1="70" x2="88" y2="120" stroke="#333" stroke-width="2"/><text x="88" y="135" text-anchor="middle" font-size="11" font-weight="bold">E</text><text x="88" y="148" text-anchor="middle" font-size="8">Pin1</text>
+  <line x1="105" y1="70" x2="105" y2="120" stroke="#333" stroke-width="2"/><text x="105" y="135" text-anchor="middle" font-size="11" font-weight="bold">B</text><text x="105" y="148" text-anchor="middle" font-size="8">Pin2</text>
+  <line x1="122" y1="70" x2="122" y2="120" stroke="#333" stroke-width="2"/><text x="122" y="135" text-anchor="middle" font-size="11" font-weight="bold">C</text><text x="122" y="148" text-anchor="middle" font-size="8">Pin3</text>
+</svg>
+<div class="body">
+  <h3>2N2222A (Q2) — sente il Pololu, comanda il MOSFET</h3>
+  <div class="leg"><b>B (Pin2)</b> → resistenza <b>10kΩ</b> → <span class="pill pP">Pololu+</span></div>
+  <div class="leg"><b>C (Pin3)</b> → filo → <b>Gate del IRL540N (Pin1)</b></div>
+  <div class="leg"><b>E (Pin1)</b> → <span class="pill pG">GND</span></div>
+  <div class="leg" style="color:#666;font-size:11px">lato piatto verso di te: sx=E, centro=B, dx=C</div>
+</div>
+</div>
+
+<!-- Level shifter -->
+<div class="card">
+<svg viewBox="0 0 210 160" font-size="11">
+  <rect x="45" y="25" width="120" height="90" rx="5" fill="#f3e8ff" stroke="#333"/>
+  <text x="105" y="42" text-anchor="middle" font-weight="bold">Level shifter</text>
+  <text x="60" y="63" font-size="10">HV</text><text x="150" y="63" text-anchor="end" font-size="10">LV</text>
+  <text x="60" y="80" font-size="10">HV3</text><text x="150" y="80" text-anchor="end" font-size="10">LV3</text>
+  <text x="105" y="105" text-anchor="middle" font-size="10">GND</text>
+</svg>
+<div class="body">
+  <h3>Level shifter — manda "manca corrente" al Pi</h3>
+  <div class="leg"><b>HV</b> → <span class="pill pP">Pololu+</span> <span style="color:#e03131">(NON il 5V del Pi!)</span></div>
+  <div class="leg"><b>HV3</b> → <span class="pill pP">Pololu+</span></div>
+  <div class="leg"><b>LV</b> → <span class="pill pPi">Pi 3V3 (Pin 17)</span></div>
+  <div class="leg"><b>LV3</b> → <span class="pill pPi">Pi GPIO26 (Pin 37)</span></div>
+  <div class="leg"><b>GND</b> → <span class="pill pG">GND</span></div>
+  <div class="warn">+ resistenza <b>bleed 1kΩ</b>: un capo <span class="pill pP">Pololu+</span>, altro capo <span class="pill pG">GND</span>. (1k, non 10k)</div>
+</div>
+</div>
+
+<!-- Buzzer -->
+<div class="card">
+<svg viewBox="0 0 210 150" font-size="11">
+  <path d="M90,45 a30,30 0 0 1 60,0 l0,20 l-60,0 z" fill="#333"/><text x="120" y="60" text-anchor="middle" fill="#fff" font-size="9">Q3 2N2222A</text>
+  <line x1="103" y1="65" x2="103" y2="95" stroke="#333" stroke-width="2"/><text x="103" y="108" text-anchor="middle" font-size="10">E</text>
+  <line x1="120" y1="65" x2="120" y2="95" stroke="#333" stroke-width="2"/><text x="120" y="108" text-anchor="middle" font-size="10">B</text>
+  <line x1="137" y1="65" x2="137" y2="95" stroke="#333" stroke-width="2"/><text x="137" y="108" text-anchor="middle" font-size="10">C</text>
+  <circle cx="45" cy="55" r="22" fill="#444" stroke="#333"/><text x="45" y="59" text-anchor="middle" fill="#fff" font-size="9">buzz</text>
+</svg>
+<div class="body">
+  <h3>Buzzer (già montato) — Q3 = 2N2222A</h3>
+  <div class="leg"><b>Q3 Base</b> → resistenza <b>1kΩ</b> → <span class="pill pPi">Pi GPIO4 (Pin 7)</span></div>
+  <div class="leg"><b>Q3 Emitter</b> → <span class="pill pG">GND</span></div>
+  <div class="leg"><b>Q3 Collector</b> → <b>Buzzer (−)</b></div>
+  <div class="leg"><b>Buzzer (+)</b> → <span class="pill pPi">Pi 5V (Pin 4)</span></div>
+</div>
+</div>
+
+<p style="font-size:10px;color:#888">Asmile #001 · schede saldatura v1 · 2026-10-28. Guarda prima la scheda del <b>LM74700 #2</b>: è il pezzo che adesso non tiene vivo il Pi.</p>
+
+</body>
+</html>
