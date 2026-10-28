@@ -63,11 +63,48 @@ perdere ore di logging): **ADS1115** legge V_pacco e a soglia bassa fa suonare l
 muore, e grazie all'overlay non si corrompe nulla. Soglia da fissare sul pacco
 di Daniele (regola Li-ion: non scaricare sotto ~3.0V/cella).
 
-## Offload video via WiFi
+## Trasmissione dati — Pi remoto → Mac (reti diverse)
 
-WiFi rsync al rientro in rete casa, riusando il pattern `deploy/sync_can_logs.sh`.
-A bitrate bassi (H264 500kbit ~225 MB/h) il trasferimento è banale; MJPEG pesa di
-più ma resta gestibile su WiFi domestico.
+Il logger starà "chissà dove", NON sulla stessa rete del Mac. Servono tre pezzi:
+
+1. **Uplink del Pi:** chiavetta USB 4G/LTE + SIM dati (es. Huawei E3372) o MiFi.
+   ⚠️ **Consumo dati:** H264 500kbit ~225 MB/h → ~1,3 GB/sessione 6h; **MJPEG ~30 GB**
+   → su SIM **usare H264** (eventualmente downscalato), mai MJPEG.
+2. **Canale sicuro Pi↔Mac attraverso Internet** (entrambi dietro NAT).
+3. **Push automatico** a fine sessione (su marker `metadata.json`) con **retry** finché
+   arriva e marcatura "già inviato"; `rsync --partial` riprende i trasferimenti
+   interrotti (vitale su 4G ballerino).
+
+**Baseline consigliata = Tailscale** (già in uso: Mac `macbook-pro-di-daniele`
+`100.87.2.77` nel tailnet). Connessione outbound dal Pi, WireGuard E2E, spesso P2P
+diretta, `rsync`-over-SSH liscio. Gotcha overlay FS: lo stato `/var/lib/tailscale`
+deve persistere (bind-mount su partizione dati scrivibile, o auth key riusabile).
+
+### Due ipotesi Cloudflare (da valutare, SALVATE 2026-10-28)
+
+Alternative/compl. a Tailscale, da scegliere in base al problema reale:
+
+- **Ipotesi A — Cloudflare Tunnel + Access (esporre SSH del Mac).**
+  `cloudflared` sul Mac in uscita (no porte aperte sul router) pubblica l'SSH del
+  Mac dietro hostname Cloudflare + Access (service token/mTLS: solo il Pi entra).
+  Il Pi fa `rsync`-over-SSH via `cloudflared access`.
+  → Conviene **se il 4G blocca WireGuard/UDP**: è outbound-only su 443.
+  Contro: serve **dominio su Cloudflare** + `cloudflared` su entrambi + token Access;
+  **il Mac deve essere acceso**; traffico con hop sull'edge Cloudflare (non P2P).
+
+- **Ipotesi B — Cloudflare R2 come punto di scarico (la migliore in Cloudflare).**
+  Il Pi carica le sessioni completate in un bucket **R2** via HTTPS (outbound puro,
+  nessun tunnel/porta, es. `rclone`); il Mac le scarica da R2 quando vuole.
+  → Conviene **se vuoi che arrivi SEMPRE, anche a Mac spento**: R2 è il relay
+  sempre-acceso. Sicuro (HTTPS + token scoped), **niente egress fee** su R2,
+  nessun `cloudflared` sul Pi.
+  Contro: i dati stazionano nel cloud (privacy/retention da decidere); serve account
+  R2 + API token.
+
+**Regola di scelta:** "arriva sempre anche a Mac spento" → **R2**; "4G blocca
+Tailscale" → **Tunnel**; nessuno dei due problemi → **resta su Tailscale**.
+Per implementare A o B: skill Cloudflare + servono dominio Cloudflare (A) o
+bucket R2 + API token (B). Serve confermare la cartella sessioni del recorder.
 
 ## Aperto
 
