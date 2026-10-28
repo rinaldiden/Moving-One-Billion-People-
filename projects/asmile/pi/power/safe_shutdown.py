@@ -85,25 +85,19 @@ def short_beep(freq=2500, duration=0.08):
 
 
 def fast_shutdown():
-    log("FAST_SHUTDOWN — morente beep + spawn detached buzzer + shutdown -h")
+    log("FAST_SHUTDOWN — sync-first + buzzer + kill writers + sysrq poweroff")
     write_tombstone("FAST_SHUTDOWN_BEGIN")
 
-    # 5 beep morenti (~700ms) — eseguiti nel processo principale prima di
-    # qualsiasi cosa che possa essere uccisa.
+    # 1) SYNC SUBITO — il filesystem e al sicuro entro ~200ms, PRIMA di ogni
+    #    altra cosa. L'hold-up del supercap e corto (il drain lo scarica in
+    #    parallelo): priorita assoluta = flushare la FS.
     try:
-        h_buzz = lgpio.gpiochip_open(GPIO_CHIP)
-        for f in (1500, 1200, 900, 600, 400):
-            lgpio.tx_pwm(h_buzz, BUZZER_PIN, f, 50)
-            time.sleep(0.10)
-            lgpio.tx_pwm(h_buzz, BUZZER_PIN, 0, 0)
-            time.sleep(0.04)
-        lgpio.gpiochip_close(h_buzz)
+        subprocess.run(["sync"], timeout=2)
     except Exception:
         pass
 
-    # Buzzer detached: nuovo session ID + ignora SIGTERM, sopravvive al kill
-    # di safe_shutdown.service e suona finché systemd-shutdown manda SIGKILL
-    # finale (giusto prima dell'halt). Effetto: tono continuo fino allo spegnimento.
+    # 2) Buzzer continuo detached SUBITO (ignora SIGTERM): tono 1500Hz fino allo
+    #    spegnimento. Niente melodia morente (quei ~700ms costavano hold-up).
     buzz_code = (
         "import lgpio, signal, time\n"
         "signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
@@ -125,21 +119,39 @@ def fast_shutdown():
     except Exception:
         pass
 
-    kills = [
-        ["killall", "-9", "gst-launch-1.0"],
-        ["pkill", "-9", "-f", "training_recorder.py"],
-        ["pkill", "-9", "-f", "follow_me/main.py"],
-        ["systemctl", "stop", "servofreno.service"],
-        ["systemctl", "stop", "master_switch.service"],
-        ["systemctl", "stop", "encoder-ssi.service"],
-    ]
-    for cmd in kills:
-        subprocess.run(cmd, capture_output=True, timeout=1)
+    # 3) Kill VELOCE dei soli writer pesanti della FS (NO systemctl stop: troppo
+    #    lento, aspetta i servizi). Poi sync di nuovo.
+    for cmd in (["killall", "-9", "gst-launch-1.0"],
+                ["pkill", "-9", "-f", "training_recorder.py"],
+                ["pkill", "-9", "-f", "follow_me/main.py"]):
+        try:
+            subprocess.run(cmd, capture_output=True, timeout=0.5)
+        except Exception:
+            pass
+    try:
+        subprocess.run(["sync"], timeout=2)
+    except Exception:
+        pass
 
-    subprocess.run(["sync"], timeout=1)
-    log("services killed + sync done — calling shutdown -h now")
+    # 4) Poweroff IMMEDIATO via sysrq (S=sync, U=remount read-only, O=off):
+    #    quasi istantaneo, al contrario del lento `shutdown -h now` di systemd
+    #    (5-15s) che NON entrava nella finestra di hold-up. Fallback se sysrq ko.
+    log("sync+kill done — sysrq emergency poweroff")
     write_tombstone("SHUTDOWN_HALT_CALLED")
-    subprocess.Popen(["shutdown", "-h", "now"])
+    try:
+        with open("/proc/sys/kernel/sysrq", "w") as f:
+            f.write("1")
+    except Exception:
+        pass
+    try:
+        for c in ("s", "u", "o"):
+            with open("/proc/sysrq-trigger", "w") as f:
+                f.write(c)
+    except Exception:
+        try:
+            subprocess.Popen(["systemctl", "--force", "--force", "poweroff"])
+        except Exception:
+            subprocess.Popen(["shutdown", "-h", "now"])
 
 
 def gpio_edge_callback(chip, gpio, level, tick):
