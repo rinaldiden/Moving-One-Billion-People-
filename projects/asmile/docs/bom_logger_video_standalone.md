@@ -11,28 +11,23 @@ Carico reale sul rail 5V = **solo Pi + Camarray** ≈ **5–9 W** (Pi4 ~5–6W,
 Pi5 ~7–9W). ⚠️ Da misurare con wattmetro USB. Autonomia = scelta batteria di
 Daniele (Li-ion sua).
 
-## SBC — Pi5 vs Pi4 1GB
+## SBC — scelto: Raspberry Pi 5 2GB
 
-Verificato (2026-10-28):
+Deciso (2026-10-28): **Pi 5 2GB**, il Pi5 più economico sufficiente allo scopo.
+- Logging video = cattura Camarray + encode **software** (Pi5 non ha H264 HW ma
+  regge 2560×800@15fps) + invio WiFi → RAM usata **<1GB**. L'overlay FS tiene in
+  RAM pochi MB (i video vanno sulla partizione dati della SD). Il collo è la
+  **CPU dell'encode, non la RAM** → 4/8/16GB non darebbero alcun vantaggio.
+- Prezzo ~€70–80 da rivenditore ufficiale IT (Melopero/Robotstore), stock variabile.
 
-| | Pi 5 (4GB) | Pi 4 (1GB, verifica) |
-|--|--|--|
-| Porte CSI | 2 (anche 2 cam separate) | **1** → serve per forza la Camarray |
-| H264 HW | **assente** → encode software (regge 2560@15fps) | presente **ma max 1920 px largo** (limite macroblocchi H264 L4.1) |
-| Stereo 2560 | 1 file nativo via SW encode | **non** in H264 2560: o downscale ≤1920, o **MJPEG 2560** (no limite), o 2× crop 1280/occhio |
-| RAM per capture | larga | 1GB tirato (ok, zero margine — 2GB meglio) |
-| WiFi offload | ✓ | ✓ integrato |
-| Consumo | ~7–9W | ~5–6W (meglio per autonomia) |
-
-**Pi4 1GB è usabile** per "segmentare/vedere situazioni", accettando il downscale
-a ≤1920 (H264, file piccoli) **oppure** MJPEG a 2560 pieno (file più grossi). Se
-c'è un Pi4 **2GB**, preferirlo.
+*(Pi4 scartato: 1 sola CSI e H264 HW limitato a 1920 px larghi → il 2560 stereo
+andrebbe downscalato o messo in MJPEG. Il Pi5 lo gestisce nativo in SW.)*
 
 ## BOM
 
 | # | Componente | Modello | Qty | Note |
 |---|---|---|---|---|
-| 1 | SBC | Raspberry Pi 5 4GB **o** Pi 4 1–2GB | 1 | Vedi tabella sopra |
+| 1 | SBC | **Raspberry Pi 5 2GB** | 1 | Scelto: capture+encode SW+WiFi usa <1GB; encode 2560 è CPU-bound non RAM-bound → 4/8/16GB inutili. ~€70–80 da rivenditore ufficiale IT (Melopero/Robotstore), verificare stock |
 | 2 | Camera stereo | Arducam Camarray HAT (2× OV9281 mono) | 1 | 2560×800, 1 porta CSI, `rpicam-vid` + `arducam_fix.so` |
 | 3 | Storage | **SD 128GB già in possesso di Daniele** | 1 | Abbondante: ~540h in H264 500kbit, ~25–28h in MJPEG. Riusata, non si compra |
 | 4 | Batteria | **Li-ion — la fa Daniele** | 1 | Nessun acquisto qui. Determina il buck (#5) |
@@ -76,6 +71,5 @@ più ma resta gestibile su WiFi domestico.
 
 ## Aperto
 
-- Pi5 vs Pi4 (1GB/2GB) + formato encode (H264 1920 downscale vs MJPEG 2560)
 - se tenere l'avviso batteria (ADS1115 + sirena) o no
 - link d'acquisto + prezzi dei pochi pezzi residui (buck + eventuale sirena/ADS1115)
