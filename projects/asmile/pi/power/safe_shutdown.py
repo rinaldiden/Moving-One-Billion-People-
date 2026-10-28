@@ -48,6 +48,7 @@ _lock = threading.Lock()
 _armed = False
 _low_since = None       # set when falling edge or LOW poll → time.monotonic()
 _glitch_count = 0
+_buzzer_started = False  # il tono continuo parte UNA volta sola, all'istante del LOW
 
 
 def log(msg):
@@ -73,41 +74,25 @@ def write_tombstone(event, extra=""):
         pass
 
 
-def short_beep(freq=2500, duration=0.08):
-    try:
-        h = lgpio.gpiochip_open(GPIO_CHIP)
-        lgpio.tx_pwm(h, BUZZER_PIN, freq, 50)
-        time.sleep(duration)
-        lgpio.tx_pwm(h, BUZZER_PIN, 0, 0)
-        lgpio.gpiochip_close(h)
-    except Exception:
-        pass
-
-
-def fast_shutdown():
-    log("FAST_SHUTDOWN — sync-first + buzzer + kill writers + sysrq poweroff")
-    write_tombstone("FAST_SHUTDOWN_BEGIN")
-
-    # 1) SYNC SUBITO — il filesystem e al sicuro entro ~200ms, PRIMA di ogni
-    #    altra cosa. L'hold-up del supercap e corto (il drain lo scarica in
-    #    parallelo): priorita assoluta = flushare la FS.
-    try:
-        subprocess.run(["sync"], timeout=2)
-    except Exception:
-        pass
-
-    # 2) Buzzer continuo detached SUBITO (ignora SIGTERM): tono 1500Hz fino allo
-    #    spegnimento. Niente melodia morente (quei ~700ms costavano hold-up).
+def start_continuous_buzzer():
+    """Tono continuo sul buzzer, spawnato UNA SOLA VOLTA all'ISTANTE in cui GPIO26
+    va LOW (= manca corrente). Processo detached che ignora SIGTERM → suona senza
+    interruzioni fino allo spegnimento, non blocca lo shutdown e sopravvive al
+    kill di questo servizio."""
+    global _buzzer_started
+    if _buzzer_started:
+        return
+    _buzzer_started = True
     buzz_code = (
         "import lgpio, signal, time\n"
         "signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
         "signal.signal(signal.SIGINT, signal.SIG_IGN)\n"
         "try:\n"
-        "    h = lgpio.gpiochip_open(4)\n"
-        "    lgpio.tx_pwm(h, 4, 1500, 50)\n"
+        "    h = lgpio.gpiochip_open(%d)\n"
+        "    lgpio.tx_pwm(h, %d, 1500, 50)\n"
         "    time.sleep(120)\n"
         "except Exception: pass\n"
-    )
+    ) % (GPIO_CHIP, BUZZER_PIN)
     try:
         subprocess.Popen(
             [sys.executable, "-c", buzz_code],
@@ -116,6 +101,23 @@ def fast_shutdown():
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
+    except Exception:
+        pass
+
+
+def fast_shutdown():
+    log("FAST_SHUTDOWN — sync-first + kill writers + sysrq poweroff")
+    write_tombstone("FAST_SHUTDOWN_BEGIN")
+
+    # Il buzzer continuo e' gia' partito all'ISTANTE del LOW (callback/poll).
+    # Qui solo sicurezza idempotente nel caso raro non fosse ancora attivo.
+    start_continuous_buzzer()
+
+    # 1) SYNC SUBITO — il filesystem e al sicuro entro ~200ms, PRIMA di ogni
+    #    altra cosa. L'hold-up del supercap e corto (il drain lo scarica in
+    #    parallelo): priorita assoluta = flushare la FS.
+    try:
+        subprocess.run(["sync"], timeout=2)
     except Exception:
         pass
 
@@ -190,7 +192,7 @@ def gpio_edge_callback(chip, gpio, level, tick):
             _glitch_count += 1
             log(f"GPIO_LOW_DETECTED #{_glitch_count} (edge)")
             write_tombstone(f"LOW_EDGE_{_glitch_count}")
-            short_beep(freq=2500, duration=0.08)
+            start_continuous_buzzer()   # tono all'ISTANTE esatto del LOW
 
 
 def health_logger(h, stop_event):
@@ -281,7 +283,7 @@ def main():
                     # Use a separate inc so we don't conflict with callback
                     log(f"GPIO_LOW_DETECTED via poll (backup, callback may have missed)")
                     write_tombstone("LOW_VIA_POLL")
-                    short_beep(freq=2500, duration=0.08)
+                    start_continuous_buzzer()   # tono all'ISTANTE esatto del LOW
                 # NOTE: rising edge NON resetta _low_since — committed to shutdown
                 # (vedi nota in gpio_edge_callback). Solo log.
                 if _armed and current == 1 and _low_since is not None:
