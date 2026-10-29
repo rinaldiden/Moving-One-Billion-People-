@@ -69,8 +69,13 @@ systemctl enable logger-offload.service || true
 systemctl enable logger-cleanup.timer || true
 # NB offload invia solo se Tailscale e' attivo sul Pi + Mac Remote Login ON + chiave Pi nel Mac.
 
-echo "[7/7] Overlay FS (root read-only, power-cut safe)"
+echo "[7/7] Overlay FS (root read-only, power-cut safe) + recurse=0"
 raspi-config nonint enable_overlayfs
+# CRUCIALE: recurse=0 -> overlaya SOLO la root. Senza, overlayroot overlaya
+# ANCHE /data (p3 ro + tmpfs RAM) e i video finiscono in RAM (persi al reboot).
+grep -q 'overlayroot=tmpfs:recurse=0' /boot/firmware/cmdline.txt || \
+  sed -i 's/overlayroot=tmpfs/overlayroot=tmpfs:recurse=0/' /boot/firmware/cmdline.txt
+echo "cmdline overlay: $(grep -o 'overlayroot[^ ]*' /boot/firmware/cmdline.txt)"
 
 echo
 echo "FATTO. Ora:  sudo reboot"
