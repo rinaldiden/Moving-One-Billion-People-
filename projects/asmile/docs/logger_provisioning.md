@@ -36,25 +36,40 @@ Tutto preparato sul Mac (2026-10-29):
 - **`/tmp/flash_pi.sh`**: auto-rileva la SD esterna, rifiuta il disco interno e
   drive >300GB, smonta e scrive con `rpi-imager --cli`.
 
-Lancio (serve `sudo`: macOS richiede privilegi per scrivere su disco raw):
+### ⚠️ Muro TCC su macOS — metodo che FUNZIONA
 
-```bash
-sudo bash /tmp/flash_pi.sh
-# → scarica immagine, scrive la SD, inietta WiFi+SSH+hostname, espelle
-```
+Scrivere direttamente su `/dev/rdiskN` con `rpi-imager --cli` **o** con `dd`
+**fallisce** da una shell non-GUI (es. agente), anche da root:
+- rpi-imager → `Authorization failed / cancelled`
+- dd → `Operation not permitted`
 
-Equivalente esplicito:
+È il **TCC "volumi rimovibili"**: serve un'app con *Accesso completo al disco*.
+Soluzione in 2 tempi che aggira il problema:
 
+**1) Personalizza l'immagine su FILE (nessun device → nessun TCC):**
 ```bash
 RPI="/Applications/Raspberry Pi Imager.app/Contents/MacOS/rpi-imager"
-sudo "$RPI" --cli --first-run-script /tmp/firstrun.sh \
-  "https://downloads.raspberrypi.com/raspios_lite_arm64_latest" /dev/diskN
+curl -fL -o /tmp/rpios.img.xz "https://downloads.raspberrypi.com/raspios_lite_arm64_latest"
+xz -dkf -T0 /tmp/rpios.img.xz                    # → /tmp/rpios.img
+mkfile -n 4g /tmp/custom.img                      # il file dst DEVE preesistere
+"$RPI" --cli --enable-writing-system-drives --disable-verify \
+  --first-run-script /tmp/firstrun.sh /tmp/rpios.img /tmp/custom.img
+# → /tmp/custom.img = RPi OS + firstrun (hostname/user/SSH/WiFi) iniettato
 ```
+
+**2) Scrivi il file sulla SD con `dd` da un Terminal con *Accesso completo al disco*:**
+```bash
+sudo dd if=/tmp/custom.img of=/dev/rdiskN bs=4m; sync; diskutil eject /dev/diskN
+```
+Se `Operation not permitted`: System Settings → Privacy & Security → Full Disk
+Access → aggiungi **Terminal**, riapri, rilancia. (La SD nel lettore interno è un
+disco *internal* rimovibile, es. `/dev/disk4` — NON esterno.)
 
 Poi: SD nel Pi 5 → accendi → si connette a EOLO da solo → `ssh asmile@asmile-logger.local`.
 
 ## Stato (2026-10-29)
 
-Flash **in attesa**: la SD non è ancora rilevata dal Mac (reader `Link: Off`,
-0 dischi esterni) — problema fisico di contatto/lettore/card, non software.
-Appena la card compare, il flash parte col comando sopra.
+Immagine personalizzata **già pronta** in `/tmp/custom.img` (RPi OS Lite arm64 +
+firstrun: hostname asmile-logger, user asmile, SSH key del Mac + password, WiFi
+EOLO_378899). Manca solo lo `sudo dd` del passo 2, da un Terminal con Full Disk
+Access — bloccato dal TCC se lanciato dall'agente.
