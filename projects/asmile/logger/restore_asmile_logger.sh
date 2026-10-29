@@ -39,25 +39,37 @@ cp "$VISION/arducam_fix.c" "$STREAM_DIR/"
 command -v gcc >/dev/null 2>&1 || { apt-get update -qq; apt-get install -y -qq gcc; }
 gcc -shared -fPIC -O2 -o "$STREAM_DIR/arducam_fix.so" "$STREAM_DIR/arducam_fix.c" -ldl
 
-echo "[3/6] stream_logger.py + recorder.sh"
+echo "[3/7] script: stream + recorder + offload + cleanup"
 cp "$LOGGER/stream_logger.py" "$STREAM_DIR/"
-install -D -m 0755 "$LOGGER/recorder.sh" "$HOME_DIR/logger/recorder.sh"
+install -D -m 0755 "$LOGGER/recorder.sh"         "$HOME_DIR/logger/recorder.sh"
+install -D -m 0755 "$LOGGER/offload_confirm.py"  "$HOME_DIR/logger/offload_confirm.py"
+install -D -m 0755 "$LOGGER/cleanup.py"          "$HOME_DIR/logger/cleanup.py"
 chown -R "$USER_NAME:$USER_NAME" "$STREAM_DIR" "$HOME_DIR/logger"
 
-echo "[4/6] Servizio streaming (auto-start al boot, http://IP:8080/)"
+echo "[4/7] Servizio streaming — installato ma NON al boot (avvio manuale)"
+# Al boot deve partire il RECORDING, non lo streaming (stessa camera = conflitto).
+# Per guardare la camera: sudo systemctl start logger-stream  (poi stop; ferma il recorder nel frattempo).
 sed "s/__USER__/$USER_NAME/g" "$LOGGER/logger-stream.service" \
     > /etc/systemd/system/logger-stream.service
 systemctl daemon-reload
-systemctl enable logger-stream.service
+systemctl disable logger-stream.service 2>/dev/null || true
 
-echo "[5/6] Servizio recorder (parte quando /data e' montata)"
+echo "[5/7] Servizio RECORDER (auto-start al boot, quando /data e' montata)"
 sed "s/__USER__/$USER_NAME/g" "$LOGGER/logger-recorder.service" \
     > /etc/systemd/system/logger-recorder.service
 systemctl enable logger-recorder.service || true
-# assicura l'utente nei gruppi video/i2c (accesso camera)
 usermod -aG video,i2c "$USER_NAME" 2>/dev/null || true
 
-echo "[6/6] Overlay FS (root read-only, power-cut safe)"
+echo "[6/7] Offload (Tailscale + prova + delete) + cleanup (>10gg, timer giornaliero)"
+sed "s/__USER__/$USER_NAME/g" "$LOGGER/logger-offload.service"  > /etc/systemd/system/logger-offload.service
+sed "s/__USER__/$USER_NAME/g" "$LOGGER/logger-cleanup.service"  > /etc/systemd/system/logger-cleanup.service
+cp "$LOGGER/logger-cleanup.timer" /etc/systemd/system/logger-cleanup.timer
+systemctl daemon-reload
+systemctl enable logger-offload.service || true
+systemctl enable logger-cleanup.timer || true
+# NB offload invia solo se Tailscale e' attivo sul Pi + Mac Remote Login ON + chiave Pi nel Mac.
+
+echo "[7/7] Overlay FS (root read-only, power-cut safe)"
 raspi-config nonint enable_overlayfs
 
 echo

@@ -1,0 +1,15 @@
+[Unit]
+Description=Asmile logger - offload clip al Mac (Tailscale) con prova checksum + delete
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+Environment=HOME=/home/__USER__
+ExecStart=/usr/bin/python3 /home/__USER__/logger/offload_confirm.py
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
