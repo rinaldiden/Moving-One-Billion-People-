@@ -27,6 +27,12 @@ CFG="/boot/firmware/config.txt"
 
 echo "== asmile-logger restore — utente $USER_NAME =="
 
+echo "[0] Timezone Europe/Rome (altrimenti i timestamp di video/log sono sfasati)"
+# Gira con overlay OFF -> persiste su p2. Il clock UTC arriva da NTP; qui fissiamo
+# solo il fuso, cosi' le ore locali nei nomi file e nei CSV sono corrette.
+timedatectl set-timezone Europe/Rome 2>/dev/null || \
+  { ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime; echo "Europe/Rome" > /etc/timezone; }
+
 echo "[1/6] Config camera (Arducam Camarray = dtoverlay=arducam-pivariety)"
 cp "$CFG" "$CFG.bak.$(date +%s)"
 sed -i 's/^camera_auto_detect=0/camera_auto_detect=1/' "$CFG"
