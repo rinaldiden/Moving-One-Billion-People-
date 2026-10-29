@@ -66,3 +66,8 @@ avvocatoguidaautonoma.md
 
 # dati di training pesanti (7+GB) - non su git
 projects/asmile/training/training_data/
+
+# Video dai logger asmile — MAI su git (solo locale)
+projects/asmile/asmile-loggers/
+*.h264
+*.mp4
