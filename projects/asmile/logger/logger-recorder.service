@@ -1,0 +1,18 @@
+[Unit]
+Description=Asmile logger - registrazione video a segmenti
+# Parte solo quando la partizione dati /data e' montata
+RequiresMountsFor=/data
+After=multi-user.target
+
+[Service]
+Type=exec
+User=asmile
+ExecStart=/home/asmile/logger/recorder.sh
+Restart=on-failure
+RestartSec=5
+# protezione crash-loop (come la flotta asmile)
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

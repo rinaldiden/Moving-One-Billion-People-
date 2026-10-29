@@ -1,0 +1,23 @@
+#!/bin/bash
+# firstrun.sh — TEMPLATE (senza segreti). Iniettato nell'immagine con
+# `rpi-imager --cli --first-run-script`. Al primo boot configura il Pi headless.
+#
+# Repo PUBBLICO: NON committare la versione con la password WiFi reale.
+# Genera la versione reale sostituendo i placeholder:
+#   - <SSH_PUBKEY>  = contenuto di ~/.ssh/id_ed25519.pub del Mac
+#   - <USER_CRYPT>  = openssl passwd -6 '<password_utente>'
+#   - <WIFI_SSID> / <WIFI_PSK> = rete WiFi (es. EOLO_378899)  [PSK fuori dal repo]
+set +e
+/usr/lib/raspberrypi-sys-mods/imager_custom set_hostname asmile-logger
+/usr/lib/raspberrypi-sys-mods/imager_custom enable_ssh -k '<SSH_PUBKEY>'
+if [ -f /usr/lib/userconf-pi/userconf ]; then
+  /usr/lib/userconf-pi/userconf 'asmile' '<USER_CRYPT>'
+else
+  /usr/lib/raspberrypi-sys-mods/imager_custom set_user 'asmile' '<USER_CRYPT>'
+fi
+/usr/lib/raspberrypi-sys-mods/imager_custom set_wlan '<WIFI_SSID>' '<WIFI_PSK>' 'IT'
+/usr/lib/raspberrypi-sys-mods/imager_custom set_keymap 'it'
+/usr/lib/raspberrypi-sys-mods/imager_custom set_timezone 'Europe/Rome'
+rm -f /boot/firstrun.sh
+sed -i 's| systemd.run.*||g' /boot/cmdline.txt || true
+exit 0
