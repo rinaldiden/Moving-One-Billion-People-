@@ -45,6 +45,17 @@ echo "  NOTE: safe_shutdown will arm only after GPIO sees battery HIGH."
 echo "  If supercap + voltage divider are not wired yet, the service will"
 echo "  run safely without triggering any shutdown."
 
+# Health logger (consumi PMIC / voltaggio / temperatura / throttle, timestampato)
+# + auto-update del repo al boot (git pull --ff-only). Su OGNI asmile completa.
+REPO_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+sed "s|__REPO__|$REPO_DIR|g" "$SCRIPT_DIR/asmile_health.service"     > /etc/systemd/system/asmile_health.service
+sed "s|__REPO__|$REPO_DIR|g" "$SCRIPT_DIR/asmile-autoupdate.service" > /etc/systemd/system/asmile-autoupdate.service
+systemctl daemon-reload
+systemctl enable asmile_health.service
+systemctl enable asmile-autoupdate.service
+echo "  Enabled asmile_health (power/voltage/temp -> /var/log/asmile_health.csv)"
+echo "  Enabled asmile-autoupdate (git pull --ff-only al boot)"
+
 # Bash alias for quick shutdown
 if ! grep -q "alias off=" $ASMILE_HOME/.bashrc 2>/dev/null; then
     echo "" >> $ASMILE_HOME/.bashrc
