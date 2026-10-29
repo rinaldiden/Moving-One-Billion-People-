@@ -18,14 +18,17 @@ Log: /var/log/asmile_health.csv   (rotazione a ~100MB, tiene 1 file vecchio .1)
 import time
 import subprocess
 import os
+import re
 from datetime import datetime
 
-LOG = "/var/log/asmile_health.csv"
+# Default /var/log; su unita' con overlay FS (es. asmile-logger) impostare
+# ASMILE_HEALTH_LOG=/data/asmile_health.csv (persistente, non RAM).
+LOG = os.environ.get("ASMILE_HEALTH_LOG", "/var/log/asmile_health.csv")
 INTERVAL = 1.0                      # s — risoluzione fine per catturare i cali
 ROTATE_BYTES = 100 * 1024 * 1024
 HEADER = ("timestamp,uptime_s,temp_c,throttled_hex,uv_now,freq_capped,"
           "throttled_now,soft_temp,uv_since_boot,throttled_since_boot,"
-          "ext5v_v,core_v,current_mA\n")
+          "ext5v_v,core_v,current_mA,power_w\n")
 
 
 def vc(args):
@@ -73,6 +76,24 @@ def read_core_v():
     s = vc(["measure_volts", "core"])        # volt=0.8000V
     try:
         return s.split("=")[1].replace("V", "")
+    except Exception:
+        return ""
+
+
+def read_power_w():
+    # Pi5: somma V*I di TUTTI i rail del PMIC -> consumo totale (W).
+    # Rail tipo: "VDD_CORE_A current(7)=0.705A" + "VDD_CORE_V volt(6)=0.885V"
+    out = vc(["pmic_read_adc"])
+    cur, vol = {}, {}
+    for line in out.splitlines():
+        m = re.match(r"\s*(\S+)_([AV])\s+\w+\(\d+\)=([\d.]+)[AV]", line)
+        if not m:
+            continue
+        name, typ, val = m.group(1), m.group(2), float(m.group(3))
+        (cur if typ == "A" else vol)[name] = val
+    try:
+        tot = sum(cur[n] * vol.get(n, 0.0) for n in cur)
+        return f"{tot:.2f}" if cur else ""
     except Exception:
         return ""
 
@@ -125,7 +146,7 @@ def main():
         t = read_throttled()
         line = (f"{ts},{uptime_s()},{read_temp()},{t[0]},{t[1]},{t[2]},"
                 f"{t[3]},{t[4]},{t[5]},{t[6]},{read_ext5v()},{read_core_v()},"
-                f"{read_ina219()}\n")
+                f"{read_ina219()},{read_power_w()}\n")
         try:
             with open(LOG, "a") as f:
                 f.write(line)

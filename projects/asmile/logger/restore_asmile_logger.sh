@@ -69,7 +69,30 @@ systemctl enable logger-offload.service || true
 systemctl enable logger-cleanup.timer || true
 # NB offload invia solo se Tailscale e' attivo sul Pi + Mac Remote Login ON + chiave Pi nel Mac.
 
-echo "[7/7] Overlay FS (root read-only, power-cut safe) + recurse=0"
+echo "[7/9] Health logger (temp/5V/power PMIC/throttle -> /data, timestampato)"
+cat > /etc/systemd/system/asmile-health.service <<SVC
+[Unit]
+Description=Asmile health logger (temp/5V/power/throttle -> /data/asmile_health.csv)
+After=multi-user.target
+[Service]
+Type=simple
+User=root
+Environment=ASMILE_HEALTH_LOG=/data/asmile_health.csv
+ExecStart=/usr/bin/python3 $REPO/projects/asmile/pi/power/health_logger.py
+Restart=always
+RestartSec=3
+[Install]
+WantedBy=multi-user.target
+SVC
+systemctl daemon-reload
+systemctl enable asmile-health.service || true
+
+echo "[8/9] Auto-update al boot (git pull --ff-only)"
+sed "s|__REPO__|$REPO|g" "$REPO/projects/asmile/config/asmile-autoupdate.service" \
+    > /etc/systemd/system/asmile-autoupdate.service
+systemctl enable asmile-autoupdate.service || true
+
+echo "[9/9] Overlay FS (root read-only, power-cut safe) + recurse=0"
 raspi-config nonint enable_overlayfs
 # CRUCIALE: recurse=0 -> overlaya SOLO la root. Senza, overlayroot overlaya
 # ANCHE /data (p3 ro + tmpfs RAM) e i video finiscono in RAM (persi al reboot).

@@ -1,0 +1,13 @@
+[Unit]
+Description=Asmile - auto-update del repo al boot (git pull --ff-only)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=ASMILE_REPO=__REPO__
+ExecStart=/bin/bash __REPO__/projects/asmile/config/autoupdate.sh
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target
