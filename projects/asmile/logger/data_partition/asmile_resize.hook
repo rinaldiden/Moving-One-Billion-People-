@@ -1,0 +1,11 @@
+#!/bin/sh
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "$1" in prereqs) prereqs; exit 0;; esac
+. /usr/share/initramfs-tools/hook-functions
+copy_exec /sbin/e2fsck
+copy_exec /sbin/resize2fs
+copy_exec /sbin/mkfs.ext4
+copy_exec /usr/sbin/parted
+copy_exec /sbin/partprobe
+exit 0

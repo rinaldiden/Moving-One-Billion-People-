@@ -1,0 +1,38 @@
+#!/bin/sh
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "$1" in prereqs) prereqs; exit 0;; esac
+
+DEV=/dev/mmcblk0
+P2=${DEV}p2
+P3=${DEV}p3
+
+log() { echo "ASMILE-RESIZE: $*" > /dev/kmsg 2>/dev/null; echo "ASMILE-RESIZE: $*"; }
+
+# idempotente: se /data (p3) esiste gia', non fare nulla
+[ -b "$P3" ] && exit 0
+
+# attendi che p2 sia disponibile
+i=0; while [ ! -b "$P2" ] && [ $i -lt 30 ]; do sleep 1; i=$((i+1)); done
+[ -b "$P2" ] || { log "p2 non trovato, ABORT"; exit 0; }
+
+log "fsck p2"
+e2fsck -f -y "$P2"; RC=$?
+[ "$RC" -gt 1 ] && { log "e2fsck rc=$RC ABORT"; exit 0; }
+
+log "resize2fs p2 -> 18G"
+resize2fs "$P2" 18G || { log "resize2fs FAIL ABORT"; exit 0; }
+
+log "resizepart 2 -> 20000MiB"
+parted -s "$DEV" unit MiB resizepart 2 20000 || { log "resizepart FAIL ABORT"; exit 0; }
+
+log "mkpart p3 20001MiB..100%"
+parted -s "$DEV" unit MiB mkpart primary ext4 20001 100% || { log "mkpart FAIL"; exit 0; }
+
+partprobe "$DEV" 2>/dev/null; sleep 2
+
+log "mkfs.ext4 p3 (label data)"
+mkfs.ext4 -F -L data "$P3" || log "mkfs FAIL"
+
+log "done"
+exit 0
