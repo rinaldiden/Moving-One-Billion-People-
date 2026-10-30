@@ -1,0 +1,92 @@
+### DATE
+2026-10-30T16:37:16+01:00
+
+### uname
+Linux asmile 6.12.75+rpt-rpi-2712 #1 SMP PREEMPT Debian 1:6.12.75-1+rpt1 (2026-03-11) aarch64 GNU/Linux
+
+### /proc/cmdline
+reboot=w coherent_pool=1M 8250.nr_uarts=1 pci=pcie_bus_safe cgroup_disable=memory numa_policy=interleave nvme.max_host_mem_size_mb=0  numa=fake=8 system_heap.max_order=0 iommu_dma_numa_policy=interleave smsc95xx.macaddr=88:A2:9E:A7:B2:4A vc_mem.mem_base=0x3fc00000 vc_mem.mem_size=0x40000000  console=ttyAMA10,115200 console=tty1 root=PARTUUID=b93f7028-02 rootfstype=ext4 fsck.repair=yes rootwait quiet splash plymouth.ignore-serial-consoles ds=nocloud;i=rpi-imager-1778690845557 cfg80211.ieee80211_regdom=IT
+
+### lsblk -f
+NAME        FSTYPE FSVER LABEL  UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+loop0       swap   1                                                                
+mmcblk0                                                                             
+├─mmcblk0p1 vfat   FAT32 bootfs 18D4-404A                             417.9M    17% /boot/firmware
+└─mmcblk0p2 ext4   1.0   rootfs ed6c7f1b-238b-41a1-b4b6-7bcdef3270fe  105.1G     6% /
+zram0       swap   1     zram0  a6a97db7-e235-4293-b443-9942499694a7                [SWAP]
+
+### df -h
+Filesystem      Size  Used Avail Use% Mounted on
+udev            7.9G     0  7.9G   0% /dev
+tmpfs           3.2G   14M  3.2G   1% /run
+/dev/mmcblk0p2  117G  6.9G  106G   7% /
+tmpfs           8.0G  400K  8.0G   1% /dev/shm
+tmpfs           5.0M   48K  5.0M   1% /run/lock
+tmpfs           1.0M     0  1.0M   0% /run/credentials/systemd-journald.service
+tmpfs           8.0G  176K  8.0G   1% /tmp
+/dev/mmcblk0p1  505M   87M  418M  18% /boot/firmware
+tmpfs           1.6G  256K  1.6G   1% /run/user/1000
+tmpfs           1.0M     0  1.0M   0% /run/credentials/getty@tty1.service
+tmpfs           1.0M     0  1.0M   0% /run/credentials/serial-getty@ttyAMA10.service
+
+### findmnt /
+TARGET SOURCE         FSTYPE OPTIONS
+/      /dev/mmcblk0p2 ext4   rw,noatime
+
+### blkid
+/dev/mmcblk0p1: LABEL_FATBOOT="bootfs" LABEL="bootfs" UUID="18D4-404A" BLOCK_SIZE="512" TYPE="vfat" PARTUUID="b93f7028-01"
+/dev/mmcblk0p2: LABEL="rootfs" UUID="ed6c7f1b-238b-41a1-b4b6-7bcdef3270fe" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="b93f7028-02"
+/dev/loop0: TYPE="swap"
+/dev/zram0: LABEL="zram0" UUID="a6a97db7-e235-4293-b443-9942499694a7" TYPE="swap"
+
+### /etc/fstab
+proc            /proc           proc    defaults          0       0
+PARTUUID=b93f7028-01  /boot/firmware  vfat    defaults          0       2
+PARTUUID=b93f7028-02  /               ext4    defaults,noatime  0       1
+
+### overlay in cmdline?
+NO overlay
+
+### servizi enabled (asmile)
+asmile_health.service              enabled enabled
+master_switch.service              enabled enabled
+safe_shutdown.service              enabled enabled
+servofreno.service                 enabled enabled
+usb_encoder_bridge.service         enabled enabled
+
+### servizi attivi ora
+  asmile_health.service         loaded active running Asmile health logger (temp, 5V, power PMIC, throttle -> /var/log/asmile_health.csv)
+  master_switch.service         loaded active running Asmile Master Switch — GPIO toggle controls brake and logging
+  safe_shutdown.service         loaded active running Asmile Safe Shutdown — monitors power loss via GPIO
+  servofreno.service            loaded active running Asmile Servofreno Server (Flask :5000)
+  usb_encoder_bridge.service    loaded active running Asmile USB encoder bridge (Arduino AMT22 -> /tmp/encoder_steer,wheel,position)
+
+### git HEAD + stato
+1967cbf
+ M projects/asmile/pi/autonomous/speed_limiter.py
+ M projects/asmile/pi/logging/training_recorder.py
+ M projects/asmile/pi/power/safe_shutdown.py
+?? projects/asmile/config/asmile_health.service
+?? projects/asmile/config/speed_limiter.service
+?? projects/asmile/config/vesc_backups/
+?? projects/asmile/pi/autonomous/encoder_speed_calibration.py
+?? projects/asmile/pi/camera/raw_stream.py
+?? projects/asmile/pi/logging/training_data/
+?? projects/asmile/pi/power/health_logger.py
+?? projects/asmile/pi/power/safe_shutdown.py.bak-20261028
+?? projects/asmile/pi/steering/amt22_bitbang_dual.py
+?? projects/asmile/pi/steering/amt22_bitbang_scan.py
+?? projects/asmile/pi/steering/amt22_dual_daemon.py
+?? projects/asmile/pi/steering/enc_watch.py
+?? projects/asmile/pi/steering/usb_encoder_bridge.py
+?? projects/asmile/pi/steering/vesc_config_backup.py
+?? projects/asmile/pi/steering/vesc_spin.py
+?? projects/asmile/pi/steering/vesc_term.py
+
+### mem/disk
+               total        used        free      shared  buff/cache   available
+Mem:            15Gi       565Mi        14Gi        35Mi       805Mi        15Gi
+Swap:          2.0Gi          0B       2.0Gi
+
+throttled=0x50000
+temp=43.3'C
