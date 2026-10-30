@@ -88,6 +88,21 @@ IMU_PWR_MGMT_1 = 0x6B
 IMU_ACCEL_XOUT_H = 0x3B
 IMU_ACCEL_SCALE = 16384.0   # ±2g range LSB/g
 
+# ─── Wheel encoder (AMT22 su ruota, via ponte Arduino-USB) ────────────
+# PRIORITÀ velocità su #001 (ha l'encoder a bordo): dà velocità/accel/decel
+# superfini per il controllo servofreno. Se il file manca/è stale (es. l'altra
+# asmile senza encoder) il limiter cade da solo su BLE/GPS → nessun cambiamento
+# per le unità senza encoder.
+ENC_WHEEL_FILE = "/tmp/encoder_wheel"
+ENC_FRESH_S = 0.5               # oltre → encoder non fidato, fallback
+ENC_COUNTS_PER_REV = 16384      # AMT22 14-bit (un giro = 0..16383)
+ENC_WHEEL_CIRCUM_M = 2.10       # ⚠️ PLACEHOLDER — TODO CALIBRARE (circonferenza
+                                # ruota effettiva in m; se l'encoder è ingranato
+                                # e non diretto, aggiustare anche COUNTS_PER_REV).
+                                # Finché non tarato, la velocità assoluta NON è
+                                # affidabile: non fidarsi del freno reale prima del tuning.
+ENC_MAX_STEP_COUNTS = 8000      # |Δcounts|/sample oltre → wrap/glitch, scarta
+
 # ─── Logging ──────────────────────────────────────────────────────────
 LOG_DIR = os.path.expanduser("~/wip/logging/speed_limiter")
 
@@ -177,6 +192,61 @@ def _read_ble_speed():
             return float(f.readline().strip().split()[0]), True
     except (FileNotFoundError, ValueError, IndexError, OSError):
         return 0.0, False
+
+
+# ══════════════════════════════════════════════════════════════════════
+# Wheel encoder (AMT22 ruota via ponte Arduino-USB) — sorgente PRIORITARIA
+# ══════════════════════════════════════════════════════════════════════
+class WheelEncoder:
+    """Velocità (e accel/decel) dalla ruota leggendo /tmp/encoder_wheel (posizione
+    assoluta AMT22 0..16383, aggiornata dal ponte Arduino-USB ~880Hz).
+    read() → (speed_ms, fresh, accel_ms2). fresh=False se il file manca/è stale/
+    dati non validi → il limiter usa il fallback BLE/GPS (altra asmile invariata)."""
+
+    def __init__(self):
+        self._last_counts = None
+        self._last_t = None
+        self._speed_ms = 0.0
+        self._prev_speed_ms = 0.0
+        self._accel_ms2 = 0.0
+        print(f"[ENC] wheel encoder PRIORITY on — circ={ENC_WHEEL_CIRCUM_M}m "
+              f"(⚠ PLACEHOLDER, TODO calibrare)", flush=True)
+
+    def read(self):
+        try:
+            st = os.stat(ENC_WHEEL_FILE)
+            if time.time() - st.st_mtime > ENC_FRESH_S:
+                self._last_counts = None          # buco → non fidarsi del prossimo delta
+                return 0.0, False, 0.0
+            with open(ENC_WHEEL_FILE) as f:
+                counts = int(f.readline().strip())
+        except (FileNotFoundError, ValueError, OSError):
+            self._last_counts = None
+            return 0.0, False, 0.0
+
+        t = time.monotonic()
+        if self._last_counts is None or self._last_t is None:
+            self._last_counts, self._last_t = counts, t
+            return self._speed_ms, True, 0.0      # primo campione: tiene l'ultima velocità
+
+        dt = t - self._last_t
+        if dt <= 0:
+            return self._speed_ms, True, self._accel_ms2
+        d = counts - self._last_counts
+        # wraparound shortest-path (0↔16383)
+        if d > ENC_COUNTS_PER_REV // 2:
+            d -= ENC_COUNTS_PER_REV
+        elif d < -ENC_COUNTS_PER_REV // 2:
+            d += ENC_COUNTS_PER_REV
+        self._last_counts, self._last_t = counts, t
+        if abs(d) > ENC_MAX_STEP_COUNTS:          # glitch/wrap irreale → tieni l'ultimo
+            return self._speed_ms, True, self._accel_ms2
+        dist = (abs(d) / ENC_COUNTS_PER_REV) * ENC_WHEEL_CIRCUM_M
+        new_speed = dist / dt
+        self._prev_speed_ms = self._speed_ms
+        self._speed_ms = 0.5 * self._speed_ms + 0.5 * new_speed   # smoothing leggero
+        self._accel_ms2 = (self._speed_ms - self._prev_speed_ms) / dt  # <0 = sto calando
+        return self._speed_ms, True, self._accel_ms2
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -324,6 +394,7 @@ class SpeedLimiter:
         self.gps = GPSReader()
         self.imu = IMU()
         self.servo = Servo()
+        self.encoder = WheelEncoder()   # sorgente velocità PRIORITARIA (se presente)
 
         self.target_ms = TARGET_KMH / 3.6
         self.activate_ms = ACTIVATE_KMH / 3.6
@@ -355,6 +426,7 @@ class SpeedLimiter:
             "error_ms", "pid_p", "pid_i", "pid_d", "ff_brake_deg",
             "target_brake_deg", "brake_cmd_deg", "zone",
             "ble_speed_ms", "ble_fresh",
+            "enc_speed_ms", "enc_fresh", "enc_accel_ms2",
         ])
         print(f"[LIMITER] log: {log_path}", flush=True)
 
@@ -379,14 +451,20 @@ class SpeedLimiter:
 
         return gps_raw, fix
 
-    def _fuse(self, gps_speed, fix, accel_x, ble_speed=0.0, ble_fresh=False):
+    def _fuse(self, gps_speed, fix, accel_x, ble_speed=0.0, ble_fresh=False,
+              enc_speed=0.0, enc_fresh=False):
         # Integrazione IMU come backup
         self.imu_speed += -accel_x * 9.81 * DT
         self.imu_speed = max(0.0, self.imu_speed * 0.995)   # damping leggero
 
-        # Priorità: BLE Coospo (preciso e immediato) > GPS (sotto-legge se Pi
-        # undervolted) > IMU integration > zero
-        if ble_fresh:
+        # Priorità: WHEEL ENCODER (superfine, su #001) > BLE Coospo > GPS
+        # (sotto-legge se Pi undervolted) > IMU integration > zero.
+        # Encoder assente/stale → cade da solo sul resto (altra asmile invariata).
+        if enc_fresh:
+            self.imu_speed = enc_speed
+            self.speed_history.append(enc_speed)
+            source = "enc"
+        elif ble_fresh:
             self.imu_speed = ble_speed
             self.speed_history.append(ble_speed)
             source = "ble"
@@ -426,8 +504,9 @@ class SpeedLimiter:
         return (s1 - s0) / dt
 
     # ─── Controller adattivo ──────────────────────────────────────────
-    def _compute_target(self, speed, accel_x, ble_speed, ble_fresh):
-        """Aggiorna brake_cmd in base a velocità + trend BLE + decel IMU.
+    def _compute_target(self, speed, accel_x, ble_speed, ble_fresh,
+                        enc_fresh=False, enc_accel=0.0):
+        """Aggiorna brake_cmd in base a velocità + trend + decel.
         Priorità: se la bici STA GIÀ RALLENTANDO → rilascia (no insistere)."""
         imu_decel = -accel_x * 9.81  # m/s² positivo = sto rallentando
         self.decel_filtered = (1.0 - DECEL_EWMA) * self.decel_filtered + DECEL_EWMA * imu_decel
@@ -435,13 +514,15 @@ class SpeedLimiter:
         t_now = time.monotonic()
         ble_trend = self._update_ble_trend(ble_speed, ble_fresh, t_now)
         # ble_trend in m/s² (negativo = velocità in calo)
+        # Trend PRIMARIO = encoder ruota (superfine) se disponibile, altrimenti BLE.
+        trend = enc_accel if enc_fresh else ble_trend
 
         step_up = STEP_UP_DEG_S * DT
         step_down = STEP_DOWN_DEG_S * DT
         speed_kmh = speed * 3.6
 
-        # Detect rallentamento: BLE in calo (primario) o IMU decel (backup)
-        speed_dropping = ble_trend < -0.15   # ~ -0.5 km/h al secondo
+        # Detect rallentamento: trend (encoder>BLE) in calo o IMU decel (backup)
+        speed_dropping = trend < -0.15   # ~ -0.5 km/h al secondo
         decel_positive = self.decel_filtered > 0.10
 
         if speed_kmh < ACTIVATE_KMH:
@@ -449,7 +530,7 @@ class SpeedLimiter:
             zone = "FREE"
         elif speed_dropping or decel_positive:
             # Bici sta già rallentando → RILASCIA proporzionale al rallentamento
-            slow_intensity = max(abs(ble_trend), self.decel_filtered)
+            slow_intensity = max(abs(trend), self.decel_filtered)
             release_scale = 1.0 + slow_intensity / 0.3   # +1 ogni 0.3 m/s² di rallentamento
             new = max(0.0, self.brake_cmd - step_down * release_scale)
             zone = "RELEASE"
@@ -492,11 +573,14 @@ class SpeedLimiter:
                 gps_speed, fix = self._read_speed()
                 accel_x = self.imu.accel_x()
                 ble_speed, ble_fresh = _read_ble_speed()
-                speed, source = self._fuse(gps_speed, fix, accel_x, ble_speed, ble_fresh)
+                enc_speed, enc_fresh, enc_accel = self.encoder.read()
+                speed, source = self._fuse(gps_speed, fix, accel_x, ble_speed, ble_fresh,
+                                           enc_speed, enc_fresh)
 
                 # Controller adattivo: aggiorna brake_cmd direttamente
                 # (no slew separato — il rate limiting è dentro al controller)
-                new_brake, decel_meas, (df, _, _), zone = self._compute_target(speed, accel_x, ble_speed, ble_fresh)
+                new_brake, decel_meas, (df, _, _), zone = self._compute_target(
+                    speed, accel_x, ble_speed, ble_fresh, enc_fresh, enc_accel)
                 self.brake_cmd = new_brake
                 self.servo.tick(self.brake_cmd)
                 # Alias per log (riusa colonne esistenti)
@@ -516,6 +600,7 @@ class SpeedLimiter:
                         f"{ff_brake:.2f}",
                         f"{target:.2f}", f"{self.brake_cmd:.2f}", zone,
                         f"{ble_speed:.3f}", 1 if ble_fresh else 0,
+                        f"{enc_speed:.3f}", 1 if enc_fresh else 0, f"{enc_accel:.3f}",
                     ])
                     self.log_f.flush()
 
