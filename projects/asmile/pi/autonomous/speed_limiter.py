@@ -18,6 +18,7 @@ Costanti tunables in cima al file.
 import csv
 import math
 import os
+import json
 import signal
 import struct
 import sys
@@ -102,6 +103,7 @@ ENC_WHEEL_CIRCUM_M = 2.10       # ⚠️ PLACEHOLDER — TODO CALIBRARE (circonf
                                 # Finché non tarato, la velocità assoluta NON è
                                 # affidabile: non fidarsi del freno reale prima del tuning.
 ENC_MAX_STEP_COUNTS = 8000      # |Δcounts|/sample oltre → wrap/glitch, scarta
+ENC_CALIB_FILE = "/var/lib/asmile/encoder_calibration.json"  # scritto da encoder_speed_calibration.py
 
 # ─── Logging ──────────────────────────────────────────────────────────
 LOG_DIR = os.path.expanduser("~/wip/logging/speed_limiter")
@@ -209,8 +211,22 @@ class WheelEncoder:
         self._speed_ms = 0.0
         self._prev_speed_ms = 0.0
         self._accel_ms2 = 0.0
-        print(f"[ENC] wheel encoder PRIORITY on — circ={ENC_WHEEL_CIRCUM_M}m "
-              f"(⚠ PLACEHOLDER, TODO calibrare)", flush=True)
+        # Carica la calibrazione reale se c'è (da encoder_speed_calibration.py),
+        # altrimenti usa il placeholder (velocità NON affidabile finché non tarata).
+        self.circum = ENC_WHEEL_CIRCUM_M
+        self.calibrated = False
+        self.forward_sign = "+"
+        try:
+            with open(ENC_CALIB_FILE) as f:
+                cal = json.load(f)
+            self.circum = float(cal["wheel_circum_m"])
+            self.forward_sign = cal.get("forward_sign", "+")
+            self.calibrated = True
+        except Exception:
+            pass
+        tag = f"TARATO (circ={self.circum:.4f}m, avanti {self.forward_sign})" if self.calibrated \
+            else f"⚠ PLACEHOLDER circ={self.circum}m — TODO calibrare (encoder_speed_calibration.py)"
+        print(f"[ENC] wheel encoder PRIORITY on — {tag}", flush=True)
 
     def read(self):
         try:
@@ -241,7 +257,7 @@ class WheelEncoder:
         self._last_counts, self._last_t = counts, t
         if abs(d) > ENC_MAX_STEP_COUNTS:          # glitch/wrap irreale → tieni l'ultimo
             return self._speed_ms, True, self._accel_ms2
-        dist = (abs(d) / ENC_COUNTS_PER_REV) * ENC_WHEEL_CIRCUM_M
+        dist = (abs(d) / ENC_COUNTS_PER_REV) * self.circum
         new_speed = dist / dt
         self._prev_speed_ms = self._speed_ms
         self._speed_ms = 0.5 * self._speed_ms + 0.5 * new_speed   # smoothing leggero
