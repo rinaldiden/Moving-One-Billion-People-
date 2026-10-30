@@ -1,0 +1,16 @@
+# GDPR: i video (grezzi e anonimizzati) restano LOCALI, mai su git.
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.h264
+*.m4v
+*.audit.json
+
+# Modelli scaricati (Haar cascades, pesi YOLO/ONNX): binari locali, non versionare.
+models/
+*.pt
+*.onnx
+
+__pycache__/
+*.pyc

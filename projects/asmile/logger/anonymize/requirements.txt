@@ -1,0 +1,15 @@
+# Dipendenze pipeline anonimizzazione log video (volti + targhe, GDPR).
+# Installa solo ciò che serve al backend che usi.
+
+numpy
+
+# --- backend 'haar' (smoke-test offline, zero download) ---
+# OpenCV 5.0 ha RIMOSSO i Haar CascadeClassifier → serve la 4.x per questo backend.
+opencv-python-headless==4.10.0.84
+
+# --- backend 'deface' (volti HQ, CenterFace ONNX, offline dopo install) ---
+# deface
+
+# --- backend 'yolo' (produzione / on-device: volti+targhe) ---
+# ultralytics          # + pesi persona/veicolo (yolo11n.pt) e un modello targhe .pt
+# onnxruntime          # per l'export edge sul Pi 5
