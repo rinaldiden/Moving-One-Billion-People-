@@ -1,0 +1,44 @@
+## cmdline
+overlayroot=tmpfs:recurse=0 console=serial0,115200 console=tty1 root=PARTUUID=b93f7028-02 rootfstype=ext4 fsck.repair=yes rootwait quiet splash plymouth.ignore-serial-consoles ds=nocloud;i=rpi-imager-1778690845557 cfg80211.ieee80211_regdom=IT## fstab
+#
+#  This fstab is for overlayroot. The real one can be found at
+#  /media/root-ro/etc/fstab
+#  The original entry for '/' and other mounts have been updated to be placed
+#  under /media/root-ro.
+#  a writable view of the underlying filesystem using:
+#      sudo overlayroot-chroot
+#
+proc /proc proc defaults 0 0 # overlayroot:fs-virtual
+PARTUUID=b93f7028-01 /boot/firmware vfat defaults 0 2 # overlayroot:fs-unsupported
+#PARTUUID=b93f7028-02 /media/root-ro/ ext4 ro,defaults,noatime,noauto 0 1
+/media/root-ro/ / overlay lowerdir=/media/root-ro/,upperdir=/media/root-rw/overlay/,workdir=/media/root-rw/overlay-workdir/_ 0 1
+LABEL=data /data ext4 defaults,noatime,nofail 0 2
+/data/training_sessions /home/asmile/training_sessions none bind,nofail 0 0
+/data/logging /home/asmile/wip/logging none bind,nofail 0 0
+/data/var_lib_asmile /var/lib/asmile none bind,nofail 0 0
+## asmile_health.service
+[Unit]
+Description=Asmile health logger (temp, 5V, power PMIC, throttle -> /var/log/asmile_health.csv)
+After=multi-user.target
+
+[Service]
+Environment=ASMILE_HEALTH_LOG=/data/asmile_health.csv
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 /home/asmile/wip/Moving-One-Billion-People-/projects/asmile/pi/power/health_logger.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+## lsblk
+NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
+mmcblk0     179:0    0 119.2G  0 disk 
+├─mmcblk0p1 179:1    0   512M  0 part /boot/firmware
+├─mmcblk0p2 179:2    0    19G  0 part /media/root-ro
+└─mmcblk0p3 179:3    0  99.7G  0 part /home/asmile/training_sessions
+                                      /var/lib/asmile
+                                      /home/asmile/wip/logging
+                                      /data
+zram0       254:0    0     0B  0 disk 
+## mounts chiave
