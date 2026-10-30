@@ -49,6 +49,7 @@ _armed = False
 _low_since = None       # set when falling edge or LOW poll → time.monotonic()
 _glitch_count = 0
 _buzzer_started = False  # il tono continuo parte UNA volta sola, all'istante del LOW
+_buzzer_h = None         # handle lgpio del buzzer, tenuto aperto cosi' il tono resta acceso
 
 
 def log(msg):
@@ -75,32 +76,19 @@ def write_tombstone(event, extra=""):
 
 
 def start_continuous_buzzer():
-    """Tono continuo sul buzzer, spawnato UNA SOLA VOLTA all'ISTANTE in cui GPIO26
-    va LOW (= manca corrente). Processo detached che ignora SIGTERM → suona senza
-    interruzioni fino allo spegnimento, non blocca lo shutdown e sopravvive al
-    kill di questo servizio."""
-    global _buzzer_started
+    """Tono continuo sul buzzer, avviato IN-PROCESS (lgpio diretto, ~1ms) nell'
+    ISTANTE esatto in cui GPIO26 va LOW. NIENTE subprocess: prima c'era un
+    Popen(python) il cui avvio interprete (~150ms) faceva partire il tono in
+    ritardo -> non si sentiva "al primo 0V". L'handle e' tenuto in un globale
+    cosi' il PWM resta acceso fino al poweroff (sysrq lascia vivo il processo).
+    Idempotente: parte una volta sola."""
+    global _buzzer_started, _buzzer_h
     if _buzzer_started:
         return
     _buzzer_started = True
-    buzz_code = (
-        "import lgpio, signal, time\n"
-        "signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
-        "signal.signal(signal.SIGINT, signal.SIG_IGN)\n"
-        "try:\n"
-        "    h = lgpio.gpiochip_open(%d)\n"
-        "    lgpio.tx_pwm(h, %d, 1500, 50)\n"
-        "    time.sleep(120)\n"
-        "except Exception: pass\n"
-    ) % (GPIO_CHIP, BUZZER_PIN)
     try:
-        subprocess.Popen(
-            [sys.executable, "-c", buzz_code],
-            start_new_session=True,
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        _buzzer_h = lgpio.gpiochip_open(GPIO_CHIP)
+        lgpio.tx_pwm(_buzzer_h, BUZZER_PIN, 1500, 50)
     except Exception:
         pass
 
