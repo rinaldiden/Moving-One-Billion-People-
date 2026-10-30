@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "asmile/perception_pipeline/case.schema.json",
+  "title": "Caso dubbio — gate umano (orchestrator → Daniele → modello)",
+  "description": "Mai PII. Solo contesto di scena. Protocollo: knowledge/casi_dubbi_protocol.md",
+  "type": "object",
+  "required": ["id", "session", "frame_range", "stage", "scene_summary", "question", "options", "status"],
+  "properties": {
+    "id": { "type": "string", "description": "hash stabile (session+frame_range+stage) per dedup" },
+    "session": { "type": "string" },
+    "frame_range": { "type": "array", "items": { "type": "string" }, "minItems": 2, "maxItems": 2 },
+    "stage": { "enum": ["2-verification", "3-situations", "4-roads"] },
+    "created": { "type": "string", "description": "timestamp passato dal chiamante" },
+    "scene_summary": {
+      "type": "object",
+      "description": "COSA vedeva la bici — niente PII",
+      "properties": {
+        "classes": { "type": "array", "items": { "type": "string" } },
+        "positions": { "type": "object" },
+        "distances_m": { "type": "object" },
+        "drivable": { "type": "object" },
+        "sensors": { "type": "object", "description": "decel, gyro_z, velocità, GPS fix" }
+      }
+    },
+    "frame_ref": { "type": ["string", "null"], "description": "path LOCALE del frame anonimo, mai immagine incorporata" },
+    "candidate_interpretations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "reading": { "type": "string" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+    "question": { "type": "string", "description": "domanda precisa per Daniele, in italiano" },
+    "options": { "type": "array", "items": { "type": "string" }, "description": "+ sempre 'Altro' libero" },
+    "is_general": { "type": "boolean", "description": "la risposta è regola generale (→ knowledge) o label locale" },
+    "status": { "enum": ["open", "sent", "resolved"] },
+    "resolution": {
+      "type": ["object", "null"],
+      "description": "presente solo in casi_dubbi/resolved/",
+      "properties": {
+        "verdict": { "type": "string", "description": "scelta o testo libero di Daniele" },
+        "applied_as": { "enum": ["label", "rule"] },
+        "decision_log_ref": { "type": ["string", "null"], "description": "se 'rule': voce DECISION_LOG da firmare" }
+      }
+    }
+  }
+}

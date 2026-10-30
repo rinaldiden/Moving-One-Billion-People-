@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "asmile/perception_pipeline/roads.schema.json",
+  "title": "Stadio 4 — output router (segmenti-strada + curriculum)",
+  "type": "object",
+  "required": ["pipeline", "stage", "cluster_params", "roads", "curriculum", "data_gaps"],
+  "properties": {
+    "pipeline": { "const": "asmile-seg" },
+    "stage": { "const": "4-roads" },
+    "cluster_params": {
+      "type": "object",
+      "description": "deterministici (vedi road_curriculum_policy.md)",
+      "properties": {
+        "radius_m": { "type": "number" },
+        "heading_deg": { "type": "number" }
+      }
+    },
+    "roads": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["road_id", "centroid", "situation_histogram", "minutes_moving", "split"],
+        "properties": {
+          "road_id": { "type": "string" },
+          "centroid": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
+          "gps_available": { "type": "boolean" },
+          "situation_histogram": { "type": "object", "description": "situazione → conteggio" },
+          "minutes_moving": { "type": "number" },
+          "scarce_conditions": { "type": "array", "items": { "enum": ["low_light", "no_gps_fix", "dropout", "depth_coarse"] } },
+          "unknown_frac": { "type": "number" },
+          "novel_frac": { "type": "number" },
+          "split": { "enum": ["train", "held_out"], "description": "per STRADA, mai per frame" },
+          "case_candidate": { "type": "boolean" }
+        }
+      }
+    },
+    "curriculum": {
+      "type": "array",
+      "description": "ordine proposto facile→difficile (road_id)",
+      "items": { "type": "string" }
+    },
+    "data_gaps": {
+      "type": "array",
+      "description": "buchi dichiarati, NON tappati con padding",
+      "items": {
+        "type": "object",
+        "properties": {
+          "what": { "type": "string" },
+          "note": { "type": "string" }
+        }
+      }
+    }
+  }
+}

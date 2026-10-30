@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "asmile/perception_pipeline/model_package.schema.json",
+  "title": "Stadio 5 — manifest del pacchetto modello (per GamePlay)",
+  "type": "object",
+  "required": ["pipeline", "stage", "model_version", "onnx_ref", "trained_from", "verdict", "road_bound"],
+  "properties": {
+    "pipeline": { "const": "asmile-seg" },
+    "stage": { "const": "5-model" },
+    "model_version": { "type": "string", "description": "es. asmile_model_v5 — mai sovrascrivere versioni" },
+    "onnx_ref": { "type": "string", "description": "path locale ONNX (gitignored)" },
+    "trained_from": {
+      "type": "object",
+      "description": "tracciabilità: da quale corpus/curriculum nasce",
+      "properties": {
+        "roads_index": { "type": "string" },
+        "sim2real_run": { "type": "string" },
+        "corpus_hash": { "type": "string" }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "roads": { "type": "integer" },
+        "situations_covered": { "type": "array", "items": { "type": "string" } },
+        "data_gaps": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "verdict": {
+      "type": "object",
+      "description": "PROPOSTO dal validator/vtest — NON è l'ok alla strada",
+      "required": ["vtest", "validator", "road_ready"],
+      "properties": {
+        "vtest": { "enum": ["go", "no_go", "not_run"] },
+        "validator": { "enum": ["go", "no_go", "not_run"] },
+        "road_ready": { "const": false, "description": "sempre false qui: la strada la firma Daniele (D002)" }
+      }
+    },
+    "deploy_target": {
+      "type": "string",
+      "description": "«GamePlay» — da confermare (QUESTIONI_APERTE Q9); finché aperto: 'unconfirmed'",
+      "default": "unconfirmed"
+    },
+    "road_bound": { "const": false }
+  }
+}

@@ -56,3 +56,20 @@ Ri-verificato su richiesta di Daniele (tweet non apribile, X 402; identificato v
 - **Distinzione utile (nuova)**: il predecessore **"Open Duck Mini"** è invece genuinamente open-hardware,
   stampabile in 3D, **~$400 in parti** (biped ~15 servo, no guida autonoma — è locomozione a zampe).
   È DA LÌ, non da MicroDuck, che si prende una base meccanica davvero libera se si vuole replicare l'approccio.
+
+## Q9 — Cos'è «GamePlay», il bersaglio di deploy del modello? (pipeline seg→modello, 2026-10-30)
+Daniele: "estrarre il vero e proprio modello di guida autonoma che poi metteremo su **Gameplay**".
+Non so cosa sia GamePlay. Ipotesi: (a) il runtime on-edge sul Pi 5 (dove già va l'ONNX della
+sim2real); (b) un ambiente di gioco/simulazione per replay closed-loop; (c) una superficie di
+prodotto/dashboard. **Aperto:** finché non confermato, `asmile-seg-modeler` produce un pacchetto
+**neutro** (ONNX + manifest JSON), senza assunzioni sul runtime (`deploy_target: unconfirmed`).
+Da chiarire con Daniele prima del primo giro reale.
+
+## Q10 — Classi di regola mancanti bloccano le situazioni di regola (seg→modello, 2026-10-30)
+`categories.yaml` non ha `stop_sign`/`traffic_light`/`give_way` (già notato in
+`segment_gate_jev_approach.md` §4). Conseguenza nella pipeline seg→modello: le situazioni
+`stop_richiesto`/`semaforo`/`precedenza`/`incrocio` cadranno quasi sempre in `unknown` → tanti
+casi dubbi a Daniele. **Aperto:** aggiungere quelle classi al training di segmentazione (o un
+classificatore dedicato) prima del primo giro, o accettare che quelle situazioni partano come
+casi dubbi finché il dato non c'è? Proposta: partire con `unknown`→umano, aggiungere le classi
+quando arrivano video con segnaletica sufficiente.

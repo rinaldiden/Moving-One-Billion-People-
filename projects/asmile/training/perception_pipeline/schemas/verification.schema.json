@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "asmile/perception_pipeline/verification.schema.json",
+  "title": "Stadio 2 — output verifier (verdetto per frame)",
+  "type": "object",
+  "required": ["pipeline", "stage", "thresholds", "frames"],
+  "properties": {
+    "pipeline": { "const": "asmile-seg" },
+    "stage": { "const": "2-verification" },
+    "thresholds": {
+      "type": "object",
+      "description": "soglie usate, dichiarate (non legge finché non calibrate sui video freschi)",
+      "properties": {
+        "iou_min": { "type": "number" },
+        "conf_min": { "type": "number" },
+        "conf_min_critical": { "type": "number" },
+        "ood_energy": { "type": "number" }
+      }
+    },
+    "frames": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["frame_id", "status", "novel"],
+        "properties": {
+          "frame_id": { "type": "string" },
+          "status": { "enum": ["ok", "review", "reject"] },
+          "reasons": { "type": "array", "items": { "type": "string" } },
+          "novel": { "type": "boolean" },
+          "novel_score": { "type": ["number", "null"] },
+          "critical_low_conf": { "type": "boolean", "description": "classe critica sotto soglia: tenuta e flaggata, mai rejected" },
+          "case_candidate": { "type": "boolean", "description": "proposto come caso dubbio" }
+        }
+      }
+    }
+  }
+}

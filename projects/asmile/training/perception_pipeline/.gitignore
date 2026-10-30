@@ -1,0 +1,13 @@
+# Output degli stadi = dati locali, non codice. Su git solo contratto + dottrina.
+pipeline_state.json
+01_segmentation/*
+02_verification/*
+03_situations/*
+04_roads/*
+05_model/*
+casi_dubbi/queue/*
+casi_dubbi/resolved/*
+
+# ...ma tieni i marcatori di cartella e gli eventuali README per-cartella
+!*/.gitkeep
+!*/README.md

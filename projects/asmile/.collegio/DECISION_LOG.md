@@ -225,3 +225,42 @@ segmenta? (b) dati su 2ª partizione della stessa SD o SSD/USB o rete? (c) overl
 campo, OFF solo per deploy — confermi questo workflow?
 
 **Firma:** ______________________  **Data:** __________
+
+---
+
+## D009 — Pipeline agenti segmentazione→modello + orchestratore con casi dubbi a Daniele
+**Data proposta:** 2026-10-30 · **Autore:** doppio di Daniele (Claude) · **Stato:** DA FIRMARE
+
+**Scelta proposta.** Accanto alla pipeline di anonimizzazione (`asmile-anon-*`, GDPR, D008),
+aggiungere una **seconda** catena di agenti dedicati (`.claude/agents/asmile-seg-*`) che dal corpus
+**anonimo** fa in autonomia: **[1] segmentazione** full-coverage → **[2] verifica** → **[3]
+comprensione delle situazioni** (tassonomia fissa) → **[4] gestione strada-per-strada** (curriculum
++ data-gap + split held-out) → **[5] estrazione del modello** (bridge alla pipeline sim2real già
+scritta → ONNX, pacchetto per «GamePlay»). **Sopra** c'è **[0] un orchestratore**
+(`asmile-seg-orchestrator`) che guida la catena, tiene lo stato, e — cuore della richiesta —
+**quando una situazione non è chiara la impacchetta (contesto di scena, mai PII) e la manda a
+Daniele personalmente su Telegram**; alla sua risposta la reinietta come label/knowledge e la
+catena prosegue. Contratto deterministico fra stadi via schemi JSON
+(`training/perception_pipeline/schemas/`).
+
+**Evidenza.** Voce di Daniele (2026-10-30). Riusa strumenti esistenti senza rifarli:
+`training/segmentation/*` + `categories.yaml` (stadio 1), Energy-OOD dal
+`segment_gate_jev_approach.md` (stadio 2), `driving_patterns.md` P1–P9/A1–A7 (stadio 3), CSV GPS
+(stadio 4), **pipeline sim2real** (`asmile-sim2real-pipeline`) + banco `asmile-vtest-*` (stadio 5).
+Scaffolding a terra: 6 agenti, skill `asmile-segmentazione-modello`, doc
+`docs/pipeline_agenti_segmentazione_modello.md`, 6 schemi, 4 knowledge, cartelle deliverable +
+coda `casi_dubbi/`. Coerente con la dottrina "l'umano dove il dato tace" e con D001/D002.
+
+**Deroghe/limiti (dichiarati).** **Nessuno stadio è stato lanciato** (richiesta esplicita:
+"prepara solo senza farlo girare, poi lo rivediamo appena abbiamo dei video freschi"). Input SOLO
+anonimo (gira dopo `asmile-anon-*`). La pipeline **non attua** nulla e **non porta su strada**:
+produce dati + un modello candidato con scheda. Il bersaglio «GamePlay» è **da confermare** (Q9).
+Classi di regola (stop/semaforo/precedenza) ancora assenti da `categories.yaml` → molte situazioni
+di regola cadranno in `unknown` → casi dubbi (Q10).
+
+**Cosa serve per firmare.** Daniele conferma: (a) la forma della catena a 6 agenti + l'orchestratore
+con il gate umano sui casi dubbi; (b) che i casi dubbi arrivino via **Telegram**, uno per uno, e che
+il suo verdetto sia l'unica via per chiuderli; (c) cos'è «GamePlay» (Q9); (d) da quale blocco di
+video freschi partire per il primo giro reale.
+
+**Firma:** ______________________  **Data:** __________
