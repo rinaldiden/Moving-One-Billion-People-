@@ -264,3 +264,46 @@ il suo verdetto sia l'unica via per chiuderli; (c) cos'è «GamePlay» (Q9); (d)
 video freschi partire per il primo giro reale.
 
 **Firma:** ______________________  **Data:** __________
+
+---
+
+## D010 — Due pipeline di calibrazione cam del logger (ChArUco a monitor + COLMAP), alternative all'auto-calib
+**Data proposta:** 2026-10-31 · **Autore:** doppio di Daniele (Claude) · **Stato:** DA FIRMARE
+
+**Scelta proposta.** Accanto a `autorectify.py` (auto-calib **senza target**, costruita oggi),
+aggiungere in `logger/depth/` **due pipeline di calibrazione** pronte al deploy, **intercambiabili**
+perché scrivono tutte lo **stesso JSON** (`stereo_common.Calib`) → drop-in in `validate.py` /
+`depth.py` / `drift_monitor.py` senza toccarli:
+- **`calib_charuco.py`** ⭐ (consigliata): tabellone **ChArUco mostrato a monitor** → in ~mezz'ora
+  calibra le **due camere + la stereo** in un colpo (`calibrateCameraCharuco` ×2 + `stereoCalibrate`
+  a intrinseci fissi). Robusto al taglio dei bordi (marker con ID). Include `--make-board` per
+  generare il PNG da schermo.
+- **`calib_colmap.py`**: **SfM a ritroso senza target** — spezza la Camarray in due camere rigide
+  (`single_camera_per_folder`), COLMAP stima intrinseci+pose, media la posa relativa L→R su tutti i
+  frame. Serve il binario `colmap` + clip con texture/movimento.
+- doc di confronto **`README_calibrazione.md`** + nota nel README esistente (additiva).
+
+**Evidenza.** Voce di Daniele (2026-10-31): *"la calibrazione prepara anche questo, pronto al deploy
+come alternativa… le strade restano due: COLMAP oppure il ChArUco a monitor, che ti consiglio…
+manda un agente a studiare i due approcci e preparare le due pipeline, poi vediamo quale stima
+meglio sul primo asmile-logger."* Coerente con la diagnosi del README depth (il problema è la
+**calibrazione**, non il matcher: focale ~13% + `dy=3.75px`) e col principio del progetto
+**baseline nota = scala metrica gratis**: entrambe le vie stimano `R,T` e **riscalano `|T|` a
+200mm** (l'ancora), così la scala incerta del monitor/SfM non conta. Numeri del rig verificati in
+doc (f≈930px, B=200mm, δd=¼px → ±3cm@5m, ±13cm@10m, ±50cm@20m). Smoke-test locale: entrambi gli
+script compilano; ChArUco genera il board e la detect (CharucoDetector 4.10) trova i 24 angoli +
+`matchImagePoints` OK.
+
+**Deroghe/limiti (dichiarati).** **Nessuna calibrazione è stata eseguita su dati reali** (manca il
+clip del primo logger acceso): le pipeline sono preparate e smoke-testate, non ancora "vinte" sul
+muro. COLMAP richiede l'installazione del binario di sistema (non pip) e un clip ricco. La scelta
+di **quale delle tre vie stima meglio** la fa Daniele coi numeri `err%` di `validate.py` (muro-test
+col metro 1–10m) — vedi piano di prova in `README_calibrazione.md`. Nulla va su strada/training
+senza firma.
+
+**Cosa serve per firmare.** Daniele conferma: (a) tenere le **due vie** affiancate all'auto-calib,
+tutte dietro lo stesso JSON; (b) **ChArUco come default** consigliato; (c) che il giudice fra le tre
+resti `validate.py` sul muro-test del **primo asmile-logger**; (d) i parametri del tabellone
+(default 7×5, DICT_5X5) o se preferisce un formato diverso per il suo monitor.
+
+**Firma:** ______________________  **Data:** __________

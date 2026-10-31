@@ -41,6 +41,21 @@ lente attuale, oltre i ~7m è il rig a limitare, non il codice.
 - **Teacher-offline → student-edge**: Mac fa il denso forte, Pi gira SGBM distillato.
 - **Monitor di drift continuo** (bici che vibra) → `drift_monitor.py`.
 
+## Due vie di calibrazione pronte al deploy (alternative all'auto-calib)
+
+Oltre a `autorectify.py` (auto-calib **senza target**, quella costruita oggi) ci
+sono ora **due pipeline di calibrazione** alternative, che scrivono lo **stesso
+JSON** → drop-in in `validate.py`/`depth.py`/`drift_monitor.py`:
+
+- **ChArUco a monitor** (`calib_charuco.py`) ⭐ — in ~mezz'ora calibra le due
+  camere + la stereo in un colpo. **Via consigliata.**
+- **COLMAP / SfM** (`calib_colmap.py`) — a ritroso, senza target, dalla geometria
+  della scena guidata (serve il binario `colmap` + clip con texture/movimento).
+
+Confronto, numeri del rig (f≈930px, B=200mm, δd=¼px → ±3cm@5m, ±13cm@10m,
+±50cm@20m) e **come decidere quale stima meglio sul primo logger** →
+**`README_calibrazione.md`**.
+
 ## Flusso di lavoro (ordine d'attacco al 7.8%)
 
 ```
