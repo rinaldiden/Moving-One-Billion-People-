@@ -58,6 +58,10 @@ def compute_depth(left_gray, right_gray, focal_px, baseline_mm, sgbm_params, swa
     af, bf = np.fliplr(a), np.fliplr(b)
     dispR = np.fliplr(sg.compute(bf, af).astype(np.float32) / 16.0)
     mask = lr_consistency(dispL, dispR)
+    # scarta disparità SATURATA al bordo della ricerca (= match inaffidabile / troppo
+    # vicino per misurare: su video mal-rettificati dava la falsa "1.24m stuck")
+    nd = sgbm_params["numDisparities"]
+    mask &= dispL < (nd - 1)
     disp = dispL.copy()
     disp[~mask] = 0
     # speckle extra (SGBM lo fa gia' internamente; qui opzionale su int16)
