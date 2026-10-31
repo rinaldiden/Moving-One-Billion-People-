@@ -18,10 +18,12 @@ import json
 import numpy as np
 import cv2
 
-# --- default fisici del rig (sovrascrivibili da calib / CLI) ---
+# --- default fisici del rig (gia' noti dal progetto; sovrascrivibili da calib/CLI) ---
 FULL_W, FULL_H = 2560, 800          # frame side-by-side
 CAM_W, CAM_H = 1280, 800            # singola camera
-BASELINE_MM = 200.0                 # baseline fisica (misurare col metro!)
+BASELINE_MM = 200.0                 # baseline fisica Camarray (calib: 199.53mm) — NOTA
+CAM_HEIGHT_M = 0.77                 # altezza camera da terra (da object_depth.py) — NOTA
+                                    # (valore bici #001; ri-confermare solo se il mount logger cambia)
 
 
 class Calib:

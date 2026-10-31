@@ -63,19 +63,22 @@ python3 depth.py --video clip.h264 --calib calib_logger.json --model crestereo.o
 python3 drift_monitor.py --video clip.h264 --calib calib_logger.json --thresh 0.5
 ```
 
-## 📏 Cosa misurare col metro (dammi questi numeri)
+## 📏 Cosa misurare col metro
 
-1. **Baseline reale**: distanza **centro-a-centro delle due lenti**, al mm
-   (nominale 200 → `--baseline-mm`). Scala la depth 1:1.
-2. **Altezza camera da terra** (per piano terra / spazio guidabile).
-3. **Target a distanze note** (il più importante): oggetto piano/ben visibile
-   sull'asse della camera a **1.0 / 2.0 / 3.0 / 5.0 / 7.0 / 10.0 m**, misurati col
-   metro, ~10s di stereo fermo a ciascuna. Compila `targets.json`:
+**Già noti** (default nella pipeline, non serve rimisurarli):
+- **Baseline = 200mm** (Camarray, calib 199.53mm) → `BASELINE_MM` / `--baseline-mm`.
+- **Altezza camera = 0.77m** → `CAM_HEIGHT_M` (ri-confermare solo se il mount logger cambia).
+
+**Da misurare (l'unico che serve davvero — specifico del tuo kit):**
+1. **Target a distanze note** (è l'ancora metrica al posto della scacchiera):
+   oggetto piano/ben visibile sull'asse della camera a **1.0 / 2.0 / 3.0 / 5.0 /
+   7.0 / 10.0 m**, misurati col metro, ~10s di stereo fermo a ciascuna. Compila
+   `targets.json`:
    ```json
    [{"video":"1m.h264","distance_m":1.0},{"video":"3m.h264","distance_m":3.0}]
    ```
    Da qui ricavo focale reale + errore % a ogni distanza.
-4. *(opz.)* sigla della lente (focale mm / FOV) per sanity-check.
+2. *(opz.)* sigla della lente (focale mm / FOV) per sanity-check.
 
 Per l'auto-calibrazione serve anche un clip con **texture varia e profondità
 diverse** (muri, strada, oggetti vicini+lontani) + un po' di movimento.
