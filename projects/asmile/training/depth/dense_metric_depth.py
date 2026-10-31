@@ -45,13 +45,14 @@ def main():
     ap.add_argument("--preset", default="camarray2560", choices=list(PRESETS))
     ap.add_argument("--out", default="/tmp/dense")
     ap.add_argument("--nframes", type=int, default=8)
+    ap.add_argument("--model", default=MONO_MODEL, help="modello monoculare metrico HF")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
 
     cfg = PRESETS[a.preset]
     dev = "mps" if torch.backends.mps.is_available() else "cpu"
-    print(f"[init] mono={MONO_MODEL} dev={dev} · stereo focal={cfg['focal_px']} baseline={cfg['baseline_mm']}mm")
-    mono = pipeline("depth-estimation", model=MONO_MODEL, device=dev)
+    print(f"[init] mono={a.model} dev={dev} · stereo focal={cfg['focal_px']} baseline={cfg['baseline_mm']}mm")
+    mono = pipeline("depth-estimation", model=a.model, device=dev)
 
     cap = cv2.VideoCapture(a.video)
     n = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 300
