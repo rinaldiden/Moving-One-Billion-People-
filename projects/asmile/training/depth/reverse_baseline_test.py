@@ -35,6 +35,10 @@ def main():
     ap.add_argument("--preset", default="camarray2560", choices=list(PRESETS))
     ap.add_argument("--nframes", type=int, default=20)
     ap.add_argument("--Hreal", type=float, default=H_PERSON_M)
+    ap.add_argument("--known-depth", type=float, default=None,
+                    help="modo RIGHELLO (esatto): distanza REALE in m di un oggetto misurata "
+                         "col metro. Usa l'oggetto piu' grande nel frame: baseline = "
+                         "dist_nota*disparita/focale. Su #001 ben calibrato deve dare ~200mm.")
     a = ap.parse_args()
     cfg = PRESETS[a.preset]
     model = YOLO("yolo11n-seg.pt")
@@ -56,7 +60,21 @@ def main():
                                     cfg["sgbm"], cfg["sgbm_swap"])
             Lbgr = cv2.cvtColor(L, cv2.COLOR_GRAY2BGR)
             res = model.predict(Lbgr, conf=0.4, verbose=False)[0]
-            if res.boxes is not None:
+            if a.known_depth is not None and res.boxes is not None and len(res.boxes):
+                # MODO RIGHELLO (esatto): oggetto piu' grande, distanza reale NOTA (metro)
+                #   baseline = dist_nota * disparita / focale   → su #001 calibrato deve dare ~200mm
+                xy = res.boxes.xyxy.cpu().numpy()
+                k = int(np.argmax((xy[:, 2] - xy[:, 0]) * (xy[:, 3] - xy[:, 1])))
+                x1, y1, x2, y2 = xy[k].astype(int)
+                reg = disp[y1:y2, x1:x2]
+                dv = reg[reg > 1]
+                if dv.size >= 100:
+                    d_med = float(np.median(dv))
+                    b_rec = a.known_depth * d_med / cfg["focal_px"] * 1000.0
+                    recovered.append(b_rec)
+                    print(f"  frame {i}: {model.names[int(res.boxes.cls[k])]} @ {a.known_depth}m (metro) "
+                          f"disp={d_med:.1f} → baseline={b_rec:.0f}mm")
+            elif res.boxes is not None:
                 for k in range(len(res.boxes)):
                     if model.names[int(res.boxes.cls[k])] != "person":
                         continue
