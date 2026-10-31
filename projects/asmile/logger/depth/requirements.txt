@@ -1,0 +1,5 @@
+# Pipeline depth logger asmile (Mac M1, venv Python 3.12)
+numpy
+opencv-contrib-python   # 'contrib' = include ximgproc (filtro WLS + right-matcher)
+scipy                   # least_squares per l'auto-calibrazione (autorectify)
+onnxruntime             # opzionale: teacher CREStereo ONNX offline (nativo Apple Silicon)
