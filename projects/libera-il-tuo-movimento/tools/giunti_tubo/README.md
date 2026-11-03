@@ -59,3 +59,21 @@ La v0.2 confronta il **disegno fisso** con i **tubi reali**: anello e montante v
 - Mancano: PA-C (travetto sopra l'anello inclinato), SG (gancio d'angolo), scarpe e cavalieri, compensazione del
   kerf, raggi e dogbone delle asole, svergolamento del tubo. Questi nodi vanno costruiti partendo da `sauna-model.js`.
 - È tutto PRELIMINARE: il collaudo è geometrico. La verifica strutturale va firmata da un tecnico.
+
+## v0.3 — `struttura_sauna.py`: STRUTTURA COMPLETA a incastro (dall'ultima tavola)
+Legge `sauna_membri.json` (dump di `sauna-model.js`, cioè l'ultima tavola con porta, finestra e montanti) e
+costruisce il telaio intero in TUB 80×80×2,5:
+- pilastri d'angolo fino a terra, con gli anelli accostati;
+- anelli laterali inclinati tagliati in verticale contro i pilastri;
+- correnti e traversi spezzati tra i montanti;
+- travetti sopra gli anelli, inclinati di 3,83° come la falda, più 2 travetti di gronda.
+
+Nei punti dove valgono mette i nodi collaudati:
+- **PA-A61-off5** al piede: 19;
+- **PA-C** sotto i travetti: 14, di cui 2 "corte" sopra la finestra;
+- **PA-B** sulla parete del vano: 3;
+- **PA-Bα** in testa ai montanti laterali senza travetto sopra: 2.
+
+Il collaudo d'interferenza su tutto il telaio (62 tubi, 38 piastre, 76 boccole) dà **0**. Gli altri nodi
+(SG angolo, T, CL correnti, PA-P, cavalieri) sono **segnaposto in magenta**, perché vanno ancora progettati.
+In Fusion il documento è "Sauna kit ferro - STRUTTURA a incastro v0.3".
