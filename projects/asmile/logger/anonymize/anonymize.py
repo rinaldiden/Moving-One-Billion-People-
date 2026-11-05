@@ -234,15 +234,38 @@ class TemporalSmoother:
 
 # ───────────────────────────── IO video ─────────────────────────────
 def _ensure_decodable(path: Path) -> tuple[Path, bool]:
-    """I .h264 grezzi (elementary stream) spesso non si aprono in OpenCV → remux a mp4
-    temporaneo con ffmpeg (copy, nessuna ri-codifica). Ritorna (path, is_temp)."""
+    """Rende il video leggibile. Ritorna (path, is_temp).
+    I .h264 grezzi di rpicam: ffmpeg li legge MALE (vede pochi frame), OpenCV invece
+    li legge bene. Quindi: prova OpenCV diretto -> remux ffmpeg -> transcodifica OpenCV."""
     if path.suffix.lower() != ".h264":
         return path, False
+    # 1) OpenCV apre il .h264 direttamente? (su questo sistema sì)
+    cap = cv2.VideoCapture(str(path))
+    direct_ok = cap.isOpened() and cap.read()[0]
+    cap.release()
+    if direct_ok:
+        return path, False
     tmp = Path(tempfile.mkdtemp(prefix="anon_")) / (path.stem + ".mp4")
-    subprocess.run(
-        ["ffmpeg", "-y", "-loglevel", "error", "-r", "15", "-i", str(path), "-c", "copy", str(tmp)],
-        check=True,
-    )
+    # 2) remux ffmpeg (-c copy, veloce) + verifica che sia leggibile
+    try:
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-r", "15",
+                        "-i", str(path), "-c", "copy", str(tmp)], check=True)
+        c = cv2.VideoCapture(str(tmp)); ok = c.isOpened() and c.read()[0]; c.release()
+        if ok:
+            return tmp, True
+    except Exception:
+        pass
+    # 3) fallback robusto: transcodifica frame-by-frame con OpenCV
+    cap = cv2.VideoCapture(str(path))
+    w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)); h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = cap.get(cv2.CAP_PROP_FPS) or 15.0
+    wr = cv2.VideoWriter(str(tmp), cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
+    while True:
+        r, f = cap.read()
+        if not r:
+            break
+        wr.write(f)
+    cap.release(); wr.release()
     return tmp, True
 
 
