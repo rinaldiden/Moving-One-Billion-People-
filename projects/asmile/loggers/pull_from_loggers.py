@@ -13,15 +13,22 @@ sim2real per migliorare il modello) la fa l'agente / lo skill asmile-sim2real-pi
 
 Uso:  python3 pull_from_loggers.py          # un giro su tutti i logger
 """
-import os, subprocess, hashlib, shlex
+import os, subprocess, hashlib, shlex, json, shutil
 
 HERE = os.path.dirname(os.path.abspath(__file__))              # .../projects/asmile/loggers
 DEST_BASE = os.path.abspath(os.path.join(HERE, "..", "asmile-loggers"))
 
-# Flotta logger. host = alias ssh o IP Tailscale. Aggiungine quando ce ne sono.
+# --- Scoperta flotta via TAILSCALE: prende TUTTI i logger ONLINE, anche fuori EOLO ---
+TAILSCALE_BIN = shutil.which("tailscale") or "/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+NAME_PATTERN = "logger"          # sottostringa (case-insens.) che identifica i logger della flotta
+DEFAULT_USER = "asmile-logger"
+SRC = "/data/recordings"
+USER_MAP = {}                    # override utente per-host se serve: {"nomehost": "utente"}
+
+# Fallback statico se Tailscale non è disponibile (host = alias ssh o IP).
 LOGGERS = [
     {"name": "asmile-logger", "host": "asmile-logger",
-     "user": "asmile-logger", "src": "/data/recordings"},
+     "user": "asmile-logger", "src": SRC},
 ]
 
 SSH_OPTS = ["-o", "BatchMode=yes", "-o", "ConnectTimeout=10",
@@ -35,6 +42,24 @@ def ssh(lg, cmd):
 
 def reachable(lg):
     return ssh(lg, "true").returncode == 0
+
+
+def discover_loggers():
+    """Logger ONLINE sulla tailnet che matchano NAME_PATTERN (li prende anche fuori EOLO)."""
+    try:
+        r = subprocess.run([TAILSCALE_BIN, "status", "--json"],
+                           capture_output=True, text=True, timeout=15)
+        data = json.loads(r.stdout)
+    except Exception:
+        return []
+    found = []
+    for p in (data.get("Peer") or {}).values():
+        host = p.get("HostName") or ""
+        ips = p.get("TailscaleIPs") or []
+        if NAME_PATTERN.lower() in host.lower() and p.get("Online") and ips:
+            found.append({"name": host, "host": ips[0],
+                          "user": USER_MAP.get(host, DEFAULT_USER), "src": SRC})
+    return found
 
 
 def complete_clips(lg):
@@ -80,8 +105,14 @@ def pull_logger(lg):
 
 def main():
     os.makedirs(DEST_BASE, exist_ok=True)
+    loggers = discover_loggers()
+    if loggers:
+        print(f"Tailscale: {len(loggers)} logger online -> {', '.join(l['name'] for l in loggers)}")
+    else:
+        loggers = LOGGERS
+        print("Tailscale non disponibile / nessun peer -> uso lista statica")
     tot = 0
-    for lg in LOGGERS:
+    for lg in loggers:
         if not reachable(lg):
             print(f"[{lg['name']}] non raggiungibile (Tailscale off?) - skip")
             continue
