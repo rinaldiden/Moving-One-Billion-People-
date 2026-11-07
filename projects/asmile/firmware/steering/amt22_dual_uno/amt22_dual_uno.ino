@@ -13,9 +13,19 @@
  *   (switch di ogni encoder in RUN prima di alimentare)
  *
  * Output @500000 baud, una riga per campione:
- *   "<pos_sterzo>,<pos_ruota>\n"   (valore -1 = lettura non valida)
- * pos 0..16383 (14 bit). Latenza bassa: letture ~0.4ms + TX ~0.2ms.
+ *   "<pos_sterzo>,<pos_ruota>,<t_us>\n"   (valore -1 = lettura non valida)
+ * pos 0..16383 (14 bit). t_us = micros() a META' fra le due letture (2026-11-07):
+ * il bridge lo porta sull'orologio del Pi (CLOCK_MONOTONIC) col fit lineare
+ * micros->Pi, cosi' il campione ha l'istante VERO della misura e non quello,
+ * ritardato e variabile, di arrivo via USB. Il bridge accetta anche il formato
+ * vecchio a 2 campi (sketch non ancora riflashato).
+ * Latenza bassa: letture ~0.4ms + TX ~0.3ms.
  */
+// Versione: cambiarla a OGNI modifica + riga in firmware/steering/FLASH_LOG.md.
+// L'Arduino la stampa all'avvio ("# ..." senza virgole): il bridge la scrive in
+// /tmp/encoder_fw_version e il sensor_hub la mette nei metadati della sessione.
+#define FW_VERSION "amt22_dual_uno v2 2026-11-07 t_us"
+
 #define PIN_SCLK 13
 #define PIN_MISO 12
 #define PIN_MOSI 2
@@ -64,12 +74,18 @@ void setup() {
   digitalWrite(PIN_MOSI, LOW);
   digitalWrite(CS_STEER, HIGH);
   digitalWrite(CS_WHEEL, HIGH);
+  Serial.print("# ");
+  Serial.println(FW_VERSION);
 }
 
 void loop() {
+  unsigned long t0 = micros();
   int s = readPos(CS_STEER);
   int w = readPos(CS_WHEEL);
+  unsigned long t = t0 + (micros() - t0) / 2;   // istante medio delle due letture
   Serial.print(s);
   Serial.print(',');
-  Serial.println(w);
+  Serial.print(w);
+  Serial.print(',');
+  Serial.println(t);
 }

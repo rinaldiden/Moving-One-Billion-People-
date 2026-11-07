@@ -15,7 +15,13 @@
 #   OUT         cartella output (default /data/recordings)
 #   FLIP        "1" per --vflip --hflip (se camera capovolta; default no)
 #   ARDUCAM_FIX path dello shim (default ~/streaming/arducam_fix.so)
+#
+# Istante dei frame (2026-11-07, metodo unico flotta): se rpicam-vid ha --metadata, ogni frame
+# finisce in clip_<STAMP>_frames.csv  (frame,t_ms,sensor_ts_ns) con t_ms = CLOCK_MONOTONIC in ms,
+# lo stesso orologio del CSV unico del sensor_hub. Numerazione continua fra i segmenti: il Mac
+# assegna i frame alle clip contandoli in ordine.
 set -u
+set -o pipefail
 
 OUT="${OUT:-/data/recordings}"
 W="${W:-2560}"; H="${H:-800}"; FPS="${FPS:-15}"; BR="${BR:-500000}"
@@ -32,9 +38,19 @@ FLIPARGS=""
 [ "$FLIP" = "1" ] && FLIPARGS="--vflip --hflip"
 
 # Pi5 = encode H264 software (no HW); Camarray via shim arducam_fix.so.
-exec env LD_PRELOAD="$ARDUCAM_FIX" rpicam-vid \
-  --width "$W" --height "$H" --framerate "$FPS" \
-  --codec h264 --profile baseline --bitrate "$BR" \
-  $FLIPARGS --nopreview --timeout 0 \
-  --segment "$SEG" \
-  -o "$OUT/clip_${STAMP}_%05d.h264"
+CAM=(env LD_PRELOAD="$ARDUCAM_FIX" rpicam-vid
+  --width "$W" --height "$H" --framerate "$FPS"
+  --codec h264 --profile baseline --bitrate "$BR"
+  $FLIPARGS --nopreview --timeout 0
+  --segment "$SEG"
+  -o "$OUT/clip_${STAMP}_%05d.h264")
+
+if ! rpicam-vid --help 2>&1 | grep -q -- '--metadata'; then
+  exec "${CAM[@]}"                                   # rpicam vecchio: come prima
+fi
+# exit code = quello di rpicam (pipefail) → systemd riavvia se la camera cade
+"${CAM[@]}" --metadata - --metadata-format txt | awk '
+  BEGIN { print "frame,t_ms,sensor_ts_ns"; n = 0 }
+  /SensorTimestamp/ { if (match($0, /[0-9][0-9][0-9][0-9][0-9][0-9]+/)) {
+      ns = substr($0, RSTART, RLENGTH); printf "%d,%d,%s\n", n++, int(ns / 1000000), ns; fflush() } }
+' > "$OUT/clip_${STAMP}_frames.csv"

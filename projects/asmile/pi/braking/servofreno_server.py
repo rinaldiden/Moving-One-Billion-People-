@@ -21,6 +21,16 @@ import sys
 from datetime import datetime, date
 from flask import Flask, jsonify, request
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sensors"))
+try:
+    from hub_client import hub_enabled, hub_state
+except ImportError:                       # hub non deployato: tutto come prima
+    def hub_enabled():
+        return False
+
+    def hub_state(max_age_ms=500):
+        return None
+
 # ═══════════════════════════════════════════════════════════
 # PATHS
 # ═══════════════════════════════════════════════════════════
@@ -208,6 +218,23 @@ def nmea_to_decimal(coord: str, direction: str) -> float:
     if direction in ("S", "W"):
         decimal = -decimal
     return decimal
+
+
+class HubGPS:
+    """Con SENSOR_HUB=1 il GPS lo legge solo il sensor_hub: stessa interfaccia di GPSReader."""
+
+    def start(self):
+        pass
+
+    def stop(self):
+        pass
+
+    def get(self) -> dict:
+        st = hub_state(max_age_ms=3000) or {}
+        fix = bool(st.get("gps_fix"))
+        return {"lat": st.get("gps_lat") or 0.0, "lon": st.get("gps_lon") or 0.0,
+                "speed_ms": float(st.get("gps_speed_ms") or 0.0) if fix else 0.0,
+                "heading": float(st.get("gps_heading") or 0.0), "fix": fix}
 
 
 class GPSReader:
@@ -589,8 +616,9 @@ def main():
     if i2c_bus:
         init_ina219(i2c_bus)
 
-    # GPS
-    gps_reader = GPSReader()
+    # GPS (con SENSOR_HUB=1 la seriale GPS è del sensor_hub)
+    use_hub = hub_enabled()
+    gps_reader = HubGPS() if use_hub else GPSReader()
     gps_reader.start()
 
     # Encoder
@@ -601,8 +629,11 @@ def main():
     print(f"[LOG] Servofreno: {LOG_SERVO_DIR}/")
     print(f"[LOG] Training:   {LOG_TRAINING_DIR}/")
 
-    # Training logger — 10Hz continuous
-    threading.Thread(target=training_logger_thread, daemon=True).start()
+    # Training logger — 10Hz continuous (con SENSOR_HUB=1 registra il sensor_hub, CSV unico 50 Hz)
+    if use_hub:
+        print("[TRAINING] disattivato: sensori nel CSV unico del sensor_hub")
+    else:
+        threading.Thread(target=training_logger_thread, daemon=True).start()
 
     # Flask
     print()

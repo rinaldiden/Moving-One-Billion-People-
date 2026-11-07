@@ -31,6 +31,21 @@ import lgpio
 import serial
 import smbus2
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sensors"))
+try:
+    from hub_client import LIMITER_STATE_FILE, hub_enabled, hub_state, write_json_atomic  # noqa: E402
+except ImportError:                   # hub_client non deployato: comportamento di prima, il freno parte comunque
+    LIMITER_STATE_FILE = "/dev/shm/asmile_limiter.json"
+
+    def hub_enabled():
+        return False
+
+    def hub_state(max_age_ms=500):
+        return None
+
+    def write_json_atomic(path, obj):
+        pass
+
 # ─── Target ───────────────────────────────────────────────────────────
 TARGET_KMH = 10.0       # ceiling: sopra → adattivo per riportare a target
 ACTIVATE_KMH = 8.0      # sotto → FREE, brake rilasciato (alzato da 7 a 8: cap puntato a 12)
@@ -159,7 +174,27 @@ class GPSReader:
 
     def _run(self):
         ser = None
+        use_hub = hub_enabled()       # SENSOR_HUB=1: il GPS (UART3) lo apre SOLO il sensor_hub
         while self._running:
+            if use_hub:
+                st = hub_state(max_age_ms=int(GPS_FIX_TIMEOUT_S * 1000))
+                if st is not None:
+                    if ser:                        # il hub è tornato: gli ridò la seriale
+                        try:
+                            ser.close()
+                        except Exception:
+                            pass
+                        ser = None
+                    t_fix = st.get("gps_t_ms")
+                    if t_fix is not None:
+                        with self._lock:
+                            self._fix = bool(st.get("gps_fix"))
+                            self._speed_ms = float(st.get("gps_speed_ms") or 0.0) if self._fix else 0.0
+                            self._last_update = time.monotonic() - (st["t_ms"] - int(t_fix)) / 1000.0
+                        self._publish_json()
+                    time.sleep(0.02)
+                    continue
+                # hub fermo da >3 s: ripiego sulla lettura diretta finché non torna
             try:
                 if ser is None:
                     ser = serial.Serial(GPS_PORT, GPS_BAUD, timeout=0.1)
@@ -258,7 +293,7 @@ class WheelEncoder:
         """Dal bridge nuovo: (count srotolati, t_monotonic) o None se manca/vecchio."""
         try:
             with open(ENC_WHEEL_CUM_FILE) as f:
-                c, tb = f.readline().split()
+                c, tb = f.readline().split()[:2]
             c, tb = int(c), float(tb)
         except (OSError, ValueError):
             return None
@@ -498,7 +533,21 @@ class SpeedLimiter:
         self.prev_speed = 0.0
         self.tick = 0
 
-        # Log
+        # Log: con SENSOR_HUB=1 lo stato del freno va nel CSV unico del sensor_hub (stesso t_ms
+        # di camere e sensori) → niente CSV proprio. Senza hub: CSV come prima.
+        self.hub = hub_enabled()
+        if self.hub:
+            self.log_f = None
+            print(f"[LIMITER] log → sensor_hub (stato in {LIMITER_STATE_FILE})", flush=True)
+        else:
+            self._open_own_log()
+
+        # Stop flag
+        self.running = True
+        signal.signal(signal.SIGTERM, self._on_signal)
+        signal.signal(signal.SIGINT, self._on_signal)
+
+    def _open_own_log(self):
         os.makedirs(LOG_DIR, exist_ok=True)
         log_path = os.path.join(LOG_DIR, f"limiter_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
         self.log_f = open(log_path, "w", newline="")
@@ -512,11 +561,6 @@ class SpeedLimiter:
             "enc_speed_ms", "enc_fresh", "enc_accel_ms2",
         ])
         print(f"[LIMITER] log: {log_path}", flush=True)
-
-        # Stop flag
-        self.running = True
-        signal.signal(signal.SIGTERM, self._on_signal)
-        signal.signal(signal.SIGINT, self._on_signal)
 
     def _on_signal(self, *_):
         self.running = False
@@ -672,8 +716,15 @@ class SpeedLimiter:
                 ff_brake = 0.0
                 error = decel_meas
 
-                # Log a 10Hz
-                if self.tick % LOG_EVERY == 0:
+                # stato per il sensor_hub, a ogni tick (50 Hz), con l'istante della misura
+                write_json_atomic(LIMITER_STATE_FILE, {
+                    "t_ms": int(t0 * 1000), "source": source, "zone": zone,
+                    "speed_ms": round(speed, 3), "accel_ms2": round(enc_accel, 3),
+                    "error_ms": round(error, 3), "target_deg": round(target, 2),
+                    "cmd_deg": round(self.brake_cmd, 2), "enc_fresh": enc_fresh, "gps_fix": fix})
+
+                # Log a 10Hz (solo senza sensor_hub)
+                if self.log_f is not None and self.tick % LOG_EVERY == 0:
                     self.log.writerow([
                         datetime.now().isoformat(timespec="milliseconds"),
                         f"{gps_speed:.3f}", f"{self.imu_speed:.3f}", f"{speed:.3f}",
@@ -712,7 +763,8 @@ class SpeedLimiter:
         except Exception:
             pass
         try:
-            self.log_f.close()
+            if self.log_f is not None:
+                self.log_f.close()
         except Exception:
             pass
 

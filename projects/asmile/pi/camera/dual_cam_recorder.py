@@ -29,6 +29,8 @@ Output:
     video_right.h264     — cam1 raw
     pts_left.txt / pts_right.txt — timestamp per frame (timecode v2, ms dal punto di sync)
     cam_left.log / cam_right.log — log rpicam (contiene "Sync achieved! Difference …us")
+    frames_left.csv / frames_right.csv — istante VERO di ogni frame (SensorTimestamp) in t_ms,
+                   lo stesso orologio del CSV unico del sensor_hub → frame↔sensori al ms (2026-11-07)
 """
 
 import subprocess
@@ -41,6 +43,9 @@ import threading
 import argparse
 from datetime import datetime
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from frame_times import FrameTimeWriter, metadata_args  # noqa: E402
 
 # ═══════════════════════════════════════════════════════════
 # CONFIG
@@ -65,6 +70,7 @@ class DualCamRecorder:
         self._running = False
         self._procs = {}
         self.session_dir = None
+        self._frame_writers = {}
 
     def _create_session(self):
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -94,9 +100,17 @@ class DualCamRecorder:
             cmd.append("--vflip")
         if HFLIP:
             cmd.append("--hflip")
+        meta_args = metadata_args()                # [] se questo rpicam-vid non ha --metadata
+        cmd += meta_args
 
         log = open(log_path, "w")                  # su file: una PIPE mai letta si riempie e blocca rpicam
-        proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
+        if not meta_args:
+            return subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=log)   # stdout = metadati per frame
+        name = "left" if cam_id == 0 else "right"
+        w = FrameTimeWriter(proc.stdout, self.session_dir / f"frames_{name}.csv")
+        w.start()                                  # svuota SEMPRE la pipe
+        self._frame_writers[name] = w
         return proc
 
     def _start_combined_recording(self):
@@ -263,6 +277,9 @@ class DualCamRecorder:
             meta["duration_seconds"] = round(elapsed, 1)
             meta["sync_achieved"] = self._sync_result()   # es. {"left": "0us", "right": "-18us", ...}
             meta["clock_map_end"] = self._clock_map()
+            meta["frame_times"] = {                    # controllo dominio orologio: rx-sensore ~ 10-80 ms
+                n: {"frames": w.frames, "first_rx_minus_sensor_ms": w.first_rx_minus_sensor_ms}
+                for n, w in self._frame_writers.items()} or "rpicam-vid senza --metadata"
             with open(meta_path, "w") as f:
                 json.dump(meta, f, indent=2)
 

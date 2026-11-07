@@ -31,13 +31,16 @@ USER_MAP = {}                    # override utente per-host se serve: {"nomehost
 FLEET = {
     "asmile-001": {"host": "100.75.198.118",          # IP Tailscale (fisso per nodo)
                    "user": "asmile", "layout": "sessions", "src": "/data/training_sessions",
-                   "sensors": ["/data/logging/speed_limiter", "/data/logging/training_data_pi"]},
+                   "sensors": ["/data/logging/sensors",          # CSV unico sensor_hub 50 Hz (2026-11-07)
+                               "/data/logging/speed_limiter", "/data/logging/training_data_pi"]},  # formato vecchio
 }
 
 # Fallback statico se Tailscale non è disponibile (host = alias ssh o IP).
 LOGGERS = [
     {"name": "asmile-logger", "host": "100.83.200.55",      # IP Tailscale
-     "user": "asmile-logger", "src": SRC},
+     "user": "asmile-logger", "src": SRC,
+     "sensors": ["/data/logging/sensors"],               # sensor_hub (stesso formato della flotta)
+     "frames_glob": "clip_*_frames.csv"},                # istanti dei frame (recorder.sh)
 ]
 
 SSH_OPTS = ["-o", "BatchMode=yes", "-o", "ConnectTimeout=10",
@@ -113,6 +116,7 @@ def pull_logger(lg):
         else:
             os.remove(local)
             print(f"  {name}: checksum DIVERSO -> ritento al prossimo giro")
+    sync_sensors(lg, dest)
     return done
 
 
@@ -157,12 +161,23 @@ def pull_sessions(lg):
             ssh(lg, f"rm -rf {shlex.quote(remote)}")       # libera il Pi dopo conferma di TUTTI i file
             done += 1
             print(f"  {sess}: OK ({len(files)} file, checksum confermato) -> cancellata dal Pi")
+    sync_sensors(lg, dest)
+    return done
+
+
+def sync_sensors(lg, dest):
+    """CSV sensori e istanti dei frame: si COPIANO (restano sul Pi), cartelle assenti = nulla."""
     sens = os.path.join(dest, "_sensors")
     for src in lg.get("sensors", []):
         os.makedirs(os.path.join(sens, os.path.basename(src)), exist_ok=True)
         subprocess.run(["rsync", "-a", "-e", "ssh " + " ".join(SSH_OPTS),
-                        f"{lg['user']}@{lg['host']}:{src}/", os.path.join(sens, os.path.basename(src)) + "/"])
-    return done
+                        f"{lg['user']}@{lg['host']}:{src}/", os.path.join(sens, os.path.basename(src)) + "/"],
+                       stderr=subprocess.DEVNULL)
+    if lg.get("frames_glob"):
+        os.makedirs(os.path.join(sens, "frames"), exist_ok=True)
+        subprocess.run(["rsync", "-a", "-e", "ssh " + " ".join(SSH_OPTS),
+                        f"{lg['user']}@{lg['host']}:{lg['src']}/{lg['frames_glob']}", os.path.join(sens, "frames") + "/"],
+                       stderr=subprocess.DEVNULL)
 
 
 def main():

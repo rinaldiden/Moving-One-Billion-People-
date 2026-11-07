@@ -36,6 +36,19 @@ import threading
 import argparse
 from datetime import datetime
 
+_PI = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(_PI, "sensors"))
+sys.path.insert(0, os.path.join(_PI, "camera"))
+try:
+    from hub_client import hub_enabled
+    from frame_times import FrameTimeWriter, metadata_args
+except ImportError:                      # moduli nuovi non deployati: tutto come prima
+    def hub_enabled():
+        return False
+
+    def metadata_args():
+        return []
+
 # ═══════════════════════════════════════════════════════════
 # CONFIG
 # ═══════════════════════════════════════════════════════════
@@ -265,8 +278,10 @@ def vesc_thread():
 # ═══════════════════════════════════════════════════════════
 # VIDEO RECORDER
 # ═══════════════════════════════════════════════════════════
-def start_video(output_path):
-    """Record video using rpicam-vid (correct auto-exposure, unlike gst-launch)."""
+def start_video(output_path, frames_csv=None, log_path=None):
+    """Record video using rpicam-vid (correct auto-exposure, unlike gst-launch).
+    Con frames_csv: istante VERO di ogni frame (SensorTimestamp) sullo stesso orologio del
+    CSV unico del sensor_hub (vedi pi/camera/frame_times.py)."""
     env = os.environ.copy()
     if os.path.isfile(ARDUCAM_FIX):
         env["LD_PRELOAD"] = ARDUCAM_FIX
@@ -284,8 +299,14 @@ def start_video(output_path):
         *(["--vflip", "--hflip"] if not os.path.isfile(ARDUCAM_FIX) else []),
         "-o", output_path,
     ]
-
-    proc = subprocess.Popen(cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    meta_args = metadata_args() if frames_csv else []
+    cmd += meta_args
+    err = open(log_path, "w") if log_path else subprocess.PIPE
+    proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE if meta_args else subprocess.DEVNULL,
+                            stderr=err)
+    if meta_args:
+        proc.frame_writer = FrameTimeWriter(proc.stdout, frames_csv)
+        proc.frame_writer.start()            # svuota sempre la pipe
     return proc
 
 
@@ -353,51 +374,60 @@ def main():
     print("=" * 50)
     print(f"Session: {session_dir}")
 
-    # Init IMU
-    try:
-        imu_bus = init_imu()
-        imu_test = read_imu(imu_bus)
-        print(f"[IMU] OK — az={imu_test['az']:.2f}g")
-    except Exception as e:
-        print(f"[IMU] FAILED: {e}")
-        sys.exit(1)
+    # Con SENSOR_HUB=1 i sensori li registra SOLO il sensor_hub (CSV unico 50 Hz, stesso orologio
+    # dei frame): qui solo video + frames.csv. Senza: tutto come prima.
+    use_hub = hub_enabled()
+    if use_hub:
+        print("[SENSORS] → sensor_hub (CSV unico /data/logging/sensors), qui solo video")
+    else:
+        # Init IMU
+        try:
+            imu_bus = init_imu()
+            imu_test = read_imu(imu_bus)
+            print(f"[IMU] OK — az={imu_test['az']:.2f}g")
+        except Exception as e:
+            print(f"[IMU] FAILED: {e}")
+            sys.exit(1)
 
-    # Init GPS
-    gps_t = threading.Thread(target=gps_thread, daemon=True)
-    gps_t.start()
-    print("[GPS] Thread started")
+        # Init GPS
+        gps_t = threading.Thread(target=gps_thread, daemon=True)
+        gps_t.start()
+        print("[GPS] Thread started")
 
-    # Init Encoder
-    enc = read_encoder()
-    print(f"[ENCODER] Position: {enc}")
+        # Init Encoder
+        enc = read_encoder()
+        print(f"[ENCODER] Position: {enc}")
 
-    # Init VESC telemetry
-    vesc_t = threading.Thread(target=vesc_thread, daemon=True)
-    vesc_t.start()
+        # Init VESC telemetry
+        vesc_t = threading.Thread(target=vesc_thread, daemon=True)
+        vesc_t.start()
 
     # Start video
     print(f"[VIDEO] Recording {WIDTH}x{HEIGHT}@{FPS}fps → {video_path}")
-    video_proc = start_video(video_path)
+    cam_log = os.path.join(session_dir, "cam.log")
+    video_proc = start_video(video_path, os.path.join(session_dir, "frames.csv"), cam_log)
     time.sleep(3)
 
     if video_proc.poll() is not None:
-        stderr = video_proc.stderr.read().decode() if video_proc.stderr else ""
-        print(f"[VIDEO] FAILED: {stderr[:200]}")
+        stderr = open(cam_log, errors="ignore").read()
+        print(f"[VIDEO] FAILED: {stderr[-300:]}")
         sys.exit(1)
 
     print("[VIDEO] Recording...")
 
     # Start sensor logger
-    sensor_t = threading.Thread(target=sensor_logger, args=(csv_path, imu_bus), daemon=True)
-    sensor_t.start()
-    print(f"[SENSORS] Logging at {SENSOR_HZ}Hz → {csv_path}")
+    if not use_hub:
+        sensor_t = threading.Thread(target=sensor_logger, args=(csv_path, imu_bus), daemon=True)
+        sensor_t.start()
+        print(f"[SENSORS] Logging at {SENSOR_HZ}Hz → {csv_path}")
 
     # Save metadata
     start_time = datetime.now()
     meta = {
         "start_time": start_time.isoformat(),
         "video_file": "video.h264",
-        "sensor_file": "sensors.csv",
+        "sensor_file": "sensor_hub: /data/logging/sensors (unire per t_ms)" if use_hub else "sensors.csv",
+        "frame_times": "frames.csv (t_ms = orologio del sensor_hub)",
         "video_width": WIDTH,
         "video_height": HEIGHT,
         "video_fps": FPS,
@@ -421,7 +451,7 @@ def main():
             time.sleep(1)
             elapsed += 1
 
-            if elapsed % 30 == 0:
+            if elapsed % 30 == 0 and not use_hub:
                 with gps_lock:
                     fix = "FIX" if gps_data["fix"] else "no fix"
                     spd = gps_data["speed_ms"]
@@ -451,6 +481,11 @@ def main():
     meta["end_time"] = end_time.isoformat()
     meta["duration_seconds"] = (end_time - start_time).total_seconds()
     meta["video_size_mb"] = os.path.getsize(video_path) / (1024 * 1024) if os.path.exists(video_path) else 0
+    fw = getattr(video_proc, "frame_writer", None)
+    if fw:
+        time.sleep(0.5)
+        meta["frames"] = fw.frames
+        meta["first_rx_minus_sensor_ms"] = fw.first_rx_minus_sensor_ms
     with open(meta_path, "w") as f:
         json.dump(meta, f, indent=2)
 
