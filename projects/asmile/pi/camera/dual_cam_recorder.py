@@ -6,11 +6,16 @@ Software-synchronized stereo recording from CAM0 and CAM1 on Raspberry Pi 5.
 Outputs side-by-side frames matching the Arducam Camarray format for
 compatibility with existing training pipeline.
 
-Synchronization:
-  - Both cameras started within ~1ms of each other
-  - Frames timestamped and matched by nearest timestamp
+Synchronization (2026-11-07):
+  - rpicam-apps sync nativo del Pi 5: cam1 = --sync client (parte prima), cam0 = --sync server.
+    libcamera allinea i frame delle due OV9281 (verificato su #001: "Sync achieved! Difference
+    -18us"), la registrazione parte al punto di sync (~5-7 s dopo l'avvio).
+    Prima c'era solo una barriera sull'AVVIO dei processi: poi ogni sensore andava col suo
+    orologio (10 frame di deriva su 7 min) → stereo falsato in movimento.
+  - --save-pts per camera (pts_left.txt / pts_right.txt) → verifica coppie a posteriori.
   - OV9281 global shutter = no rolling shutter artifacts
-  - At 15fps, max drift ~1-5ms = acceptable for stereo at cycling speed
+  - Upgrade possibile: trigger hardware FSIN (J3 EXT TRIG Inno-Maker + dtoverlay trigger-mode=1),
+    vedi docs/ov9281_hardware_sync.md
 
 Usage:
   python3 dual_cam_recorder.py                    # record indefinitely
@@ -20,10 +25,10 @@ Usage:
 
 Output:
   ~/training_sessions/session_YYYYMMDD_HHMMSS/
-    video_stereo.h264    — side-by-side stereo (2560x800)
-    video_left.h264      — left camera raw
-    video_right.h264     — right camera raw
-    sync_log.csv         — frame timestamps for both cameras
+    video_left.h264      — cam0 raw  (⚠ su #001 è fisicamente la camera DESTRA, calib order=RL)
+    video_right.h264     — cam1 raw
+    pts_left.txt / pts_right.txt — timestamp per frame (timecode v2, ms dal punto di sync)
+    cam_left.log / cam_right.log — log rpicam (contiene "Sync achieved! Difference …us")
 """
 
 import subprocess
@@ -67,8 +72,8 @@ class DualCamRecorder:
         self.session_dir.mkdir(parents=True, exist_ok=True)
         return self.session_dir
 
-    def _start_camera(self, cam_id, output_path):
-        """Start rpicam-vid for one camera."""
+    def _start_camera(self, cam_id, output_path, sync_role, pts_path, log_path):
+        """Start rpicam-vid for one camera (sync_role: 'server' | 'client')."""
         cmd = [
             "rpicam-vid",
             "--camera", str(cam_id),
@@ -78,8 +83,10 @@ class DualCamRecorder:
             "--bitrate", str(BITRATE),
             "--codec", "h264",
             "--profile", "baseline",
-            "--timeout", "0",
+            "--timeout", str(self.duration_min * 60 * 1000 if self.duration_min else 0),
             "--nopreview",
+            "--sync", sync_role,
+            "--save-pts", str(pts_path),
             "-o", str(output_path),
         ]
 
@@ -88,57 +95,51 @@ class DualCamRecorder:
         if HFLIP:
             cmd.append("--hflip")
 
-        if self.duration_min:
-            cmd[cmd.index("0")] = str(self.duration_min * 60 * 1000)
-
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+        log = open(log_path, "w")                  # su file: una PIPE mai letta si riempie e blocca rpicam
+        proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
         return proc
 
     def _start_combined_recording(self):
-        """Record both cameras with minimal start delay using threads."""
-        left_path = self.session_dir / "video_left.h264"
-        right_path = self.session_dir / "video_right.h264"
-
-        # Start both cameras nearly simultaneously using a barrier
-        barrier = threading.Barrier(2, timeout=5)
-        results = {}
-
-        def launch_cam(cam_id, path, name):
-            barrier.wait()  # both threads release at the same instant
-            results[name] = self._start_camera(cam_id, path)
-
-        t0 = threading.Thread(target=launch_cam, args=(0, left_path, "left"))
-        t1 = threading.Thread(target=launch_cam, args=(1, right_path, "right"))
-
-        t0.start()
-        t1.start()
+        """Record both cameras frame-synchronized via rpicam --sync (client first, then server)."""
+        d = self.session_dir
+        self._procs = {
+            "right": self._start_camera(1, d / "video_right.h264", "client",
+                                        d / "pts_right.txt", d / "cam_right.log"),
+        }
+        time.sleep(1.5)                                 # il client deve essere in ascolto prima del server
+        self._procs["left"] = self._start_camera(0, d / "video_left.h264", "server",
+                                                 d / "pts_left.txt", d / "cam_left.log")
         self._start_time = time.monotonic()
-        t0.join()
-        t1.join()
+        print(f"[CAM0] server → {d / 'video_left.h264'}")
+        print(f"[CAM1] client → {d / 'video_right.h264'}")
+        print("[SYNC] rpicam --sync attivo: la registrazione parte al punto di sync (vedi cam_*.log)")
 
-        self._procs = results
-        drift = (time.monotonic() - self._start_time) * 1000
-        print(f"[CAM0] Left → {left_path}")
-        print(f"[CAM1] Right → {right_path}")
-        print(f"[SYNC] Both cameras started, drift < {drift:.0f}ms")
+    def _sync_result(self):
+        """Legge dai log rpicam la differenza di sync raggiunta (µs)."""
+        out = {}
+        for name in ("left", "right"):
+            p = self.session_dir / f"cam_{name}.log"
+            if p.exists():
+                for line in p.read_text(errors="ignore").splitlines():
+                    if "Sync achieved" in line:
+                        out[name] = line.split("Difference")[-1].strip()
+        return out
 
     def _save_metadata(self):
         meta = {
             "session_dir": str(self.session_dir),
             "start_time": datetime.now().isoformat(),
             "camera_type": "dual_innomaker_ov9281",
-            "sync_method": "software_timestamp",
+            "sync_method": "rpicam_sync_server_client",
             "resolution": f"{CAM_WIDTH}x{CAM_HEIGHT}",
             "fps": FPS,
             "bitrate": BITRATE,
             "vflip": VFLIP,
             "hflip": HFLIP,
-            "cam0": "left",
-            "cam1": "right",
-            "note": "Two separate OV9281 cameras, not hardware synced. "
-                    "Global shutter ensures no rolling artifacts. "
-                    "Frame alignment by timestamp matching.",
+            "cam0": "video_left (fisicamente DESTRA su #001, calib order=RL)",
+            "cam1": "video_right (fisicamente SINISTRA su #001)",
+            "note": "Two separate OV9281 cameras, frame-synced by libcamera (rpicam --sync, "
+                    "cam0 server / cam1 client). Per-frame pts in pts_left/right.txt.",
         }
         meta_path = self.session_dir / "metadata.json"
         with open(meta_path, "w") as f:
@@ -245,6 +246,7 @@ class DualCamRecorder:
                 meta = json.load(f)
             meta["end_time"] = datetime.now().isoformat()
             meta["duration_seconds"] = round(elapsed, 1)
+            meta["sync_achieved"] = self._sync_result()   # es. {"left": "0us", "right": "-18us"}
             with open(meta_path, "w") as f:
                 json.dump(meta, f, indent=2)
 

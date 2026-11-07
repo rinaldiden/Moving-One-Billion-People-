@@ -159,9 +159,26 @@ class YoloDetector(Detector):
         except ImportError:
             raise RuntimeError("Backend 'yolo' non installato: pip install ultralytics")
         self.m = YOLO(person_model)
+        if plate_model is None and DEFAULT_PLATE_MODEL.exists():
+            plate_model = str(DEFAULT_PLATE_MODEL)       # senza questo le targhe NON venivano oscurate
         self.plate = YOLO(plate_model) if plate_model else None
         self.conf = conf
         self.head_only = head_only
+        try:                                             # facce vere (anche senza corpo visibile)
+            self.faces = DefaceDetector()
+        except RuntimeError:
+            self.faces = None
+
+    def detect_persons(self, frame) -> list[Box]:
+        """Solo le teste da persona (per l'auditor)."""
+        out: list[Box] = []
+        for b in self.m(frame, conf=self.conf, verbose=False)[0].boxes:
+            if int(b.cls[0]) in self.PERSON:
+                x1, y1, x2, y2 = (int(v) for v in b.xyxy[0])
+                if self.head_only:
+                    y2 = y1 + int((y2 - y1) * 0.35)
+                out.append(Box(x1, y1, x2, y2, "face", float(b.conf[0])))
+        return out
 
     def detect(self, frame) -> list[Box]:
         out: list[Box] = []
@@ -172,12 +189,17 @@ class YoloDetector(Detector):
                 if self.head_only:  # testa ≈ terzo superiore del box persona
                     y2 = y1 + int((y2 - y1) * 0.35)
                 out.append(Box(x1, y1, x2, y2, "face", c))
+        if self.faces is not None:
+            out.extend(self.faces.detect(frame))
         if self.plate is not None:
             rp = self.plate(frame, conf=self.conf, verbose=False)[0]
             for b in rp.boxes:
                 x1, y1, x2, y2 = (int(v) for v in b.xyxy[0])
                 out.append(Box(x1, y1, x2, y2, "plate", float(b.conf[0])))
         return out
+
+
+DEFAULT_PLATE_MODEL = MODELS / "plate_yolo11s.pt"   # morsetechlab/yolov11-license-plate-detection (AGPL)
 
 
 def make_detector(backend: str, do_faces: bool, do_plates: bool, **kw) -> Detector:
@@ -339,9 +361,22 @@ def process_video(src: Path, dst: Path, backend: str, do_faces: bool, do_plates:
     return man
 
 
+def _head_redacted(frame, b: Box, sharp_max: float = 30.0) -> bool:
+    """Testa oscurata = zona quasi priva di dettaglio (box pieno o blur forte)."""
+    crop = frame[max(0, b.y1):b.y2, max(0, b.x1):b.x2]
+    if crop.size == 0:
+        return True
+    g = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY) if crop.ndim == 3 else crop
+    return cv2.Laplacian(g, cv2.CV_64F).var() < sharp_max
+
+
 def _audit_output(dst: Path, det: Detector, man: AuditManifest, stride: int) -> None:
-    """Rigira il detector sul video ANONIMIZZATO. Se trova ancora facce/targhe,
-    l'oscuramento ha fallito → FAIL. Campiona 1 frame ogni `stride`."""
+    """Rigira i detector sul video ANONIMIZZATO. Residuo = faccia (CenterFace) o targa
+    ancora visibile, oppure persona con la zona testa NON oscurata. Il corpo di una
+    persona resta visibile per scelta (segnale di guida) e non conta come PII.
+    Campiona 1 frame ogni `stride`."""
+    faces = getattr(det, "faces", None)
+    plates = getattr(det, "plate", None)
     cap = cv2.VideoCapture(str(dst))
     i = 0
     while True:
@@ -350,11 +385,20 @@ def _audit_output(dst: Path, det: Detector, man: AuditManifest, stride: int) -> 
             break
         if i % stride == 0:
             man.audit_sampled_frames += 1
-            for b in det.detect(frame):
-                if b.cls == "face":
-                    man.audit_residual_faces += 1
-                else:
-                    man.audit_residual_plates += 1
+            if isinstance(det, YoloDetector):
+                for b in det.detect_persons(frame):
+                    if not _head_redacted(frame, b):
+                        man.audit_residual_faces += 1
+                if faces is not None:
+                    man.audit_residual_faces += len(faces.detect(frame))
+                if plates is not None:
+                    man.audit_residual_plates += len(plates(frame, conf=det.conf, verbose=False)[0].boxes)
+            else:
+                for b in det.detect(frame):
+                    if b.cls == "face":
+                        man.audit_residual_faces += 1
+                    else:
+                        man.audit_residual_plates += 1
         i += 1
     cap.release()
     residual = man.audit_residual_faces + man.audit_residual_plates

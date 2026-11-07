@@ -1,0 +1,10 @@
+proc            /proc           proc    defaults          0       0
+PARTUUID=b93f7028-01  /boot/firmware  vfat    defaults          0       2
+PARTUUID=b93f7028-02  /               ext4    defaults,noatime  0       1
+LABEL=data /data ext4 defaults,noatime,nofail 0 2
+/data/training_sessions /home/asmile/training_sessions none bind,nofail 0 0
+/data/logging /home/asmile/wip/logging none bind,nofail 0 0
+/data/var_lib_asmile /var/lib/asmile none bind,nofail 0 0
+/data/logging/speed_limiter /root/wip/logging/speed_limiter none bind,nofail 0 0
+/data/logging/training_data_pi /home/asmile/wip/Moving-One-Billion-People-/projects/asmile/pi/logging/training_data none bind,nofail 0 0
+/data/var_lib_tailscale /var/lib/tailscale none bind,nofail 0 0

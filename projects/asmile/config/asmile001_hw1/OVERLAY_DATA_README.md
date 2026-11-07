@@ -48,3 +48,22 @@ il Pi torna normale (root RW). Il rootfs p2 (18G) è intatto.
 ## Replica da zero
 `logger/data_partition/README.md` + hook/premount (resize2fs offline a 18G, poi parted live +
 mkfs p3), poi `raspi-config nonint enable_overlayfs` e `:recurse=0` nel cmdline.
+
+## Aggiornamento 2026-11-07 (sessione calib encoder + Tailscale + sync camere)
+Tutto scritto ANCHE nella root reale (`/media/root-ro`), quindi sopravvive al reboot.
+- **Nuovi bind in fstab** (copia completa: `fstab.real.20261107`): prima questi log finivano in RAM e si perdevano:
+  ```
+  /data/logging/speed_limiter   /root/wip/logging/speed_limiter                                    none bind,nofail 0 0
+  /data/logging/training_data_pi /home/asmile/wip/Moving-One-Billion-People-/projects/asmile/pi/logging/training_data none bind,nofail 0 0
+  /data/var_lib_tailscale       /var/lib/tailscale                                                 none bind,nofail 0 0
+  ```
+- **Tailscale** installato nella root reale (pacchetto `tailscale`, repo pkgs.tailscale.com trixie, `/etc/default/tailscaled`),
+  stato su `/data/var_lib_tailscale` → nodo **asmile-001 = 100.75.198.118**. Pull automatico dal Mac:
+  `loggers/pull_from_loggers.py` (FLEET) via launchd ogni 5 min.
+- **Chiave SSH del Mac** in `/media/root-ro/home/asmile/.ssh/authorized_keys` (sull'overlay si perdeva a ogni reboot
+  → il pull automatico falliva in silenzio).
+- **Taratura encoder ruota**: `/var/lib/asmile/encoder_calibration.json` (bind su /data) — copia in
+  `var_lib_asmile/encoder_calibration.json`. `wheel_circum_m=0.3374` (l'encoder fa ~6.3 giri per giro ruota),
+  validata su un secondo giro (GPS/encoder = 1.013).
+- **Recorder camere in sync**: `pi/camera/dual_cam_recorder.py` con `rpicam-vid --sync server/client`
+  (misurato: coppie L/R entro 0.045 ms su 1640 frame). Backup della versione precedente sul Pi: `*.bak-20261107`.

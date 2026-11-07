@@ -1,0 +1,11 @@
+{
+  "m_per_count": 2.06e-05,
+  "wheel_circum_m": 0.3374,
+  "enc_counts_per_rev": 16384,
+  "forward_sign": "+",
+  "n_samples": 2177,
+  "mean_rel_err": 0.09,
+  "raw_csv": "limiter_20261030_180224.csv (giro 2026-11-07 14:02, GPS fix, >=6 km/h, lag GPS 0.8s)",
+  "generated": "2026-11-07T15:00:00",
+  "note": "Offline da log speed_limiter: k=GPS/enc(placeholder 2.1m). Encoder ~6.3 giri per giro ruota. forward_sign non stimato (il limiter usa |delta|)."
+}

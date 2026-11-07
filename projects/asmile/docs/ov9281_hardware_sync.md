@@ -1,3 +1,27 @@
+# Sync delle 2 OV9281 di #001 — stato al 2026-11-07
+
+## ✅ FATTO: sync software nativo libcamera (Pi 5), in produzione
+`pi/camera/dual_cam_recorder.py` lancia `rpicam-vid --sync client` sulla cam1 e, 1.5 s dopo,
+`--sync server` sulla cam0 (stesso `--framerate 15`). libcamera allinea i frame dei due sensori
+e la registrazione parte al punto di sync (~5-7 s dopo l'avvio). Misurato su #001:
+- log: `*** Sync achieved! Difference -17us`
+- `--save-pts`: **|pts_L − pts_R| ≤ 0.045 ms su 1640 coppie**, nessun frame perso (66.67 ms costanti)
+- funziona anche con lo stop del master_switch (`killall -9 rpicam-vid`): metadata con `sync_achieved`.
+
+Prima c'era solo una barriera sull'AVVIO dei due processi (commit 2d3d2577): poi ogni sensore
+andava col suo orologio (giro del 2026-11-07: 6236 vs 6226 frame su 7 min) → disparità falsata in moto.
+
+## Upgrade opzionale: trigger hardware FSIN (se servisse ancora più rigore)
+Correzione rispetto alla versione precedente di questo file: **NON serve un traslatore a 1.8 V**.
+La scheda Inno-Maker CAM-OV9281RAW-V2 ha **J3 "EXT TRIG"** (pin1 TRIG+ 3.3–5 V, pin2 TRIG−, optoisolato
+TLP281) e **J2 STROB** (uscita open-collector). Il driver Pi `ov9282.c` (rpi-6.12/6.18) supporta
+`dtoverlay=ov9281,cam0,trigger-mode=1` (+ `dtoverlay=ov9281,trigger-mode=1` per CAM1): un frame per
+fronte di salita su FSIN. Cablaggio: UN GPIO PWM hardware libero (NON GPIO12 = freno; verificare
+GPIO13 con `pinctrl`) → TRIG+ di entrambe, GND → TRIG−. Fonti: github.com/INNO-MAKER/CAM-OV9281RAW-V2,
+raspberrypi/linux overlays README. Non provato.
+
+---
+## (storico, versione 2026-10-31)
 # Sync hardware delle 2 OV9281 di #001 (upgrade depth)
 
 ## Com'è ora

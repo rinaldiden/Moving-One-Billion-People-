@@ -1,0 +1,87 @@
+{
+  "K_left": [
+    [
+      930.0,
+      0.0,
+      640.0
+    ],
+    [
+      0.0,
+      930.0,
+      400.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "dist_left": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "K_right": [
+    [
+      930.0,
+      0.0,
+      640.0
+    ],
+    [
+      0.0,
+      930.0,
+      400.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "dist_right": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "R": [
+    [
+      0.9999921913850349,
+      0.0018820429169823594,
+      -0.0034749220730956668
+    ],
+    [
+      -0.0014175299610444442,
+      0.9916249677404998,
+      0.129142998116283
+    ],
+    [
+      0.0036888721535168157,
+      -0.12913706388218496,
+      0.9916198923751598
+    ]
+  ],
+  "T": [
+    -197.6726895679344,
+    -11.158795366184428,
+    -28.3017505634308
+  ],
+  "size": [
+    1280,
+    800
+  ],
+  "baseline_mm": 200.0,
+  "method": "selfcalib_essential (SIFT+E, K a priori, |T|=baseline nota)",
+  "n_matches": 8805,
+  "rect_dy_median_px": 0.912,
+  "order": "RL",
+  "flip180": false,
+  "note": "Focale a priori: FISSARLA col metro (validate.py), poi rilanciare con --focal-px misurata.",
+  "d0_px": 62.0,
+  "d0_note": "PROVVISORIO dalla scena (oggetti lontani ~0 disparit\u00e0). Da sostituire col fit d=f\u00b7B/Z+d0 sui target col metro.",
+  "source": "session_20261030_180225 (giro 2026-11-07 14:02)",
+  "valid_for": "SOLO asmile #001 (asmile-tirano, hostname asmile / Tailscale asmile-001) con QUESTO set di 2 camere OV9281 cos\u00ec come montate il 2026-11-07. NON vale per asmile2, asmile-logger o altre unit\u00e0; se si smonta/sposta una camera va rifatta (calib_tape_joint.py)."
+}

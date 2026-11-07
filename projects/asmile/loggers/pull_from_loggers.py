@@ -25,9 +25,18 @@ DEFAULT_USER = "asmile-logger"
 SRC = "/data/recordings"
 USER_MAP = {}                    # override utente per-host se serve: {"nomehost": "utente"}
 
+# Bici della flotta con layout "sessions" (dual_cam_recorder: una cartella per sessione con
+# video_left.h264 + video_right.h264 + metadata.json). Su #001 /data è la partizione
+# persistente fuori dall'overlay. I CSV sensori si COPIANO (restano anche sul Pi).
+FLEET = {
+    "asmile-001": {"host": "100.75.198.118",          # IP Tailscale (fisso per nodo)
+                   "user": "asmile", "layout": "sessions", "src": "/data/training_sessions",
+                   "sensors": ["/data/logging/speed_limiter", "/data/logging/training_data_pi"]},
+}
+
 # Fallback statico se Tailscale non è disponibile (host = alias ssh o IP).
 LOGGERS = [
-    {"name": "asmile-logger", "host": "asmile-logger",
+    {"name": "asmile-logger", "host": "100.83.200.55",      # IP Tailscale
      "user": "asmile-logger", "src": SRC},
 ]
 
@@ -56,7 +65,11 @@ def discover_loggers():
     for p in (data.get("Peer") or {}).values():
         host = p.get("HostName") or ""
         ips = p.get("TailscaleIPs") or []
-        if NAME_PATTERN.lower() in host.lower() and p.get("Online") and ips:
+        if not (p.get("Online") and ips):
+            continue
+        if host in FLEET:
+            found.append(dict(FLEET[host], name=host, host=ips[0]))
+        elif NAME_PATTERN.lower() in host.lower():
             found.append({"name": host, "host": ips[0],
                           "user": USER_MAP.get(host, DEFAULT_USER), "src": SRC})
     return found
@@ -103,20 +116,72 @@ def pull_logger(lg):
     return done
 
 
+def complete_sessions(lg):
+    # sessioni CHIUSE: se il recorder non gira sono tutte chiuse (anche quelle troncate da
+    # uno spegnimento, senza end_time); se gira, escludo la più recente (in scrittura).
+    r = ssh(lg, f"ls -dt {lg['src']}/session_* 2>/dev/null")
+    sess = [f.strip() for f in r.stdout.splitlines() if f.strip()]
+    if ssh(lg, "pgrep -f [d]ual_cam_recorder.py >/dev/null").returncode == 0:
+        sess = sess[1:]
+    return sess
+
+
+def pull_sessions(lg):
+    """Layout #001: video piatti <sessione>_<cam>.h264 (per on_new_videos.sh) + sidecar in <sessione>/."""
+    dest = os.path.join(DEST_BASE, lg["name"])
+    os.makedirs(dest, exist_ok=True)
+    done = 0
+    for remote in complete_sessions(lg):
+        sess = os.path.basename(remote)
+        # Con l'overlay l'orologio riparte da un'ora finta a ogni boot (prima di NTP): lo
+        # stesso nome può tornare in boot diversi -> se esiste già con contenuto diverso,
+        # suffisso col checksum del video, mai sovrascrivere.
+        loc = os.path.join(dest, f"{sess}_left.h264")
+        if os.path.exists(loc) and sha256_local(loc) != sha256_remote(lg, f"{remote}/video_left.h264"):
+            sess = f"{sess}_{sha256_remote(lg, remote + '/video_left.h264')[:8]}"
+        side = os.path.join(dest, sess)
+        os.makedirs(side, exist_ok=True)
+        files = [f.strip() for f in ssh(lg, f"ls {shlex.quote(remote)}").stdout.splitlines() if f.strip()]
+        ok = True
+        for name in files:
+            rem = f"{remote}/{name}"
+            local = (os.path.join(dest, f"{sess}_{name[len('video_'):]}")
+                     if name.startswith("video_") and name.endswith(".h264")
+                     else os.path.join(side, name))
+            rc = subprocess.run(["rsync", "-a", "-e", "ssh " + " ".join(SSH_OPTS),
+                                 f"{lg['user']}@{lg['host']}:{rem}", local]).returncode
+            if rc != 0 or sha256_local(local) != sha256_remote(lg, rem):
+                ok = False
+                print(f"  {sess}/{name}: rsync/checksum KO -> ritento al prossimo giro")
+        if ok:
+            ssh(lg, f"rm -rf {shlex.quote(remote)}")       # libera il Pi dopo conferma di TUTTI i file
+            done += 1
+            print(f"  {sess}: OK ({len(files)} file, checksum confermato) -> cancellata dal Pi")
+    sens = os.path.join(dest, "_sensors")
+    for src in lg.get("sensors", []):
+        os.makedirs(os.path.join(sens, os.path.basename(src)), exist_ok=True)
+        subprocess.run(["rsync", "-a", "-e", "ssh " + " ".join(SSH_OPTS),
+                        f"{lg['user']}@{lg['host']}:{src}/", os.path.join(sens, os.path.basename(src)) + "/"])
+    return done
+
+
 def main():
     os.makedirs(DEST_BASE, exist_ok=True)
     loggers = discover_loggers()
     if loggers:
         print(f"Tailscale: {len(loggers)} logger online -> {', '.join(l['name'] for l in loggers)}")
     else:
-        loggers = LOGGERS
-        print("Tailscale non disponibile / nessun peer -> uso lista statica")
+        # da launchd la CLI di Tailscale.app prova ad aprire la GUI e fallisce ("CLIError 3"):
+        # allora provo direttamente gli IP Tailscale noti (reachable() scarta chi è offline)
+        loggers = LOGGERS + [dict(cfg, name=n) for n, cfg in FLEET.items()]
+        print("Tailscale CLI non disponibile -> provo la lista statica: "
+              + ", ".join(l["name"] for l in loggers))
     tot = 0
     for lg in loggers:
         if not reachable(lg):
             print(f"[{lg['name']}] non raggiungibile (Tailscale off?) - skip")
             continue
-        n = pull_logger(lg)
+        n = pull_sessions(lg) if lg.get("layout") == "sessions" else pull_logger(lg)
         print(f"[{lg['name']}] scaricati+cancellati {n} segmenti")
         tot += n
     if tot:
