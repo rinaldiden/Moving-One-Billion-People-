@@ -95,6 +95,9 @@ IMU_ACCEL_SCALE = 16384.0   # ±2g range LSB/g
 # asmile senza encoder) il limiter cade da solo su BLE/GPS → nessun cambiamento
 # per le unità senza encoder.
 ENC_WHEEL_FILE = "/tmp/encoder_wheel"
+ENC_WHEEL_CUM_FILE = "/tmp/encoder_wheel_cum"   # "<count srotolati> <t_monotonic>" dal bridge a ~880Hz:
+                                # niente aliasing del giro (col solo file a 50Hz oltre ~30 km/h la
+                                # velocità si ripiega e LEGGE BASSO) e t esatto di lettura
 ENC_FRESH_S = 0.5               # oltre → encoder non fidato, fallback
 ENC_COUNTS_PER_REV = 16384      # AMT22 14-bit (un giro = 0..16383)
 ENC_WHEEL_CIRCUM_M = 2.10       # ⚠️ PLACEHOLDER — TODO CALIBRARE (circonferenza
@@ -229,6 +232,7 @@ class WheelEncoder:
 
     def __init__(self):
         self._last_counts = None
+        self._mode = None                 # "cum" (bridge nuovo) o "raw": al cambio si riparte
         self._cum = 0                     # count cumulati (srotolati) dall'avvio
         self._hist = deque()              # (t, cum) ultimi ENC_FIT_WIN_S
         self._speed_ms = 0.0
@@ -250,7 +254,34 @@ class WheelEncoder:
             else f"⚠ PLACEHOLDER circ={self.circum}m — TODO calibrare (encoder_speed_calibration.py)"
         print(f"[ENC] wheel encoder PRIORITY on — {tag}", flush=True)
 
+    def _read_cum(self):
+        """Dal bridge nuovo: (count srotolati, t_monotonic) o None se manca/vecchio."""
+        try:
+            with open(ENC_WHEEL_CUM_FILE) as f:
+                c, tb = f.readline().split()
+            c, tb = int(c), float(tb)
+        except (OSError, ValueError):
+            return None
+        if time.monotonic() - tb > ENC_FRESH_S:
+            return None
+        return c, tb
+
     def read(self):
+        cur = self._read_cum()
+        mode = "raw" if cur is None else "cum"
+        if mode != self._mode:
+            self._mode, self._last_counts = mode, None
+        if cur is not None:
+            c, t = cur
+            if self._last_counts is None or self._hist and t <= self._hist[-1][0]:
+                if self._last_counts is None:
+                    self._last_counts = c
+                    self._hist.clear()
+                    self._hist.append((t, self._cum))
+                return self._speed_ms, True, self._accel_ms2     # primo campione / nessuna riga nuova
+            self._cum += abs(c - self._last_counts)
+            self._last_counts = c
+            return self._fit(t)
         try:
             st = os.stat(ENC_WHEEL_FILE)
             if time.time() - st.st_mtime > ENC_FRESH_S:
@@ -279,6 +310,9 @@ class WheelEncoder:
         if abs(d) > ENC_MAX_STEP_COUNTS:          # glitch/wrap irreale → tieni l'ultimo
             return self._speed_ms, True, self._accel_ms2
         self._cum += abs(d)
+        return self._fit(t)
+
+    def _fit(self, t):
         self._hist.append((t, self._cum))
         while len(self._hist) > 3 and t - self._hist[0][0] > ENC_FIT_WIN_S:
             self._hist.popleft()

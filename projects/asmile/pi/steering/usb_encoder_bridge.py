@@ -10,6 +10,11 @@ Pi gia' leggono, cosi' i dati arrivano "come dal Pi":
   /tmp/encoder_steer      (sterzo)
   /tmp/encoder_wheel      (ruota)
   /tmp/encoder_position   (= sterzo, retro-compat con servofreno_server/recorder)
+  /tmp/encoder_wheel_cum  "<count_srotolati> <t_monotonic>"  (ruota: srotolata QUI a ~880Hz,
+                          così chi legge più lento — speed_limiter 50Hz — non perde giri né
+                          confonde il verso oltre ~30 km/h; t = istante di arrivo della riga)
+Scritture ATOMICHE (tmp + rename): prima open("w") troncava il file e il lettore a volte
+trovava il file vuoto → "encoder non fresco" → 27 cadute della velocità a 0 nel giro 2026-11-07.
 
 Uso:
   python3 usb_encoder_bridge.py            # gira in loop
@@ -17,6 +22,7 @@ Uso:
 """
 import serial
 import glob
+import os
 import sys
 import time
 
@@ -24,6 +30,8 @@ BAUD = 500000
 STEER_FILE = "/tmp/encoder_steer"
 WHEEL_FILE = "/tmp/encoder_wheel"
 COMPAT_FILE = "/tmp/encoder_position"   # = sterzo
+WHEEL_CUM_FILE = "/tmp/encoder_wheel_cum"
+WHEEL_CPR = 16384                       # AMT22 14 bit
 WATCHDOG_S = 3.0                        # nessun dato valido -> reset Arduino
 
 
@@ -44,12 +52,18 @@ def find_port():
     return None, None
 
 
-def write_int(path, v):
+def write_atomic(path, text):
+    tmp = path + ".tmp"
     try:
-        with open(path, "w") as f:
-            f.write(str(int(v)))
+        with open(tmp, "w") as f:
+            f.write(text)
+        os.replace(tmp, path)            # il lettore vede il vecchio o il nuovo, mai un file vuoto
     except OSError:
         pass
+
+
+def write_int(path, v):
+    write_atomic(path, str(int(v)))
 
 
 def main():
@@ -64,6 +78,7 @@ def main():
         time.sleep(2.2)              # reset Uno + setup
         s.reset_input_buffer()
         last_good = time.time()
+        last_wheel, cum = None, 0
         try:
             while True:
                 line = s.readline().decode("ascii", "replace").strip()
@@ -76,6 +91,12 @@ def main():
                         write_int(STEER_FILE, steer)
                         write_int(WHEEL_FILE, wheel)
                         write_int(COMPAT_FILE, steer)
+                        if wheel >= 0:
+                            if last_wheel is not None:
+                                d = (wheel - last_wheel + WHEEL_CPR // 2) % WHEEL_CPR - WHEEL_CPR // 2
+                                cum += d
+                            last_wheel = wheel
+                            write_atomic(WHEEL_CUM_FILE, "%d %.6f" % (cum, time.monotonic()))
                         last_good = now
                         if show:
                             print("steer=%d  wheel=%d" % (steer, wheel), flush=True)

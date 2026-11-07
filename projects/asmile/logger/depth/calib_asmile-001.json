@@ -122,5 +122,12 @@
       "z_model_m": 9.694
     }
   ],
-  "valid_for": "SOLO asmile #001 (asmile-tirano, hostname asmile / Tailscale asmile-001) con QUESTO set di 2 camere OV9281 cos\u00ec come montate il 2026-11-07. NON vale per asmile2, asmile-logger o altre unit\u00e0; se si smonta/sposta una camera va rifatta (calib_tape_joint.py)."
+  "valid_for": "SOLO asmile #001 (asmile-tirano, hostname asmile / Tailscale asmile-001) con QUESTO set di 2 camere OV9281 cos\u00ec come montate il 2026-11-07. NON vale per asmile2, asmile-logger o altre unit\u00e0; se si smonta/sposta una camera va rifatta (calib_tape_joint.py).",
+  "camera_hw": {
+    "model": "Inno-Maker CAM-MIPIOV9281V2 (Amazon B09WTP5GZH), 2 moduli separati",
+    "sensor": "OV9281 mono global shutter 1280x800, pixel 3um",
+    "lens_nominal": "2.8mm F2.2, TV dist < -17%, FOV dich. D148/H118",
+    "focal_nominal_px": 933,
+    "note": "f*B dal metro = 261.3 px*m: con B=200mm f=1306px; se f=933 allora B=280mm. Misurare baseline vera. Vedi config/asmile001_hw1/cameras_ov9281.md"
+  }
 }
