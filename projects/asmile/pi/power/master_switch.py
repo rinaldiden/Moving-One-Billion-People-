@@ -26,6 +26,13 @@ import os
 import pwd
 from datetime import datetime
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sensors"))
+try:
+    from actuator_log import log_cmd     # pulse freno all'ON/OFF nel log uscite (stesso ms del hub)
+except Exception:                        # master_switch non deve MAI fermarsi per il log
+    def log_cmd(*a, **k):
+        return None
+
 # --- Config ---
 GPIO_CHIP = 4          # Pi 5 = gpiochip4
 SWITCH_PIN = 17        # GPIO 17, Pin 11
@@ -189,10 +196,12 @@ class MasterSwitch:
             pass
         lgpio.gpio_claim_output(h, PIN_SERVO)
         lgpio.tx_pwm(h, PIN_SERVO, SERVO_FREQ, angle_to_duty(RELEASE_ANGLE))
+        log_cmd("brake", "pwm", RELEASE_ANGLE, "master_switch ON: rilascio")
         print(f"[SWITCH] Servo → {RELEASE_ANGLE}° (release, 1.5s di pulse @ {SERVO_FREQ}Hz)")
         time.sleep(1.5)
         lgpio.tx_pwm(h, PIN_SERVO, SERVO_FREQ, 0)  # ferma PWM (duty 0)
         lgpio.gpio_free(h, PIN_SERVO)              # rilascia pin → hi-Z
+        log_cmd("brake", "free", RELEASE_ANGLE, "master_switch ON")
         lgpio.gpiochip_close(h)
         self.servo_handle = None
         print("[SWITCH] PWM stopped, pin freed (hi-Z) — servo libero")
@@ -265,11 +274,13 @@ class MasterSwitch:
             pass
         lgpio.gpio_claim_output(h2, PIN_SERVO)
         lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, angle_to_duty(BRAKE_ANGLE))
+        log_cmd("brake", "pwm", BRAKE_ANGLE, "master_switch OFF: frena")
         print(f"[SWITCH] Brake → {BRAKE_ANGLE}° (1.5s di pulse @ {SERVO_FREQ}Hz)")
         time.sleep(1.5)
         lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, 0)
         time.sleep(0.05)
         lgpio.gpio_free(h2, PIN_SERVO)
+        log_cmd("brake", "free", BRAKE_ANGLE, "master_switch OFF")
         lgpio.gpiochip_close(h2)
         self.servo_handle = None
         print("[SWITCH] PWM stopped, pin freed (hi-Z) — servo libero, niente segnale")

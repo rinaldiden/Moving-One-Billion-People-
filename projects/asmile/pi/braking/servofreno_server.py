@@ -24,11 +24,15 @@ from flask import Flask, jsonify, request
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sensors"))
 try:
     from hub_client import hub_enabled, hub_state
+    from actuator_log import log_cmd
 except ImportError:                       # hub non deployato: tutto come prima
     def hub_enabled():
         return False
 
     def hub_state(max_age_ms=500):
+        return None
+
+    def log_cmd(*a, **k):
         return None
 
 # ═══════════════════════════════════════════════════════════
@@ -427,6 +431,7 @@ def brake_loop():
     # Write flag file — speed_limiter reads this and brakes via GPIO
     with open(EMERGENCY_BRAKE_FILE, "w") as f:
         f.write("40")
+    log_cmd("brake", "phone_flag", 1, "richiesta frenata da telefono")
     print(f"[BRAKE] Emergency brake requested (flag written)")
     log_servo("INIZIO_FRENATA", 0, 0, 30)
 
@@ -449,6 +454,7 @@ def release_servo():
     # Remove flag file — speed_limiter releases brake
     try:
         os.remove(EMERGENCY_BRAKE_FILE)
+        log_cmd("brake", "phone_flag", 0, "rilascio da telefono")
     except FileNotFoundError:
         pass
     if was_braking:

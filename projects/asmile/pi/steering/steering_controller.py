@@ -19,6 +19,22 @@ import threading
 import sys
 import os
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sensors"))
+try:
+    from actuator_log import log_cmd     # ogni comando VESC con l'istante esatto (sensor_hub)
+    from hub_client import hub_enabled, write_json_atomic
+except ImportError:
+    def log_cmd(*a, **k):
+        return None
+
+    def hub_enabled():
+        return False
+
+    def write_json_atomic(path, obj):
+        pass
+
+VESC_STATE_FILE = "/dev/shm/asmile_vesc.json"   # telemetria per il sensor_hub: il VESC (UART0) ha UN padrone
+
 # --- Hardware config ---
 UART_PORT = "/dev/ttyAMA0"
 UART_BAUD = 115200
@@ -126,6 +142,7 @@ class SteeringController:
         self._telem_interval = loop_hz // telemetry_hz if telemetry_hz > 0 else 0
         self._telem_counter = 0
         self._telem_file = None
+        self._hub = hub_enabled()        # SENSOR_HUB=1: comandi e telemetria nel CSV unico del hub
         self.telemetry = {}
         self.peak_i_motor = 0.0
         self.peak_i_input = 0.0
@@ -199,6 +216,7 @@ class SteeringController:
             ma = int(amps * 1000)
             self._ser.write(vesc_packet(
                 struct.pack(">Bi", COMM_SET_CURRENT, ma)))
+            log_cmd("steer", "set_current", f"{ma / 1000:.3f}", "steering_controller")
 
     def _read_telemetry(self):
         if not self._ser or not self._ser.is_open:
@@ -213,9 +231,11 @@ class SteeringController:
         vals = parse_vesc_values(resp)
         if vals:
             self.telemetry = vals
+            write_json_atomic(VESC_STATE_FILE, dict(vals, t_ms=time.monotonic_ns() // 1_000_000,
+                                                    owner="steering_controller"))
             self.peak_i_motor = max(self.peak_i_motor, abs(vals['i_motor']))
             self.peak_i_input = max(self.peak_i_input, abs(vals['i_input']))
-            if self._telem_file:
+            if self._telem_file and not self._hub:
                 self._telem_file.write(
                     f"{time.time():.3f},"
                     f"{self.current_angle:.1f},"

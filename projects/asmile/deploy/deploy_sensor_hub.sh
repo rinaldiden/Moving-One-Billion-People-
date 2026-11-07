@@ -11,6 +11,8 @@
 #
 # NON riavvia speed_limiter né recorder (li lancia master_switch con l'interruttore ON):
 # il codice nuovo entra al prossimo ON. Se l'interruttore è ON lo dice e si ferma lì.
+# NON riavvia master_switch (deve restare sempre su; al riavvio potrebbe pulsare il servo):
+# il suo log delle uscite entra al prossimo boot. steering.service: riavvio solo se già attivo.
 set -u
 ROLE="${1:?ruolo: 001 | asmile2 | logger}"; DRY="${2:-}"
 A="$(cd "$(dirname "$0")/.." && pwd)"                    # projects/asmile
@@ -18,20 +20,24 @@ STAMP=$(date +%Y%m%d)
 case "$ROLE" in
   001)     HOST="${HOST:-100.75.198.118}"; U=asmile
            R=/home/asmile/wip/Moving-One-Billion-People-/projects/asmile; HUB_DIR=$R/pi/sensors
-           FILES="pi/sensors/sensor_hub.py pi/sensors/hub_client.py pi/autonomous/speed_limiter.py
+           FILES="pi/sensors/sensor_hub.py pi/sensors/hub_client.py pi/sensors/actuator_log.py
+                  pi/autonomous/speed_limiter.py pi/power/master_switch.py
+                  pi/steering/steering_controller.py pi/steering/power_steering.py pi/autonomous/route_replay.py
                   pi/steering/usb_encoder_bridge.py pi/steering/flash_encoder_arduino.sh
                   pi/braking/servofreno_server.py pi/camera/dual_cam_recorder.py pi/camera/frame_times.py
                   firmware/steering/hex/amt22_dual_uno_v2_20261107.hex firmware/steering/FLASH_LOG.md"
            CONF_EXTRA="" ;;
   asmile2) HOST="${HOST:-192.168.1.119}"; U=asmile
            R=/home/asmile/wip/Moving-One-Billion-People-/projects/asmile; HUB_DIR=$R/pi/sensors
-           FILES="pi/sensors/sensor_hub.py pi/sensors/hub_client.py pi/autonomous/speed_limiter.py
+           FILES="pi/sensors/sensor_hub.py pi/sensors/hub_client.py pi/sensors/actuator_log.py
+                  pi/autonomous/speed_limiter.py pi/power/master_switch.py
+                  pi/steering/steering_controller.py pi/steering/power_steering.py pi/autonomous/route_replay.py
                   pi/steering/usb_encoder_bridge.py pi/braking/servofreno_server.py
                   pi/logging/training_recorder.py pi/camera/frame_times.py"
            CONF_EXTRA="HUB_VESC=1" ;;                    # il training_recorder leggeva il VESC: ora lo fa il hub
   logger)  HOST="${HOST:-100.83.200.55}"; U=asmile-logger
            R=/home/asmile-logger/logger; HUB_DIR=$R
-           FILES="pi/sensors/sensor_hub.py=sensor_hub.py pi/sensors/hub_client.py=hub_client.py logger/recorder.sh=recorder.sh"
+           FILES="pi/sensors/sensor_hub.py=sensor_hub.py pi/sensors/hub_client.py=hub_client.py pi/sensors/actuator_log.py=actuator_log.py logger/recorder.sh=recorder.sh"
            CONF_EXTRA="" ;;
   *) echo "ruolo sconosciuto: $ROLE"; exit 1 ;;
 esac
@@ -71,7 +77,7 @@ done
 [ "$OVL" = 1 ] && run "sync; sudo mount -o remount,ro /media/root-ro"
 
 run "sudo mkdir -p /data/logging/sensors /data/firmware; sudo systemctl daemon-reload; sudo systemctl restart sensor_hub.service"
-[ "$ROLE" != logger ] && run "sudo systemctl restart usb_encoder_bridge.service 2>/dev/null; sudo systemctl restart servofreno.service 2>/dev/null; true"
+[ "$ROLE" != logger ] && run "sudo systemctl restart usb_encoder_bridge.service 2>/dev/null; sudo systemctl try-restart servofreno.service steering.service 2>/dev/null; true"
 [ "$ROLE" = logger ] && run "sudo systemctl restart logger-recorder.service"
 sleep 4
 echo "== verifica"

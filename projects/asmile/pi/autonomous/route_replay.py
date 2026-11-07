@@ -35,6 +35,12 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PI_DIR = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0, os.path.join(PI_DIR, "steering"))
 sys.path.insert(0, os.path.join(PI_DIR, "braking"))
+sys.path.insert(0, os.path.join(PI_DIR, "sensors"))
+try:
+    from actuator_log import log_cmd     # ogni comando VESC con l'istante esatto (sensor_hub)
+except ImportError:
+    def log_cmd(*a, **k):
+        return None
 
 # Config
 MAX_SPEED_MS = 3.33          # 12 km/h
@@ -217,6 +223,7 @@ class RouteReplayer:
                     c &= 0xFFFF
             pkt = bytes([0x02, len(payload)]) + payload + struct.pack(">H", c) + bytes([0x03])
             self.ser.write(pkt)
+            log_cmd("steer", "set_current", f"{ma / 1000:.3f}", "route_replay")
 
     def _brake(self, intensity=0.5):
         """Activate brake servo. 0=release, 1=full brake."""
@@ -224,7 +231,8 @@ class RouteReplayer:
             return
         import urllib.request
         try:
-            angle = int(intensity * 95)  # 0-95 degrees
+            angle = int(intensity * 60)  # 0-60°: MAI oltre 60 sull'idraulico (a 65° inchioda). Era 95.
+            log_cmd("brake", "request", angle, "route_replay → servofreno /brake")
             urllib.request.urlopen(
                 f"http://localhost:5000/brake?angle={angle}", timeout=1)
         except Exception:

@@ -34,8 +34,12 @@ import smbus2
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sensors"))
 try:
     from hub_client import LIMITER_STATE_FILE, hub_enabled, hub_state, write_json_atomic  # noqa: E402
+    from actuator_log import log_cmd   # ogni uscita al servo freno, con l'istante esatto  # noqa: E402
 except ImportError:                   # hub_client non deployato: comportamento di prima, il freno parte comunque
     LIMITER_STATE_FILE = "/dev/shm/asmile_limiter.json"
+
+    def log_cmd(*a, **k):
+        return None
 
     def hub_enabled():
         return False
@@ -476,6 +480,7 @@ class Servo:
                 self._log(f"claim_output(pin={SERVO_PIN})")
             duty = angle_to_duty(angle)
             lgpio.tx_pwm(self._chip, SERVO_PIN, SERVO_FREQ, duty)
+            log_cmd("brake", "pwm", f"{angle:.2f}", f"duty={duty:.2f}%")
             self._log(f"tx_pwm(pin={SERVO_PIN}, freq={SERVO_FREQ}Hz, "
                       f"duty={duty:.2f}%, angle={angle:.2f}°) [Δ{delta:+.1f}°]")
             self._last_pulsed_angle = angle
@@ -487,6 +492,7 @@ class Servo:
             lgpio.tx_pwm(self._chip, SERVO_PIN, SERVO_FREQ, 0.0)
             self._log(f"tx_pwm(pin={SERVO_PIN}, duty=0%) — stop PWM (hold done @ {angle:.2f}°)")
             lgpio.gpio_free(self._chip, SERVO_PIN)
+            log_cmd("brake", "free", f"{self._last_pulsed_angle:.2f}", "pwm off, pin hi-Z")
             self._claimed = False
             self._log(f"gpio_free(pin={SERVO_PIN}) — pin hi-Z, servo mantiene posizione")
 
@@ -497,6 +503,7 @@ class Servo:
                     lgpio.tx_pwm(self._chip, SERVO_PIN, SERVO_FREQ, 0.0)
                     time.sleep(0.02)
                     lgpio.gpio_free(self._chip, SERVO_PIN)
+                    log_cmd("brake", "free", f"{self._last_pulsed_angle:.2f}", "shutdown limiter")
                 lgpio.gpiochip_close(self._chip)
             except Exception:
                 pass

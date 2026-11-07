@@ -29,11 +29,33 @@ stesso passo, stesso formato.
 Senza `SENSOR_HUB=1` in `~/asmile_id.conf` tutto resta come prima: si attiva unità per unità.
 Se `rpicam-vid` non ha `--metadata`, i recorder registrano come prima, senza frames csv.
 
+## Uscite: cosa viene deciso e cosa parte verso freno e sterzo
+Ogni comando a un attuatore viene timbrato nell'istante in cui parte verso l'hardware
+(`pi/sensors/actuator_log.py`, chiamato subito dopo la scrittura):
+| chi | cosa | riga |
+|---|---|---|
+| speed_limiter | PWM al servo freno (angolo, duty), stop PWM + pin libero | `brake,pwm,<deg>` / `brake,free,<deg>` |
+| master_switch | pulse di rilascio all'ON, pulse 60° all'OFF | `brake,pwm/free,…,master_switch …` |
+| servofreno_server | richiesta frenata dal telefono | `brake,phone_flag,1/0` |
+| route_replay | richiesta freno (ora max 60°, prima 95°) | `brake,request,<deg>` |
+| steering_controller / power_steering / route_replay | corrente VESC su UART0 (200 Hz) | `steer,set_current,<A>` |
+
+Il hub le scrive **tutte** in `actuators_<sessione>.csv` (stesso nome e stesso `t_ms` del CSV
+unico; provato: 565/565 comandi sterzo a 200 Hz e 8/8 freno, anche con rotazione del file).
+Nel CSV unico: `brake_out_*` = ultimo comando freno con il suo istante, `steer_out_*` = ultimo
+comando sterzo, numero e media dei comandi nei 20 ms, `evento` = tutti i comandi freno della riga.
+Decisione del limiter: `lim_*`, `brake_target_deg`, `brake_cmd_deg` con `lim_t_ms` del suo tick.
+INA219 (corrente servo freno) letta subito dopo l'IMU nella stessa riga: entro ~1 ms da `t_ms`.
+VESC: un solo padrone della UART0. Con lo sterzo acceso la telemetria la pubblica lui
+(`/dev/shm/asmile_vesc.json`, `vesc_t_ms`); prima su asmile2 il recorder interrogava il VESC
+in contemporanea allo sterzo, sulla stessa seriale.
+
 ## Colonne `asmile_sensors_v1`
 `t_ms, wall, imu_ax_g, imu_ay_g, imu_az_g, imu_gx_dps, imu_gy_dps, imu_gz_dps,
 enc_t_ms, enc_wheel_cum, enc_wheel_raw, enc_steer_raw, servo_v, servo_ma,
 lim_t_ms, lim_source, lim_zone, lim_speed_ms, lim_accel_ms2, lim_error_ms, brake_target_deg, brake_cmd_deg,
-vesc_rpm, vesc_duty, vesc_i_motor, vesc_i_in, vesc_v_in, vesc_tach, vesc_fault,
+brake_out_t_ms, brake_out_cmd, brake_out_deg, steer_out_t_ms, steer_out_a, steer_out_n, steer_out_mean_a,
+vesc_t_ms, vesc_rpm, vesc_duty, vesc_i_motor, vesc_i_in, vesc_v_in, vesc_tach, vesc_fault,
 gps_t_ms, gps_utc, gps_fix, gps_lat, gps_lon, gps_speed_ms, gps_heading, gps_sats, gps_hdop, gps_alt_m, evento`
 
 `enc_t_ms` e `lim_t_ms` sono gli istanti VERI di quei campioni (possono precedere `t_ms` di

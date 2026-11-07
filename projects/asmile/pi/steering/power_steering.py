@@ -11,6 +11,14 @@ import serial
 import struct
 import time
 import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sensors"))
+try:
+    from actuator_log import log_cmd     # ogni comando VESC con l'istante esatto (sensor_hub)
+except ImportError:
+    def log_cmd(*a, **k):
+        return None
 
 # --- Config ---
 UART_PORT = "/dev/ttyAMA0"
@@ -49,6 +57,7 @@ def vesc_packet(payload: bytes) -> bytes:
 def vesc_set_current(ser, amps: float):
     ma = int(amps * 1000)
     ser.write(vesc_packet(struct.pack(">Bi", COMM_SET_CURRENT, ma)))
+    log_cmd("steer", "set_current", f"{ma / 1000:.3f}", "power_steering")
 
 
 # --- Encoder ---

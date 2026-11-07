@@ -11,6 +11,12 @@ sensor_hub.py — UN solo registratore per tutti i sensori del Pi, uguale su tut
     un fix nuovo, cioè ogni ~5 righe; vuoti nelle altre
   - STESSE colonne su ogni unità: un sensore assente lascia la colonna vuota
   - fsync ogni secondo: uno spegnimento perde al massimo l'ultimo secondo, mai buchi di byte nulli
+  - USCITE: ogni comando a freno (servo/pulse/flag telefono) e sterzo (VESC set_current) arriva
+    da actuator_log con il SUO istante: tutti in actuators_<sessione>.csv (nessuno perso, anche lo
+    sterzo a 200 Hz) + nel CSV unico l'ultimo per attuatore (brake_out_*, steer_out_*) e gli
+    eventi freno in `evento`
+  - VESC: un solo padrone della UART0. Se lo sterzo gira, la telemetria arriva da lui
+    (/dev/shm/asmile_vesc.json); il hub interroga il VESC da sé solo con HUB_VESC=1 e sterzo fermo
 
 File:  /data/logging/sensors/sensors_<AAAAMMGG_hhmmss>.csv (+ .json con orologi e dispositivi),
        nuovo file ogni ora.  Stato live: /dev/shm/asmile_hub.json (lo leggono limiter e server freno).
@@ -28,6 +34,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hub_client import (HUB_STATE_FILE, LIMITER_STATE_FILE, now_ms, unit_conf,  # noqa: E402
                         write_json_atomic)
+from actuator_log import ACT_FILE                                                  # noqa: E402
 
 SCHEMA = "asmile_sensors_v1"
 PERIOD_MS = 20
@@ -42,7 +49,9 @@ COLUMNS = [
     "servo_v", "servo_ma",
     "lim_t_ms", "lim_source", "lim_zone", "lim_speed_ms", "lim_accel_ms2", "lim_error_ms",
     "brake_target_deg", "brake_cmd_deg",
-    "vesc_rpm", "vesc_duty", "vesc_i_motor", "vesc_i_in", "vesc_v_in", "vesc_tach", "vesc_fault",
+    "brake_out_t_ms", "brake_out_cmd", "brake_out_deg",
+    "steer_out_t_ms", "steer_out_a", "steer_out_n", "steer_out_mean_a",
+    "vesc_t_ms", "vesc_rpm", "vesc_duty", "vesc_i_motor", "vesc_i_in", "vesc_v_in", "vesc_tach", "vesc_fault",
     "gps_t_ms", "gps_utc", "gps_fix", "gps_lat", "gps_lon", "gps_speed_ms", "gps_heading",
     "gps_sats", "gps_hdop", "gps_alt_m",
     "evento",
@@ -79,8 +88,10 @@ GPS_KEYS = [
 VESC_PORT = "/dev/ttyAMA0"
 VESC_BAUD = 115200
 
-# ─── eventi da file flag ───────────────────────────────────────────────
-FLAG_EVENTS = {"/tmp/emergency_brake": "FRENATA_TELEFONO"}
+VESC_STATE_FILE = "/dev/shm/asmile_vesc.json"   # telemetria pubblicata dallo sterzo (padrone UART0)
+VESC_FRESH_MS = 300
+ACT_ROTATE_BYTES = 4_000_000                    # /dev/shm è RAM: oltre, il file uscite riparte
+ACT_COLUMNS = ["t_ms", "device", "cmd", "value", "note"]
 
 running = True
 
@@ -249,14 +260,22 @@ class Vesc(threading.Thread):
         return crc
 
     def run(self):
-        try:
-            import serial
-            ser = serial.Serial(VESC_PORT, VESC_BAUD, timeout=0.05)
-        except Exception as e:
-            print(f"[HUB] VESC assente: {e}", flush=True)
-            return
+        import serial
+        ser = None
         pkt = bytes([0x02, 1, 4]) + struct.pack(">H", self._crc16(bytes([4]))) + b"\x03"
         while running:
+            if read_vesc_owner() is not None:          # lo sterzo comanda il VESC: niente seconda voce
+                if ser:
+                    ser.close()
+                    ser = None
+                time.sleep(0.1)
+                continue
+            if ser is None:
+                try:
+                    ser = serial.Serial(VESC_PORT, VESC_BAUD, timeout=0.05)
+                except Exception:
+                    time.sleep(1.0)
+                    continue
             try:
                 ser.reset_input_buffer()
                 ser.write(pkt)
@@ -266,7 +285,7 @@ class Vesc(threading.Thread):
                 pl = r[i + 2:i + 2 + r[i + 1]] if i >= 0 and i + 2 <= len(r) else b""
                 if len(pl) >= 56 and pl[0] == 4:
                     q = pl[1:]
-                    self.data = (struct.unpack(">i", q[22:26])[0], struct.unpack(">h", q[20:22])[0] / 1000,
+                    self.data = (now_ms(), struct.unpack(">i", q[22:26])[0], struct.unpack(">h", q[20:22])[0] / 1000,
                                  struct.unpack(">i", q[4:8])[0] / 100, struct.unpack(">i", q[8:12])[0] / 100,
                                  struct.unpack(">h", q[26:28])[0] / 10, struct.unpack(">i", q[44:48])[0], q[52])
             except Exception:
@@ -288,6 +307,66 @@ def read_encoders():
             return None, None, None, int(f.readline())
     except (OSError, ValueError):
         return None
+
+
+def read_vesc_owner():
+    """Telemetria dallo sterzo se fresca: (t_ms, rpm, duty, i_motor, i_in, v_in, tach, fault)."""
+    try:
+        with open(VESC_STATE_FILE) as f:
+            v = json.load(f)
+        if now_ms() - v.get("t_ms", 0) <= VESC_FRESH_MS:
+            return (v["t_ms"], v.get("rpm"), v.get("duty"), v.get("i_motor"), v.get("i_input"),
+                    v.get("v_in"), v.get("tach"), v.get("fault"))
+    except (OSError, ValueError, KeyError):
+        pass
+    return None
+
+
+class ActuatorTail:
+    """Legge le righe nuove di /dev/shm/asmile_actuators.log a ogni tick (nessuna persa)."""
+
+    def __init__(self):
+        self.off = 0
+        try:                                      # all'avvio si parte dalla fine: il passato non ha un CSV
+            self.off = os.path.getsize(ACT_FILE)
+        except OSError:
+            pass
+
+    def _read(self, path, off):
+        try:
+            with open(path, "rb") as f:
+                f.seek(off)
+                data = f.read()
+        except OSError:
+            return [], off
+        end = data.rfind(b"\n") + 1                 # solo righe complete
+        return data[:end].decode("ascii", "ignore").splitlines(), off + end
+
+    def new(self):
+        try:
+            size = os.path.getsize(ACT_FILE)
+        except OSError:
+            return []
+        if size < self.off:                       # qualcuno l'ha ricreato
+            self.off = 0
+        lines, self.off = self._read(ACT_FILE, self.off)
+        if self.off > ACT_ROTATE_BYTES:           # ruota: rinomina, aspetta chi stava scrivendo, finisce di leggere
+            old = ACT_FILE + ".old"
+            try:
+                os.replace(ACT_FILE, old)
+                time.sleep(0.005)
+                more, _ = self._read(old, self.off)
+                lines += more
+                os.remove(old)
+            except OSError:
+                pass
+            self.off = 0
+        out = []
+        for ln in lines:
+            p = ln.split(",", 4)
+            if len(p) == 5 and p[0].isdigit():
+                out.append(p)
+        return out
 
 
 def read_limiter():
@@ -323,26 +402,33 @@ class Writer:
         self.path = os.path.join(OUT_DIR, name + ".csv")
         self.f = open(self.path, "w")
         self.f.write(",".join(COLUMNS) + "\n")
+        self.fa = open(os.path.join(OUT_DIR, name.replace("sensors_", "actuators_") + ".csv"), "w")
+        self.fa.write(",".join(ACT_COLUMNS) + "\n")
         self.opened, self.n = time.monotonic(), 0
         meta = dict(self.info, file=name + ".csv", schema=SCHEMA, columns=COLUMNS,
+                    actuators_file=name.replace("sensors_", "actuators_") + ".csv",
                     clocks_start=clocks(), started=datetime.now().isoformat(timespec="milliseconds"))
         write_json_atomic(os.path.join(OUT_DIR, name + ".json"), meta)
         print(f"[HUB] scrivo {self.path}", flush=True)
 
-    def row(self, line):
+    def row(self, line, act_lines=()):
         if self.f is None or time.monotonic() - self.opened > ROTATE_S:
             self._open()
         self.f.write(line)
+        for a in act_lines:
+            self.fa.write(",".join(a) + "\n")
         self.n += 1
         if self.n % FSYNC_EVERY == 0:
-            self.f.flush()
-            os.fsync(self.f.fileno())
+            for f in (self.f, self.fa):
+                f.flush()
+                os.fsync(f.fileno())
 
     def close(self):
         if self.f:
-            self.f.flush()
-            os.fsync(self.f.fileno())
-            self.f.close()
+            for f in (self.f, self.fa):
+                f.flush()
+                os.fsync(f.fileno())
+                f.close()
             meta_p = self.path[:-4] + ".json"
             try:
                 meta = json.load(open(meta_p))
@@ -381,7 +467,9 @@ def main():
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
 
-    last_gps_seq, flags = 0, {k: False for k in FLAG_EVENTS}
+    last_gps_seq = 0
+    act = ActuatorTail()
+    brake_last = steer_last = None
     nxt = time.monotonic()
     late = 0
     while running:
@@ -394,18 +482,23 @@ def main():
             nxt = time.monotonic()
         t_ms = now_ms()
         imu = i2c.imu()
+        ina = i2c.ina()                         # subito dopo l'IMU: entrambi entro ~1 ms da t_ms
         enc = read_encoders()
-        ina = i2c.ina()
         lim = read_limiter()
+        acts = act.new()
         with gps.lock:
             g = gps.latest if gps.seq != last_gps_seq else None
             last_gps_seq = gps.seq
-        ev = []
-        for path, name in FLAG_EVENTS.items():
-            on = os.path.exists(path)
-            if on != flags[path]:
-                ev.append(name + ("_ON" if on else "_OFF"))
-                flags[path] = on
+        ev, steer_win = [], []
+        for a in acts:
+            if a[1] == "steer" and a[2] == "set_current":
+                steer_win.append(a)
+            else:                               # freno e altro: pochi, tutti anche qui nella riga
+                ev.append(":".join(a[:4]))
+            if a[1] == "brake":
+                brake_last = a
+            elif a[1] == "steer":
+                steer_last = a
         vals = [t_ms, datetime.now().isoformat(timespec="milliseconds")]
         vals += [fmt(x, 4) for x in imu[:3]] + [fmt(x, 2) for x in imu[3:]] if imu else [""] * 6
         vals += [fmt(x, 0) for x in enc] if enc else [""] * 4
@@ -416,9 +509,20 @@ def main():
                      fmt(lim.get("target_deg"), 2), fmt(lim.get("cmd_deg"), 2)]
         else:
             vals += [""] * 8
-        vd = vesc.data if vesc else None
-        vals += [fmt(vd[0], 0), fmt(vd[1], 3), fmt(vd[2], 2), fmt(vd[3], 2), fmt(vd[4], 1),
-                 fmt(vd[5], 0), fmt(vd[6], 0)] if vd else [""] * 7
+        vals += [brake_last[0], brake_last[2], brake_last[3]] if brake_last else ["", "", ""]
+        if steer_last:
+            try:
+                mean = sum(float(a[3]) for a in steer_win) / len(steer_win) if steer_win else None
+            except ValueError:
+                mean = None
+            vals += [steer_last[0], steer_last[3], len(steer_win), fmt(mean, 3)]
+        else:
+            vals += ["", "", "", ""]
+        vd = read_vesc_owner() or (vesc.data if vesc else None)
+        if vd and now_ms() - vd[0] > 1000:
+            vd = None
+        vals += [vd[0], fmt(vd[1], 0), fmt(vd[2], 3), fmt(vd[3], 2), fmt(vd[4], 2), fmt(vd[5], 1),
+                 fmt(vd[6], 0), fmt(vd[7], 0)] if vd else [""] * 8
         if g:
             vals += [g["t_ms"], g["utc"], g.get("quality", 0) if g.get("fix_rmc") else 0,
                      fmt(g.get("lat"), 7), fmt(g.get("lon"), 7), fmt(g.get("speed"), 3),
@@ -426,7 +530,7 @@ def main():
         else:
             vals += [""] * 10
         vals.append("|".join(ev))
-        w.row(",".join(str(v) for v in vals) + "\n")
+        w.row(",".join(str(v) for v in vals) + "\n", acts)
 
         state = dict(zip(COLUMNS, vals))
         with gps.lock:
