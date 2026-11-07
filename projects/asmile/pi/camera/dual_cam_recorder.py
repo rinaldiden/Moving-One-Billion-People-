@@ -115,7 +115,8 @@ class DualCamRecorder:
         print("[SYNC] rpicam --sync attivo: la registrazione parte al punto di sync (vedi cam_*.log)")
 
     def _sync_result(self):
-        """Legge dai log rpicam la differenza di sync raggiunta (µs)."""
+        """Dai log rpicam: differenza di sync (µs) e ISTANTE del sync (uptime s, orologio dei log
+        libcamera) = istante del frame 0 nei pts."""
         out = {}
         for name in ("left", "right"):
             p = self.session_dir / f"cam_{name}.log"
@@ -123,7 +124,20 @@ class DualCamRecorder:
                 for line in p.read_text(errors="ignore").splitlines():
                     if "Sync achieved" in line:
                         out[name] = line.split("Difference")[-1].strip()
+                        try:                                  # "[0:31:31.468847157] ..." → secondi
+                            h, m, sec = line[1:line.index("]")].split(":")
+                            out[f"{name}_sync_uptime_s"] = int(h) * 3600 + int(m) * 60 + float(sec)
+                        except ValueError:
+                            pass
         return out
+
+    @staticmethod
+    def _clock_map():
+        """Legame orologio di sistema ↔ uptime (CLOCK_BOOTTIME e MONOTONIC), per portare i pts
+        video sull'ora dei CSV sensori:  t_wall(frame i) = sync_uptime_s + pts_i/1000 + offset."""
+        wall = time.time()
+        return {"wall_minus_boottime_s": wall - time.clock_gettime(time.CLOCK_BOOTTIME),
+                "wall_minus_monotonic_s": wall - time.monotonic()}
 
     def _save_metadata(self):
         meta = {
@@ -136,6 +150,7 @@ class DualCamRecorder:
             "bitrate": BITRATE,
             "vflip": VFLIP,
             "hflip": HFLIP,
+            "clock_map_start": self._clock_map(),
             "cam0": "video_left (fisicamente DESTRA su #001, calib order=RL)",
             "cam1": "video_right (fisicamente SINISTRA su #001)",
             "note": "Two separate OV9281 cameras, frame-synced by libcamera (rpicam --sync, "
@@ -246,7 +261,8 @@ class DualCamRecorder:
                 meta = json.load(f)
             meta["end_time"] = datetime.now().isoformat()
             meta["duration_seconds"] = round(elapsed, 1)
-            meta["sync_achieved"] = self._sync_result()   # es. {"left": "0us", "right": "-18us"}
+            meta["sync_achieved"] = self._sync_result()   # es. {"left": "0us", "right": "-18us", ...}
+            meta["clock_map_end"] = self._clock_map()
             with open(meta_path, "w") as f:
                 json.dump(meta, f, indent=2)
 

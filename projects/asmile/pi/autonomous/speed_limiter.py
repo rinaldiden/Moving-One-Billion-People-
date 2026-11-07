@@ -104,6 +104,10 @@ ENC_WHEEL_CIRCUM_M = 2.10       # ⚠️ PLACEHOLDER — TODO CALIBRARE (circonf
                                 # affidabile: non fidarsi del freno reale prima del tuning.
 ENC_MAX_STEP_COUNTS = 8000      # |Δcounts|/sample oltre → wrap/glitch, scarta
 ENC_CALIB_FILE = "/var/lib/asmile/encoder_calibration.json"  # scritto da encoder_speed_calibration.py
+ENC_FIT_WIN_S = 0.30            # parabola ai minimi quadrati sulla DISTANZA percorsa in questa finestra:
+                                # s(t) = s0 + v·τ + ½a·τ²  (τ = t − adesso) → v e a ALL'ISTANTE ATTUALE
+                                # (2026-11-07: la differenza fra due letture a 50Hz dava std 8 m/s²,
+                                #  picchi ±20 → falsi "sto rallentando" → zona RELEASE a caso)
 
 # ─── Logging ──────────────────────────────────────────────────────────
 LOG_DIR = os.path.expanduser("~/wip/logging/speed_limiter")
@@ -199,6 +203,24 @@ def _read_ble_speed():
 # ══════════════════════════════════════════════════════════════════════
 # Wheel encoder (AMT22 ruota via ponte Arduino-USB) — sorgente PRIORITARIA
 # ══════════════════════════════════════════════════════════════════════
+def _solve3(M, Y):
+    """Risolve M·x = Y (3x3) con Cramer; None se singolare."""
+    def det(A):
+        return (A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1])
+                - A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0])
+                + A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]))
+    D = det(M)
+    if abs(D) < 1e-18:
+        return None
+    out = []
+    for c in range(3):
+        A = [row[:] for row in M]
+        for r in range(3):
+            A[r][c] = Y[r]
+        out.append(det(A) / D)
+    return out
+
+
 class WheelEncoder:
     """Velocità (e accel/decel) dalla ruota leggendo /tmp/encoder_wheel (posizione
     assoluta AMT22 0..16383, aggiornata dal ponte Arduino-USB ~880Hz).
@@ -207,9 +229,9 @@ class WheelEncoder:
 
     def __init__(self):
         self._last_counts = None
-        self._last_t = None
+        self._cum = 0                     # count cumulati (srotolati) dall'avvio
+        self._hist = deque()              # (t, cum) ultimi ENC_FIT_WIN_S
         self._speed_ms = 0.0
-        self._prev_speed_ms = 0.0
         self._accel_ms2 = 0.0
         # Carica la calibrazione reale se c'è (da encoder_speed_calibration.py),
         # altrimenti usa il placeholder (velocità NON affidabile finché non tarata).
@@ -241,27 +263,38 @@ class WheelEncoder:
             return 0.0, False, 0.0
 
         t = time.monotonic()
-        if self._last_counts is None or self._last_t is None:
-            self._last_counts, self._last_t = counts, t
-            return self._speed_ms, True, 0.0      # primo campione: tiene l'ultima velocità
+        if self._last_counts is None:
+            self._last_counts = counts
+            self._hist.clear()
+            self._hist.append((t, self._cum))
+            return self._speed_ms, True, self._accel_ms2   # primo campione: tiene l'ultima velocità
 
-        dt = t - self._last_t
-        if dt <= 0:
-            return self._speed_ms, True, self._accel_ms2
         d = counts - self._last_counts
         # wraparound shortest-path (0↔16383)
         if d > ENC_COUNTS_PER_REV // 2:
             d -= ENC_COUNTS_PER_REV
         elif d < -ENC_COUNTS_PER_REV // 2:
             d += ENC_COUNTS_PER_REV
-        self._last_counts, self._last_t = counts, t
+        self._last_counts = counts
         if abs(d) > ENC_MAX_STEP_COUNTS:          # glitch/wrap irreale → tieni l'ultimo
             return self._speed_ms, True, self._accel_ms2
-        dist = (abs(d) / ENC_COUNTS_PER_REV) * self.circum
-        new_speed = dist / dt
-        self._prev_speed_ms = self._speed_ms
-        self._speed_ms = 0.5 * self._speed_ms + 0.5 * new_speed   # smoothing leggero
-        self._accel_ms2 = (self._speed_ms - self._prev_speed_ms) / dt  # <0 = sto calando
+        self._cum += abs(d)
+        self._hist.append((t, self._cum))
+        while len(self._hist) > 3 and t - self._hist[0][0] > ENC_FIT_WIN_S:
+            self._hist.popleft()
+        if len(self._hist) < 6 or t - self._hist[0][0] < 0.1:   # finestra ancora troppo corta
+            return self._speed_ms, True, self._accel_ms2
+        k = self.circum / ENC_COUNTS_PER_REV
+        tau = [p[0] - t for p in self._hist]
+        sm = [(p[1] - self._cum) * k for p in self._hist]       # metri, 0 = adesso
+        # minimi quadrati  s = c0 + c1·τ + c2·τ²  (equazioni normali 3x3)
+        S = [sum(x ** n for x in tau) for n in range(5)]
+        Y = [sum(y * x ** n for x, y in zip(tau, sm)) for n in range(3)]
+        M = [[S[0], S[1], S[2]], [S[1], S[2], S[3]], [S[2], S[3], S[4]]]
+        sol = _solve3(M, Y)
+        if sol is not None:
+            self._speed_ms = max(0.0, sol[1])
+            self._accel_ms2 = 2.0 * sol[2]                       # <0 = sto calando
         return self._speed_ms, True, self._accel_ms2
 
 
