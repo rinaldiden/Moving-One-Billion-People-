@@ -1,0 +1,54 @@
+{
+ "unit": "asmile-logger",
+ "method": "scacchiera + metro (calib_board_video.py)",
+ "square_mm": 29.2,
+ "baseline_mm": 200.0,
+ "f_px": 934.6,
+ "fit": {
+  "fB_px_m": 176.32,
+  "d0_px": 27.66,
+  "f_from_baseline_px": 881.6
+ },
+ "soste": [
+  {
+   "z_metro_m": 1.0,
+   "inizio": "00062:400",
+   "frame": 56,
+   "lato_px": 27.1,
+   "f_px": 928.2,
+   "disp_px": 203.98,
+   "dy_px": -12.0,
+   "z_stereo_fit_m": 1.0,
+   "err_fit_pct": 0.0,
+   "z_stereo_semplice_m": 0.916,
+   "err_semplice_pct": -8.36
+  },
+  {
+   "z_metro_m": 2.0,
+   "inizio": "00062:300",
+   "frame": 49,
+   "lato_px": 13.64,
+   "f_px": 934.6,
+   "disp_px": 115.82,
+   "dy_px": -12.0,
+   "z_stereo_fit_m": 2.0,
+   "err_fit_pct": -0.0,
+   "z_stereo_semplice_m": 1.614,
+   "err_semplice_pct": -19.31
+  },
+  {
+   "z_metro_m": 3.0,
+   "inizio": "00062:270",
+   "frame": 36,
+   "lato_px": 9.26,
+   "f_px": 951.4,
+   "disp_px": 86.43,
+   "dy_px": -12.0,
+   "z_stereo_fit_m": 3.0,
+   "err_fit_pct": 0.0,
+   "z_stereo_semplice_m": 2.163,
+   "err_semplice_pct": -27.91
+  }
+ ],
+ "valid_for": "SOLO asmile-logger \u2014 mai usarla per un'altra unit\u00e0"
+}

@@ -132,5 +132,21 @@
  },
  "cam_height_m": 0.825,
  "baseline_tape_mm": 200.0,
- "measured_2026_11_08": "Daniele col metro: camere #001 a 825 mm da terra, interasse 200 mm. SOLO #001 (logger: 0.71 m, Camarray; asmile2: altro)."
+ "measured_2026_11_08": "Daniele col metro: camere #001 a 825 mm da terra, interasse 200 mm. SOLO #001 (logger: 0.71 m, Camarray; asmile2: altro).",
+ "focal_board_2026_11_08": {
+  "f_px": [
+   1127.0,
+   1174.7,
+   1131.3
+  ],
+  "f_median_px": 1131.3,
+  "distances_m": [
+   1,
+   2,
+   3
+  ],
+  "square_mm": 29.2,
+  "camera": "sinistra (cam0, fisicamente destra) — la destra NON ha registrato (sync senza WiFi, corretto)",
+  "note": "f ~1130-1175 px: ne' 933 nominale ne' 1306 (= f·B 261.3 / B 200). Rifare 1-2 m con le DUE camere per la depth stereo."
+ }
 }
