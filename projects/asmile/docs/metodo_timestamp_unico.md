@@ -48,7 +48,10 @@ Decisione del limiter: `lim_*`, `brake_target_deg`, `brake_cmd_deg` con `lim_t_m
 INA219 (corrente servo freno) letta subito dopo l'IMU nella stessa riga: entro ~1 ms da `t_ms`.
 VESC: un solo padrone della UART0. Con lo sterzo acceso la telemetria la pubblica lui
 (`/dev/shm/asmile_vesc.json`, `vesc_t_ms`); prima su asmile2 il recorder interrogava il VESC
-in contemporanea allo sterzo, sulla stessa seriale.
+in contemporanea allo sterzo, sulla stessa seriale. Telemetria (rpm, duty, correnti, tensione,
+fault = cosa ESEGUE) a **50 Hz**, una per riga da 20 ms: la richiesta parte ogni 4 tick del
+loop a 200 Hz e la risposta si raccoglie nei tick dopo, senza fermare il loop (prima: 10 Hz e
+15 ms di attesa bloccante a lettura). Pacchetti accettati solo con CRC giusto.
 
 ## Colonne `asmile_sensors_v1`
 `t_ms, wall, imu_ax_g, imu_ay_g, imu_az_g, imu_gx_dps, imu_gy_dps, imu_gz_dps,

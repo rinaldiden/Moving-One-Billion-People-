@@ -127,7 +127,7 @@ class SteeringController:
                  deadband_steps=2,
                  loop_hz=200,
                  smoothing=0.85,
-                 telemetry_hz=10):
+                 telemetry_hz=50):                  # 50 Hz = una lettura ogni riga da 20 ms del hub
         # Tuning
         self.scale = scale
         self.max_current = min(max_current, 30.0)
@@ -142,6 +142,9 @@ class SteeringController:
         self._telem_interval = loop_hz // telemetry_hz if telemetry_hz > 0 else 0
         self._telem_counter = 0
         self._telem_file = None
+        self._rx = bytearray()           # byte VESC in arrivo, raccolti a ogni tick
+        self._telem_pending = None       # istante dell'ultima GET_VALUES senza risposta
+        self.telem_timeouts = 0
         self._hub = hub_enabled()        # SENSOR_HUB=1: comandi e telemetria nel CSV unico del hub
         self.telemetry = {}
         self.peak_i_motor = 0.0
@@ -218,17 +221,46 @@ class SteeringController:
                 struct.pack(">Bi", COMM_SET_CURRENT, ma)))
             log_cmd("steer", "set_current", f"{ma / 1000:.3f}", "steering_controller")
 
-    def _read_telemetry(self):
+    def _telemetry_tick(self, request):
+        """Telemetria SENZA fermare il loop a 200 Hz (prima: 15 ms di sleep a lettura → max 10 Hz).
+        GET_VALUES ogni 20 ms; i byte della risposta (~73 B ≈ 6,3 ms a 115200) si raccolgono
+        nei tick successivi e il pacchetto vale solo se intero, con CRC e 0x03 finale giusti."""
         if not self._ser or not self._ser.is_open:
             return None
-        self._ser.reset_input_buffer()
-        self._ser.write(vesc_packet(bytes([COMM_GET_VALUES])))
-        time.sleep(0.01)
-        resp = self._ser.read(self._ser.in_waiting or 128)
-        if resp:
-            time.sleep(0.005)
-            resp += self._ser.read(self._ser.in_waiting or 64)
-        vals = parse_vesc_values(resp)
+        n = self._ser.in_waiting
+        if n:
+            self._rx += self._ser.read(n)
+        if len(self._rx) > 1024:
+            self._rx.clear()
+        vals = None
+        while True:
+            i = self._rx.find(b'\x02')
+            if i < 0:
+                self._rx.clear()
+                break
+            del self._rx[:i]
+            if len(self._rx) < 2:
+                break
+            if not 0 < self._rx[1] <= 100:          # GET_VALUES ~70 B: un 0x02 di rumore non blocca
+                del self._rx[:1]
+                continue
+            end = 2 + self._rx[1] + 3
+            if len(self._rx) < end:
+                break
+            if self._rx[end - 1] == 3 and \
+                    struct.unpack(">H", bytes(self._rx[end - 3:end - 1]))[0] == crc16(bytes(self._rx[2:end - 3])):
+                vals = parse_vesc_values(bytes(self._rx[:end])) or vals
+                del self._rx[:end]
+            else:
+                del self._rx[:1]
+        now = time.monotonic()
+        if vals or (self._telem_pending and now - self._telem_pending > 0.05):
+            if not vals:
+                self.telem_timeouts += 1
+            self._telem_pending = None
+        if request and self._telem_pending is None:
+            self._ser.write(vesc_packet(bytes([COMM_GET_VALUES])))
+            self._telem_pending = now
         if vals:
             self.telemetry = vals
             write_json_atomic(VESC_STATE_FILE, dict(vals, t_ms=time.monotonic_ns() // 1_000_000,
@@ -367,9 +399,10 @@ class SteeringController:
             # Telemetria periodica
             if self._telem_interval > 0:
                 self._telem_counter += 1
-                if self._telem_counter >= self._telem_interval:
+                req = self._telem_counter >= self._telem_interval
+                if req:
                     self._telem_counter = 0
-                    self._read_telemetry()
+                self._telemetry_tick(req)
 
             if self.on_log:
                 self.on_log(time.time(), self.current_angle,
