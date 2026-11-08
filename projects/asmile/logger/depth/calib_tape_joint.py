@@ -109,6 +109,7 @@ def main():
     ap.add_argument("--fit-k1", action="store_true",
                     help="stima anche la distorsione radiale (2026-11-07 su #001: peggiora, overfit)")
     ap.add_argument("--base", help="calib JSON da cui ereditare i metadati (order, flip...)")
+    ap.add_argument("--stops", help="soste a mano in secondi, in ordine di distanza: 31-45,47-64,...")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     a.out_dir = tempfile.mkdtemp()
@@ -116,7 +117,10 @@ def main():
 
     src = Source(argparse.Namespace(video=a.video, left=a.left, right=a.right, out=a.out_dir),
                  a.order, not a.no_flip)
-    segs = still_segments(src, 5.0)
+    if a.stops:   # soste indicate a mano (secondi), quando il rilevamento automatico ne trova di spurie
+        segs = [(int(float(x.split("-")[0]) * 15), int(float(x.split("-")[1]) * 15)) for x in a.stops.split(",")]
+    else:
+        segs = still_segments(src, 5.0)
     print(f"[1] tratti fermi: {len(segs)} -> " + ", ".join(f"{s / 15:.0f}-{e / 15:.0f}s" for s, e in segs))
     n = min(len(segs), len(a.distances))
     segs, Zs = segs[:n], a.distances[:n]

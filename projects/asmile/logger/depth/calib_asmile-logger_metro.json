@@ -1,0 +1,129 @@
+{
+ "K_left": [
+  [
+   935.0,
+   0.0,
+   640.0
+  ],
+  [
+   0.0,
+   935.0,
+   400.0
+  ],
+  [
+   0.0,
+   0.0,
+   1.0
+  ]
+ ],
+ "dist_left": [
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "K_right": [
+  [
+   935.0,
+   0.0,
+   640.0
+  ],
+  [
+   0.0,
+   935.0,
+   400.0
+  ],
+  [
+   0.0,
+   0.0,
+   1.0
+  ]
+ ],
+ "dist_right": [
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "R": [
+  [
+   1.0,
+   0.0,
+   0.0
+  ],
+  [
+   0.0,
+   1.0,
+   0.0
+  ],
+  [
+   0.0,
+   0.0,
+   1.0
+  ]
+ ],
+ "T": [
+  -0.2,
+  0.0,
+  0.0
+ ],
+ "size": [
+  1280,
+  800
+ ],
+ "baseline_mm": 200.0,
+ "order": "LR",
+ "flip180": false,
+ "d0_px": 26.336,
+ "focal_fit_px": 902.8,
+ "scale_fixed_dense": 0.9691,
+ "method": "calib_tape_joint: R da dy=0 su match a bici FERMA + fit col METRO d=fB/Z+d0 (T orizz. 200mm)",
+ "tape_points": [
+  {
+   "Z_m": 1.0,
+   "disp_px": 207.179,
+   "Z_stereo_m": 0.998,
+   "z_model_m": 0.888
+  },
+  {
+   "Z_m": 2.0,
+   "disp_px": 115.824,
+   "Z_stereo_m": 2.018,
+   "z_model_m": 1.807
+  },
+  {
+   "Z_m": 3.0,
+   "disp_px": 86.737,
+   "Z_stereo_m": 2.989,
+   "z_model_m": 3.154
+  },
+  {
+   "Z_m": 5.0,
+   "disp_px": 62.647,
+   "Z_stereo_m": 4.973,
+   "z_model_m": 5.159
+  },
+  {
+   "Z_m": 7.0,
+   "disp_px": 51.887,
+   "Z_stereo_m": 7.066,
+   "z_model_m": 12.794
+  },
+  {
+   "Z_m": 10.0,
+   "disp_px": 44.783,
+   "Z_stereo_m": 9.788,
+   "z_model_m": 11.926
+  },
+  {
+   "Z_m": 15.0,
+   "disp_px": 38.318,
+   "Z_stereo_m": 15.069,
+   "z_model_m": 11.651
+  }
+ ],
+ "valid_for": "SOLO asmile-logger (Camarray, camere a 0.71 m) — mai per #001 o asmile2",
+ "video": "asmile-loggers/asmile-logger/calib_20261108_160535 segmenti 62-67, soste 1-2-3-5-7-10-15 m, scacchiera 29.2 mm sul muro"
+}
