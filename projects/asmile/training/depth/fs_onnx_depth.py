@@ -50,9 +50,8 @@ def main():
     cfg = PRESETS[a.preset]
 
     path = hf_hub_download(ONNX_REPO, ONNX_FILE)
-    provs = ort.get_available_providers()
-    use = ["CoreMLExecutionProvider", "CPUExecutionProvider"] if "CoreMLExecutionProvider" in provs else ["CPUExecutionProvider"]
-    sess = ort.InferenceSession(path, providers=use)
+    # CPU: CoreML compila lento (~2min) e copre solo parte del grafo → CPU piu' affidabile.
+    sess = ort.InferenceSession(path, providers=["CPUExecutionProvider"])
     print(f"[init] FoundationStereo-ONNX providers={sess.get_providers()} · focal={cfg['focal_px']} baseline={cfg['baseline_mm']}mm")
 
     cap = cv2.VideoCapture(a.video)

@@ -22,8 +22,8 @@ import cv2
 FULL_W, FULL_H = 2560, 800          # frame side-by-side
 CAM_W, CAM_H = 1280, 800            # singola camera
 BASELINE_MM = 200.0                 # baseline fisica Camarray (calib: 199.53mm) — NOTA
-CAM_HEIGHT_M = 0.77                 # altezza camera da terra (da object_depth.py) — NOTA
-                                    # (valore bici #001; ri-confermare solo se il mount logger cambia)
+CAM_HEIGHT_M = 0.71                 # altezza camera logger da terra (MISURATA 2026-11-05) — NOTA
+                                    # (71cm sul mount bici; era 0.77 sulla bici #001)
 
 
 class Calib:
