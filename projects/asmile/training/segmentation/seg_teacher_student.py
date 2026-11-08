@@ -106,13 +106,67 @@ class ThingsTeacher:
             self.model = YOLOE(os.path.join(MODELS, "yoloe-26l-seg.pt"))
             self.model.set_classes(THINGS)
         self.device = device
+        self.prev = []          # (classe, box) grezzi della passata prima, per la conferma su più frame
+        self.ego = []           # contorni del pezzo di bici davanti alla camera (esclusi)
 
     def __call__(self, img):
         if self.kind == "sam3":
             self.pred.set_image(img)
-            return self.pred(text=THINGS)[0]
-        return self.model.track(img, persist=True, conf=0.25, imgsz=960, device=self.device,
-                                tracker="bytetrack.yaml", verbose=False, retina_masks=False)[0]
+            r = self.pred(text=THINGS)[0]
+        else:
+            r = self.model.track(img, persist=True, conf=0.25, imgsz=960, device=self.device,
+                                 tracker="bytetrack.yaml", verbose=False, retina_masks=False)[0]
+        return self.clean(r, img)
+
+    def clean(self, r, img):
+        h, w = img.shape[:2]
+        """Etichette pulite per l'allievo (2026-11-08, dopo la prima clip SAM 3):
+        - EGO: il pezzo di bici sfocato davanti alla camera sinistra veniva chiamato «palo». Una
+          maschera che tocca il bordo basso ed è alta più di metà immagine non è un oggetto della
+          strada: va tolta (e disegnata a parte) finché il pezzo non viene spostato.
+        - Soglia CONF_MIN e conferma: sotto CONF_SURE un oggetto vale solo se la passata prima del
+          maestro aveva la stessa classe nello stesso punto (IoU > 0.3) → via i «gatti» sui muri.
+        Solo classi da «palo» (EGO_LIKE) e strette: una persona vicinissima NON viene mai tolta."""
+        self.ego = []
+        if r is None or r.boxes is None or not len(r.boxes):
+            self.prev = []
+            return r
+        boxes, cls, conf = r.boxes.xyxy.tolist(), r.boxes.cls.int().tolist(), r.boxes.conf.tolist()
+        polys = r.masks.xy if r.masks is not None else [np.zeros((0, 2))] * len(boxes)
+        lap = cv2.Laplacian(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), cv2.CV_32F)
+        sharp_all = float(lap.var()) + 1e-6
+        keep, raw = [], []
+        for k, (b, c, cf, m) in enumerate(zip(boxes, cls, conf, polys)):
+            if THINGS[c] in EGO_LIKE and b[3] >= h - 4 and (b[3] - b[1]) > 0.55 * h \
+                    and (b[2] - b[0]) < 0.35 * w and self.blurry(r, k, lap, sharp_all):
+                self.ego.append(m)
+                continue
+            raw.append((c, b))
+            seen = any(pc == c and iou(pb, b) > 0.3 for pc, pb in self.prev)
+            if cf >= CONF_SURE or (cf >= CONF_MIN and seen):
+                keep.append(k)
+        self.prev = raw
+        return r[keep] if keep else r[[]]
+
+    @staticmethod
+    def blurry(r, k, lap, sharp_all):
+        """Il pezzo di bici è fuori fuoco (a pochi cm dalla lente): varianza del Laplaciano < 30% del frame.
+        Sul frame 75 s della 14:50: dentro 2,2 contro 18 fuori (varianza Laplaciano)."""
+        if r.masks is None:
+            return False
+        m = cv2.resize(r.masks.data[k].cpu().numpy().astype(np.uint8), (lap.shape[1], lap.shape[0])) > 0
+        return m.any() and float(lap[m].var()) < 0.3 * sharp_all
+
+
+CONF_MIN, CONF_SURE = 0.45, 0.70
+EGO_LIKE = {"pole", "bollard", "barrier", "traffic sign", "traffic light", "traffic cone"}
+
+
+def iou(a, b):
+    ix = max(0, min(a[2], b[2]) - max(a[0], b[0]))
+    iy = max(0, min(a[3], b[3]) - max(a[1], b[1]))
+    inter = ix * iy
+    return inter / ((a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - inter + 1e-9)
 
 
 class StuffTeacher:
@@ -177,6 +231,8 @@ def main():
     ap.add_argument("--cam", default="left")
     ap.add_argument("--out", default="asmile-loggers/_seg")
     ap.add_argument("--max-frames", type=int)
+    ap.add_argument("--start", type=float, default=0, help="secondo da cui partire")
+    ap.add_argument("--teacher-every", type=int, help="maestro ogni N frame (default: 3 con SAM 3, 1 con YOLOE)")
     ap.add_argument("--stuff-every", type=int, default=5, help="sfondo ogni N frame (15 fps / 5 = 3 Hz)")
     ap.add_argument("--device", default="mps")
     a = ap.parse_args()
@@ -206,12 +262,19 @@ def main():
 
     t_teach, t_stuff, t_stud = [], [], []
     counts, tracks = Counter(), defaultdict(set)
-    lab, lg = None, legend(h)
-    for i, img in enumerate(video_frames(video, a.max_frames)):
+    lab, lg, n_ego = None, legend(h), 0
+    start = int(a.start * 15)
+    every = a.teacher_every or (3 if teacher.kind == "sam3" else 1)   # SAM 3 ~1,9 s/frame su Mac → 5 Hz
+    r = None
+    for i, img in enumerate(video_frames(video, None if a.max_frames is None else start + a.max_frames)):
+        if i < start:
+            continue
         t_ms = pts[i] if i < len(pts) else round(i * 1000 / 15)
-        t0 = time.time()
-        r = teacher(img)
-        t_teach.append(time.time() - t0)
+        fresh = (i - start) % every == 0
+        if fresh:
+            t0 = time.time()
+            r = teacher(img)
+            t_teach.append(time.time() - t0)
         if i % a.stuff_every == 0 or lab is None:
             t0 = time.time()
             lab = stuff(img)
@@ -223,7 +286,7 @@ def main():
         rs = student.predict(small, imgsz=320, conf=0.25, device="cpu", verbose=False)[0]
         t_stud.append(time.time() - t0)
 
-        if r is not None and r.boxes is not None and len(r.boxes):
+        if fresh and r is not None and r.boxes is not None and len(r.boxes):
             ids = r.boxes.id.int().tolist() if r.boxes.id is not None else [None] * len(r.boxes)
             areas = [int(cv2.contourArea(m.astype(np.float32))) if len(m) else 0 for m in r.masks.xy] \
                 if r.masks is not None else [0] * len(r.boxes)
@@ -235,7 +298,18 @@ def main():
                 if tid is not None:
                     tracks[names[c]].add(tid)
 
-        left = draw_things(draw_stuff(img, lab), r, names,
+        base = draw_stuff(img, lab)
+        for m in (teacher.ego if fresh else []):    # pezzo di bici: grigio, escluso (solo sul frame visto)
+            if len(m):
+                pts_e = m.astype(np.int32)
+                ov = base.copy()
+                cv2.fillPoly(ov, [pts_e], (90, 90, 90))
+                base = cv2.addWeighted(base, 0.4, ov, 0.6, 0)
+                x, y = pts_e[:, 0].min(), int(np.median(pts_e[:, 1]))
+                cv2.putText(base, "BICI (esclusa)", (int(x) + 5, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        if fresh:
+            n_ego += bool(teacher.ego)
+        left = draw_things(base, r, names,
                            f"MAESTRO {teacher.kind} + mask2former  {t_ms / 1000:6.1f}s")
         right = draw_things(small.copy(), rs, names, "ALLIEVO Pi yoloe-26n 320px")
         right = np.vstack([right, np.zeros((h - h // 2, w // 2, 3), np.uint8)])
@@ -252,6 +326,7 @@ def main():
     summary = dict(session=sess, cam=a.cam, frames=len(t_teach), teacher_things=teacher.kind,
                    teacher_stuff=StuffTeacher.NAME, student="yoloe-26n-seg @320 (non affinato)",
                    ms_teacher_things=ms(t_teach), ms_teacher_stuff=ms(t_stuff), ms_student_cpu_mac=ms(t_stud),
+                   frames_with_bike_part=n_ego, conf_min=CONF_MIN, conf_sure=CONF_SURE,
                    detections=dict(counts.most_common()), tracks={k: len(v) for k, v in tracks.items()},
                    things=THINGS, stuff=list(STUFF))
     json.dump(summary, open(os.path.join(out_dir, f"summary_{a.cam}.json"), "w"), indent=1)
