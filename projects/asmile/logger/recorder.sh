@@ -49,7 +49,9 @@ if ! rpicam-vid --help 2>&1 | grep -q -- '--metadata'; then
   exec "${CAM[@]}"                                   # rpicam vecchio: come prima
 fi
 # exit code = quello di rpicam (pipefail) → systemd riavvia se la camera cade
-"${CAM[@]}" --metadata - --metadata-format txt | awk '
+# mawk legge la pipe a blocchi (~40 s di ritardo, persi a un taglio di corrente): -W interactive = riga per riga
+AWK=(awk); awk -W version 2>&1 | grep -q mawk && AWK=(awk -W interactive)
+"${CAM[@]}" --metadata - --metadata-format txt | "${AWK[@]}" '
   BEGIN { print "frame,t_ms,sensor_ts_ns"; n = 0 }
   /SensorTimestamp/ { if (match($0, /[0-9][0-9][0-9][0-9][0-9][0-9]+/)) {
       ns = substr($0, RSTART, RLENGTH); printf "%d,%d,%s\n", n++, int(ns / 1000000), ns; fflush() } }
