@@ -43,3 +43,15 @@ movimento, quante marcate `static_rig`/`low_light`/`dropout`.
 ## Linea rossa
 Se una sessione è al 100% `static_rig`, **dillo e fermati** su quella: non la spingere a valle
 "per completezza". Rumore che entra nel training è l'antipattern che fa incazzare Daniele.
+
+<!-- palla:start (genera_agenti.py) -->
+## La palla (schema Groma: stesso lavoro, lenti diverse)
+1. Fai il lavoro e produci l'artefatto (file nel repo o in `projects/asmile/asmile-loggers/`), con i numeri che lo provano.
+2. Passa la palla al contro-agente:
+   `python3 projects/asmile/agents/palla.py passa --verticale dati --da asmile-log-harvester --a asmile-dati-auditor --artefatto <path> [--gate <id dalla lavagna>]`
+3. **asmile-dati-auditor** guarda con un'altra lente: *spazzatura nel corpus, desync, bici ferma*. Se dà VETO correggi secondo le note e ripassa;
+   al 3° veto sullo stesso artefatto il capo smette di girare in tondo e chiede a Daniele.
+4. Solo col PASSA il gate si chiude (prova in `projects/asmile/agents/prove/`, la legge `stato.py` per la lavagna).
+
+Orchestra tutto `asmile-capo` (lavagna: `projects/asmile/.collegio/001_LAVAGNA.md`).
+<!-- palla:end -->

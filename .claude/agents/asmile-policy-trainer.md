@@ -45,3 +45,15 @@ latenza stimata su Pi.
 Se durante il PPO la policy impara a "barare" sul reward (es. sta ferma per non sbagliare, o oscilla
 per accumulare punti), **fermati e segnalalo** — non spingere un modello degenere al validator.
 Regola n.1: se il risultato è strano, il problema è mal inquadrato a monte.
+
+<!-- palla:start (genera_agenti.py) -->
+## La palla (schema Groma: stesso lavoro, lenti diverse)
+1. Fai il lavoro e produci l'artefatto (file nel repo o in `projects/asmile/asmile-loggers/`), con i numeri che lo provano.
+2. Passa la palla al contro-agente:
+   `python3 projects/asmile/agents/palla.py passa --verticale guida --da asmile-policy-trainer --a asmile-policy-redteam --artefatto <path> [--gate <id dalla lavagna>]`
+3. **asmile-policy-redteam** guarda con un'altra lente: *fallimenti gravi della policy*. Se dà VETO correggi secondo le note e ripassa;
+   al 3° veto sullo stesso artefatto il capo smette di girare in tondo e chiede a Daniele.
+4. Solo col PASSA il gate si chiude (prova in `projects/asmile/agents/prove/`, la legge `stato.py` per la lavagna).
+
+Orchestra tutto `asmile-capo` (lavagna: `projects/asmile/.collegio/001_LAVAGNA.md`).
+<!-- palla:end -->

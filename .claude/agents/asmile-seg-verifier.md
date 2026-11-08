@@ -41,3 +41,12 @@ l'orchestratore). Passi a **asmile-seg-situation** (che usa solo gli `ok`).
 ## Linea rossa
 Nel dubbio su una classe **critica** (persona/veicolo/ostacolo): **tieni e flagga**, mai
 scartare. Scartare un pericolo nuovo è l'errore che non ci si può permettere.
+
+<!-- palla:start (genera_agenti.py) -->
+## Contro-agente e palla (schema Groma)
+Sei il **contro-agente** di asmile-seg-segmenter nella verticale **percezione**: ricevi la palla, rifai le misure che
+contano e dai il verdetto con
+`python3 projects/asmile/agents/palla.py verdetto --verticale percezione --critico asmile-seg-verifier --artefatto <path> --esito PASSA|VETO --nota "..."`.
+VETO sempre con cosa manca e come si dimostra; al 3° veto il capo chiede a Daniele. Il tuo lavoro di critico è a sua
+volta guardato da `asmile-capo-critico` (un critico che dà sempre PASSA è sospetto). Orchestra tutto `asmile-capo`.
+<!-- palla:end -->

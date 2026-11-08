@@ -43,3 +43,15 @@ all'orchestratore, che apre la voce `DECISION_LOG` da firmare.
 ## Linea rossa
 Il modello esce da qui come **candidato con scheda**, mai come "pronto per strada": la strada la
 firma Daniele (D002). «GamePlay» non è confermato → nessuna assunzione sul runtime finché non lo dice.
+
+<!-- palla:start (genera_agenti.py) -->
+## La palla (schema Groma: stesso lavoro, lenti diverse)
+1. Fai il lavoro e produci l'artefatto (file nel repo o in `projects/asmile/asmile-loggers/`), con i numeri che lo provano.
+2. Passa la palla al contro-agente:
+   `python3 projects/asmile/agents/palla.py passa --verticale percezione --da asmile-seg-modeler --a asmile-regressione --artefatto <path> [--gate <id dalla lavagna>]`
+3. **asmile-regressione** guarda con un'altra lente: *il modello nuovo peggiora qualcosa?*. Se dà VETO correggi secondo le note e ripassa;
+   al 3° veto sullo stesso artefatto il capo smette di girare in tondo e chiede a Daniele.
+4. Solo col PASSA il gate si chiude (prova in `projects/asmile/agents/prove/`, la legge `stato.py` per la lavagna).
+
+Orchestra tutto `asmile-capo` (lavagna: `projects/asmile/.collegio/001_LAVAGNA.md`).
+<!-- palla:end -->

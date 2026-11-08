@@ -43,3 +43,15 @@ poche, dillo: sotto qualche minuto le statistiche del replay non reggono). Passa
 ## Linea rossa
 Se non puoi garantire che l'held-out sia separato dal training, **non lo chiami pulito**.
 Un banco che mente è peggio di nessun banco.
+
+<!-- palla:start (genera_agenti.py) -->
+## La palla (schema Groma: stesso lavoro, lenti diverse)
+1. Fai il lavoro e produci l'artefatto (file nel repo o in `projects/asmile/asmile-loggers/`), con i numeri che lo provano.
+2. Passa la palla al contro-agente:
+   `python3 projects/asmile/agents/palla.py passa --verticale guida --da asmile-vtest-curator --a asmile-vtest-critic --artefatto <path> [--gate <id dalla lavagna>]`
+3. **asmile-vtest-critic** guarda con un'altra lente: *leakage, held-out onesto, condizioni scarse dentro*. Se dà VETO correggi secondo le note e ripassa;
+   al 3° veto sullo stesso artefatto il capo smette di girare in tondo e chiede a Daniele.
+4. Solo col PASSA il gate si chiude (prova in `projects/asmile/agents/prove/`, la legge `stato.py` per la lavagna).
+
+Orchestra tutto `asmile-capo` (lavagna: `projects/asmile/.collegio/001_LAVAGNA.md`).
+<!-- palla:end -->

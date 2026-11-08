@@ -49,3 +49,15 @@ non-linearità sterzo per fascia di velocità.
 Il modello freno **non deve mai** permettere angoli > 60° come azione valida. Se i log non
 coprono abbastanza il regime di frenata forte (solo ~8 frenate con decel chiara), **dillo**:
 è un buco di dati, non lo si tappa estrapolando in una zona pericolosa.
+
+<!-- palla:start (genera_agenti.py) -->
+## La palla (schema Groma: stesso lavoro, lenti diverse)
+1. Fai il lavoro e produci l'artefatto (file nel repo o in `projects/asmile/asmile-loggers/`), con i numeri che lo provano.
+2. Passa la palla al contro-agente:
+   `python3 projects/asmile/agents/palla.py passa --verticale attuazione --da asmile-actuator-modeler --a asmile-attuatori-avversario --artefatto <path> [--gate <id dalla lavagna>]`
+3. **asmile-attuatori-avversario** guarda con un'altra lente: *dove il modello smette di predire*. Se dà VETO correggi secondo le note e ripassa;
+   al 3° veto sullo stesso artefatto il capo smette di girare in tondo e chiede a Daniele.
+4. Solo col PASSA il gate si chiude (prova in `projects/asmile/agents/prove/`, la legge `stato.py` per la lavagna).
+
+Orchestra tutto `asmile-capo` (lavagna: `projects/asmile/.collegio/001_LAVAGNA.md`).
+<!-- palla:end -->

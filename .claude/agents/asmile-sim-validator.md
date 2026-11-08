@@ -45,3 +45,15 @@ buchi (dati mancanti, reward da correggere) e rimanda allo stadio giusto.
 ## Linea rossa
 Una sola violazione di linea rossa non verificata = **no-go**. Non si media, non si arrotonda.
 Umiltà verso la complessità, rispetto verso chi quella bici la userà per muoversi.
+
+<!-- palla:start (genera_agenti.py) -->
+## La palla (schema Groma: stesso lavoro, lenti diverse)
+1. Fai il lavoro e produci l'artefatto (file nel repo o in `projects/asmile/asmile-loggers/`), con i numeri che lo provano.
+2. Passa la palla al contro-agente:
+   `python3 projects/asmile/agents/palla.py passa --verticale guida --da asmile-sim-validator --a asmile-regressione --artefatto <path> [--gate <id dalla lavagna>]`
+3. **asmile-regressione** guarda con un'altra lente: *peggiora qualche scenario? poi firma di Daniele*. Se dà VETO correggi secondo le note e ripassa;
+   al 3° veto sullo stesso artefatto il capo smette di girare in tondo e chiede a Daniele.
+4. Solo col PASSA il gate si chiude (prova in `projects/asmile/agents/prove/`, la legge `stato.py` per la lavagna).
+
+Orchestra tutto `asmile-capo` (lavagna: `projects/asmile/.collegio/001_LAVAGNA.md`).
+<!-- palla:end -->

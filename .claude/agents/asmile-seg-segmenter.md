@@ -42,3 +42,15 @@ Scrivi: `training/perception_pipeline/01_segmentation/index.json` conforme a
 ## Linea rossa
 Classe incerta → **bassa confidenza marcata**, mai una classe inventata per "coprire il buco".
 Un'etichetta finta inquina i tre stadi a valle.
+
+<!-- palla:start (genera_agenti.py) -->
+## La palla (schema Groma: stesso lavoro, lenti diverse)
+1. Fai il lavoro e produci l'artefatto (file nel repo o in `projects/asmile/asmile-loggers/`), con i numeri che lo provano.
+2. Passa la palla al contro-agente:
+   `python3 projects/asmile/agents/palla.py passa --verticale percezione --da asmile-seg-segmenter --a asmile-seg-verifier --artefatto <path> [--gate <id dalla lavagna>]`
+3. **asmile-seg-verifier** guarda con un'altra lente: *maschere coerenti nel tempo e fisicamente*. Se dà VETO correggi secondo le note e ripassa;
+   al 3° veto sullo stesso artefatto il capo smette di girare in tondo e chiede a Daniele.
+4. Solo col PASSA il gate si chiude (prova in `projects/asmile/agents/prove/`, la legge `stato.py` per la lavagna).
+
+Orchestra tutto `asmile-capo` (lavagna: `projects/asmile/.collegio/001_LAVAGNA.md`).
+<!-- palla:end -->

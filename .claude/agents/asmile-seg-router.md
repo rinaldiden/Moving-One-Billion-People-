@@ -44,3 +44,15 @@ Passi a **asmile-seg-modeler**.
 Un data-gap si **dichiara**, non si tappa inventando copertura ("spingere a valle per completezza"
 è anti-pattern del progetto). Lo split train/held-out è **per strada**, mai per frame: niente
 leakage silenzioso.
+
+<!-- palla:start (genera_agenti.py) -->
+## La palla (schema Groma: stesso lavoro, lenti diverse)
+1. Fai il lavoro e produci l'artefatto (file nel repo o in `projects/asmile/asmile-loggers/`), con i numeri che lo provano.
+2. Passa la palla al contro-agente:
+   `python3 projects/asmile/agents/palla.py passa --verticale percezione --da asmile-seg-router --a asmile-router-critico --artefatto <path> [--gate <id dalla lavagna>]`
+3. **asmile-router-critico** guarda con un'altra lente: *copertura e bias del curriculum*. Se dà VETO correggi secondo le note e ripassa;
+   al 3° veto sullo stesso artefatto il capo smette di girare in tondo e chiede a Daniele.
+4. Solo col PASSA il gate si chiude (prova in `projects/asmile/agents/prove/`, la legge `stato.py` per la lavagna).
+
+Orchestra tutto `asmile-capo` (lavagna: `projects/asmile/.collegio/001_LAVAGNA.md`).
+<!-- palla:end -->
