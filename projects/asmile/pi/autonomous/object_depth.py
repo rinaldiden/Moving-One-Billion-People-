@@ -37,7 +37,7 @@ from datetime import datetime
 
 # Camera parameters (Arducam Camarray OV9281 @ 1280x800 per cam)
 FOCAL_PX = 887.0       # from checkerboard calibration
-CAM_HEIGHT_M = 0.77    # camera height from ground
+CAM_HEIGHT_M = 0.77    # camera height from ground — VECCHIO valore asmile2, NON #001 (0.825, calib_asmile-001.json) né logger (0.71)
 CAM_WIDTH_PX = 1280
 CAM_HEIGHT_PX = 800
 CAM_TILT_DEG = 0       # 0 = looking straight ahead

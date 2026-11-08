@@ -86,9 +86,17 @@ for root in "" $([ "$OVL" = 1 ] && echo /media/root-ro); do
     run "grep -q '^${kv%%=*}=' $root$CONF || echo $kv | sudo tee -a $root$CONF >/dev/null"
   done
 done
+# #001 (2 camere separate con rpicam --sync): il segnale di sync deve passare da lo, non dal WiFi
+if [ "$ROLE" = 001 ]; then
+  scp -q -o BatchMode=yes "$A/config/camera_sync_lo.service" "$U@$HOST:/tmp/hubdeploy/camera_sync_lo.service"
+  for root in "" $([ "$OVL" = 1 ] && echo /media/root-ro); do
+    run "cp /tmp/hubdeploy/camera_sync_lo.service $root/etc/systemd/system/ && ln -sf /etc/systemd/system/camera_sync_lo.service $root/etc/systemd/system/multi-user.target.wants/camera_sync_lo.service"
+  done
+fi
 [ "$OVL" = 1 ] && run "sync; sudo mount -o remount,ro /media/root-ro"
 
 run "sudo mkdir -p /data/logging/sensors /data/firmware; sudo systemctl daemon-reload; sudo systemctl restart sensor_hub.service"
+[ "$ROLE" = 001 ] && run "systemctl restart camera_sync_lo.service"
 [ "$ROLE" != logger ] && run "sudo systemctl restart usb_encoder_bridge.service 2>/dev/null; sudo systemctl try-restart servofreno.service steering.service 2>/dev/null; true"
 [ "$ROLE" = logger ] && run "sudo systemctl restart logger-recorder.service"
 sleep 4
