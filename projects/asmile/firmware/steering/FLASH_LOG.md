@@ -15,3 +15,4 @@ Compilazione sul Mac: `arduino-cli compile --fqbn arduino:avr:uno --output-dir <
 | data e ora | unità | hex | sha256 (16) | commit | esito | versione letta |
 |---|---|---|---|---|---|---|
 | 2026-10-27 (circa) | asmile-tirano (#001) | v1, caricato da IDE | — | 5a9c4822 | OK (bridge 882 Hz) | — (v1 senza banner) |
+| 2026-11-08 16:01:27 | asmile-tirano (#001) | amt22_dual_uno_v2_20261107.hex | 416e048f5482c109 | 0fb52d87 (repo Mac; sul Pi 1967cbf) | OK, verificato da avrdude | amt22_dual_uno v2 2026-11-07 t_us |

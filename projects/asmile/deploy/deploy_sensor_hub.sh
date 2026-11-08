@@ -20,8 +20,10 @@ STAMP=$(date +%Y%m%d)
 case "$ROLE" in
   001)     HOST="${HOST:-100.75.198.118}"; U=asmile
            R=/home/asmile/wip/Moving-One-Billion-People-/projects/asmile; HUB_DIR=$R/pi/sensors
+           # master_switch NO: su #001 gira la versione del 2026-05-10 (freno a 40°, senza pulse-and-free);
+           # quella del repo cambierebbe il freno al boot (60°, buzzer GPIO4) → decisione a parte di Daniele
            FILES="pi/sensors/sensor_hub.py pi/sensors/hub_client.py pi/sensors/actuator_log.py
-                  pi/autonomous/speed_limiter.py pi/power/master_switch.py
+                  pi/autonomous/speed_limiter.py
                   pi/steering/steering_controller.py pi/steering/power_steering.py pi/autonomous/route_replay.py
                   pi/steering/usb_encoder_bridge.py pi/steering/flash_encoder_arduino.sh
                   pi/braking/servofreno_server.py pi/camera/dual_cam_recorder.py pi/camera/frame_times.py
@@ -42,7 +44,16 @@ case "$ROLE" in
   *) echo "ruolo sconosciuto: $ROLE"; exit 1 ;;
 esac
 SSH="ssh -o BatchMode=yes -o ConnectTimeout=8 $U@$HOST"
-run() { echo "+ $*"; [ "$DRY" = "--dry-run" ] || $SSH "$@"; }
+# sudo sul Pi chiede la password (PI_PW, default quella di CLAUDE.md): ogni comando gira come root
+# in UN solo sudo -S; al primo comando che fallisce lo script si FERMA (prima andava avanti alla cieca).
+PI_PW="${PI_PW:-asmile}"
+run() {
+  echo "+ $*"
+  [ "$DRY" = "--dry-run" ] && return 0
+  local cmd="${*//sudo /}"
+  $SSH "echo '$PI_PW' | sudo -S -p '' bash -c $(printf %q "$cmd")" </dev/null || { echo "!! fallito: $*"; exit 3; }
+}
+$SSH "echo '$PI_PW' | sudo -S -p '' true" </dev/null || { echo "!! sudo: password sbagliata (PI_PW)"; exit 3; }
 
 $SSH true || { echo "$HOST non raggiungibile"; exit 1; }
 OVL=$($SSH 'mountpoint -q /media/root-ro && echo 1 || echo 0')
@@ -51,6 +62,7 @@ if $SSH 'pgrep -f "[s]peed_limiter.py|[d]ual_cam_recorder.py|[t]raining_recorder
   echo "!! interruttore ON (limiter/recorder in corsa): spegnilo e rilancia. Nessuna modifica fatta."; exit 2
 fi
 
+[ "$DRY" = "--dry-run" ] && { echo "(dry-run: nessuna copia)"; }
 $SSH "mkdir -p /tmp/hubdeploy"
 [ "$OVL" = 1 ] && run "sudo mount -o remount,rw /media/root-ro"   # root vera scrivibile per le copie
 for item in $FILES; do
@@ -58,7 +70,7 @@ for item in $FILES; do
   scp -q -o BatchMode=yes "$A/$src" "$U@$HOST:/tmp/hubdeploy/$(basename "$dst")" || { echo "scp fallito: $src"; exit 1; }
   for root in "" $([ "$OVL" = 1 ] && echo /media/root-ro); do
     tgt="$root$R/$dst"
-    run "sudo mkdir -p \$(dirname $tgt); [ -f $tgt ] && sudo cp -n $tgt $tgt.bak-$STAMP; sudo cp /tmp/hubdeploy/$(basename "$dst") $tgt"
+    run "mkdir -p \$(dirname $tgt); if [ -f $tgt ] && [ ! -f $tgt.bak-$STAMP ]; then cp -p $tgt $tgt.bak-$STAMP; fi; cp /tmp/hubdeploy/$(basename "$dst") $tgt"
   done
 done
 
@@ -81,5 +93,5 @@ run "sudo mkdir -p /data/logging/sensors /data/firmware; sudo systemctl daemon-r
 [ "$ROLE" = logger ] && run "sudo systemctl restart logger-recorder.service"
 sleep 4
 echo "== verifica"
-run "systemctl is-active sensor_hub; ls -t /data/logging/sensors | head -2; f=\$(ls -t /data/logging/sensors/*.csv | head -1); wc -l \$f; tail -2 \$f; cat /tmp/encoder_fw_version 2>/dev/null"
+run "systemctl is-active sensor_hub; ls -t /data/logging/sensors | head -3; f=\$(ls -t /data/logging/sensors/sensors_*.csv 2>/dev/null | head -1); if [ -n \"\$f\" ]; then wc -l < \$f; tail -2 \$f; else echo 'nessun CSV ancora'; fi; cat /tmp/encoder_fw_version 2>/dev/null; true"
 echo "fatto. Backup: <file>.bak-$STAMP accanto a ogni file sostituito."
