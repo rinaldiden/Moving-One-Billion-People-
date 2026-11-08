@@ -1,6 +1,6 @@
 ---
 name: asmile-segmentazione-modello
-description: Runbook per la pipeline segmentazione→modello di guida Asmile — dal corpus video ANONIMO al modello ONNX candidato, passando per segmentazione, verifica, comprensione delle situazioni e gestione strada-per-strada, con un orchestratore che manda i CASI DUBBI a Daniele personalmente. Usa quando arrivano video freschi da elaborare o per ri-eseguire uno stadio. Orchestra i 6 agenti asmile-seg-* in .claude/agents/. NON porta nulla su strada senza firma di Daniele; i casi dubbi li decide Daniele uno per uno.
+description: Runbook per la pipeline segmentazione→modello di guida Asmile — dal corpus video al modello ONNX candidato, passando per segmentazione, verifica, comprensione delle situazioni e gestione strada-per-strada, con un orchestratore che manda i CASI DUBBI a Daniele personalmente. Usa quando arrivano video freschi da elaborare o per ri-eseguire uno stadio. Orchestra i 6 agenti asmile-seg-* in .claude/agents/. NON porta nulla su strada senza firma di Daniele; i casi dubbi li decide Daniele uno per uno.
 ---
 
 # Runbook — pipeline segmentazione → modello di guida Asmile
@@ -14,8 +14,7 @@ Orchestra i 6 agenti dedicati (`.claude/agents/asmile-seg-*`). Architettura e pe
 > freschi, dopo firma `DECISION_LOG` D009. Complementare alla `asmile-sim2real-pipeline`.
 
 ## Prima di partire
-1. **Il corpus deve essere ANONIMO.** Gira **prima** `asmile-anonimizza-log`. Mai dare in pasto
-   video con volti/targhe in chiaro: la pipeline rifiuta e si ferma.
+1. Il corpus sono i video scaricati dai logger/bici (anonimizzazione esclusa da Daniele 2026-11-08).
 2. Leggi `CONTEXT.md` + `GLOSSARIO.md` (linee rosse = muri) e la tassonomia situazioni in
    `training/perception_pipeline/knowledge/situation_taxonomy.md`.
 3. Verifica che `DECISION_LOG.md` D009 sia firmato se stai avviando l'esecuzione reale.
@@ -29,7 +28,7 @@ Orchestra i 6 agenti dedicati (`.claude/agents/asmile-seg-*`). Architettura e pe
 ```
 
 ## Passi
-1. **Segmenter** sul corpus anonimo: segmentazione full-coverage → `01_segmentation/index.json`.
+1. **Segmenter** sul corpus: segmentazione full-coverage → `01_segmentation/index.json`.
 2. **Verifier**: marca ogni frame `ok|review|reject` + `novel` → `02_verification/index.json`.
 3. **Situation**: timeline di situazioni dalla tassonomia fissa, `unknown` dove non è chiaro →
    `03_situations/index.json`.
@@ -55,7 +54,6 @@ non è cambiato nulla (es. nuova tassonomia → rilancia da 3). Additivo, mai so
 output vicini o modelli vecchi (versiona `_vN`).
 
 ## Linee rosse
-- Input SOLO anonimo. Casi dubbi SENZA PII (solo contesto di scena).
 - `unknown` è una risposta valida, non un fallimento: meglio chiedere che inventare.
 - Il verdetto sui casi dubbi è di **Daniele**, uno per uno. L'uscita su strada è di **Daniele** (D002).
 - In dubbio: non ottimizzare, aspetta, chiedi.

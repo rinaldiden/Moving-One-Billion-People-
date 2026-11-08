@@ -33,6 +33,13 @@ A_TERRA = {"person", "child", "car", "van", "truck", "bus", "tractor", "bollard"
            "traffic cone", "barrier", "stroller", "bicycle", "motorcycle", "dog", "cat", "wheelchair", "pole"}
 
 
+def iou(a, b):
+    ix = max(0, min(a[2], b[2]) - max(a[0], b[0]))
+    iy = max(0, min(a[3], b[3]) - max(a[1], b[1]))
+    inter = ix * iy
+    return inter / ((a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - inter + 1e-9)
+
+
 def ground_ok(Z, y2, f, horizon, cam_h, tol=2.5):
     """Lo stereo è coerente col punto dove il box tocca la strada? (base tagliata dal bordo: non si sa)"""
     if y2 >= H - 5:
@@ -175,12 +182,28 @@ def main():
             for s in (-1, 1):
                 u = int(cx + s * a.corridor * f / z)
                 cv2.line(img, (u, 0), (u, H), (80, 80, 80), 1)
-        for b, cls, Z, front in last:
+        placed, drawn = [], []
+        for b, cls, Z, front in sorted(last, key=lambda o: (o[2] is None, o[2] or 0)):
             col = (90, 90, 90) if Z is None else (0, 0, 255) if Z < 4 else (0, 165, 255) if Z < 8 else (0, 220, 0)
-            cv2.rectangle(img, tuple(b[:2]), tuple(b[2:]), col, 3 if front else 1)
-            lab = f"{cls} {'?' if Z is None else f'{Z:.1f}m'}{' DAVANTI' if front else ''}"
-            cv2.putText(img, lab, (b[0], max(18, b[1] - 6)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 4)
-            cv2.putText(img, lab, (b[0], max(18, b[1] - 6)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, col, 2)
+            cv2.rectangle(img, tuple(b[:2]), tuple(b[2:]), col, 4 if front else 2)
+            if Z is None or any(iou(b, o) > 0.6 for o in drawn):   # stesso oggetto con 2 etichette: 1 targhetta
+                continue
+            drawn.append(b)
+            big, small = f"{Z:.1f} m", cls + (" DAVANTI" if front else "")
+            (wb, hb), _ = cv2.getTextSize(big, cv2.FONT_HERSHEY_DUPLEX, 1.4, 3)
+            (ws, hs), _ = cv2.getTextSize(small, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
+            tw, th = max(wb, ws) + 16, hb + hs + 22
+            x = min(max(0, b[0]), W - tw)
+            free = lambda yy: 0 <= yy <= H - th and all(x + tw < px or px + pw < x or yy + th < py or py + ph < yy
+                                                       for px, py, pw, ph in placed)
+            y0 = b[1] - th - 4                          # targhette sovrapposte: prima posizione libera sopra/sotto
+            y = next((yy for k in range(12) for yy in (y0 - k * (th + 4), y0 + k * (th + 4)) if free(yy)),
+                     min(max(0, y0), H - th))
+            placed.append((x, y, tw, th))
+            cv2.rectangle(img, (x, y), (x + tw, y + th), col, -1)
+            cv2.rectangle(img, (x, y), (x + tw, y + th), (0, 0, 0), 2)
+            cv2.putText(img, big, (x + 8, y + hb + 8), cv2.FONT_HERSHEY_DUPLEX, 1.4, (0, 0, 0), 3, cv2.LINE_AA)
+            cv2.putText(img, small, (x + 8, y + th - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2, cv2.LINE_AA)
         cv2.putText(img, f"f={i}  dy={dy:+.1f}px  stereo d={fB:.1f}/Z+{d0:.1f}", (10, 28),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         vw.write(img)

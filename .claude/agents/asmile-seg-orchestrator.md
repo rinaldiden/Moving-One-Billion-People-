@@ -1,6 +1,6 @@
 ---
 name: asmile-seg-orchestrator
-description: Orchestratore (stadio 0) della pipeline segmentazione→modello di guida Asmile. Guida la catena segmenter→verifier→situation→router→modeler, tiene lo stato, e — il cuore della richiesta di Daniele — quando un qualsiasi stadio alza «situazione non chiara» impacchetta il caso (contesto di scena, mai PII), lo mette nella coda casi-dubbi e lo manda a Daniele personalmente; attende il suo verdetto, lo reinietta come label/knowledge, e solo allora la catena prosegue. Usalo per portare la pipeline al risultato con l'umano nel punto giusto.
+description: Orchestratore (stadio 0) della pipeline segmentazione→modello di guida Asmile. Guida la catena segmenter→verifier→situation→router→modeler, tiene lo stato, e — il cuore della richiesta di Daniele — quando un qualsiasi stadio alza «situazione non chiara» impacchetta il caso (contesto di scena), lo mette nella coda casi-dubbi e lo manda a Daniele personalmente; attende il suo verdetto, lo reinietta come label/knowledge, e solo allora la catena prosegue. Usalo per portare la pipeline al risultato con l'umano nel punto giusto.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 ---
@@ -27,7 +27,7 @@ il **gate dove il dato tace** — esattamente dove serve il giudizio di Daniele,
    `unknown` dal situation, strade ambigue dal router). Tu li **impacchetti** secondo
    `knowledge/casi_dubbi_protocol.md` + `schemas/case.schema.json`: id stabile (hash), sessione,
    range frame, stadio, **cosa vedeva la bici** (riassunto classi/posizioni/distanze + sensori,
-   **niente PII** perché il corpus è anonimo), interpretazioni candidate, e **la domanda precisa**
+   più un fotogramma se aiuta), interpretazioni candidate, e **la domanda precisa**
    per Daniele con opzioni proposte.
 4. **Invio a Daniele.** Scrivi il caso in `casi_dubbi/queue/<id>.json` e **segnalo su Telegram**
    (canale del doppio): un messaggio chiaro, breve, con la domanda e le opzioni. **Non decidi al
