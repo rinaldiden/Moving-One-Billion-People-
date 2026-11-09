@@ -1,4 +1,4 @@
-# 001 — stato fotografato 2026-11-09 16:26 dopo: sterzo_vel_001: ritorno al centro a corrente regolata sull'encoder (10 deg/s, tetto 30 A); prova riuscita -42 deg -> +0.2 deg in 7.6 s, 8.5 A medi
+# 001 — stato fotografato 2026-11-09 16:38 dopo: VESC sterzo: l_current ±30 A + foc_hall_interp_erpm 20 (scritti via UART, verificati); sterzo_vel_001 a inseguimento riferimento (molla+smorzatore), prove 16:35-16:37
 kernel: 6.12.75+rpt-rpi-2712
 git sul Pi: 1967cbf 2026-05-13 fix: separate boot config for asmile (ov9281 dual cam, no arducam HAT)
 overlay: si
