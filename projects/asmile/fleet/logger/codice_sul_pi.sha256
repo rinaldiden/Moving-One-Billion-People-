@@ -1,5 +1,5 @@
 cfa009aa19f619bf75dd34d2a0edaf78190bdce7ff297151200071a204119fe7  ./actuator_log.py
-736a8d42791d9a968d7b51d36c3e2e2723edfa4ff8bf02347bc9867f6cf34c64  ./bike_speed_ble.py
+baacda7c0c126b318c526974c07147a0e279c4ce9854a1e24d6a49e5aa7fa105  ./bike_speed_ble.py
 cd0d8faaf11bc63f5d5ae33685058d88799cddd4f124e8b9a4f67e6fe9e52a45  ./cleanup.py
 a093411fc672b4d3ac0b77437f840515ccef94cf6644e23bbe80011deaaad6dd  ./hub_client.py
 07c62965761385ab3861e155bd6c8ccaea51ddd70b80ac4a06c6343cdd3d5c0c  ./offload_confirm.py

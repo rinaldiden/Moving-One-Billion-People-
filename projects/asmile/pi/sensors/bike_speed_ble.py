@@ -36,7 +36,9 @@ NAME_PREFIX = "BK6LS"
 CIRC_PLACEHOLDER = 1.50                        # m — NON misurato per la bici del logger
 MAC_FILE = "/data/bike_speed_mac" if os.path.isdir("/data") else os.path.expanduser("~/.bike_speed_mac")
 CONNECT_TIMEOUT_S = 25.0                       # connect BLE (20-30 s)
-MAX_FAILS_BEFORE_REMOVE = 2                    # poi: bluetoothctl remove + riscan
+MAX_FAILS_BEFORE_REMOVE = 3                    # poi: bluetoothctl remove + riscan (raro: la causa vera è load_conn_params)
+CONN_MIN, CONN_MAX, CONN_LAT, CONN_SUP = 24, 40, 0, 500   # 30-50 ms, supervision 5 s (unità 1.25 ms / 10 ms)
+WATCHDOG_S = 25                                # connesso ma senza notifiche → riconnetti (come asmile2)
 STOP_AFTER_S = 3.0                             # nessun giro nuovo da tanto → velocità 0
 
 
@@ -146,6 +148,33 @@ def save_mac(mac):
         print(f"[ERR] salvataggio MAC {MAC_FILE}: {e}", file=sys.stderr, flush=True)
 
 
+def load_conn_params(mac, addr_type=2):
+    """CAUSA DEL BUG 'TimeoutError a ogni connect' (logger001, 2026-11-09): BlueZ 5.82/kernel creava la connessione
+    con intervallo 500-1000 ms e supervision 4 s (parametri tenuti dal kernel per quel device); il CooSpo non
+    risponde a quell'intervallo → 0x3e 'Connection Failed to be Established' dopo ~7 s. Con 30-50 ms connette in
+    3 s. Prima di OGNI connect si caricano nel kernel i parametri giusti (MGMT Load Connection Parameters, serve root).
+    Non fatale se fallisce."""
+    import ctypes, socket, struct
+    try:
+        sk = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_RAW, socket.BTPROTO_HCI)
+        sa = struct.pack("HHH", 31, 0xFFFF, 3)           # AF_BLUETOOTH, HCI_DEV_NONE, HCI_CHANNEL_CONTROL
+        if ctypes.CDLL("libc.so.6", use_errno=True).bind(sk.fileno(), sa, len(sa)) != 0:
+            raise OSError("bind mgmt")
+        addr = bytes(int(x, 16) for x in mac.split(":"))[::-1]
+        p = struct.pack("<H", 1) + addr + struct.pack("<BHHHH", addr_type, CONN_MIN, CONN_MAX, CONN_LAT, CONN_SUP)
+        sk.settimeout(3)
+        sk.send(struct.pack("<HHH", 0x0035, 0, len(p)) + p)
+        r = sk.recv(64)
+        ok = len(r) >= 9 and r[8] == 0
+        sk.close()
+        if not ok:
+            log(f"[BLE] load_conn_params risposta mgmt {r.hex()}")
+        return ok
+    except Exception as e:                       # noqa: BLE001
+        log(f"[BLE] load_conn_params non riuscito: {type(e).__name__}: {e}")
+        return False
+
+
 def log(msg):
     print(f"{time.strftime('%H:%M:%S')} {msg}", file=sys.stderr, flush=True)
 
@@ -201,8 +230,8 @@ async def session(BleakClient, tr, device):
         while client.is_connected:
             await asyncio.sleep(1.0)
             tr.publish()                        # porta a 0 la velocità se la ruota si è fermata
-            if time.monotonic() - tr.notify_mono > 60:
-                log("[BLE] connesso ma muto da 60 s: riconnetto")
+            if time.monotonic() - tr.notify_mono > WATCHDOG_S:
+                log(f"[BLE] connesso ma muto da {WATCHDOG_S} s: riconnetto")
                 break
     finally:
         try:
@@ -214,11 +243,12 @@ async def session(BleakClient, tr, device):
 
 
 async def connection_loop(BleakClient, BleakScanner, circ, ph, name, address, remove=bluez_remove,
-                          save=None, sleep=asyncio.sleep, max_iter=None):
+                          save=None, sleep=asyncio.sleep, max_iter=None, load_params=load_conn_params):
     """Riconnessione infinita robusta dopo ogni sonno del sensore.
+    - prima di ogni connect: load_conn_params (30-50 ms) — la vera correzione;
     - cerca il BLEDevice con find_device_by_address (scanner fermo a connect), mai MAC nudo;
     - sensore non visibile (dorme) = attesa, NON è un errore;
-    - dopo 2 connessioni fallite di fila: bluetoothctl remove <MAC> + nuovo scan per nome."""
+    - dopo 3 connessioni fallite di fila: bluetoothctl remove <MAC> + nuovo scan per nome."""
     save = save or save_mac
     fails = it = 0
     while max_iter is None or it < max_iter:
@@ -247,6 +277,11 @@ async def connection_loop(BleakClient, BleakScanner, circ, ph, name, address, re
                 address = device.address
                 save(address)
             fails = 0
+        try:
+            at = 1 if str((getattr(device, 'details', None) or {}).get('props', {}).get('AddressType')) == 'public' else 2
+        except Exception:                       # noqa: BLE001
+            at = 2
+        load_params(address, at)                # parametri di connessione giusti PRIMA di ogni connect
         tr = Tracker(circ, ph, address)
         ok, n = await session(BleakClient, tr, device)
         if ok:
