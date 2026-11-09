@@ -45,6 +45,10 @@ FINECORSA = (4304, 8884)        # finecorsa meccanici veri
 MARGINE_FC = 60                 # count (1.3 deg): mai piu' vicino di cosi' al finecorsa vero
 COMM_GET_VALUES_SELECTIVE = 50  # fw 5.02 datatypes.h
 MASK_I_MOTOR = 1 << 2           # avg motor current (float32 * 100)
+# telemetria UART (fw 5.02 GET_VALUES_SELECTIVE): bit0 temp FET, bit1 temp motore (f16 x10), bit2 corrente motore,
+# bit3 corrente BATTERIA (f32 x100), bit8 tensione batteria (f16 x10)
+MASK_TEL = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 8)
+TEL = {"t_fet": 0.0, "t_mot": 0.0, "i_batt": 0.0, "v_batt": 0.0}
 HZ = 400                        # comandi al secondo (2.5 ms) — Daniele 2026-11-09: "così è perfetto" a 400 Hz, 15 deg/s
 VEL_MAX_DEG_S = 30.0
 WRONG_COUNTS = 10
@@ -87,16 +91,21 @@ def wheel():
 
 
 def q_imotor(ser):
-    """GET_VALUES_SELECTIVE solo corrente motore media (A). ~2 ms andata+ritorno."""
+    """GET_VALUES_SELECTIVE: corrente motore (ritorno) + corrente batteria, tensione, temperature in TEL. ~3 ms."""
     try:
         ser.reset_input_buffer()
-        ser.write(pkt(struct.pack(">BI", COMM_GET_VALUES_SELECTIVE, MASK_I_MOTOR)))
+        ser.write(pkt(struct.pack(">BI", COMM_GET_VALUES_SELECTIVE, MASK_TEL)))
         if ser.read(1) != b"\x02": return None
         n = ser.read(1)
-        if not n or n[0] != 9: return None
+        if not n or n[0] != 19: return None
         pl = ser.read(n[0] + 3)[:n[0]]
-        if len(pl) < 9 or pl[0] != COMM_GET_VALUES_SELECTIVE: return None
-        return struct.unpack(">i", pl[5:9])[0] / 100.0
+        if len(pl) < 19 or pl[0] != COMM_GET_VALUES_SELECTIVE: return None
+        TEL["t_fet"] = struct.unpack(">h", pl[5:7])[0] / 10.0
+        TEL["t_mot"] = struct.unpack(">h", pl[7:9])[0] / 10.0
+        im = struct.unpack(">i", pl[9:13])[0] / 100.0
+        TEL["i_batt"] = struct.unpack(">i", pl[13:17])[0] / 100.0
+        TEL["v_batt"] = struct.unpack(">h", pl[17:19])[0] / 10.0
+        return im
     except (serial.SerialException, OSError, struct.error):
         return None
 
@@ -145,7 +154,7 @@ def main(argv=None):
     imax = a.imax if a.imax is not None else (30.0 if a.modo == "vai" else 15.0)
     vmax_ok, vel_stop = (35, 45.0) if a.prova_veloce else (20, VEL_MAX_DEG_S)
     if not 0 < a.vel <= vmax_ok: sys.exit(f"--vel in (0, {vmax_ok}] deg/s")
-    if not 0 < imax <= 30: sys.exit("--imax in (0, 30] A")
+    if not 0 < imax <= 45: sys.exit("--imax in (0, 45] A")  # 45 A: Daniele 2026-11-09
     if not 0 < a.durata <= 60: sys.exit("--durata in (0, 60] s")
     if not 0 <= a.dither <= 3: sys.exit("--dither in [0, 3] A")
     c, lo, hi, hard_lo, hard_hi = limiti()
@@ -180,7 +189,7 @@ def main(argv=None):
 
     os.makedirs("/data/logging/vesc", exist_ok=True)
     log = open(time.strftime(f"/data/logging/vesc/sterzo_fluido_{a.modo}_%Y%m%d_%H%M%S{a.tag}.csv"), "w")
-    log.write("t,pos,lag_deg,v_est,v_ref,sp_deg,i_cmd,i_motor,i_coul,i_int\n")
+    log.write("t,pos,lag_deg,v_est,v_ref,sp_deg,i_cmd,i_motor,i_coul,i_int,i_batt,v_batt,t_fet,t_mot\n")
     ser = serial.Serial(UART, BAUD, timeout=0.01)
 
     def stop():
@@ -249,7 +258,7 @@ def main(argv=None):
                     if q_fail >= 3: reason = "VESC muto"; break
                 else:
                     q_fail = 0; i_mot = im
-            log.write(f"{tc - t0:.4f},{p},{lag:.3f},{v:.2f},{v_ref:.2f},{sp:.3f},{i_cmd:.2f},{i_mot:.2f},{i_coul:.2f},{i_int:.2f}\n")
+            log.write(f"{tc - t0:.4f},{p},{lag:.3f},{v:.2f},{v_ref:.2f},{sp:.3f},{i_cmd:.2f},{i_mot:.2f},{i_coul:.2f},{i_int:.2f},{TEL['i_batt']:.2f},{TEL['v_batt']:.1f},{TEL['t_fet']:.1f},{TEL['t_mot']:.1f}\n")
 
             # ---------------- sicurezze ----------------
             if a.modo == "vai" and (p - p0) * d <= -WRONG_COUNTS: reason = f"VERSO SBAGLIATO: encoder {p - p0:+d} count"; break

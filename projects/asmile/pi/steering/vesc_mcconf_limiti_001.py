@@ -98,6 +98,7 @@ def main():
     ap.add_argument("--fw", default="5.2", help="versione fw attesa")
     ap.add_argument("--apply", action="store_true")
     for n in PROPOSTA: ap.add_argument("--" + n.replace("_", "-"), type=float, default=PROPOSTA[n])
+    ap.add_argument("--consenti-alzare", type=float, default=0.0, help="A: permette di ALZARE l_current fino a questo valore (max 60). Solo col vai esplicito di Daniele")
     ap.add_argument("--hall-interp-erpm", type=float, help="foc_hall_interp_erpm (solo abbassare, >=0): sotto questa velocita' il VESC non interpola fra gli hall -> scatti")
     a = ap.parse_args()
     ser = serial.Serial(PORT, BAUD, timeout=0.2); time.sleep(0.1)
@@ -123,7 +124,7 @@ def main():
         for i, n in enumerate(CAMPI):
             if n in PROPOSTA:
                 v = getattr(a, n)
-                if abs(v) > abs(cur[n]) + 1e-6: sys.exit(f"{n}: {v} ALZEREBBE il limite ({cur[n]:.2f}): rifiutato")
+                if abs(v) > abs(cur[n]) + 1e-6 and not (n in ("l_current_max", "l_current_min") and abs(v) <= min(a.consenti_alzare, 60.0)): sys.exit(f"{n}: {v} ALZEREBBE il limite ({cur[n]:.2f}): rifiutato")
                 new[OFF0 + 4 * i:OFF0 + 4 * i + 4] = enc(v)
         if a.hall_interp_erpm is not None:
             hv = dec(bytes(blob[OFF_HALL_INTERP:OFF_HALL_INTERP + 4]))
