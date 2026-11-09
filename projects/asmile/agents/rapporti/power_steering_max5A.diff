@@ -1,0 +1,11 @@
+--- pi/steering/power_steering.py	2026-11-07 22:04:33
++++ pi/steering/power_steering.py (proposta)	2026-11-09 12:10:09
+@@ -27,7 +27,7 @@
+ 
+ LOOP_HZ = 50            # Match encoder daemon rate
+ SCALE = 1.0             # Amps per encoder step. THE tuning knob.
+-MAX_CURRENT = 15.0       # Safety clamp (Amps)
++MAX_CURRENT = 5.0        # Safety clamp (Amps)
+ MIN_DELTA = 1            # Ignore noise below this
+ 
+ # VESC commands
