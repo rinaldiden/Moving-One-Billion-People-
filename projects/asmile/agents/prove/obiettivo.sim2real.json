@@ -1,0 +1,7 @@
+{
+ "gate": "obiettivo.sim2real",
+ "artefatto": "agents/ricerche/sim2real_valutazione_20261109.md",
+ "visto_critico": "asmile-ricerca-scettico",
+ "nota": "Riverificate 4 fonti col testo vero: ToS Google 3.2.3 (a)(ii) Street View bulk e (c)(vii) uso per ML train/test/validate/fine-tune = citazioni esatte, NO corretto; Cityscapes: solo non commerciale, modelli addestrati ammessi come derivati astratti = ok; Bojarski 2016: viste spostate/ruotate, rientro in 2 s = ok (ma usa viewpoint transform dell'immagine, non depth: il 'SUBITO reproiezione con depth stereo' e' estensione nostra, non replica del paper); HUGSIM: abstract dice 'unlocks the potential for fine-tuning' senza esperimento = il report lo dice giusto. Verdetti coerenti con 0.12 h di guida; stime marcate STIMA/M/S. Riserve non bloccanti: (1) Cityscapes/Mapillary NC: se Asmile diventa prodotto, SUBITO 'solo pesi' va richiarito prima di usarli; (2) KITTI/BDD100K/UniSim/GAIA-1 restano NON VERIFICATI (dichiarato in sez.7); (3) soglie ore sez.6 sono stime: confermarle col PoC 3DGS a 2 passate.",
+ "quando": "2026-11-09T07:48:04"
+}
