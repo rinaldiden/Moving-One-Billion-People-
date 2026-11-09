@@ -136,13 +136,15 @@ def main(argv=None):
     ap.add_argument("--kd", type=float, default=KD, help="A/(deg/s), vai")
     ap.add_argument("--rip", type=int, default=0, choices=(0, 1), help="compensazione ripple (vai)")
     ap.add_argument("--tag", default="", help="etichetta nel nome del log")
+    ap.add_argument("--prova-veloce", action="store_true", help="SOLO PROVE (Daniele 2026-11-09): vel fino a 35, stop oltre 45 deg/s")
     ap.add_argument("--hz", type=float, default=HZ, help="comandi al secondo (max 500)")
     ap.add_argument("--ab", type=float, nargs=2, default=(0.35, 0.05), help="filtro velocita' alfa beta")
     ap.add_argument("--sign", type=int, default=-1, choices=(-1, 1), help="segno corrente VESC per far SALIRE l'encoder")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args(argv)
     imax = a.imax if a.imax is not None else (30.0 if a.modo == "vai" else 15.0)
-    if not 0 < a.vel <= 20: sys.exit("--vel in (0, 20] deg/s")
+    vmax_ok, vel_stop = (35, 45.0) if a.prova_veloce else (20, VEL_MAX_DEG_S)
+    if not 0 < a.vel <= vmax_ok: sys.exit(f"--vel in (0, {vmax_ok}] deg/s")
     if not 0 < imax <= 30: sys.exit("--imax in (0, 30] A")
     if not 0 < a.durata <= 60: sys.exit("--durata in (0, 60] s")
     if not 0 <= a.dither <= 3: sys.exit("--dither in [0, 3] A")
@@ -251,7 +253,7 @@ def main(argv=None):
 
             # ---------------- sicurezze ----------------
             if a.modo == "vai" and (p - p0) * d <= -WRONG_COUNTS: reason = f"VERSO SBAGLIATO: encoder {p - p0:+d} count"; break
-            if abs(rate_safe) > VEL_MAX_DEG_S: reason = f"troppo veloce {rate_safe:+.0f} deg/s"; break
+            if abs(rate_safe) > vel_stop: reason = f"troppo veloce {rate_safe:+.0f} deg/s"; break
             if not hard_lo <= p <= hard_hi: reason = f"vicino al finecorsa vero: {p}"; break
             if (p < lo and i_cmd < 0) or (p > hi and i_cmd > 0): reason = f"limite software {p} (spinta verso l'esterno)"; break
             if abs(i_mot) > imax + 2.0: reason = f"corrente {i_mot:.1f} A"; break
