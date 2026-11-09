@@ -8,3 +8,4 @@
   - asmile-logger: Pi 5 + Arducam **Camarray** (un solo CSI, SBS 2560×800, serve arducam_fix.so), camere a 0.71 m, solo video+sensor_hub, niente attuatori/encoder; codice in /home/asmile-logger/logger (recorder.sh); calib `calib_asmile-logger_metro.json`.
   - asmile #001: Pi 5 + **2 OV9281 Inno-Maker separate** (2 CSI, rpicam --sync, dual_cam_recorder.py, arducam_fix NON serve), pitch 7.4°, cam0=destra; encoder sterzo AMT22 + encoder ruota, VESC sterzo, servofreno GPIO12; repo in /home/asmile/wip/...; calib `calib_asmile-001.json`.
   - Un modello/depth validato sul logger NON è validato su #001 (e viceversa): ogni gate di percezione si chiude per unità.
+- 2026-11-09 **Controlli e letture: falli da solo, NON chiedere.** Chiedi a Daniele solo prima di SCRIVERE una modifica al comportamento/funzionamento del Pi (codice, servizi, config, deploy, reboot). Leggere, misurare, registrare clip di prova, verificare = autonomia.
