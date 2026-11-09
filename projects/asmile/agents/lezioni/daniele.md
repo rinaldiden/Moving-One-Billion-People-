@@ -4,3 +4,7 @@
 - 2026-11-09 OBIETTIVO FISSATO: modello di guida autonoma LEGGERO su Raspberry Pi, allenato sul Mac (o server esterno). Dai video di logger e #001: depth e segmentazione al top sul Mac → poi a bordo: camere + traiettoria proiettata dall'ingombro bici + encoder sterzo + path planner; segmentare a bordo gli ostacoli e stimarne la depth per frenare e sterzare entro i limiti fissati.
 - 2026-11-08 Niente oscuratore GDPR / anonimizzazione nelle pipeline.
 - Linee rosse sempre: freno ≤60°, niente motore/freno senza "vai" esplicito, niente reboot, niente strada senza firma.
+- 2026-11-09 **logger e #001 hanno hardware DIVERSO** — mai trasferire calib, codice camera, frame o conclusioni dall'uno all'altro senza dirlo:
+  - asmile-logger: Pi 5 + Arducam **Camarray** (un solo CSI, SBS 2560×800, serve arducam_fix.so), camere a 0.71 m, solo video+sensor_hub, niente attuatori/encoder; codice in /home/asmile-logger/logger (recorder.sh); calib `calib_asmile-logger_metro.json`.
+  - asmile #001: Pi 5 + **2 OV9281 Inno-Maker separate** (2 CSI, rpicam --sync, dual_cam_recorder.py, arducam_fix NON serve), pitch 7.4°, cam0=destra; encoder sterzo AMT22 + encoder ruota, VESC sterzo, servofreno GPIO12; repo in /home/asmile/wip/...; calib `calib_asmile-001.json`.
+  - Un modello/depth validato sul logger NON è validato su #001 (e viceversa): ogni gate di percezione si chiude per unità.
