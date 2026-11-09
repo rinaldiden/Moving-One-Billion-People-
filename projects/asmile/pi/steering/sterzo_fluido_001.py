@@ -61,6 +61,8 @@ KI = 4.0             # A/(deg*s), integrale piccolo
 I_INT_MAX = 3.0      # A
 LAG_MAX = 2.5        # deg: il riferimento non scappa mai piu' di cosi' dal manubrio (anti-strappo)
 A_MAX = 40.0         # deg/s^2 rampa del riferimento
+JERK = 250.0         # deg/s^3: micro-rampa d'accelerazione in partenza (Daniele: "picchia un po' in partenza")
+V_FF = 6.0           # deg/s: la spinta d'attrito entra gradualmente fino a questa velocita' di riferimento
 I_DITH = 0.0         # A, dither +/- a 100 Hz solo quando dovrebbe muoversi ed e' fermo
 V_FERMO = 1.5        # deg/s
 # Ripple per giro elettrico (prova 16:58: velocita' 1.7-7.8 deg/s a 5 deg/s, picchi a 1-2 Hz = metà/quarto di giro
@@ -202,7 +204,7 @@ def main(argv=None):
 
     ab = AlfaBeta(p0, mt0, a.ab[0], a.ab[1]); last_mt = mt0
     hist = [(time.monotonic(), p0)]
-    sp = p0 * DEG; v_ref = 0.0; i_int = 0.0; i_coul = I_COUL0; i_cmd = 0.0; i_mot = 0.0
+    sp = p0 * DEG; v_ref = 0.0; acc = 0.0; i_int = 0.0; i_coul = I_COUL0; i_cmd = 0.0; i_mot = 0.0
     k = 0; t0 = t_prev = time.monotonic(); reason = None; t_stallo = None; t_caldo = 0.0; q_fail = 0
     tgt_deg = tgt * DEG
     try: rip = json.load(open(RIP_FILE))
@@ -226,7 +228,8 @@ def main(argv=None):
             if a.modo == "vai":
                 rem = (tgt_deg - sp) * d                                  # deg ancora da percorrere col riferimento
                 v_lim = min(a.vel, math.sqrt(max(2 * A_MAX * max(rem, 0.0), 0.0)))   # frenata trapezio
-                v_ref = d * min(abs(v_ref) + A_MAX * dt, v_lim)
+                acc = min(acc + JERK * dt, A_MAX)                         # accelerazione che cresce dolce (curva a S)
+                v_ref = d * min(abs(v_ref) + acc * dt, v_lim)
                 sp += v_ref * dt
                 if (tgt_deg - sp) * d < 0: sp = tgt_deg; v_ref = 0.0
                 sp = x + max(min(sp - x, LAG_MAX), -LAG_MAX)              # mai piu' di LAG_MAX dal manubrio
@@ -234,7 +237,7 @@ def main(argv=None):
                 moving = abs(v) > V_FERMO
                 if moving and abs(v - v_ref) < 3 and v * d > 0:           # apprendo l'attrito in moto
                     i_coul = min(max(0.99 * i_coul + 0.01 * abs(i_cmd - kp * lag - i_int), 3.0), 12.0)
-                ff = d * i_coul if abs(v_ref) > 0.1 else 0.0
+                ff = d * i_coul * min(1.0, abs(v_ref) / V_FF) if abs(v_ref) > 0.1 else 0.0
                 i_int = max(min(i_int + KI * lag * dt, I_INT_MAX), -I_INT_MAX)
                 dith = (a.dither if k % 2 else -a.dither) if (not moving and abs(v_ref) > 0.1) else 0.0
                 b = int((p % EREV) / EREV * NB) % NB
