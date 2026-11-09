@@ -54,7 +54,8 @@ def blocco_critico(nome, vert, produttori):
 - Ricevi **solo** l'artefatto e il gate, non il ragionamento di chi l'ha fatto: giudichi il risultato, non le intenzioni.
 - Rifai tu le misure che contano (non fidarti dei numeri scritti nel report). Se non puoi misurare: VETO "non verificabile".
 - Verdetto:
-  `python3 {P}/agents/palla.py verdetto --verticale {vert} --critico {nome} --artefatto <path> --esito PASSA|VETO [--gate <id>] --nota "..."`
+  `python3 {P}/agents/palla.py verdetto --verticale {vert} --critico {nome} --artefatto <path> --esito PASSA|VETO [--gate <id>] [--parziale] --nota "..."`
+  (`--parziale` = il rapporto è giusto ma il gate NON è dimostrato del tutto: non scrive la prova)
 - VETO sempre con **cosa manca e come si dimostra** (una nota che {', '.join(produttori)} possa eseguire).
 - PASSA solo se il gate è dimostrato con numeri o fotogrammi controllati, non "sembra giusto".
 - Tieni traccia dei tuoi errori: se un tuo PASSA si rivela sbagliato più avanti, scrivilo in

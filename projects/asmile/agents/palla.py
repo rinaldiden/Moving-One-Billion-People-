@@ -6,7 +6,7 @@ Ogni deliverable passa da un contro-agente che lo guarda con una LENTE diversa. 
 il suo PASSA. Dopo 3 VETO sullo stesso artefatto il capo smette di girare in tondo e chiede a Daniele.
 
   passa    --verticale V --da PRODUTTORE --a CRITICO --artefatto PATH [--gate G] [--nota ...]
-  verdetto --verticale V --critico CRITICO --artefatto PATH --esito PASSA|VETO [--gate G] [--nota ...]
+  verdetto --verticale V --critico CRITICO --artefatto PATH --esito PASSA|VETO [--gate G] [--parziale] [--nota ...]
   stato    [--verticale V]          palle aperte, giri, escalation
   lezioni  --da AGENTE              lezioni da mettere nel brief di AGENTE (sue + di Daniele)
 
@@ -106,6 +106,8 @@ def main():
     ap.add_argument("--esito", choices=["PASSA", "VETO"])
     ap.add_argument("--gate")
     ap.add_argument("--nota", default="")
+    ap.add_argument("--parziale", action="store_true",
+                    help="PASSA sul rapporto ma il gate resta aperto (nessuna prova scritta)")
     a = ap.parse_args()
 
     if a.cmd == "stato":
@@ -126,7 +128,7 @@ def main():
     scrivi({"tipo": "verdetto", "verticale": a.verticale, "critico": a.critico, "artefatto": a.artefatto,
             "esito": a.esito, "gate": a.gate, "nota": a.nota})
     impara(a)
-    parziale = "PARZIALE" in a.nota.upper() or "NON CHIUSO" in a.nota.upper()
+    parziale = a.parziale
     if a.esito == "PASSA" and a.gate and parziale:
         print(f"PASSA sul rapporto PARZIALE — il gate {a.gate} resta aperto (nessuna prova scritta)")
     elif a.esito == "PASSA" and a.gate:

@@ -1,0 +1,7 @@
+{
+ "gate": "L0.sensori_001",
+ "artefatto": "agents/rapporti/L0.sensori_sync_001_20261109.md",
+ "visto_critico": "asmile-pi-001-verifica",
+ "nota": "Rimisurato 09/11 08:07-08:10 sul Pi: sensor_hub active+enabled; ultime 6000 righe CSV = 119.96 s, 50.00 Hz, dt p50 20 ms, max 31 ms, 0 buchi >40 ms; IMU/servo vivi, enc fermi (bici ferma), GPS fix=0 (al chiuso, non verificato a cielo aperto). Clip dual_cam_recorder 241+241 frame: ogni frame entro 10 ms da una riga sensori (stesso CLOCK_MONOTONIC); scarto sx/dx 16-30 us; Sync achieved 0/-17 us; luma cam0 88.2 cam1 90.2. Clip cancellata. Aperti non bloccanti: file sensori chiamato 20261030 con wall sbagliata a inizio file (fake-hwclock); servofreno.service enabled+active contro linea rossa (da Daniele). L0.sync_001 NON chiuso: manca giro in movimento.",
+ "quando": "2026-11-09T08:09:29"
+}
