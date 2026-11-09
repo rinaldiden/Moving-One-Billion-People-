@@ -1,0 +1,152 @@
+{
+ "K_left": [
+  [
+   1424.345442945397,
+   0.0,
+   640.0
+  ],
+  [
+   0.0,
+   1424.345442945397,
+   400.0
+  ],
+  [
+   0.0,
+   0.0,
+   1.0
+  ]
+ ],
+ "dist_left": [
+  -9.999999999999999e-10,
+  0.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "K_right": [
+  [
+   1424.345442945397,
+   0.0,
+   640.0
+  ],
+  [
+   0.0,
+   1424.345442945397,
+   400.0
+  ],
+  [
+   0.0,
+   0.0,
+   1.0
+  ]
+ ],
+ "dist_right": [
+  -9.999999999999999e-10,
+  0.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "R": [
+  [
+   0.9997933368877108,
+   -0.0032519929811833425,
+   0.02006758721388097
+  ],
+  [
+   0.0016141960973382555,
+   0.9967049317203176,
+   0.0810966920124148
+  ],
+  [
+   -0.020265189017024305,
+   -0.08104753929668353,
+   0.9965041989314731
+  ]
+ ],
+ "T": [
+  -0.2,
+  0.0,
+  0.0
+ ],
+ "size": [
+  1280,
+  800
+ ],
+ "baseline_mm": 200.0,
+ "method": "calib_tape_joint: R da dy=0 su match a bici FERMA + fit col METRO d=fB/Z+d0 (T orizz. 200mm)",
+ "n_matches": 8805,
+ "rect_dy_median_px": 0.912,
+ "order": "RL",
+ "flip180": false,
+ "note": "Focale a priori: FISSARLA col metro (validate.py), poi rilanciare con --focal-px misurata.",
+ "d0_px": 98.221,
+ "source": "session_20261030_180225 (giro 2026-11-07 14:02)",
+ "focal_fit_px": 1306.34,
+ "scale_fixed_dense": 1.6259,
+ "tape_points": [
+  {
+   "Z_m": 2,
+   "disp_px": 228.326,
+   "Z_stereo_m": 2.008,
+   "z_model_m": 0.358
+  },
+  {
+   "Z_m": 3,
+   "disp_px": 186.47,
+   "Z_stereo_m": 2.961,
+   "z_model_m": 1.76
+  },
+  {
+   "Z_m": 5,
+   "disp_px": 149.7,
+   "Z_stereo_m": 5.075,
+   "z_model_m": 2.795
+  },
+  {
+   "Z_m": 7,
+   "disp_px": 135.621,
+   "Z_stereo_m": 6.986,
+   "z_model_m": 4.895
+  },
+  {
+   "Z_m": 10,
+   "disp_px": 124.867,
+   "Z_stereo_m": 9.805,
+   "z_model_m": 6.742
+  },
+  {
+   "Z_m": 15,
+   "disp_px": 115.187,
+   "Z_stereo_m": 15.399,
+   "z_model_m": 9.694
+  }
+ ],
+ "valid_for": "SOLO asmile #001 (asmile-tirano, hostname asmile / Tailscale asmile-001) con QUESTO set di 2 camere OV9281 così come montate il 2026-11-07. NON vale per asmile2, asmile-logger o altre unità; se si smonta/sposta una camera va rifatta (calib_tape_joint.py).",
+ "camera_hw": {
+  "model": "Inno-Maker CAM-MIPIOV9281V2 (Amazon B09WTP5GZH), 2 moduli separati",
+  "sensor": "OV9281 mono global shutter 1280x800, pixel 3um",
+  "lens_nominal": "2.8mm F2.2, TV dist < -17%, FOV dich. D148/H118",
+  "focal_nominal_px": 933,
+  "note": "f*B dal metro = 261.3 px*m. Interasse MISURATO 200 mm (2026-11-08) -> f = 1306 px, NON 933 nominale: la focale nominale del venditore non torna o la lente montata non e' la 2.8mm. Da confermare con la ChArUco a 1-2 m."
+ },
+ "cam_height_m": 0.825,
+ "baseline_tape_mm": 200.0,
+ "measured_2026_11_08": "Daniele col metro: camere #001 a 825 mm da terra, interasse 200 mm. SOLO #001 (logger: 0.71 m, Camarray; asmile2: altro).",
+ "focal_board_2026_11_08": {
+  "f_px": [
+   1127.0,
+   1174.7,
+   1131.3
+  ],
+  "f_median_px": 1131.3,
+  "distances_m": [
+   1,
+   2,
+   3
+  ],
+  "square_mm": 29.2,
+  "camera": "sinistra (cam0, fisicamente destra) — la destra NON ha registrato (sync senza WiFi, corretto)",
+  "note": "f ~1130-1175 px: ne' 933 nominale ne' 1306 (= f·B 261.3 / B 200). Rifare 1-2 m con le DUE camere per la depth stereo."
+ }
+}

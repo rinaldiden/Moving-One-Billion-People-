@@ -1,0 +1,7 @@
+{
+ "gate": "L0.calib_001",
+ "artefatto": "logger/depth/calib_asmile-001.json",
+ "visto_critico": "asmile-calib-critico",
+ "nota": "Rifatto da h264 con Calib.rectify (focale rett 1312.49, B 0.2): disparita ZNCC indipendente (mio codice, ROI e metodo diversi) err% 5m +0.93, 6m +0.52, 7m +0.97, 8m +0.43, 10m +0.08, 12m -0.71, 15m -0.76 (n=2 frame); con scacchiera SB 2m -0.54, 3m +0.48, 4m +0.43 (sq rett 9.5-19 px -> f 1314-1339 coerente con 1312). Verifica 4-6-8-12 max |err| 0.7% (rapporto 1.14%): fit_verify fit su 1-2-3-5-7-10-15, 4-6-8-12 fuori dalla disparita del fit (solo SIFT sfondo nel dy). Limiti, da NON nascondere: (1) distanze del protocollo non rimisurate, quadretto 29 mm assunto; (2) leave-out 2-5-10 da 12/15 m -2.4/-2.8%: a 12-15 m margine solo 0.3 px; (3) tutte le soste al CENTRO immagine: il +-2% non e provato ai bordi; (4) dy aperto: mediana 0.8-1 px sul bersaglio, bordi sx p95 3-6 px (gate L1.rettifica). Per L1: ripetere soste con bersaglio decentrato e una seconda sessione di 12-15 m. valid_for solo #001 verificato nel json.",
+ "quando": "2026-11-09T10:15:59"
+}

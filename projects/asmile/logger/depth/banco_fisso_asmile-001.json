@@ -1,0 +1,104 @@
+{
+ "unita": "asmile-001",
+ "calib": "calib_asmile-001.json",
+ "data": "2026-11-09",
+ "sessione": "session_20261109_093216",
+ "baseline_mm": 200,
+ "punti": [
+  {
+   "Z_m": 1,
+   "role": "fit",
+   "n_frames": 8,
+   "disp_rect_px": 265.723,
+   "Z_stereo_m": 0.988,
+   "err_pct": -1.21
+  },
+  {
+   "Z_m": 2,
+   "role": "fit",
+   "n_frames": 10,
+   "disp_rect_px": 131.312,
+   "Z_stereo_m": 1.999,
+   "err_pct": -0.05
+  },
+  {
+   "Z_m": 3,
+   "role": "fit",
+   "n_frames": 6,
+   "disp_rect_px": 86.907,
+   "Z_stereo_m": 3.02,
+   "err_pct": 0.68
+  },
+  {
+   "Z_m": 4,
+   "role": "verifica",
+   "n_frames": 6,
+   "disp_rect_px": 65.27,
+   "Z_stereo_m": 4.022,
+   "err_pct": 0.54
+  },
+  {
+   "Z_m": 5,
+   "role": "fit",
+   "n_frames": 10,
+   "disp_rect_px": 52.026,
+   "Z_stereo_m": 5.046,
+   "err_pct": 0.91
+  },
+  {
+   "Z_m": 6,
+   "role": "verifica",
+   "n_frames": 2,
+   "disp_rect_px": 43.385,
+   "Z_stereo_m": 6.05,
+   "err_pct": 0.84
+  },
+  {
+   "Z_m": 7,
+   "role": "fit",
+   "n_frames": 10,
+   "disp_rect_px": 37.165,
+   "Z_stereo_m": 7.063,
+   "err_pct": 0.9
+  },
+  {
+   "Z_m": 8,
+   "role": "verifica",
+   "n_frames": 10,
+   "disp_rect_px": 32.664,
+   "Z_stereo_m": 8.036,
+   "err_pct": 0.45
+  },
+  {
+   "Z_m": 10,
+   "role": "fit",
+   "n_frames": 10,
+   "disp_rect_px": 26.105,
+   "Z_stereo_m": 10.055,
+   "err_pct": 0.55
+  },
+  {
+   "Z_m": 12,
+   "role": "verifica",
+   "n_frames": 10,
+   "disp_rect_px": 22.128,
+   "Z_stereo_m": 11.863,
+   "err_pct": -1.14
+  },
+  {
+   "Z_m": 15,
+   "role": "fit",
+   "n_frames": 10,
+   "disp_rect_px": 17.698,
+   "Z_stereo_m": 14.832,
+   "err_pct": -1.12
+  }
+ ],
+ "note": "soste = persona con scacchiera 7x10 (29 mm); disparita = ZNCC del foglio scacchiera in ROI fissa, filtro epipolare |dy+118.5|<0.8, mediana su 10 frame/sosta (2-10 validi). Distanze come da protocollo di Daniele (dalle lenti), NON ri-misurate; controllo indipendente: lato quadretto in px 1/2/3 m -> f 1163/1141/1137.",
+ "gate": {
+  "<5m": 2,
+  "5-10m": 5,
+  "10-20m": 10
+ },
+ "verifica_max_abs_err_pct": 1.14
+}
