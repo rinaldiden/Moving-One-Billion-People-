@@ -238,7 +238,12 @@ def main(argv=None):
                 if moving and abs(v - v_ref) < 3 and v * d > 0:           # apprendo l'attrito in moto
                     i_coul = min(max(0.99 * i_coul + 0.01 * abs(i_cmd - kp * lag - i_int), 3.0), 12.0)
                 ff = d * i_coul * min(1.0, abs(v_ref) / V_FF) if abs(v_ref) > 0.1 else 0.0
-                i_int = max(min(i_int + KI * lag * dt, I_INT_MAX), -I_INT_MAX)
+                # manubrio trattenuto (ritardo al massimo): la spinta sale fino al tetto imax a 25 A/s, cosi' si usano
+                # davvero i 45 A (prova 17:52: si fermava a ~29 A = somma dei termini, mai al tetto). Libero: integrale piccolo.
+                if abs(lag) >= 0.9 * LAG_MAX:
+                    i_int = max(min(i_int + 25.0 * dt * (1 if lag > 0 else -1), imax), -imax)
+                else:
+                    i_int = max(min(i_int + KI * lag * dt, max(I_INT_MAX, abs(i_int) - 50.0 * dt)), -max(I_INT_MAX, abs(i_int) - 50.0 * dt))
                 dith = (a.dither if k % 2 else -a.dither) if (not moving and abs(v_ref) > 0.1) else 0.0
                 b = int((p % EREV) / EREV * NB) % NB
                 if moving and abs(v_ref) > 0.1 and v * d > 0:         # imparo il ripple della fase elettrica
@@ -277,7 +282,7 @@ def main(argv=None):
                 if t_arr and ((abs(tgt - p) < 46 and abs(v) < V_FERMO) or tc - t_arr > 0.8):
                     print(f"ARRIVATO pos={p} err={(tgt - p) * DEG:+.2f} deg in {tc - t0:.1f} s: corrente rilasciata"); break
                 if (tgt - p) * d < -20: print(f"superato di {(p - tgt) * d * DEG:.2f} deg: mollo"); break
-                stuck = abs(v) < V_FERMO and (abs(lag) >= LAG_MAX * 0.95 or abs(i_cmd) >= 0.95 * cap)
+                stuck = abs(v) < V_FERMO and abs(i_cmd) >= 0.95 * cap          # stallo solo AL TETTO di corrente
                 t_stallo = (t_stallo or tc) if stuck else None
                 if t_stallo and tc - t_stallo > 1.5: reason = f"STALLO a {i_cmd:.1f} A"; break
             else:

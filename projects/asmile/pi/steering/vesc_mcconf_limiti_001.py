@@ -32,6 +32,8 @@ PROPOSTA = {"l_current_max": 8.0, "l_current_min": -8.0, "l_in_current_max": 5.0
 # di #001: decodificano R=29.82 mOhm, L=18.28 uH, flux=1.318 mWb, foc_sensor_mode=2 (HALL) = esattamente i valori della
 # detection del 2026-10-26. E' la prova del layout (sostituisce il confronto con VESC Tool).
 OFF_SENSOR_MODE_FOC, OFF_L, OFF_R, OFF_FLUX, OFF_HALL_INTERP = 198, 207, 215, 219, 269
+# PID di velocita' del VESC (float32_auto, offset fw 5.02 verificati con lo stesso metodo)
+OFF_SPID = {"s_pid_kp": 329, "s_pid_ki": 333, "s_pid_kd": 337, "s_pid_kd_filter": 341, "s_pid_min_erpm": 345, "s_pid_ramp_erpms_s": 350}
 DETECT_001 = {"r": 0.02982, "l": 18.28e-6, "flux": 1.318e-3}
 
 
@@ -99,6 +101,7 @@ def main():
     ap.add_argument("--apply", action="store_true")
     for n in PROPOSTA: ap.add_argument("--" + n.replace("_", "-"), type=float, default=PROPOSTA[n])
     ap.add_argument("--consenti-alzare", type=float, default=0.0, help="A: permette di ALZARE l_current fino a questo valore (max 60). Solo col vai esplicito di Daniele")
+    ap.add_argument("--spid", nargs="*", default=[], help="nome=valore per i campi del PID velocita' (s_pid_kp, s_pid_ki, s_pid_kd, s_pid_kd_filter, s_pid_min_erpm, s_pid_ramp_erpms_s)")
     ap.add_argument("--hall-interp-erpm", type=float, help="foc_hall_interp_erpm (solo abbassare, >=0): sotto questa velocita' il VESC non interpola fra gli hall -> scatti")
     a = ap.parse_args()
     ser = serial.Serial(PORT, BAUD, timeout=0.2); time.sleep(0.1)
@@ -111,6 +114,7 @@ def main():
     cur = campi(blob)
     print(f"backup: {bk} ({len(blob)} B)")
     for n, v in cur.items(): print(f"  {n:20s} {v:8.2f}")
+    for n_, o_ in OFF_SPID.items(): print(f"  {n_:20s} {dec(bytes(blob[o_:o_ + 4])):10.5f}")
     print(f"  {'foc_hall_interp_erpm':20s} {dec(bytes(blob[OFF_HALL_INTERP:OFF_HALL_INTERP + 4])):8.1f}   layout provato (R/L/flux/hall = detection): {layout_provato(blob)}")
     if not plausibile(blob):
         sys.exit("layout NON plausibile: non scrivo. Verifica offset con VESC Tool.")
@@ -130,11 +134,19 @@ def main():
             hv = dec(bytes(blob[OFF_HALL_INTERP:OFF_HALL_INTERP + 4]))
             if not 0 <= a.hall_interp_erpm <= hv: sys.exit(f"hall_interp_erpm {a.hall_interp_erpm} fuori da [0, {hv}]: rifiuto")
             new[OFF_HALL_INTERP:OFF_HALL_INTERP + 4] = enc(a.hall_interp_erpm)
+        for kv in a.spid:
+            n_, v_ = kv.split("="); v_ = float(v_)
+            if n_ not in OFF_SPID: sys.exit(f"campo sconosciuto {n_}")
+            lim = {"s_pid_kp": (0, 0.1), "s_pid_ki": (0, 0.1), "s_pid_kd": (0, 0.01), "s_pid_kd_filter": (0, 1), "s_pid_min_erpm": (0, 2000), "s_pid_ramp_erpms_s": (-1, 100000)}[n_]
+            if not lim[0] <= v_ <= lim[1]: sys.exit(f"{n_}={v_} fuori da {lim}")
+            new[OFF_SPID[n_]:OFF_SPID[n_] + 4] = enc(v_)
         if not plausibile(new): sys.exit("valori nuovi NON plausibili (segno sbagliato o zero): rifiuto")
     if len(new) != len(blob) or new[:4] != blob[:4]: sys.exit("signature/lunghezza incoerenti: rifiuto")
     print("DIFF:")
     for n, v in campi(new).items(): print(f"  {n:20s} {cur[n]:8.2f} -> {v:8.2f}")
     print(f"  {'foc_hall_interp_erpm':20s} {dec(bytes(blob[OFF_HALL_INTERP:OFF_HALL_INTERP+4])):8.1f} -> {dec(bytes(new[OFF_HALL_INTERP:OFF_HALL_INTERP+4])):8.1f}")
+    for n_, o_ in OFF_SPID.items():
+        if new[o_:o_ + 4] != blob[o_:o_ + 4]: print(f"  {n_:20s} {dec(bytes(blob[o_:o_ + 4])):10.5f} -> {dec(bytes(new[o_:o_ + 4])):10.5f}")
     ch = [i for i in range(len(new)) if new[i] != blob[i]]
     print(f"  byte cambiati: {ch}")
     if not a.apply:
