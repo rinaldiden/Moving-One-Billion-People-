@@ -1,4 +1,4 @@
-# 001 — stato fotografato 2026-11-09 16:38 dopo: VESC sterzo: l_current ±30 A + foc_hall_interp_erpm 20 (scritti via UART, verificati); sterzo_vel_001 a inseguimento riferimento (molla+smorzatore), prove 16:35-16:37
+# 001 — stato fotografato 2026-11-09 17:05 dopo: sterzo_fluido_001: loop 200 Hz su encoder piantone, attrito appreso, compensazione ripple per fase elettrica (/data/sterzo_ripple_001.json), rilascio corrente all'arrivo; 24 prove 5-15 deg/s
 kernel: 6.12.75+rpt-rpi-2712
 git sul Pi: 1967cbf 2026-05-13 fix: separate boot config for asmile (ov9281 dual cam, no arducam HAT)
 overlay: si
