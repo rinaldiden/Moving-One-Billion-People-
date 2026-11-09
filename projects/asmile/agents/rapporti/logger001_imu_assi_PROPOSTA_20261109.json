@@ -1,0 +1,28 @@
+{
+  "unita": "asmile-logger001 (Camarray SBS, IMU HW-123/MPU6050)",
+  "data": "2026-11-09",
+  "stato": "PROPOSTA - non applicata al Pi. Assi: evidenza da video (3 assi concordi) ma SENZA marcia reale. Accelerazione longitudinale NON verificata.",
+  "frame_corpo_target": "x avanti (asse ottico camera), y sinistra, z su, destrorso",
+  "mapping_chip_to_corpo": {
+    "ax_body": "-imu_ax_g",
+    "ay_body": "-imu_ay_g",
+    "az_body": "+imu_az_g",
+    "gx_body": "-imu_gx_dps",
+    "gy_body": "-imu_gy_dps",
+    "gz_body": "+imu_gz_dps",
+    "nota": "il chip ha X verso dietro (opposto alla camera), Y a destra, Z su: rotazione di 180 gradi attorno a Z. La freccia X dichiarata 'verso la marcia' NON e' confermata, il video la smentisce (X punta indietro)."
+  },
+  "evidenza": {
+    "yaw_gz_vs_flusso_orizz": {"r": 0.446, "lag_ms": 0, "segno": "gz>0 <-> contenuto a destra (camera gira a sinistra): Z su confermato"},
+    "pitch_gy_vs_flusso_vert": {"r": 0.311, "lag_ms": -10, "segno": "gy>0 <-> contenuto in giu' (camera beccheggia in su): Y a destra se X indietro"},
+    "roll_gx_vs_rotazione_immagine": {"r": 0.580, "lag_ms": 0, "segno": "gx>0 <-> rotazione oraria sullo schermo: X indietro"},
+    "coerenza_acc_gyro": "dA/dt = -(w x a): pendenza y 1.02, z 0.88 (+), x non valutabile -> acc e gyro stesso frame destrorso, scala gyro ~1"
+  },
+  "correzione_bias_per_unita": {
+    "gyro_bias_dps_chip": {"gx": -1.765, "gy": -0.674, "gz": 0.968, "std": 0.03, "fonte": "ultimi 30 s fermo di sensors_20261109_085838 (gy/gz in 100557: -0.48/0.88: deriva ~0.2 dps, ricalcolare a inizio sessione)"},
+    "acc_scala_globale": 0.8457,
+    "acc_scala_nota": "|a| fermo = 1.1825 g (085838), 1.201 (100557): scala globale 1/|g|. Ellissoide per-asse NON stimabile: tutti i tratti fermi sono con Z in su.",
+    "acc_offset_g_chip_fermo": {"ax": 0.0687, "ay": 0.0028, "az": 1.1826, "nota": "ax 0.069 g = inclinazione 3.3 gradi di X rispetto all'orizzonte, non e' per forza offset: calibrare a 6 posizioni prima di sottrarre"},
+    "azione_richiesta": "calibrazione 6 posizioni (6 facce, 20 s ferme ciascuna) + giro vero con partenza/frenata dritta per confermare segno ax"
+  }
+}
