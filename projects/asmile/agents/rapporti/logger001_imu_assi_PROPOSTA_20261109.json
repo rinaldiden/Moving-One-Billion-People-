@@ -1,28 +1,114 @@
 {
-  "unita": "asmile-logger001 (Camarray SBS, IMU HW-123/MPU6050)",
-  "data": "2026-11-09",
-  "stato": "PROPOSTA - non applicata al Pi. Assi: evidenza da video (3 assi concordi) ma SENZA marcia reale. Accelerazione longitudinale NON verificata.",
-  "frame_corpo_target": "x avanti (asse ottico camera), y sinistra, z su, destrorso",
-  "mapping_chip_to_corpo": {
-    "ax_body": "-imu_ax_g",
-    "ay_body": "-imu_ay_g",
-    "az_body": "+imu_az_g",
-    "gx_body": "-imu_gx_dps",
-    "gy_body": "-imu_gy_dps",
-    "gz_body": "+imu_gz_dps",
-    "nota": "il chip ha X verso dietro (opposto alla camera), Y a destra, Z su: rotazione di 180 gradi attorno a Z. La freccia X dichiarata 'verso la marcia' NON e' confermata, il video la smentisce (X punta indietro)."
+ "unita": "asmile-logger001 (Camarray SBS, IMU HW-123/MPU6050)",
+ "data": "2026-11-09",
+ "stato": "PROPOSTA - non applicata al Pi. Assi da video (3 assi concordi). Giro 10:05: SEGNO accel longitudinale (-ax) SUPPORTATO da 3 eventi puliti (partenza, 2 frenate dritte) ma SCALA NON stimabile (ego-motion video troppo rumorosa).",
+ "frame_corpo_target": "x avanti (asse ottico camera), y sinistra, z su, destrorso",
+ "mapping_chip_to_corpo": {
+  "ax_body": "-imu_ax_g",
+  "ay_body": "-imu_ay_g",
+  "az_body": "+imu_az_g",
+  "gx_body": "-imu_gx_dps",
+  "gy_body": "-imu_gy_dps",
+  "gz_body": "+imu_gz_dps",
+  "nota": "il chip ha X verso dietro (opposto alla camera), Y a destra, Z su: rotazione di 180 gradi attorno a Z. La freccia X dichiarata 'verso la marcia' NON e' confermata, il video la smentisce (X punta indietro)."
+ },
+ "evidenza": {
+  "yaw_gz_vs_flusso_orizz": {
+   "r": 0.446,
+   "lag_ms": 0,
+   "segno": "gz>0 <-> contenuto a destra (camera gira a sinistra): Z su confermato"
   },
-  "evidenza": {
-    "yaw_gz_vs_flusso_orizz": {"r": 0.446, "lag_ms": 0, "segno": "gz>0 <-> contenuto a destra (camera gira a sinistra): Z su confermato"},
-    "pitch_gy_vs_flusso_vert": {"r": 0.311, "lag_ms": -10, "segno": "gy>0 <-> contenuto in giu' (camera beccheggia in su): Y a destra se X indietro"},
-    "roll_gx_vs_rotazione_immagine": {"r": 0.580, "lag_ms": 0, "segno": "gx>0 <-> rotazione oraria sullo schermo: X indietro"},
-    "coerenza_acc_gyro": "dA/dt = -(w x a): pendenza y 1.02, z 0.88 (+), x non valutabile -> acc e gyro stesso frame destrorso, scala gyro ~1"
+  "pitch_gy_vs_flusso_vert": {
+   "r": 0.311,
+   "lag_ms": -10,
+   "segno": "gy>0 <-> contenuto in giu' (camera beccheggia in su): Y a destra se X indietro"
   },
-  "correzione_bias_per_unita": {
-    "gyro_bias_dps_chip": {"gx": -1.765, "gy": -0.674, "gz": 0.968, "std": 0.03, "fonte": "ultimi 30 s fermo di sensors_20261109_085838 (gy/gz in 100557: -0.48/0.88: deriva ~0.2 dps, ricalcolare a inizio sessione)"},
-    "acc_scala_globale": 0.8457,
-    "acc_scala_nota": "|a| fermo = 1.1825 g (085838), 1.201 (100557): scala globale 1/|g|. Ellissoide per-asse NON stimabile: tutti i tratti fermi sono con Z in su.",
-    "acc_offset_g_chip_fermo": {"ax": 0.0687, "ay": 0.0028, "az": 1.1826, "nota": "ax 0.069 g = inclinazione 3.3 gradi di X rispetto all'orizzonte, non e' per forza offset: calibrare a 6 posizioni prima di sottrarre"},
-    "azione_richiesta": "calibrazione 6 posizioni (6 facce, 20 s ferme ciascuna) + giro vero con partenza/frenata dritta per confermare segno ax"
-  }
+  "roll_gx_vs_rotazione_immagine": {
+   "r": 0.58,
+   "lag_ms": 0,
+   "segno": "gx>0 <-> rotazione oraria sullo schermo: X indietro"
+  },
+  "coerenza_acc_gyro": "dA/dt = -(w x a): pendenza y 1.02, z 0.88 (+), x non valutabile -> acc e gyro stesso frame destrorso, scala gyro ~1"
+ },
+ "correzione_bias_per_unita": {
+  "gyro_bias_dps_chip": {
+   "gx": -1.57,
+   "gy": -0.46,
+   "gz": 0.9,
+   "std": 0.08,
+   "fonte": "4 tratti fermi giro 10:05"
+  },
+  "acc_scala_globale": 0.83,
+  "acc_scala_nota": "|a| fermo = 1.1825 g (085838), 1.201 (100557): scala globale 1/|g|. Ellissoide per-asse NON stimabile: tutti i tratti fermi sono con Z in su.",
+  "acc_offset_g_chip_fermo": {
+   "ax": 0.0687,
+   "ay": 0.0028,
+   "az": 1.1826,
+   "nota": "ax 0.069 g = inclinazione 3.3 gradi di X rispetto all'orizzonte, non e' per forza offset: calibrare a 6 posizioni prima di sottrarre"
+  },
+  "azione_richiesta": "calibrazione 6 posizioni (6 facce, 20 s ferme ciascuna) + giro vero con partenza/frenata dritta per confermare segno ax"
+ },
+ "giro_1005": {
+  "finestre_moto_t_ms_s": {
+   "A": [
+    2752,
+    3025
+   ],
+   "B": [
+    3880,
+    4188
+   ]
+  },
+  "ble": "assente nel giro (solo 10:25-10:28 prova ruota a mano)",
+  "segno_ax": "long=-ax SUPPORTATO su 4 eventi allineati: partenza 2751.5 (ax 0.127->-0.074, v 0->1.3), frenate 2774.8 (+0.33 g, v 4.07->0.19) e 2827.5 (+0.36, 1.65->0.49), stop 4181.2 (+0.50, 3.81->0.07)",
+  "scala_acc": "NON stimata: dv_imu integrato ~2.5x piu' grande di dv_video sui 2 eventi puliti (-5.9 vs -2.0, -5.7 vs -2.2) ma contaminato da beccheggio/tilt e dal video (sigma v ~1.5 m/s per campione, 1.2 giri vibrazioni ax +-0.5 g). Non applicare.",
+  "yaw_gz_vs_video": "campione 1s: r=0.11/-0.04 (inutilizzabile); finestre 4 s: r=0.58 (A), 0.32 (B), accordo segno 83%/70% per |dpsi|>10 gradi, pendenza video/gz 0.43/0.15 (flusso mediano sottostima in curva) -> segno gz confermato, scala non misurabile dal video",
+  "bias_riposo_4_tratti_fermi": {
+   "ax": [
+    0.126,
+    0.051,
+    0.052,
+    0.012
+   ],
+   "ay": [
+    -0.152,
+    -0.087,
+    -0.088,
+    0.032
+   ],
+   "az": [
+    1.187,
+    1.205,
+    1.195,
+    1.205
+   ],
+   "gx": [
+    -1.607,
+    -1.489,
+    -1.677,
+    -1.52
+   ],
+   "gy": [
+    -0.514,
+    -0.388,
+    -0.543,
+    -0.412
+   ],
+   "gz": [
+    0.918,
+    0.886,
+    0.927,
+    0.885
+   ],
+   "modulo_g": [
+    1.203,
+    1.209,
+    1.199,
+    1.205
+   ],
+   "lettura": "gyro bias stabile: gx -1.57, gy -0.46, gz 0.90 dps (std tra tratti 0.08). |a|=1.204 -> scala 0.830 (era 0.8457). ax/ay a riposo variano 0.01-0.13 g con l'inclinazione della bici: NON sono offset, non sottrarli fissi; sottrarre il riposo a inizio sessione."
+  },
+  "azione": "Per la scala accel serve riferimento di velocita' (CooSpo BLE da riparare) o frenata dritta con sosta misurata.",
+  "sync": "clip->tempo via mtime fine clip - n/15; indice cumulato deriva +1.8 s da clip 75; dopo correzione residuo <=0.25 s"
+ }
 }

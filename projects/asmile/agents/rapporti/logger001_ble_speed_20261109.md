@@ -29,7 +29,7 @@ Unità: asmile-logger001 (hostname asmile-logger, 100.83.200.55). Non vale per #
 ## NON VERIFICATO / mancante
 - Connessione reale al BK467 e righe CSV con ble_* piene: serve ruota che gira, dopo il deploy.
 - ALLOW asmile-sicurezza: non ho lo strumento per interpellarlo da qui. Da chiedere col diff sopra + deploy_bike_speed.sh.
-- Rollback provato: da fare una volta dopo il deploy (`deploy_bike_speed.sh --rollback`), poi ri-deploy.
+- Rollback: provato una volta col PRIMO deploy (10:09, esito: sensor_hub vecchio, bike_speed stopped+disabled, ri-deploy ok); NON ripetuto sulla versione attuale 8296a4b9 (logger offline 11:37). Vedi sezione prove aperte.
 
 ## AGGIORNAMENTO 11:22 — riconnessione robusta (bug sul campo giro 10:30-11:10)
 Causa: dopo il sonno il reader connetteva con la stringa MAC e la cache GATT BlueZ vecchia dava timeout all'infinito.
@@ -52,3 +52,11 @@ Fix (deploy 11:31): `load_conn_params()` prima di OGNI connect (root, non fatale
 solo dopo 3 fallimenti. Tenuti i grezzi, t_ms, JSON. bleak resta 3.1.0 vendorizzato.
 Verifica dopo il deploy: CONNESSO dopo 3 s, CSV con ble_* pieni (ble_t_ms ~0.75 s prima di t_ms, rev 3220, speed 1.345 m/s con 1.576 m).
 Mancano prova 2 (ruota ferma 2 min, sensore dorme) e prova 3 (gira → si ricollega da sola entro ~30 s).
+
+## Stato 11:40 — logger OFFLINE dalle 11:37; prove aperte (VETO parziale guardian)
+Ultimo stato noto sul logger: deploy 8296a4b9 attivo, bike_speed connesso, CSV a 52 colonne con ble_* pieni, root-ro in ro.
+Preparato `deploy/prova_bike_speed.sh` (non eseguito): `rollback` (rollback sulla versione attuale + verifiche + ri-deploy), `crash`
+(kill -9 solo bike_speed), `riavvio` (dopo il riavvio vero: bike_speed enabled/attivo, IMU/i2c, MAC in /data, 52 colonne, ble_*).
+Il rollback lascia in posto, innocui a servizio disabilitato: unit file bike_speed.service (senza symlink wants), `vendor/` (bleak/dbus-fast),
+`bike_speed_ble.py`, `BIKE_SPEED_CIRC_M` in asmile_id.conf, i .bak; /data/bike_speed_mac. Cambia solo sensor_hub.py (torna a 48 colonne).
+NON VERIFICATO: rollback sulla versione attuale; crash kill -9; riavvio del Pi (lo farà Daniele); cicli ruota ferma/gira (prove 2-3).

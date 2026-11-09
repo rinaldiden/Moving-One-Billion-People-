@@ -44,3 +44,18 @@ agents/rapporti/logger001_imu_assi_PROPOSTA_20261109.json: ax_b=-ax, ay_b=-ay, a
 
 Immagini: agents/rapporti/img/logger001_imu_frame00150.jpg, ..00900, ..01500, ..03000, serie logger001_imu_serie_0_220s.png (flusso, acc, gyro nei primi 220 s).
 Frame -> orario: wall = 08:58:38.665 + (t_ms - 78661) ms; frame 0 = 08:58:39.84, ogni 15 frame = 1 s.
+
+## 6. Giro 10:05 (accel/decel, yaw) — 2026-11-09 (rev. dopo VETO 1/3)
+
+**Sync video-IMU (causa e correzione).** Il mio mapping clip->righe frames.csv contava le clip mancanti (71,73,76,77) a 465 frame; confronto con mtime delle clip (fine clip, wall->t_ms sensori): la mappatura per indice e' corretta entro 0.2 s fino a clip 70 e poi **deriva di +1.8 s costante dalla clip 75 in poi** (le mancanti e alcune clip sono da ~450 frame). Non e' 10 s: il picco di correlazione |movimento video| vs |gyro| era a -2.0 s (A, r 0.78 vs 0.50 a 0) e -1.5 s (B, r 0.61 vs 0.47) con il mio mapping; dopo aver tolto 1.75 s il picco e' a -0.2 s (A r 0.69, B r 0.50): residuo <=0.25 s. Il ritardo di ~10 s dell'auditor NON si riproduce con l'allineamento per mtime/t_ms: probabile mapping diverso lato auditor (indice nominale 465/clip). Regola: per la clip->tempo usare mtime di fine clip - n_frame/15, mai l'indice cumulato; i t_ms nel frames.csv sono continui (66-67 ms) e restano la verita' per tempo/frame, ma la loro associazione a un file clip va fatta via mtime. **Vale anche per taglia_fermi e depth del logger001 se usano indici cumulati con clip mancanti.** Il frames.csv ha anche 67 s oltre l'ultima clip pulled (clip >141 non scaricate).
+
+Eventi riletti allineati (video a t_vero = t_label - 1.75 s), v = mediana su 2 s prima/dopo:
+| evento | t IMU (s) | ax prima -> picco (g) | v video prima -> dopo (m/s) |
+|---|---|---|---|
+| partenza A | 2751.5 | 0.127 -> -0.074 | 0.0 -> 1.3 |
+| frenata dritta A | 2774.8 | 0.20 -> +0.33 | 4.07 -> 0.19 |
+| frenata A2 | 2827.5 | 0.07 -> +0.36 | 1.65 -> 0.49 |
+| stop B | 4181.2 | 0.11 -> +0.50 | 3.81 -> 0.07 |
+Video fermo da 4185.5 s, IMU ferma da 4186 s: coerente. Segno **-ax = longitudinale: supportato su 4 eventi** (partenza ax negativo, frenate ax positivo con v che scende). Scala accel: ancora NON stimata (video sigma ~1.5 m/s per campione, tilt/beccheggio): nessuna correzione proposta. Yaw: segno gz confermato in curva (4 s: r 0.58 A / 0.32 B), scala non misurabile. Bias gyro gx -1.57, gy -0.46, gz 0.90 dps; |a| 1.204 g -> scala 0.830; ax/ay a riposo (0.01-0.13 g) = inclinazione, non offset.
+
+Immagini (prima / evento / dopo): agents/rapporti/img/giro1005_partenza_2751s_pre_post.jpg, giro1005_frenata_2827s_pre_post.jpg, giro1005_stop_4181s_pre_post.jpg.
