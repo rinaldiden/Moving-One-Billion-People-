@@ -10,3 +10,6 @@
   - Un modello/depth validato sul logger NON è validato su #001 (e viceversa): ogni gate di percezione si chiude per unità.
 - 2026-11-09 **Controlli e letture: falli da solo, NON chiedere.** Chiedi a Daniele solo prima di SCRIVERE una modifica al comportamento/funzionamento del Pi (codice, servizi, config, deploy, reboot). Leggere, misurare, registrare clip di prova, verificare = autonomia.
 - 2026-11-09 **Sensore nuovo = loggato con tutti gli altri (stesso CSV/t_ms del sensor_hub) e permanente al riavvio**, senza che Daniele lo debba dire: gli agenti lo sanno e lo propongono da soli (regola di mestiere in tutti i 52 agenti). Caso: IMU HW-123 sul logger.
+- 2026-11-09 **A cosa serve ogni unità (non chiedere GPS/strada al logger):**
+  - **logger** = fonte di VIDEO e SITUAZIONI NUOVE da cui imparare (percezione: ostacoli, depth, casi). Velocità/accel/decel da **IMU + video**; se serve la velocità c'è il **sensore ruota BT** (CooSpo BLE, già fatto e funzionante su asmile2; non primario per il freno, altro discorso). **Strada e posizione NON interessano** a Daniele: niente GPS da aggiungere, niente curriculum "strada per strada" come requisito.
+  - **#001** = set COMPLETO di sensori mentre guida Daniele: da qui si imparano **sterzo, accelerazione e frenata** fatti bene (encoder sterzo, encoder ruota, IMU, VESC, freno).
