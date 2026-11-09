@@ -39,8 +39,11 @@ def make_sgbm(num_disp=192, block=7):
         preFilterCap=63, mode=cv2.StereoSGBM_MODE_HH)
 
 
-def disparity_sgbm(left, right, num_disp=192, block=7, wls=True):
-    """Disparita' subpixel (px). Con WLS: + right-matcher + left-right consistency."""
+def disparity_sgbm(left, right, num_disp=192, block=7, wls=True, conf_min=None):
+    """Disparita' subpixel (px). Con WLS: + right-matcher + left-right consistency.
+
+    conf_min (OPZIONALE, default None = comportamento identico a prima): con WLS attivo, scarta (disparita' = -1,
+    cioe' invalida) i pixel la cui confidenza WLS (getConfidenceMap, 0..255) e' < conf_min."""
     sgbm = make_sgbm(num_disp, block)
     dl = sgbm.compute(left, right).astype(np.float32) / 16.0
     if wls and HAS_WLS:
@@ -51,6 +54,8 @@ def disparity_sgbm(left, right, num_disp=192, block=7, wls=True):
         wf.setSigmaColor(1.5)
         disp = wf.filter((dl * 16).astype(np.int16), left, None,
                          (dr * 16).astype(np.int16)).astype(np.float32) / 16.0
+        if conf_min is not None:
+            disp = np.where(wf.getConfidenceMap() >= conf_min, disp, -1.0).astype(np.float32)
         return disp
     return dl
 
@@ -103,6 +108,8 @@ def main():
     ap.add_argument("--max-frames", type=int, default=30)
     ap.add_argument("--order", default="LR", choices=["LR", "RL"])
     ap.add_argument("--no-flip", action="store_true")
+    ap.add_argument("--conf-min", type=float, default=None,
+                    help="filtro confidenza WLS (0..255), solo SGBM+WLS; default: nessun filtro")
     args = ap.parse_args()
 
     os.makedirs(args.out, exist_ok=True)
@@ -123,7 +130,7 @@ def main():
         left, right = split_sbs(frame, order=args.order, flip180=not args.no_flip)
         lr = cv2.remap(left, rect["m1x"], rect["m1y"], cv2.INTER_LINEAR)
         rr = cv2.remap(right, rect["m2x"], rect["m2y"], cv2.INTER_LINEAR)
-        disp = teacher.disparity(lr, rr) if teacher else disparity_sgbm(lr, rr, args.num_disp)
+        disp = teacher.disparity(lr, rr) if teacher else disparity_sgbm(lr, rr, args.num_disp, conf_min=args.conf_min)
         depth = depth_from_disparity(disp, f, B)
         np.save(f"{args.out}/depth_{n:05d}.npy", depth)
         cv2.imwrite(f"{args.out}/depth_{n:05d}.png", colorize(depth))

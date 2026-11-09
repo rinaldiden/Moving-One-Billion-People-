@@ -359,3 +359,42 @@ SOLUZIONE_DEFINITIVA (punto 2 da firmare lì). Q11 (dima fornitore vs stazione n
 **Cosa serve per firmare.** (a) soglie della tabella; (b) ok alla sessione di ~15 min con tabellone rigido su #001.
 
 **Firma:** ______________________  **Data:** __________
+
+---
+
+## D012 — FIRMA di Daniele (2026-11-09 sera): gate FIRMATI con leggeri aggiustamenti
+**Stato:** FIRMATO (voce di Daniele, testo integrale nel mandato `agents/rapporti/calib_punto_A_MANDATO_20261109.md`)
+
+Soglie accettate come **obiettivo operativo**, tutte come proposte in D012 §(c)(d), con queste precisazioni di Daniele:
+- RMS mono < 0.5 px e RMS stereo < 1 px **sulle viste tenute fuori**: OK.
+- **dy p95 < 1 px in tutte le 9 zone: OK e PRIORITARIO.** Il −4 px a sinistra è il segnale più importante da eliminare.
+- Baseline 200 mm ±3% **misurata, non forzata**; fuori di oltre ±1% → misura col calibro **e annotazione**.
+- Depth centro ≤2% a 5 m, ≤3% a 10 m: OK (già quasi raggiunto).
+- Depth bordi ≤3% a 2-5 m: OK come target; **gate più critico della sessione B** (non verificato su dati veri).
+- **Sync p95 Δt < 1 ms: OK e molto importante — scarto AUTOMATICO delle coppie oltre soglia.**
+- Aggiunta (non bloccante): dopo il fit riportare anche l'errore depth **ai bordi a 1 m e a 10 m**, per capire se
+  rational+prism+tilted corregge davvero l'inclinazione del sensore.
+- Il test sintetico col sensore inclinato diventa **regressione automatica** a ogni modifica del codice di calibrazione.
+- Sessione B (15 min, tabellone A2 rigido, lato misurato, 40-60 viste ferme 20-40°, 9 zone su entrambe le camere,
+  shutter corto + gain fisso solo come comando di registrazione, griglia 12 punti con spostamento laterale in cm): **OK, procedi.**
+- Dopo il fit → CANDIDATO → critico. Si sostituisce solo se passa **tutti** i gate D012 e nessun punto del banco fisso peggiora.
+
+**Ordine firmato:** A (codice sul Mac, agli agenti dell'istanza calib) → B (sessione su #001) → fit → CANDIDATO → gate D012.
+Solo dopo il PASSA: depth/segmentazione sulle immagini rettificate, poi logger001 + smonta/rimonta ×3.
+
+**Firma:** Daniele (testo, 2026-11-09)
+
+## D013 — Q11 chiusa: "jig fisso" = dima del FORNITORE + nostro script di collaudo a campione
+**Data:** 2026-11-09 · **Stato:** FIRMATO (risposta di Daniele a Q11)
+
+**Scelta.** Per i 15.000 non si riapre una stazione di calibrazione nostra. La ripetibilità meccanica sta nel **contratto
+di fornitura** (tolleranze scritte nella RdO: baseline, parallelismo, inclinazione sensore). Il nostro valore è lo
+**script di verifica automatica** (collaudo a campione del file del fornitore) + fine-tuning online / allievo robusto ai
+piccoli errori residui, come già in `calib_SOLUZIONE_DEFINITIVA_20261109.md`.
+
+**Ordine.** Il collaudo a campione si automatizza solo dopo aver validato il metodo su #001 → logger001 → 3-5 monoblocchi.
+
+**Deroga prevista.** Se in industrializzazione la dima del fornitore non tiene le tolleranze, allora si valuta una
+stazione nostra — **non ora**.
+
+**Firma:** Daniele (testo, 2026-11-09)

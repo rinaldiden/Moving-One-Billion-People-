@@ -81,3 +81,7 @@ SOLUZIONE_DEFINITIVA: modulo calibrato dal fornitore + autoregistrazione in stra
 Lettura compatibile proposta: la dima la fa il **fornitore**, il nostro script (`calib_charuco_dual.py` + gate) diventa
 il **collaudo a campione** e la verifica del file del fornitore. **Aperto:** confermare questa lettura, o Daniele vuole
 riaprire la stazione nostra? Gli agenti non decidono. Dettagli: `agents/rapporti/calib_consigli_daniele_REVISIONE_20261109.md` §2.4.
+
+**Q11 — CHIUSA 2026-11-09 da Daniele → D013:** "jig fisso" = dima del fornitore + nostro script di collaudo a campione.
+Tolleranze (baseline, parallelismo, inclinazione sensore) nella RdO; stazione nostra solo se in industrializzazione la
+dima del fornitore non le tiene.
