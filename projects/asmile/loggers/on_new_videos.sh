@@ -32,9 +32,16 @@ for d in "$BASE"/*/ ; do
   [ -d "$d" ] || continue
   name="$(basename "$d")"
   case "$name" in _*) continue ;; esac                # _anon, _work = output
-  calib="$DEPTH/calib_${name}.json"
-  CAL=(); [ -f "$calib" ] && CAL=(--calib "$calib") \
-    || echo "[$(ts)] $name: niente calib_${name}.json -> depth densa con scala del modello (non ancorata)" >> "$LOG"
+  # mappa ESPLICITA unita' -> calib (mai fallback fra unita'; hardware diverso)
+  case "$name" in
+    asmile-001)    calib="$DEPTH/calib_asmile-001.json" ;;
+    asmile-logger) calib="$DEPTH/calib_asmile-logger_metro.json"   # domani: calib_asmile-logger001.json
+                   [ -f "$DEPTH/calib_asmile-logger001.json" ] && calib="$DEPTH/calib_asmile-logger001.json" ;;
+    *)             calib="" ;;
+  esac
+  DONE_SESS=" "
+  CAL=(); [ -n "$calib" ] && [ -f "$calib" ] && CAL=(--calib "$calib") \
+    || echo "[$(ts)] $name: niente calib per l unita (mappa esplicita) -> depth densa con scala del modello (non ancorata)" >> "$LOG"
   for clip in "$d"/*.h264; do
     [ -f "$clip" ] || continue
     sz=$(stat -f%z "$clip" 2>/dev/null || echo 0)
@@ -43,20 +50,22 @@ for d in "$BASE"/*/ ; do
       *_right.h264) continue ;;                       # gestita insieme alla _left
       *_left.h264)                                    # bici con camere separate (#001)
         sess="$(basename "${clip%_left.h264}")"
-        right="$d/${sess}_right.h264"; [ -f "$right" ] || continue
+        right="$d/${sess}_right.h264"; [ -f "$right" ] || continue; OUTSUF=""
         if [ -f "$SM/$name/$sess/${sess}_left.h264" ] && [ -f "$SM/$name/$sess/${sess}_right.h264" ]; then
-          clip="$SM/$name/$sess/${sess}_left.h264"; right="$SM/$name/$sess/${sess}_right.h264"
+          clip="$SM/$name/$sess/${sess}_left.h264"; right="$SM/$name/$sess/${sess}_right.h264"; OUTSUF="_solomov"
           echo "[$(ts)]   $name/$sess: uso video SOLO MOVIMENTO (fermi tagliati)" >> "$LOG"
         elif [ -f "$SM/$name/$sess/index.json" ] && grep -q '"tagliato_s": [1-9]' "$SM/$name/$sess/index.json" \
              && ! grep -q '"stato": "tenuto"' "$SM/$name/$sess/index.json"; then
           echo "[$(ts)]   $name/$sess: tutta ferma -> salto" >> "$LOG"; continue
         fi
         echo "[$(ts)]   $name/$sess: depth+seg ..." >> "$LOG"
-        run_perception "$BASE/_work/$name/$sess" --left "$clip" --right "$right" ${CAL[@]+"${CAL[@]}"} ;;
+        run_perception "$BASE/_work/$name/${sess}${OUTSUF}" --left "$clip" --right "$right" ${CAL[@]+"${CAL[@]}"} ;;
       *)                                              # logger Camarray side-by-side
         sess="$(basename "${clip%.h264}")"
         csess="$(echo "$sess" | sed -E 's/_[0-9]{5}$//')"      # clip_<data>_<ora>
         if [ -f "$SM/$name/$csess/$csess.h264" ]; then         # sessione tagliata: una sola volta, sul concatenato
+          case "$DONE_SESS" in *" $csess "*) continue ;; esac   # una volta per sessione, non per chunk
+          DONE_SESS="$DONE_SESS$csess "
           mov="$SM/$name/$csess/$csess.h264"
           echo "[$(ts)]   $name/$csess: uso video SOLO MOVIMENTO (fermi tagliati)" >> "$LOG"
           run_perception "$BASE/_work/$name/${csess}_solomov" --video "$mov" ${CAL[@]+"${CAL[@]}"}
