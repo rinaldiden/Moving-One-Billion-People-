@@ -6,6 +6,7 @@ layout provato: R 29.82 mOhm, L 18.28 uH, flux 1.318 mWb, sensori HALL = detecti
 |---|---|---|---|---|---|
 | vesc_mcconf_backup_20261109_160801.bin | 2026-11-09 16:08 (originale) | 44.85 / -44.85 | 99 / -60 | 150 | 500 |
 | vesc_mcconf_backup_20261109_163009.bin | 2026-11-09 16:30 (dopo tentativo di scrittura NON applicato) | 44.85 / -44.85 | 99 / -60 | 150 | 500 |
+| vesc_mcconf_backup_20261109_163432.bin | 2026-11-09 16:34 **NUOVA, scritta e verificata** (rilettura byte per byte) | **30 / -30** | 99 / -60 | 150 | **20** |
 
 Modifica proposta e autorizzata da Daniele (2026-11-09): l_current ±30 A, foc_hall_interp_erpm 500 -> 20 (scatti a bassa velocità).
-Stato: NON ancora applicata (la scrittura via UART non è andata a buon fine, da ripetere). Ogni nuova scrittura aggiunge una riga qui.
+Stato: APPLICATA 2026-11-09 16:34 via UART (vai di Daniele). Ritorno all'originale: `vesc_mcconf_limiti_001.py ripristina vesc_mcconf_backup_20261109_160801.bin --apply`. Ogni nuova scrittura aggiunge una riga qui.
