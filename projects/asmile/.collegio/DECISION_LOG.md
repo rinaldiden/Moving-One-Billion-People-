@@ -307,3 +307,31 @@ resti `validate.py` sul muro-test del **primo asmile-logger**; (d) i parametri d
 (default 7×5, DICT_5X5) o se preferisce un formato diverso per il suo monitor.
 
 **Firma:** ______________________  **Data:** __________
+
+---
+
+## D011 — Encoder ruota #001: la scala si tara COL METRO (10 giri = 15.760 m), il GPS solo verifica
+**Data proposta:** 2026-11-09 · **Autore:** doppio di Daniele (Claude) · **Stato:** DA FIRMARE
+
+**Scelta proposta.** Il riferimento della velocità encoder di #001 diventa la **misura di Daniele**:
+10 giri completi di ruota = **15.760 m** (C = 1.5760 m). `m_per_count = 15.760 / Δcount` della spinta a
+mano da 10 giri (script `agents/rapporti/encoder_taratura_metro.py rotolata`), al posto del fit GPS
+del 07/11 (0.3374 m/giro-encoder, GPS a 1 Hz, errore mediano 4-6%). Il GPS (ora 10 Hz) resta come
+**verifica** su ogni giro (`... giro`), anche per l'accelerazione. Deploy del nuovo
+`encoder_calibration.json` solo dopo il vai, via asmile-sicurezza → asmile-deploy.
+
+**Evidenza.** Voce di Daniele 2026-11-09 (*"15.760 mm coprono 10 giri completi di ruota… fai tutto…
+passa ad asmile-capo"*). Il rapporto L0.encoder_ruota del 09/11 chiedeva proprio un riferimento di
+distanza indipendente. Dalla misura: se il GPS aveva ragione, 4.67 giri encoder per giro ruota (la
+nota "~6.3" nasceva dal placeholder 2.10 m) e la rotolata deve dare ≈765 000 count: test che
+conferma o smentisce la scala attuale.
+
+**Deroghe/limiti.** Rotolata non ancora trovata nei log scaricati (#001 offline durante il giro):
+il numero finale arriva al rientro. Il campo `wheel_circum_m` resta "metri per giro encoder" (non
+si rinomina per non toccare il limiter); la proposta aggiunge `ruota_circonferenza_m` e
+`enc_giri_per_giro_ruota` per chiarezza.
+
+**Cosa serve per firmare.** (a) metro come riferimento primario, GPS come verifica; (b) vai al deploy
+del JSON quando verifica-critico dà PASSA e il giro sta sotto il 5%.
+
+**Firma:** ______________________  **Data:** __________
