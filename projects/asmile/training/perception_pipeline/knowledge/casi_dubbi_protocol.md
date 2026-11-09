@@ -23,7 +23,12 @@
 - `is_general` — il chiamante propone se la risposta è una **regola generale** (→ knowledge) o solo
   per questa scena (→ label locale).
 
-## Niente PII — mai
+## Aggiornamento 2026-11-09 (Daniele)
+- **Niente anonimizzazione** (decisione 2026-11-08): al caso si allega il **fotogramma vero** (piccolo, jpg) con le maschere e le distanze, perché Daniele deve VEDERE la scena per decidere.
+- **Strada e posizione NON interessano**: il router "strada per strada" non è fonte di casi; i casi nascono da segmentazione/depth/situazione poco chiare (es. ostacolo senza classe, distanza incoerente, classe dubbia).
+- Vale per #001 e asmile-logger001, ognuno col suo nome unità nel caso.
+
+## (storico) Niente PII — mai
 Il corpus è già anonimo (`asmile-anon-*`), ma per prudenza il caso porta **solo contesto di scena**
 (classi, box, distanze, sensori), **mai** il frame con volti/targhe in chiaro. Un eventuale
 riferimento al frame è un path **locale**, non un'immagine incorporata.
