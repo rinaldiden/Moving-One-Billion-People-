@@ -1,4 +1,4 @@
 {"data": "2026-11-09T17:45", "approvato_da": "Daniele (cosi e perfetto)", "script": "pi/steering/sterzo_fluido_001.py",
- "hz": 400, "vel_deg_s": 15, "kp_A_deg": 3.0, "kd_A_per_deg_s": 0.6, "filtro_alfa_beta": [0.35, 0.05], "dither_A": 0, "ripple": 0,
+ "hz": 400, "vel_deg_s": 20, "kp_A_deg": 3.0, "kd_A_per_deg_s": 0.6, "filtro_alfa_beta": [0.35, 0.05], "dither_A": 0, "ripple": 0,
  "imax_A": 25, "vesc": {"l_current": [30, -30], "foc_hall_interp_erpm": 20, "fw": "5.02", "salvato_in_flash": true},
- "risultato": "variazione velocita 9-10% a 15 deg/s, arrivo entro 0.2 deg, corrente rilasciata all arrivo, nessuna vibrazione"}
+ "risultato": "variazione velocita 6-8% a 20 deg/s (9-10% a 15), arrivo entro 0.2 deg, corrente rilasciata all arrivo, nessuna vibrazione"}

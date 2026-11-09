@@ -128,7 +128,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("modo", choices=["vai", "tieni"])
     ap.add_argument("--target", type=int, help="raw encoder (vai: default centro calib; tieni: default pos attuale)")
-    ap.add_argument("--vel", type=float, default=15.0, help="deg/s al manubrio, (0,20]")
+    ap.add_argument("--vel", type=float, default=20.0, help="deg/s al manubrio, (0,20]")
     ap.add_argument("--imax", type=float, default=None, help="A, max 30 (default: vai 30, tieni 15)")
     ap.add_argument("--durata", type=float, default=20.0, help="s, tieni (max 60)")
     ap.add_argument("--kp", type=float, default=None, help="A/deg (vai %.1f, tieni %.1f)" % (KP, KP_H))
