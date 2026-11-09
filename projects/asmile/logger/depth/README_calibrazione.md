@@ -146,3 +146,37 @@ si prepara e si misura. La scelta della vincente la fa lui sui numeri del muro.
 | `validate.py` | muro-test col metro → **il giudice fra le tre vie** |
 | `depth.py` | depth metrica (SGBM/WLS edge + CREStereo teacher) |
 | `drift_monitor.py` | gate di drift della calibrazione |
+
+<!-- 2026-11-09 — nota di Daniele (voce), integrata com'è -->
+## Calibrazione stereo Asmile: perché la scacchiera fallisce, ChArUco/AprilGrid e procedura
+
+Per Asmile (Arducam Camarray HAT + 2× OV9281 global shutter mono, baseline ~200 mm) la calibrazione stereo classica con scacchiera a distanze variabili funziona male, soprattutto lateralmente e in movimento. Le cause: le lenti sono wide (FOV H tipico ~118°, distorsione TV alta); la scacchiera non copre bene il FOV ai bordi; il pattern non è abbastanza denso e robusto a distanze medio-lunghe; sincronizzazione, illuminazione e rigidità del target introducono errori. Ho già RMS ~1.27 ed errore depth ~7.8% (target <2% a 2560×800). Come punto di partenza va bene, ma si può migliorare.
+
+Perché la scacchiera classica fallisce qui
+- FOV largo + distorsione: ai bordi i corner sono imprecisi o non vengono rilevati, e a 5-15 m la scacchiera occupa troppo poco FOV.
+- Moto laterale/avvicinamento: motion blur, sync non perfetta fra i due stream o board non perfettamente piatta danno un errore di riproiezione che esplode in depth (depth ∝ 1/disparity, quindi l'errore cresce quadraticamente con la distanza).
+- Pochi punti utili a distanze diverse: la calibrazione ha bisogno di una copertura densa di tutto il FOV (soprattutto bordi e angoli) e di pose inclinate.
+Le OV9281 (global shutter, mono, 1280×800) sono ottime per lo stereo ad alta velocità, proprio perché eliminano lo skew del rolling shutter. Il problema è quasi sempre nella qualità dei dati di calibrazione e nel modello di distorsione.
+
+Come fanno Tesla e i progetti open-source seri
+- Tesla non si basa su uno stereo geometrico puro "classico". Usa multi-camera + reti neurali (occupancy networks, depth end-to-end) che imparano la geometria dai dati. C'è una calibrazione geometrica iniziale (target statici + verifica pitch), poi una ricalibrazione dinamica guidando su strade con linee di corsia visibili (20-40+ km). Con un sistema a 15.000 unità non posso fare la calibrazione manuale per ogni triciclo.
+- Robotica open-source (Luxonis/OAK con OV9282 simili, Kalibr, ModalAI, Stereolabs ZED, ecc.):
+  - preferiscono ChArUco (scacchiera + ArUco) o AprilGrid, che gestiscono la visibilità parziale, identificano univocamente i corner e funzionano meglio con FOV larghi e occlusioni;
+  - raccolgono 20-50+ pose che coprono tutto il FOV (soprattutto i bordi), a distanze diverse e con angoli diversi, con board rigida e piatta, illuminazione uniforme, niente riflessi;
+  - modello: pinhole + rational/fisheye o equidistante per il wide-angle, a volte modelli estesi (fino a 14 coefficienti) per il WFOV;
+  - validazione: non solo RMS di riproiezione (<0.5 px ideale, <1 px accettabile), ma anche errore di depth su distanze note e copertura laterale;
+  - per le flotte: calibrazione di fabbrica ripetibile + eventuale online/self-calibration o neural refinement.
+- Luxonis (OAK con OV9282) ottiene errori depth tipici <2% sotto i 3-4 m con una buona calibrazione e baseline simile. Più lontano l'errore cresce. Subpixel disparity e buona texture aiutano.
+
+Procedura semplice e veloce (pronta per depth + segmentazione)
+Target migliore (da fare subito)
+- Stampo o visualizzo su schermo grande/TV un ChArUco (es. 9×6 o 11×8, square 3-5 cm, marker un po' più piccoli), generato con OpenCV (cv2.aruco.CharucoBoard).
+- Lo monto su una superficie rigida e perfettamente piatta (vetro, alluminio, MDF spesso). Matte, niente riflessi.
+Cattura (30-60 coppie buone)
+- Sincronizzo i due stream (libcamera / Arducam Camarray + GStreamer, o la pipeline già usata per RTSP).
+- Board ferma in ogni scatto, buona illuminazione diffusa.
+- Pose: vicino (copre quasi tutto il FOV), medio, lontano; inclinata in tutte le direzioni; sposto la board verso i bordi e gli angoli di entrambe le immagini.
+- Evito angoli troppo estremi (>45-50°) e il blur.
+- Script tipico: cattura side-by-side o coppie left/right sincronizzate, salva solo quando i corner vengono rilevati bene su entrambe.
+Calibrazione
+- OpenCV (stereoCalibrate + stereoRectify), o meglio ancora Kalibr (supporta multi-camera, modelli fisheye/equi, AprilGrid/ChArUco).
