@@ -55,3 +55,15 @@ Fatto (punto 1 del piano, solo Mac, nessun Pi toccato, nessun messaggio a Daniel
 Resta: verdetto del critico; punto 2 (sessione scacchiera con Daniele: 40-60 viste inclinate 20-40°, tutte le 9 zone
 di ENTRAMBE le camere, 3 soste col metro al centro; prima #001, poi logger001); NON VERIFICATO col sintetico: fuoco M12
 a 0.6-1.5 m, moiré del monitor, sync reale; poi punti 3-4 del piano.
+- **Verdetto arrivato dopo il passaggio: PASSA parziale di asmile-calib-critico.** La sessione scacchiera si può chiedere:
+  l'analisi è sul Mac, quindi registrare non dipende dalle correzioni. Il candidato reale si giudica solo dopo le
+  correzioni 1-5. **Falso verde trovato:** con i file scambiati lo script dà VERDE con T[0]=+0.2.
+  Correzioni da fare (non fatte, mi sono fermato):
+  1) ROSSO se T[0] >= 0;
+  2) ROSSO se una zona ha dy_n o scale_n = 0;
+  3) ROSSO se |T| dal tabellone è fuori da 200 mm ±3%;
+  4) caso "file scambiati" nel test sintetico, deve dare ROSSO;
+  5) p95 di |dy| < 1 px nel gate, non solo la mediana;
+  6) hold-out a blocchi di tempo contigui, non una vista ogni 5;
+  7) il controllo di scala dello script è tautologico (T riscalata a 200 mm): la depth vera si prova col metro a
+     1-5 m + SIFT in movimento.
