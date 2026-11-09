@@ -55,6 +55,63 @@ def decode_metric(files, crop_left_half):
     return np.concatenate(frames) if frames else np.zeros((0, 100, 160), np.uint8)
 
 
+def decode_per_clip(files, crop_left_half):
+    """Logger: metrica per chunk SEPARATAMENTE (i buchi fra chunk non generano falsi movimenti)."""
+    bl, cnt = [], []
+    for f in files:
+        g = decode_metric([f], crop_left_half)
+        bl.append(scene_changed_blocks(g) if len(g) else np.zeros(0, np.int32))
+        cnt.append(len(g))
+    return (np.concatenate(bl) if bl else np.zeros(0, np.int32)), np.array(cnt, int)
+
+
+def map_logger(files, counts, fr, sd):
+    """Mapping CORRETTO clip->righe frames.csv (non indice cumulato: mancano clip -> deriva).
+    Per ogni clip: fine = mtime convertito in t_ms con la colonna wall dei sensori; inizio = fine - n/FPS;
+    le righe frames.csv si agganciano per t_ms (n righe consecutive dall'inizio piu' vicino).
+    Ritorna (vrow per frame video (-1 = senza riga), tms per frame video, buchi[list], note)."""
+    t_csv = fr.t_ms.values.astype(float)
+    w = pd.to_datetime(sd["wall"], errors="coerce")
+    okw = w.notna().values
+    wsec = (w[okw] - pd.Timestamp("1970-01-01")).dt.total_seconds().values   # epoch s naive locale
+    tsen = sd.t_ms.values[okw].astype(float)
+    vrow, tms, gaps, notes = [], [], [], []
+    prev_end = None
+    prev_r1 = None
+    extrap = False
+    for f, n in zip(files, counts):
+        mt = pd.Timestamp(os.path.getmtime(f), unit="s", tz="UTC").tz_convert("Europe/Rome").tz_localize(None)
+        mts = (mt - pd.Timestamp("1970-01-01")).total_seconds()
+        if wsec[0] <= mts <= wsec[-1]:
+            end_ms = float(np.interp(mts, wsec, tsen))
+        else:   # oltre la fine dei sensori (sensor_hub fermo/scaricato prima): offset costante t_ms = wall + off
+            end_ms = float(mts * 1000 + np.median(tsen - wsec * 1000))
+            if not extrap:
+                notes.append("mtime oltre l'ultimo wall dei sensori: t_ms estrapolato con offset costante monotonic-wall")
+                extrap = True
+        st_ms = end_ms - n / FPS * 1000
+        r0 = int(np.abs(t_csv - st_ms).argmin())
+        # clip contigue (inizio stimato entro 1.5 s dalla fine della precedente): righe consecutive esatte
+        if prev_r1 is not None and abs(st_ms - prev_end) < 1500 and prev_r1 + 1 < len(t_csv):
+            r0 = prev_r1 + 1
+            st_ms = t_csv[r0]
+        # se la stima cade fuori dal csv di oltre 2 s non aggancio
+        ok0 = abs(t_csv[r0] - st_ms) < 2000
+        for k in range(n):
+            r = r0 + k
+            if ok0 and r < len(t_csv):
+                vrow.append(r); tms.append(t_csv[r])
+            else:
+                vrow.append(-1); tms.append(st_ms + k * 1000 / FPS)
+        if not ok0:
+            notes.append(f"{os.path.basename(f)}: inizio stimato {st_ms:.0f} ms lontano dal csv ({t_csv[r0]:.0f}): senza righe")
+        if prev_end is not None and st_ms - prev_end > 1500:
+            gaps.append({"prima_di": os.path.basename(f), "buco_s": round((st_ms - prev_end) / 1000, 1)})
+        prev_end = end_ms if not ok0 else t_csv[min(r0 + n - 1, len(t_csv) - 1)] + 1000 / FPS
+        prev_r1 = r0 + n - 1 if ok0 else None
+    return np.array(vrow), np.array(tms), gaps, notes
+
+
 def scene_changed_blocks(fr):
     """Per frame: n blocchi 10x10 con |diff| medio > DIFF_PIX rispetto al frame i-LAG."""
     n = len(fr)
@@ -134,7 +191,7 @@ def bike_active(d, tf):
             "frac_imu_attiva": float(imu_act[near][ok].mean()) if ok.any() else None,
             "frac_vel_sopra_soglia": float(mov[near][ok].mean()) if ok.any() else None,
             "vel_max_ms": float(np.nanmax(speed)) if np.isfinite(speed).any() else None}
-    return np.where(ok, flag, True), info, ok
+    return np.where(ok, flag, False), info, ok   # senza sensori: solo diff frame (fallback)
 
 
 # ---------------------------------------------------------------- tratti
@@ -275,19 +332,42 @@ def process(base, unit, sess, left, right, sessdir, dry, force):
     fr = pd.read_csv(fcsv).dropna().reset_index(drop=True)
     os.makedirs(out_dir, exist_ok=True)
     npz = os.path.join(out_dir, "metrics.npz")
-    if os.path.isfile(npz) and not force and int(np.load(npz)["sig"]) == int(sig[:12], 16):
-        blocks = np.load(npz)["blocks"]
-    else:
-        gray = decode_metric(left, crop_left_half=not is001)
-        blocks = scene_changed_blocks(gray)
-        np.savez(npz, blocks=blocks, sig=int(sig[:12], 16))
-    nfr = min(len(blocks), len(fr))
     notes = []
-    if len(blocks) != len(fr):
-        notes.append(f"frame decodificati {len(blocks)} != righe csv {len(fr)}: uso i primi {nfr}")
-    fr = fr.iloc[:nfr]
-    blocks = blocks[:nfr]
-    tms = fr.t_ms.values.astype(float)
+    vrow = None
+    gaps = []
+    if os.path.isfile(npz) and not force and int(np.load(npz)["sig"]) == int(sig[:12], 16):
+        z = np.load(npz); blocks = z["blocks"]; counts = z["counts"]
+    else:
+        if is001:
+            blocks = scene_changed_blocks(decode_metric(left, crop_left_half=False)); counts = np.array([len(blocks)])
+        else:
+            blocks, counts = decode_per_clip(left, True)
+        np.savez(npz, blocks=blocks, counts=counts, sig=int(sig[:12], 16))
+    if is001:
+        nfr = min(len(blocks), len(fr))
+        if len(blocks) != len(fr):
+            notes.append(f"frame decodificati {len(blocks)} != righe csv {len(fr)}: uso i primi {nfr}")
+        fr = fr.iloc[:nfr]
+        blocks = blocks[:nfr]
+        tms = fr.t_ms.values.astype(float)
+    else:
+        mm0 = re.search(r"(\d{8})_(\d{6})", sess)
+        st0 = pd.to_datetime(mm0.group(1) + mm0.group(2), format="%Y%m%d%H%M%S") if mm0 else None
+        sdir0 = os.path.join(udir, "_sensors", "sensors")
+        sd0 = load_sensors(sdir0, fr.t_ms.min() - 600000, fr.t_ms.max() + 600000, st0)
+        if sd0 is None or "wall" not in sd0:
+            raise RuntimeError("niente sensori con wall per mappare le clip sul t_ms: NON taglio")
+        vrow, tms, gaps, n2 = map_logger(left, counts, fr, sd0)
+        notes += n2
+        nfr = len(blocks)
+        nunm = int((vrow < 0).sum())
+        if nunm:
+            notes.append(f"{nunm} frame video senza riga csv (clip oltre la fine del csv)")
+        if gaps:
+            notes.append(f"clip mancanti/buchi: {gaps}")
+            # dopo un buco la sequenza e' discontinua: il frame subito dopo non puo' far parte di un fermo continuo
+        gapmask = np.zeros(nfr, bool)
+        gapmask[1:] = np.diff(tms) > 1500
     scene_moving = pd.Series(blocks > DIFF_BLOCKS).rolling(int(FPS), center=True, min_periods=1).max().values.astype(bool)
     sens_dir = os.path.join(udir, "_sensors", "sensors") if os.path.isdir(os.path.join(udir, "_sensors", "sensors")) \
         else os.path.join(udir, "_sensors")
@@ -300,8 +380,10 @@ def process(base, unit, sess, left, right, sessdir, dry, force):
     else:
         bike, sens_info, ok = res
         if ok.mean() < 0.9:
-            notes.append(f"sensori coprono solo {ok.mean()*100:.0f}% dei frame: gli scoperti sono trattati come in movimento (non taglio)")
+            notes.append(f"sensori coprono solo {ok.mean()*100:.0f}% dei frame: dove mancano si usa solo la differenza frame (fallback)")
     still = (~bike) & (~scene_moving)
+    if not is001:
+        still &= ~gapmask
     still_runs = [(tms[b] - tms[a]) / 1000 for a, b in runs(still) if (tms[b] - tms[a]) / 1000 >= MIN_STILL_S]
     cuts = decide_cuts(still, tms)
     susp = calib_suspect(sess, sessdir, still_runs, float(1 - still.mean()))
@@ -329,7 +411,7 @@ def process(base, unit, sess, left, right, sessdir, dry, force):
              "frame_totali": int(nfr), "durata_s": round(tot_s, 1), "tagliato_s": round(cut_s, 1),
              "tagliato_pct": round(100 * cut_s / tot_s, 1) if tot_s else 0.0,
              "sensori": sens_info, "frac_scena_in_movimento": round(float(scene_moving.mean()), 3),
-             "note": notes, "tratti": jseg, "video_solo_movimento": [], "grezzi_toccati": False}
+             "note": notes, "buchi_clip": gaps, "mapping": "mtime->t_ms (wall sensori), non indice cumulato" if not is001 else "frames csv diretto", "tratti": jseg, "video_solo_movimento": [], "grezzi_toccati": False}
     if dry:
         return index
     if cuts:
@@ -349,7 +431,11 @@ def process(base, unit, sess, left, right, sessdir, dry, force):
         else:
             o = os.path.join(out_dir, sess + ".h264")
             write_video(left, keep_fr, o)
-            write_frames_csv(fcsv, os.path.join(out_dir, f"{sess}_frames.csv"), keep_ms)
+            kr = np.concatenate([np.arange(a, b + 1) for a, b in keep_fr]) if keep_fr else np.array([], int)
+            rows = vrow[kr]; rows = rows[rows >= 0]
+            oc = pd.read_csv(fcsv).dropna().reset_index(drop=True).iloc[rows].copy()
+            oc.insert(1, "orig_frame", oc["frame"].values); oc["frame"] = np.arange(len(oc))
+            oc.to_csv(os.path.join(out_dir, f"{sess}_frames.csv"), index=False)
             index["video_solo_movimento"].append(os.path.basename(o))
         if not keep_fr:
             notes.append("tutto fermo: nessun tratto tenuto")
