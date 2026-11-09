@@ -1,0 +1,23 @@
+{
+  "_comment": "Sterzo asmile-001: centro segnato da Daniele 2026-11-09 16:05 (manubrio dritto) = 6606; finecorsa a mano 16:06-16:07 (spinti fino in fondo 4304 / 8884, tenuti 4576 / 8798). Ritorno al centro letto 6664 (+1.27 deg): ripetibilita oltre 1 deg, da ripetere.",
+  "unit": "asmile-001",
+  "date": "2026-11-09T16:07:42",
+  "encoder_file": "/tmp/encoder_steer",
+  "encoder_bits": 14,
+  "encoder_steps_per_rev": 16384,
+  "deg_per_step": 0.02197,
+  "encoder_center_raw": 6606,
+  "encoder_sx_max_raw": 4304,
+  "encoder_dx_max_raw": 8884,
+  "delta_sx_steps": -2302,
+  "delta_dx_steps": 2278,
+  "delta_sx_deg": -50.58,
+  "delta_dx_deg": 50.05,
+  "encoder_sx_tenuto_raw": 4576,
+  "encoder_dx_tenuto_raw": 8798,
+  "encoder_pos_increases_to": "DX (destra)",
+  "center_repeatability_steps": 58,
+  "center_repeatability_deg": 1.27,
+  "limite_sw_sx_raw": 4500,
+  "limite_sw_dx_raw": 8700
+}

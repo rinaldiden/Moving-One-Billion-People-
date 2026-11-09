@@ -68,6 +68,7 @@ b629a2932b5f3933b08c54c0d188fc60376d8cc6d0621212bc3a6f9d45677fbc  ./pi/steering/
 05d688251f19ccde1281c83ba8407cd661094bfe5d134b5f59542bccff0df6aa  ./pi/steering/encoder_spi_daemon.py
 45afb223b24294e4587973adde9a58b860d721c3c9432d430aa3436d2c44ef6e  ./pi/steering/flash_encoder_arduino.sh
 dae4c7ff27cf2b86ddd5654dd7c68139effc5b0ad951a2c97548afd5d3925fbf  ./pi/steering/power_steering.py
+598b63e4204b31a97232ea405df11eb1b7730a0bcf4fb4c883366500e1c6beb3  ./pi/steering/safety_001.py
 b8100657ef1b03b41b36cece7a5b108ff7f2b7b126518d1dded6516adec01602  ./pi/steering/steering_controller.py
 d9c1067aea7c6ab30fe24bcaeb17359aa9356addc421c86aac76c73c9b081e8d  ./pi/steering/steering_test.py
 a57079bc2bedacf48773e540fa887e3c1b80f345196f6c3db8367219cfa9c2be  ./pi/steering/steering_vesc_encoder.py
@@ -86,6 +87,8 @@ e847ff0df9b1279de15e774625f162352b330023835a2d8d06497a62dc2bec00  ./pi/steering/
 4a5f729ab1e5eae2e98e80c41b77a8294753b1019188304192afb18dbc4ac4cb  ./pi/steering/test_vesc_uart.py
 f19428a6f8342ee6410062ead7457fe3562568600aea10e85f19097230ee537f  ./pi/steering/usb_encoder_bridge.py
 708ccd9a3c923d4334e40002e207873d2ce231783c2ea4f8db7bcc9b3be9d52e  ./pi/steering/vesc_config_backup.py
+d59ed4b60d4534579463c2d77b22dd69d9f06f878248aea2caad93e21653596f  ./pi/steering/vesc_mcconf_limiti_001.py
+644406242fa5240da4bac0d449340539935a776222c39f8ce013edbe7934eef3  ./pi/steering/vesc_return_centro_001.py
 affd7eb6bf8ea4588fb94474ee34e4bd1b40ee732b6ad6b6cce3be0b5db3b1ab  ./pi/steering/vesc_spin.py
 9b400a42440bcee6ad1860b2a8424d8a4dbf9af016c6c58114b821c7d7852cef  ./pi/steering/vesc_telemetry.py
 67f9544ecd1dbde9b2cd2e36fdec25c2b30e54924caea7c4eac4725b74926cc5  ./pi/steering/vesc_term.py

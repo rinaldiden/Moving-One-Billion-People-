@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-vesc_mcconf_limiti_001.py — #001: legge e (con --apply --vai) abbassa i SOLI limiti di corrente del VESC sterzo.
+vesc_mcconf_limiti_001.py — #001: legge e (con --apply + vai interattivo) abbassa i SOLI limiti di corrente del VESC sterzo.
 
   leggi            : GET_MCCONF, salva backup .bin con timestamp, stampa i limiti. NON muove il motore.
-  scrivi           : dry-run (default): mostra il diff. Con --apply --vai: SET_MCCONF dei soli campi di limite,
+  scrivi           : dry-run (default): mostra il diff. Con --apply + "vai" scritto a mano (terminale interattivo): SET_MCCONF dei soli campi di limite,
                      poi rilegge e verifica (diff = solo quei campi, resto del blob byte-identico).
-  ripristina <bin> : rimanda il backup (serve --apply --vai).
+  ripristina <bin> : rimanda il backup (serve --apply + vai interattivo, stampa il diff prima).
 
 SOLA LETTURA finche' Daniele non crea ~/wip/vesc_leggi_validato_vesctool (dopo aver confrontato i valori con VESC Tool). Via di default per abbassare i limiti: VESC Tool.
 Layout mcconf fw 5.2 (confgenerator): signature u32, pwm_mode,comm_mode,motor_type,sensor_mode (4 x u8),
@@ -18,6 +18,7 @@ import argparse, math, struct, sys, time, os
 from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import serial
+from safety_001 import uart_libera, vai_interattivo
 COMM_FW_VERSION = 0
 VALIDATO = os.path.expanduser('~/wip/vesc_leggi_validato_vesctool')  # lo crea Daniele a mano dopo il confronto con VESC Tool
 from vesc_config_backup import pack, read_packet, PORT, BAUD, COMM_GET_MCCONF, COMM_SET_MCCONF
@@ -69,8 +70,10 @@ def campi(blob):
 
 def plausibile(blob):
     c = campi(blob)
+    # segni: max > 0, min <= 0; nessun campo uguale a 0 (tranne l_in_current_min che puo' essere 0)
     ok = (0 < c["l_current_max"] < 300 and -300 < c["l_current_min"] < 0 and 0 < c["l_in_current_max"] < 200
-          and -200 < c["l_in_current_min"] <= 0 and 0 < c["l_abs_current_max"] < 400)
+          and -200 < c["l_in_current_min"] <= 0 and 0 < c["l_abs_current_max"] < 400
+          and all(v != 0 for k, v in c.items() if k != "l_in_current_min"))
     rt = all(enc(dec(bytes(blob[OFF0 + 4 * i:OFF0 + 4 * i + 4]))) == bytes(blob[OFF0 + 4 * i:OFF0 + 4 * i + 4])
              or abs(dec(enc(dec(bytes(blob[OFF0 + 4 * i:OFF0 + 4 * i + 4])))) - c[CAMPI[i]]) < 1e-3
              for i in range(len(CAMPI)))
@@ -83,7 +86,6 @@ def main():
     ap.add_argument("file", nargs="?")
     ap.add_argument("--fw", default="5.2", help="versione fw attesa")
     ap.add_argument("--apply", action="store_true")
-    ap.add_argument("--vai", action="store_true", help="solo dopo il 'vai' esplicito di Daniele")
     for n in PROPOSTA: ap.add_argument("--" + n.replace("_", "-"), type=float, default=PROPOSTA[n])
     a = ap.parse_args()
     ser = serial.Serial(PORT, BAUD, timeout=0.2); time.sleep(0.1)
@@ -102,6 +104,7 @@ def main():
     if a.cmd == "ripristina":
         new = bytearray(open(a.file, "rb").read())
         if new[:4] != blob[:4] or len(new) != len(blob): sys.exit("backup con signature/lunghezza diverse dal VESC attuale: rifiuto")
+        if not plausibile(new): sys.exit("backup NON plausibile (segni/zeri): rifiuto")
     else:
         new = bytearray(blob)
         for i, n in enumerate(CAMPI):
@@ -109,12 +112,16 @@ def main():
                 v = getattr(a, n)
                 if abs(v) > abs(cur[n]) + 1e-6: sys.exit(f"{n}: {v} ALZEREBBE il limite ({cur[n]:.2f}): rifiutato")
                 new[OFF0 + 4 * i:OFF0 + 4 * i + 4] = enc(v)
+        if not plausibile(new): sys.exit("valori nuovi NON plausibili (segno sbagliato o zero): rifiuto")
     if len(new) != len(blob) or new[:4] != blob[:4]: sys.exit("signature/lunghezza incoerenti: rifiuto")
     print("DIFF:")
     for n, v in campi(new).items(): print(f"  {n:20s} {cur[n]:8.2f} -> {v:8.2f}")
-    if not (a.apply and a.vai):
-        print("DRY-RUN: nessuna scrittura (serve --apply --vai dopo il via di Daniele)."); return
+    if not a.apply:
+        print("DRY-RUN: nessuna scrittura (serve --apply e poi il 'vai' scritto a mano da Daniele)."); return
     if not os.path.exists(VALIDATO): sys.exit(f"scrittura bloccata: 'leggi' non ancora validato contro VESC Tool (manca {VALIDATO}). Usa VESC Tool.")
+    ok_u, why = uart_libera(PORT)
+    if not ok_u: sys.exit(f"UART VESC non libera ({why}): fermare power_steering/speed_limiter e ripetere. Nessuna scrittura.")
+    if not vai_interattivo(f"SCRIVO la mcconf sul VESC ({a.cmd}): diff stampato sopra. Backup: {bk}"): sys.exit("annullato")
     ser.write(pack(bytes([COMM_SET_MCCONF]) + bytes(new))); time.sleep(0.8)
     chk = get(ser)
     diff = [i for i in range(len(new)) if new[i] != chk[i]]

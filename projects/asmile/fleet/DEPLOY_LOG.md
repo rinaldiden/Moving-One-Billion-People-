@@ -4,3 +4,4 @@
 - 2026-11-09 10:10 logger: bike_speed BLE CooSpo BK467 20261109 deploy/deploy_bike_speed.sh pi/sensors/bike_speed_ble.py pi/sensors/sensor_hub.py config/bike_speed_logger.service
 - 2026-11-09 11:22 logger: bike_speed BLE CooSpo BK467 20261109 deploy/deploy_bike_speed.sh pi/sensors/bike_speed_ble.py pi/sensors/sensor_hub.py config/bike_speed_logger.service
 - 2026-11-09 11:31 logger: bike_speed BLE CooSpo BK467 20261109 deploy/deploy_bike_speed.sh pi/sensors/bike_speed_ble.py pi/sensors/sensor_hub.py config/bike_speed_logger.service
+- 2026-11-09 16:08 001: sterzo: centro 6606 + finecorsa 4304/8884 in /data/steering_limits_asmile-001.json; copiati safety_001/vesc_mcconf_limiti_001/vesc_return_centro_001 (sicurezza ALLOW); backup mcconf letto pi/steering/safety_001.py pi/steering/vesc_mcconf_limiti_001.py pi/steering/vesc_return_centro_001.py pi/steering/test_vesc_001_rifiuti.py

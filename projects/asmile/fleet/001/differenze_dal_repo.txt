@@ -3,4 +3,5 @@
 solo-Pi ./pi/braking/speed_limiter.py
 ≠ ./pi/logging/training_recorder.py
 ≠ ./pi/power/master_switch.py
+≠ ./pi/sensors/sensor_hub.py
 ≠ ./training/shadow_analyzer.py
