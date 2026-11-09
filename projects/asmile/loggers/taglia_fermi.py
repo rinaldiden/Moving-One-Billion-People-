@@ -126,7 +126,7 @@ def scene_changed_blocks(fr):
 
 
 # ---------------------------------------------------------------- sensori
-def load_sensors(sens_dir, t0, t1, start=None):
+def load_sensors(sens_dir, t0, t1, start=None, pad=3000):
     cols = ["t_ms", "imu_ax_g", "imu_ay_g", "imu_az_g", "imu_gx_dps", "imu_gy_dps", "imu_gz_dps",
             "enc_wheel_cum", "ble_speed_ms", "ble_wheel_rev"]
     parts = []
@@ -139,13 +139,15 @@ def load_sensors(sens_dir, t0, t1, start=None):
             continue
         d["t_ms"] = pd.to_numeric(d["t_ms"], errors="coerce")
         d = d.dropna(subset=["t_ms"])
-        d = d[(d.t_ms >= t0 - 3000) & (d.t_ms <= t1 + 3000)]
-        # t_ms e' CLOCK_MONOTONIC dal boot: boot diversi si sovrappongono -> tengo solo il file il cui
-        # orario (wall) a t0 coincide con l'inizio sessione (+-2 min)
+        d = d[(d.t_ms >= t0 - pad) & (d.t_ms <= t1 + pad)]
+        # t_ms e' CLOCK_MONOTONIC dal boot: boot diversi si sovrappongono. Il sensor_hub ruota file ogni ora e a
+        # ogni riavvio: si UNISCONO tutti i file che coprono l'intervallo, ma solo se il loro wall e' coerente con
+        # quello atteso (inizio sessione + (t_ms - t0)): prime riga nel range entro 3 min
         if len(d) and start is not None and "wall" in d:
             w = pd.to_datetime(d["wall"], errors="coerce")
-            w0 = w.iloc[(d.t_ms - t0).abs().values.argmin()]
-            if pd.isna(w0) or abs((w0 - start).total_seconds()) > 120:
+            k = int(w.notna().values.argmax())
+            expected = start + pd.Timedelta(milliseconds=float(d.t_ms.iloc[k] - t0))
+            if pd.isna(w.iloc[k]) or abs((w.iloc[k] - expected).total_seconds()) > 180:
                 continue
         if len(d):
             parts.append(d)
@@ -354,7 +356,7 @@ def process(base, unit, sess, left, right, sessdir, dry, force):
         mm0 = re.search(r"(\d{8})_(\d{6})", sess)
         st0 = pd.to_datetime(mm0.group(1) + mm0.group(2), format="%Y%m%d%H%M%S") if mm0 else None
         sdir0 = os.path.join(udir, "_sensors", "sensors")
-        sd0 = load_sensors(sdir0, fr.t_ms.min() - 600000, fr.t_ms.max() + 600000, st0)
+        sd0 = load_sensors(sdir0, fr.t_ms.min(), fr.t_ms.max(), st0, pad=600000)
         if sd0 is None or "wall" not in sd0:
             raise RuntimeError("niente sensori con wall per mappare le clip sul t_ms: NON taglio")
         vrow, tms, gaps, n2 = map_logger(left, counts, fr, sd0)
