@@ -9,3 +9,4 @@
   - asmile #001: Pi 5 + **2 OV9281 Inno-Maker separate** (2 CSI, rpicam --sync, dual_cam_recorder.py, arducam_fix NON serve), pitch 7.4°, cam0=destra; encoder sterzo AMT22 + encoder ruota, VESC sterzo, servofreno GPIO12; repo in /home/asmile/wip/...; calib `calib_asmile-001.json`.
   - Un modello/depth validato sul logger NON è validato su #001 (e viceversa): ogni gate di percezione si chiude per unità.
 - 2026-11-09 **Controlli e letture: falli da solo, NON chiedere.** Chiedi a Daniele solo prima di SCRIVERE una modifica al comportamento/funzionamento del Pi (codice, servizi, config, deploy, reboot). Leggere, misurare, registrare clip di prova, verificare = autonomia.
+- 2026-11-09 **Sensore nuovo = loggato con tutti gli altri (stesso CSV/t_ms del sensor_hub) e permanente al riavvio**, senza che Daniele lo debba dire: gli agenti lo sanno e lo propongono da soli (regola di mestiere in tutti i 52 agenti). Caso: IMU HW-123 sul logger.
