@@ -1,0 +1,7 @@
+{
+ "gate": "L0.sync_001",
+ "artefatto": "agents/rapporti/L0.encoder_sync_001_20261109.md",
+ "visto_critico": "asmile-pi-001-verifica",
+ "nota": "Rifatto su frames_*.csv: 093216 4522/4522, 093909 408/408, 094146 10066/10066 frame sx/dx, 15.00 fps, scarto sensor_ts sx-dx max 0.086 ms (<=1 ms), gap max 67 ms (1 frame), 0 gap >100 ms, sync libcamera 0/-19 us. Giro 094146 vivo su entrambe. Limiti: 15 fps non 30; allineamento al pixel non verificato.",
+ "quando": "2026-11-09T10:00:23"
+}

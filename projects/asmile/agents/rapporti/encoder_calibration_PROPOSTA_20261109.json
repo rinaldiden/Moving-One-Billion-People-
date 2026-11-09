@@ -1,0 +1,12 @@
+{
+ "m_per_count": 2.1219e-05,
+ "wheel_circum_m": 0.3477,
+ "enc_counts_per_rev": 16384,
+ "forward_sign": "+",
+ "ruota_circonferenza_m": 1.576,
+ "enc_giri_per_giro_ruota": 4.5332,
+ "metodo": "rotolata 10 giri col metro (15.760 m), sensors_20261109_085334.csv 2736.8-2765.6 s",
+ "nota_campo": "wheel_circum_m = metri per giro ENCODER (k=wheel_circum_m/16384), non la ruota",
+ "stato": "PROPOSTA — non deployata; deploy solo col vai di Daniele (asmile-sicurezza → asmile-deploy)",
+ "generated": "2026-11-09T09:58:14"
+}

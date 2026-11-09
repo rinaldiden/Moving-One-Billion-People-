@@ -1,9 +1,8 @@
-# Lavagna asmile #001 — 2026-11-09 09:58
+# Lavagna asmile #001 — 2026-11-09 10:00
 
 **Livello raggiunto:** nessuno  ·  **Stiamo lavorando per:** L0 (registra)
 
 ## Cosa serve da te (parte fisica)
-- accendi asmile #001 e fai un giro di 5 minuti  ← per: Camere di #001 sincronizzate anche nei video in movimento
 - video col metro col logger: soste 1-2-3-4-5-6-7-8-10-12-15 m + tabellone  ← per: Calibrazione stereo del logger col metro (±2% da fermi)
 - video col metro con #001: soste a 1-2-3-5-7-10-15 m  ← per: Calibrazione stereo di #001 col metro (±2% da fermi, 1-15 m)
 
@@ -11,7 +10,7 @@
 
 | | gate | cosa | chi → contro-agente | prova |
 |---|---|---|---|---|
-| ⬜ | L0.sync_001 | Camere di #001 sincronizzate anche nei video in movimento | asmile-pi-001 → asmile-pi-001-verifica |  |
+| ✅ | L0.sync_001 | Camere di #001 sincronizzate anche nei video in movimento | asmile-pi-001 → asmile-pi-001-verifica | agents/rapporti/L0.encoder_sync_001_20261109.md (visto asmile-pi-001-verifica, 2026-11-09) |
 | ✅ | L0.sensori_001 | sensor_hub a 50 Hz attivo su #001 (camere+sensori stesso ms) | asmile-pi-001 → asmile-pi-001-verifica | agents/rapporti/L0.sensori_sync_001_20261109.md (visto asmile-pi-001-verifica, 2026-11-09) |
 | ⬜ | L0.encoder_ruota | Encoder ruota tarato (velocità e accelerazione giuste) | asmile-pi-001 → asmile-pi-001-verifica |  |
 | 🟡 | L0.calib_logger | Calibrazione stereo del logger col metro (±2% da fermi) | asmile-calib → asmile-calib-critico | calib_asmile-logger_metro.json: residui del fit ≤2.1%, mancano soste di verifica fuori fit (4-6-8-12 m) |
