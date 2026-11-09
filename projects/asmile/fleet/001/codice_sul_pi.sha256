@@ -72,7 +72,7 @@ dae4c7ff27cf2b86ddd5654dd7c68139effc5b0ad951a2c97548afd5d3925fbf  ./pi/steering/
 b8100657ef1b03b41b36cece7a5b108ff7f2b7b126518d1dded6516adec01602  ./pi/steering/steering_controller.py
 d9c1067aea7c6ab30fe24bcaeb17359aa9356addc421c86aac76c73c9b081e8d  ./pi/steering/steering_test.py
 a57079bc2bedacf48773e540fa887e3c1b80f345196f6c3db8367219cfa9c2be  ./pi/steering/steering_vesc_encoder.py
-e7f645c2e72997f08e30f67b6c91dd9d640fa71f5161808777cd8079716d8fbb  ./pi/steering/sterzo_fluido_001.py
+bd4b123306035aca0a6bc7507e89a37bc12d09dd43ec11e72bad309ae1cfefc7  ./pi/steering/sterzo_fluido_001.py
 9de4cb2d5e6e197103e3eb5c4f75a565ebba7d48f7d9efc48f993ab86e5f73c0  ./pi/steering/sterzo_vel_001.py
 435a94092f6d6dbc1ee6de43e7068aea04f626f99929e2c4fe2fa6ddfdd563e0  ./pi/steering/test_biss.py
 081c5858a6b9e6248e0e3ddc61715e71de463afa60adee0c7ce0f70109e5931e  ./pi/steering/test_clock_deep.py

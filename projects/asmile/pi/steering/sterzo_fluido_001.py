@@ -52,12 +52,12 @@ WRONG_COUNTS = 10
 # --- guadagni (in unita' di MANUBRIO: deg, deg/s; corrente in A che spinge l'encoder in SU) ---
 I_COUL0 = 6.5        # A, attrito in moto misurato 2026-11-09 (6-7 A), poi appreso in linea
 KP = 3.0             # A/deg molla sul ritardo dal riferimento (vai)
-KD = 0.25            # A/(deg/s) smorzatore
+KD = 0.6             # A/(deg/s) — sweep 2026-11-09: 0.5->16-18%, 0.6->12-15%, 0.75 verso SX martella e vibra. Non oltre 0.6 senza filtro velocita migliore
 KI = 4.0             # A/(deg*s), integrale piccolo
 I_INT_MAX = 3.0      # A
 LAG_MAX = 2.5        # deg: il riferimento non scappa mai piu' di cosi' dal manubrio (anti-strappo)
 A_MAX = 40.0         # deg/s^2 rampa del riferimento
-I_DITH = 1.5         # A, dither +/- a 100 Hz solo quando dovrebbe muoversi ed e' fermo
+I_DITH = 0.0         # A, dither +/- a 100 Hz solo quando dovrebbe muoversi ed e' fermo
 V_FERMO = 1.5        # deg/s
 # Ripple per giro elettrico (prova 16:58: velocita' 1.7-7.8 deg/s a 5 deg/s, picchi a 1-2 Hz = metà/quarto di giro
 # elettrico; hall "significantly misaligned"). Tabella di compensazione per fase elettrica, imparata e salvata in /data.
@@ -128,11 +128,15 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("modo", choices=["vai", "tieni"])
     ap.add_argument("--target", type=int, help="raw encoder (vai: default centro calib; tieni: default pos attuale)")
-    ap.add_argument("--vel", type=float, default=10.0, help="deg/s al manubrio, (0,20]")
+    ap.add_argument("--vel", type=float, default=15.0, help="deg/s al manubrio, (0,20]")
     ap.add_argument("--imax", type=float, default=None, help="A, max 30 (default: vai 30, tieni 15)")
     ap.add_argument("--durata", type=float, default=20.0, help="s, tieni (max 60)")
     ap.add_argument("--kp", type=float, default=None, help="A/deg (vai %.1f, tieni %.1f)" % (KP, KP_H))
     ap.add_argument("--dither", type=float, default=I_DITH, help="A (0 = spento)")
+    ap.add_argument("--kd", type=float, default=KD, help="A/(deg/s), vai")
+    ap.add_argument("--rip", type=int, default=0, choices=(0, 1), help="compensazione ripple (vai)")
+    ap.add_argument("--tag", default="", help="etichetta nel nome del log")
+    ap.add_argument("--ab", type=float, nargs=2, default=(0.35, 0.05), help="filtro velocita' alfa beta")
     ap.add_argument("--sign", type=int, default=-1, choices=(-1, 1), help="segno corrente VESC per far SALIRE l'encoder")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args(argv)
@@ -172,7 +176,7 @@ def main(argv=None):
     if a.dry_run: print("dry-run: nessun comando"); return
 
     os.makedirs("/data/logging/vesc", exist_ok=True)
-    log = open(time.strftime(f"/data/logging/vesc/sterzo_fluido_{a.modo}_%Y%m%d_%H%M%S.csv"), "w")
+    log = open(time.strftime(f"/data/logging/vesc/sterzo_fluido_{a.modo}_%Y%m%d_%H%M%S{a.tag}.csv"), "w")
     log.write("t,pos,lag_deg,v_est,v_ref,sp_deg,i_cmd,i_motor,i_coul,i_int\n")
     ser = serial.Serial(UART, BAUD, timeout=0.01)
 
@@ -184,7 +188,7 @@ def main(argv=None):
     def _kill(*_): raise KeyboardInterrupt
     signal.signal(signal.SIGTERM, _kill); signal.signal(signal.SIGHUP, _kill)
 
-    ab = AlfaBeta(p0, mt0); last_mt = mt0
+    ab = AlfaBeta(p0, mt0, a.ab[0], a.ab[1]); last_mt = mt0
     hist = [(time.monotonic(), p0)]
     sp = p0 * DEG; v_ref = 0.0; i_int = 0.0; i_coul = I_COUL0; i_cmd = 0.0; i_mot = 0.0
     k = 0; t0 = t_prev = time.monotonic(); reason = None; t_stallo = None; t_caldo = 0.0; q_fail = 0
@@ -223,8 +227,8 @@ def main(argv=None):
                 dith = (a.dither if k % 2 else -a.dither) if (not moving and abs(v_ref) > 0.1) else 0.0
                 b = int((p % EREV) / EREV * NB) % NB
                 if moving and abs(v_ref) > 0.1 and v * d > 0:         # imparo il ripple della fase elettrica
-                    rt[b] = max(min(rt[b] + K_RIP * (v_ref - v) * d, RIP_MAX), -RIP_MAX)
-                i_cmd = ff + kp * lag + KD * (v_ref - v) + i_int + dith + (d * rt[b] if abs(v_ref) > 0.1 else 0.0)
+                    rt[b] = rt[b] if not a.rip else max(min(rt[b] + K_RIP * (v_ref - v) * d, RIP_MAX), -RIP_MAX)
+                i_cmd = ff + kp * lag + a.kd * (v_ref - v) + i_int + dith + (d * rt[b] if (abs(v_ref) > 0.1 and a.rip) else 0.0)
                 cap = imax
             else:
                 lag = tgt_deg - x

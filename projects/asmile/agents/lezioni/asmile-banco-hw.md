@@ -14,3 +14,11 @@ Scritte da palla.py dai VETO dei contro-agenti. Leggile prima di ogni lavoro.
 - Scatti residui = hall a gradini (79 count encoder per passo tach, foc_hall_interp_erpm 500 > 20-150 ERPM di lavoro):
   si sistema nel VESC, non nel Pi.
 - Controllo di stallo: tarato sul tetto deciso da Daniele (30 A), non 5 A, altrimenti ferma prove valide.
+
+## 2026-11-09 17:30 — "stai facendo disastri: invece che muoversi martella e vibra" (Daniele)
+- La metrica di regolarità guardava solo le prove riuscite: le prove fermate da "corrente 27 A" (oscillazione violenta
+  ±25 A, verso SX) restavano fuori o contavano poco -> ho scelto KD 0.75 che in metà prove martellava. Ogni prova
+  interrotta (corrente, verso sbagliato, superato) = configurazione BOCCIATA, non scartata dalla media.
+- Prima di una serie automatica sul motore: max 2 prove per configurazione nuova e STOP alla prima prova violenta.
+- KD alto amplifica il rumore della velocità stimata: oltre 0.5 serve un filtro velocità migliore, non più guadagno.
+- pkill -f dentro ssh uccide anche la sessione ssh (il pattern è nella riga di comando).
