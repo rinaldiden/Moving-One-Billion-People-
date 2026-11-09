@@ -1,0 +1,147 @@
+{
+ "synth_9zone": {
+  "gate_script": "VERDE",
+  "gate_problemi": [],
+  "verita": {
+   "zone": [
+    "alto-sx",
+    "alto-centro",
+    "alto-dx",
+    "mezzo-sx",
+    "centro",
+    "mezzo-dx",
+    "basso-sx",
+    "basso-centro",
+    "basso-dx"
+   ],
+   "B_dy_abs_p95": [
+    0.288,
+    0.09,
+    0.145,
+    0.043,
+    0.043,
+    0.067,
+    0.773,
+    0.062,
+    0.325
+   ],
+   "B_dy_median": [
+    0.006,
+    -0.055,
+    -0.003,
+    -0.015,
+    -0.011,
+    0.018,
+    0.021,
+    -0.009,
+    0.069
+   ],
+   "C_depth_pct_p95": [
+    0.435,
+    0.24,
+    0.964,
+    0.404,
+    0.173,
+    0.633,
+    0.978,
+    0.258,
+    1.115
+   ],
+   "C_depth_pct_median": [
+    -0.189,
+    0.123,
+    0.407,
+    -0.266,
+    0.031,
+    0.212,
+    -0.262,
+    -0.062,
+    0.11
+   ],
+   "focal_rect_est_true": [
+    1296.9003736950463,
+    1304.6187991987217
+   ],
+   "baseline_dir_ok": true
+  }
+ },
+ "synth_solo_centro": {
+  "gate_script": "ROSSO",
+  "gate_problemi": [
+   "copertura L insufficiente (<150 corner) in: alto-sx, alto-dx, basso-sx, basso-dx",
+   "copertura R insufficiente (<150 corner) in: alto-sx, alto-centro, alto-dx, mezzo-dx, basso-dx",
+   "hold-out stereo: zona alto-sx con 12 punti (<20) -> non verificata",
+   "hold-out stereo: zona alto-dx con 8 punti (<20) -> non verificata",
+   "hold-out stereo: zona basso-sx con 4 punti (<20) -> non verificata",
+   "hold-out stereo: zona basso-dx con 8 punti (<20) -> non verificata"
+  ],
+  "verita": {
+   "zone": [
+    "alto-sx",
+    "alto-centro",
+    "alto-dx",
+    "mezzo-sx",
+    "centro",
+    "mezzo-dx",
+    "basso-sx",
+    "basso-centro",
+    "basso-dx"
+   ],
+   "B_dy_abs_p95": [
+    3.729,
+    0.112,
+    4.079,
+    0.606,
+    0.118,
+    0.845,
+    3.079,
+    0.188,
+    3.418
+   ],
+   "B_dy_median": [
+    0.012,
+    0.022,
+    -0.026,
+    -0.159,
+    -0.071,
+    -0.255,
+    -0.205,
+    -0.121,
+    -0.358
+   ],
+   "C_depth_pct_p95": [
+    10.715,
+    0.398,
+    12.179,
+    4.703,
+    0.254,
+    4.643,
+    8.596,
+    0.365,
+    8.259
+   ],
+   "C_depth_pct_median": [
+    -0.571,
+    0.133,
+    0.793,
+    -0.517,
+    0.017,
+    0.464,
+    -0.536,
+    -0.116,
+    0.238
+   ],
+   "focal_rect_est_true": [
+    1308.9807954207872,
+    1304.6187991987217
+   ],
+   "baseline_dir_ok": true
+  }
+ },
+ "TEST": "VERDE",
+ "criteri": "obiettivo HANDOFF in OGNI zona 3x3 (punti 1-5 m): dy |p95| < 1 px e depth |p95| <= 2%; gate script VERDE; baseline col segno giusto; controllo negativo solo-centro -> gate script ROSSO",
+ "margine_interno_0.5px_1pct": [
+  "basso-sx NO",
+  "basso-dx NO"
+ ]
+}
