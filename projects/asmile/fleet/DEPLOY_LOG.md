@@ -1,2 +1,3 @@
 - 2026-11-09 08:50 logger: IMU HW-123 (MPU6050 0x68) su I2C1: dtparam=i2c_arm=on in config.txt + i2c-dev in modules-load.d (live+root-ro); sensor_hub la logga nello stesso CSV/t_ms deploy/registra_deploy.sh
 - 2026-11-09 10:01 001: encoder ruota tarato coi 10 giri (15.760 m): wheel_circum_m 0.3374→0.3477 (m/giro encoder), m_per_count 2.1219e-5; backup .bak-20261109; ALLOW asmile-sicurezza, vai di Daniele agents/rapporti/encoder_calibration_PROPOSTA_20261109.json
+- 2026-11-09 10:09 logger: bike_speed BLE CooSpo BK467 20261109 deploy/deploy_bike_speed.sh pi/sensors/bike_speed_ble.py pi/sensors/sensor_hub.py config/bike_speed_logger.service

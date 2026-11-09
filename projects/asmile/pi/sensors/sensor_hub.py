@@ -55,6 +55,8 @@ COLUMNS = [
     "gps_t_ms", "gps_utc", "gps_fix", "gps_lat", "gps_lon", "gps_speed_ms", "gps_heading",
     "gps_sats", "gps_hdop", "gps_alt_m",
     "evento",
+    # in CODA (2026-11-09): sensore ruota BLE (CooSpo BK467) di asmile-logger001; vuote se manca/vecchio
+    "ble_t_ms", "ble_wheel_rev", "ble_wheel_evt", "ble_speed_ms",
 ]
 
 # ─── IMU MPU6050 ───────────────────────────────────────────────────────
@@ -380,6 +382,22 @@ def read_limiter():
     return None
 
 
+BLE_FILE = "/tmp/bike_speed.json"          # scritto da bike_speed_ble.py (t_ms = ricezione, stesso orologio)
+BLE_FRESH_MS = 3000
+
+
+def read_ble():
+    """(t_ms, wheel_rev, wheel_evt, speed_ms) se il file BLE esiste ed è fresco, altrimenti None."""
+    try:
+        with open(BLE_FILE) as f:
+            b = json.load(f)
+        if now_ms() - b["t_ms"] <= BLE_FRESH_MS:
+            return b["t_ms"], b["wheel_rev"], b["wheel_evt"], b["speed_ms"]
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    return None
+
+
 def fmt(v, nd):
     return "" if v is None else (f"{v:.{nd}f}" if isinstance(v, float) else str(v))
 
@@ -530,6 +548,8 @@ def main():
         else:
             vals += [""] * 10
         vals.append("|".join(ev))
+        ble = read_ble()
+        vals += [ble[0], ble[1], ble[2], fmt(ble[3], 3)] if ble else [""] * 4
         w.row(",".join(str(v) for v in vals) + "\n", acts)
 
         state = dict(zip(COLUMNS, vals))
