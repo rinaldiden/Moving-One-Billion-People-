@@ -1,0 +1,1831 @@
+{
+ "gate": "L0.dati",
+ "data_controllo": "2026-11-09",
+ "nessun_download_nessuna_cancellazione": true,
+ "verifica_duplicati_30_10": {
+  "hash_identici_tra_sessioni_diverse": [],
+  "primi_5_frame_md5_identici": false,
+  "note": "nessun duplicato per hash ne per primi frame (framemd5 diversi, conteggi frame diversi). Sovrapposizione solo di luogo: 180019/180023/182802 stesso punto parcheggio (corr primo frame 0.78-0.95, diff 10-12/255); 180215/180225 stesso punto (diff 0.78/255 vs 0.03 tra frame adiacenti: registrazioni distinte).",
+  "sessioni": 7,
+  "frame_left_totali_30_10": 20180,
+  "minuti_video_30_10": 22.4,
+  "span_orologio": "15:57 -> 18:45 (~2h48) ma video reale ~22 min",
+  "timestamp_gps_veri": "NON ricavabili per il 30/10: training_20261030.csv ha lat/lon/speed ma NESSUN gps_utc (fix solo dopo il reset orologio, Tirano 46.2175N 10.1743E). Data 30/10 da: Pi date 16:37:16+01:00 (backup config) + continuita CSV 15:50->18:00. gps_utc (hhmmss, senza data) esiste solo dall 8/11 (sensors_*.csv) e conferma wall=UTC+1",
+  "fake_hwclock": "training_20261030.csv: clock indietro 18:10:16 -> 18:00:19 e 18:00:44 -> 18:00:26: segmenti 4 e 5 = due boot con orologio finto, uguali a start di 180019 e 180023 (entro 4 s). Per queste end_time/mtime non sono compatibili con la durata video -> salto NTP in registrazione: data 30/10 plausibile, ora del giorno stimata."
+ },
+ "sessioni_asmile_001": {
+  "20261030_155729": {
+   "sessione": "asmile-001/session_20261030_155729",
+   "cam": {
+    "left": {
+     "presente": true,
+     "path": "asmile-001/session_20261030_155729_left.h264",
+     "bytes": 7868416,
+     "sha256": "bc9cacf35a9992b10550ff9b26c77a7588b81f8df51327cbf6a24f611eb98795",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 1491,
+     "fps_nominale": 15,
+     "durata_s": 99.4,
+     "frame_ffprobe_count_packets": 1491,
+     "frame_decodificati_count_frames": 1491,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxN] corrupted macroblock N N (total_coeff=-N)",
+       "[hN @ NxN] error while decoding MB N N"
+      ]
+     }
+    },
+    "right": {
+     "presente": true,
+     "path": "asmile-001/session_20261030_155729_right.h264",
+     "bytes": 8253440,
+     "sha256": "252db8bf24f4afa1b63621329af395656874a871f7cd67d2ea91e16dc89c53c7",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 1489,
+     "fps_nominale": 15,
+     "durata_s": 99.3,
+     "frame_ffprobe_count_packets": 1489,
+     "frame_decodificati_count_frames": 1489,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxNeN] corrupted macroblock N N (total_coeff=-N)",
+       "[hN @ NxNeN] error while decoding MB N N"
+      ]
+     }
+    }
+   },
+   "movimento_video": {
+    "samples": 50,
+    "mad_med": 0.19,
+    "mad_p90": 0.83,
+    "mean_luma": 81.2,
+    "luma_min": 80.1
+   },
+   "classe": "bici ferma",
+   "data_reale": "2026-10-30 15:57:29-15:59:13 CET (+01:00); certa: CSV training_20261030 continua 15:50->18:00 e backup Pi del 30/10 16:37:16+01:00 conferma l'orologio",
+   "sensori": {
+    "file": "_sensors/training_data_pi/training_20261030.csv (finestra)",
+    "righe": 972,
+    "gps_fix": 0,
+    "gps_speed_max": 0.0
+   },
+   "motivo": "video statico (diff mediano tra frame 0.19/255), GPS senza fix, speed 0, accel std 0.006 g. Metadata ok. Frame L/R 1491/1489."
+  },
+  "20261030_180019": {
+   "sessione": "asmile-001/session_20261030_180019",
+   "cam": {
+    "left": {
+     "presente": true,
+     "path": "asmile-001/session_20261030_180019_left.h264",
+     "bytes": 203956224,
+     "sha256": "bf9508d4a9067a2a0b9388af4778e9f158a134d3ca3b082c8c893ca75c8a7701",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 1335,
+     "fps_nominale": 15,
+     "durata_s": 89.0,
+     "frame_ffprobe_count_packets": 1335,
+     "frame_decodificati_count_frames": 1335,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxNeN] corrupted macroblock N N (total_coeff=-N)",
+       "[hN @ NxNeN] error while decoding MB N N"
+      ]
+     }
+    },
+    "right": {
+     "presente": true,
+     "path": "asmile-001/session_20261030_180019_right.h264",
+     "bytes": 208850944,
+     "sha256": "42b56e9817457848e8455455ccf7fbea5842e6a155ed9cc239e8d2994ba0669e",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 1335,
+     "fps_nominale": 15,
+     "durata_s": 89.0,
+     "frame_ffprobe_count_packets": 1335,
+     "frame_decodificati_count_frames": 1335,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxNeN] corrupted macroblock N N (total_coeff=-N)",
+       "[hN @ NxNeN] error while decoding MB N N"
+      ]
+     }
+    }
+   },
+   "movimento_video": {
+    "samples": 45,
+    "mad_med": 0.07,
+    "mad_p90": 0.2,
+    "mean_luma": 89.2,
+    "luma_min": 88.0
+   },
+   "classe": "bici ferma",
+   "data_reale": "2026-10-30, ora incerta: start fake-hwclock 18:00:19; end_time 18:45:40 ma durata 94 s -> salto orologio (NTP): inizio reale ~18:44:06 (inferenza)",
+   "sensori": {
+    "file": "training_20261030.csv segmento 4 (18:00:19-18:00:44 clock finto)",
+    "righe": 234,
+    "gps_fix": 226,
+    "gps_speed_max": 0.044
+   },
+   "motivo": "scena statica (diff 0.07), speed ~0, accel std 0.008. 89 s di video. NON duplicato di 180023 (hash e frame diversi, diff 12/255 sullo stesso punto di parcheggio). CSV sensori troncata a 25 s.",
+   "difetti": "ffprobe: macroblock corrotto in sx e dx (1 evento ciascuno). Frame 1335/1335 decodificati = packets."
+  },
+  "20261030_180023": {
+   "sessione": "asmile-001/session_20261030_180023",
+   "cam": {
+    "left": {
+     "presente": true,
+     "path": "asmile-001/session_20261030_180023_left.h264",
+     "bytes": 329347072,
+     "sha256": "ca4654e7764f378a27cd0f480c23a0df574812f2f5959a21a3ba9f1c26abda81",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 9376,
+     "fps_nominale": 15,
+     "durata_s": 625.1,
+     "frame_ffprobe_count_packets": 9376,
+     "frame_decodificati_count_frames": 9376,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxNfeN] out of range intra chroma pred mode",
+       "[hN @ NxNfeN] error while decoding MB N N"
+      ]
+     }
+    },
+    "right": {
+     "presente": true,
+     "path": "asmile-001/session_20261030_180023_right.h264",
+     "bytes": 352403456,
+     "sha256": "ffcf524aedd7250b65f7c335647dfe441f191b752ecfe74c28a865ac76ae2a84",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 9612,
+     "fps_nominale": 15,
+     "durata_s": 640.8,
+     "frame_ffprobe_count_packets": 9612,
+     "frame_decodificati_count_frames": 9612,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxNfeN] corrupted macroblock N N (total_coeff=-N)",
+       "[hN @ NxNfeN] error while decoding MB N N"
+      ]
+     }
+    }
+   },
+   "movimento_video": {
+    "samples": 313,
+    "mad_med": 0.09,
+    "mad_p90": 0.13,
+    "mean_luma": 87.0,
+    "luma_min": 82.4
+   },
+   "classe": "bici ferma",
+   "data_reale": "2026-10-30, ora incerta: start fake 18:00:23; mtime 18:43:34 con 625 s di video -> salto orologio; inizio reale ~18:33:09 (inferenza)",
+   "sensori": {
+    "file": "training_20261030.csv segmento 5 (18:00:26-18:00:48 clock finto)",
+    "righe": 203,
+    "gps_fix": 0,
+    "gps_speed_max": 0.0
+   },
+   "motivo": "scena statica per 625 s (diff 0.09). Anomalie: metadata senza end_time (chiusura sporca), right 9612 vs left 9376 frame (236 di differenza, 16 s). Utile solo come camera ferma."
+  },
+  "20261030_180215": {
+   "sessione": "asmile-001/session_20261030_180215",
+   "cam": {
+    "left": {
+     "presente": true,
+     "path": "asmile-001/session_20261030_180215_left.h264",
+     "bytes": 225280,
+     "sha256": "5d8264e3de8a33ab1f0b120d16a07c91aebc4f8b092879bb08d6f28cf883ecee",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 46,
+     "fps_nominale": 15,
+     "durata_s": 3.1,
+     "frame_ffprobe_count_packets": 46,
+     "frame_decodificati_count_frames": 46,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxN] out of range intra chroma pred mode",
+       "[hN @ NxN] error while decoding MB N N"
+      ]
+     }
+    },
+    "right": {
+     "presente": true,
+     "path": "asmile-001/session_20261030_180215_right.h264",
+     "bytes": 241664,
+     "sha256": "c83c8ea98b622a80793989e139fdc9bb2db717840e6d65080aaa2da74d822304",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 46,
+     "fps_nominale": 15,
+     "durata_s": 3.1,
+     "frame_ffprobe_count_packets": 46,
+     "frame_decodificati_count_frames": 46,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxNbeN] corrupted macroblock N N (total_coeff=-N)",
+       "[hN @ NxNbeN] error while decoding MB N N"
+      ]
+     }
+    }
+   },
+   "movimento_video": {
+    "samples": 2,
+    "mad_med": 1.75,
+    "mad_p90": 1.75,
+    "mean_luma": 98.8,
+    "luma_min": 97.9
+   },
+   "classe": "incompleta",
+   "data_reale": "2026-10-30 18:02:15-18:02:24 (clock coerente con CSV continua)",
+   "sensori": {
+    "file": "_sensors/speed_limiter/limiter_20261030_180214.csv",
+    "righe": 80,
+    "gps_fix_rows_training": 84
+   },
+   "motivo": "solo 46 frame per cam (3 s; metadata dice 9 s). Primo frame quasi identico a 180225 (stesso posto, riavvio 10 s dopo), ma hash e contenuto diversi: non e duplicato."
+  },
+  "20261030_180225": {
+   "sessione": "asmile-001/session_20261030_180225",
+   "cam": {
+    "left": {
+     "presente": true,
+     "path": "asmile-001/session_20261030_180225_left.h264",
+     "bytes": 26292224,
+     "sha256": "24d86d3d079e0b1f6af02072a6fb7de20c707614afd5a6847be5e6e46ce56a53",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 6236,
+     "fps_nominale": 15,
+     "durata_s": 415.7,
+     "frame_ffprobe_count_packets": 6236,
+     "frame_decodificati_count_frames": 6236,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxNeN] corrupted macroblock N N (total_coeff=-N)",
+       "[hN @ NxNeN] error while decoding MB N N"
+      ]
+     }
+    },
+    "right": {
+     "presente": true,
+     "path": "asmile-001/session_20261030_180225_right.h264",
+     "bytes": 26193920,
+     "sha256": "ce9575e3deb66c29ee125b75af64b9cc853f5cefe13a69296abd3e7d9541c1b2",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 6226,
+     "fps_nominale": 15,
+     "durata_s": 415.1,
+     "frame_ffprobe_count_packets": 6226,
+     "frame_decodificati_count_frames": 6226,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 0
+     }
+    }
+   },
+   "movimento_video": {
+    "samples": 208,
+    "mad_med": 31.37,
+    "mad_p90": 43.46,
+    "mean_luma": 97.6,
+    "luma_min": 66.5
+   },
+   "classe": "buona",
+   "data_reale": "2026-10-30 18:02:25-18:09:24 (clock coerente: limiter e training CSV coincidono, fine ~18:09:21)",
+   "sensori": {
+    "file": "training_20261030.csv seg 3 + speed_limiter/limiter_20261030_180224.csv",
+    "righe_training": 3895,
+    "righe_limiter": 4172,
+    "gps_fix": 3451,
+    "gps_speed_max_ms": 3.316,
+    "posizione": "Tirano ~46.2175N 10.1743E"
+   },
+   "motivo": "UNICA sessione del 30/10 con moto reale: diff video mediano 31/255, GPS fix, accel std 0.25 g, 415 s, L/R 6236/6226 frame. Attenzione: enc_speed del limiter (max 25 m/s) non attendibile, circonferenza ruota allora placeholder 2.10 m (tarata il 7/11).",
+   "difetti": "ffprobe: macroblock corrotto in sx (1 evento); dx pulito. Frame sx 6236 decodificati = packets."
+  },
+  "20261030_182802": {
+   "sessione": "asmile-001/session_20261030_182802",
+   "cam": {
+    "left": {
+     "presente": true,
+     "path": "asmile-001/session_20261030_182802_left.h264",
+     "bytes": 9768960,
+     "sha256": "9a7eb020a60c99c3088077b388346561c893807818de802c8636b4e931c4c9e3",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 1696,
+     "fps_nominale": 15,
+     "durata_s": 113.1,
+     "frame_ffprobe_count_packets": 1696,
+     "frame_decodificati_count_frames": 1696,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxNaeN] out of range intra chroma pred mode",
+       "[hN @ NxNaeN] error while decoding MB N N"
+      ]
+     }
+    },
+    "right": {
+     "presente": true,
+     "path": "asmile-001/session_20261030_182802_right.h264",
+     "bytes": 10215424,
+     "sha256": "cb79f50baacf022edf74378fbee03b28cfcb729865fec1ce30895957c511f23c",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 1696,
+     "fps_nominale": 15,
+     "durata_s": 113.1,
+     "frame_ffprobe_count_packets": 1696,
+     "frame_decodificati_count_frames": 1696,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxNdN] corrupted macroblock N N (total_coeff=-N)",
+       "[hN @ NxNdN] error while decoding MB N N"
+      ]
+     }
+    }
+   },
+   "movimento_video": {
+    "samples": 57,
+    "mad_med": 0.17,
+    "mad_p90": 0.24,
+    "mean_luma": 81.8,
+    "luma_min": 81.2
+   },
+   "classe": "bici ferma",
+   "data_reale": "2026-10-30, ora incerta (mtime 18:29:57 coerente con 109 s di video ma dopo il reset clock; inferenza)",
+   "sensori": {
+    "file": null,
+    "righe": 0
+   },
+   "motivo": "scena statica (diff 0.17), 113 s, L/R 1696/1696, metadata senza end_time. Nessuna CSV sensori nel periodo (la training del 30/10 si ferma a 18:10 / 18:00:48 clock finto)."
+  },
+  "20261030_184541": {
+   "sessione": "asmile-001/session_20261030_184541",
+   "cam": {
+    "left": {
+     "presente": true,
+     "path": "asmile-001/session_20261030_184541_left.h264",
+     "bytes": 0,
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "apribile_ffprobe": false,
+     "errore": "file vuoto"
+    },
+    "right": {
+     "presente": true,
+     "path": "asmile-001/session_20261030_184541_right.h264",
+     "bytes": 0,
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "apribile_ffprobe": false,
+     "errore": "file vuoto"
+    }
+   },
+   "movimento_video": null,
+   "classe": "incompleta",
+   "data_reale": "2026-10-30 ~18:45:41 (clock del boot dopo salto)",
+   "sensori": {
+    "file": null,
+    "righe": 0
+   },
+   "motivo": "video L/R 0 byte, metadata.json 0 byte: avvio senza scrittura (boot/spegnimento). Nulla da recuperare."
+  },
+  "20261107_165926": {
+   "sessione": "asmile-001/session_20261107_165926",
+   "cam": {
+    "left": {
+     "presente": true,
+     "path": "asmile-001/session_20261107_165926_left.h264",
+     "bytes": 3325952,
+     "sha256": "9e826508d5fce1242866eb3e87e91987af3a0096c065109b9739edde85698b21",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 789,
+     "fps_nominale": 15,
+     "durata_s": 52.6,
+     "frame_ffprobe_count_packets": 789,
+     "frame_decodificati_count_frames": 789,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxNeN] corrupted macroblock N N (total_coeff=-N)",
+       "[hN @ NxNeN] error while decoding MB N N"
+      ]
+     }
+    },
+    "right": {
+     "presente": true,
+     "path": "asmile-001/session_20261107_165926_right.h264",
+     "bytes": 3346432,
+     "sha256": "2c472b29744ff2996a52bc0a3940b5c0be9f291b6778fbfad3b5cfde36ebfbad",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 789,
+     "fps_nominale": 15,
+     "durata_s": 52.6,
+     "frame_ffprobe_count_packets": 789,
+     "frame_decodificati_count_frames": 789,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxN] cbp too large (N) at N N",
+       "[hN @ NxN] error while decoding MB N N"
+      ]
+     }
+    }
+   },
+   "movimento_video": {
+    "samples": 27,
+    "mad_med": 0.44,
+    "mad_p90": 32.54,
+    "mean_luma": 60.7,
+    "luma_min": 1.4
+   },
+   "classe": "buona",
+   "data_reale": "2026-11-07 16:59:26-17:00:27 (clock a posto)",
+   "sensori": {
+    "file": "training_data_pi/training_20261107.csv (finestra)",
+    "righe": 571,
+    "gps_fix": 571,
+    "gps_speed_max_ms": 1.058,
+    "nota": "CSV con 7075 byte NUL (scrittura interrotta), righe valide lette"
+   },
+   "motivo": "L/R 789/789 frame (52.6 s su 60.1 dichiarati), sync 0/-17 us. Inizio buio (luma min 1.4, esposizione che si assesta) poi luminoso. Moto lento (GPS max 1.06 m/s). pts_left/right.txt troncati (425 righe su 789)."
+  },
+  "20261107_170056": {
+   "sessione": "asmile-001/session_20261107_170056",
+   "cam": {
+    "left": {
+     "presente": true,
+     "path": "asmile-001/session_20261107_170056_left.h264",
+     "bytes": 8589312,
+     "sha256": "cff64e33950c9491dee99a1e7aa4eb84917e934851d9238d0742531e9efa58e9",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 2007,
+     "fps_nominale": 15,
+     "durata_s": 133.8,
+     "frame_ffprobe_count_packets": 2007,
+     "frame_decodificati_count_frames": 2007,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxNdN] corrupted macroblock N N (total_coeff=-N)",
+       "[hN @ NxNdN] error while decoding MB N N"
+      ]
+     }
+    },
+    "right": {
+     "presente": true,
+     "path": "asmile-001/session_20261107_170056_right.h264",
+     "bytes": 8572928,
+     "sha256": "c6ccbc22610b8a743b1a8e2892e6c8219a4aa198d6fe52158f87a9e3b8f8da9b",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 2006,
+     "fps_nominale": 15,
+     "durata_s": 133.7,
+     "frame_ffprobe_count_packets": 2006,
+     "frame_decodificati_count_frames": 2006,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 0
+     }
+    }
+   },
+   "movimento_video": {
+    "samples": 67,
+    "mad_med": 0.27,
+    "mad_p90": 0.28,
+    "mean_luma": 1.6,
+    "luma_min": 1.4
+   },
+   "classe": "incompleta",
+   "data_reale": "2026-11-07 17:00:56-17:03:21",
+   "sensori": {
+    "file": "training_data_pi/training_20261107.csv (finestra)",
+    "righe": 1357,
+    "gps_fix": 1357,
+    "gps_speed_max_ms": 2.841
+   },
+   "motivo": "video quasi NERO per tutta la sessione (luma media 1.6/255) con la bici in movimento (GPS 2.8 m/s): obiettivo coperto o esposizione rotta. Frame L/R 2007/2006 presenti ma inutilizzabile per visione. pts troncati (1640 su 2007)."
+  },
+  "20261108_163453": {
+   "sessione": "asmile-001/session_20261108_163453",
+   "cam": {
+    "left": {
+     "presente": true,
+     "path": "asmile-001/session_20261108_163453_left.h264",
+     "bytes": 10301440,
+     "sha256": "fcaa04b0a8d81300e532c7f4c91117a6c5994106679f262094b4ae7806d04a41",
+     "apribile_ffprobe": true,
+     "codec": "h264",
+     "risoluzione": "1280x800",
+     "frame": 2281,
+     "fps_nominale": 15,
+     "durata_s": 152.1,
+     "frame_ffprobe_count_packets": 2281,
+     "frame_decodificati_count_frames": 2281,
+     "frame_ricontati_uguali": true,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxN] corrupted macroblock N N (total_coeff=-N)",
+       "[hN @ NxN] error while decoding MB N N"
+      ]
+     }
+    },
+    "right": {
+     "presente": false,
+     "file_destro_assente": true,
+     "pts_right_txt_bytes": 0,
+     "frames_right_csv": "solo header (55 byte)",
+     "cam_right_log": "203608 byte di errori RPiSync \"Unable to set socket options\"",
+     "metadata_frame_right": 0,
+     "nota": "esiste solo session_20261108_163453/video_left.h264 (stesso sha256 di session_..._left.h264); nessun video destro in nessuna forma"
+    }
+   },
+   "movimento_video": {
+    "samples": 77,
+    "mad_med": 1.5,
+    "mad_p90": 21.8,
+    "mean_luma": 107.9,
+    "luma_min": 85.8
+   },
+   "classe": "incompleta",
+   "data_reale": "2026-11-08 16:34:53-16:37:37 CET (confermato: gps_utc 15:34:53 = wall-1h)",
+   "sensori": {
+    "file": "_sensors/sensors_20261108_160150.csv (finestra)",
+    "righe": 8200,
+    "gps_fix": 1640,
+    "gps_speed_max_ms": 1.083,
+    "frames_left.csv_righe": 2292,
+    "frames_right.csv": "solo header"
+   },
+   "motivo": "camera destra morta: cam_right.log = errori RPiSync \"Unable to set socket options\", nessun video_right, pts_right 0 byte, frames_right.csv vuoto. Solo sinistra (2281 frame, 152 s): niente stereo, niente depth. video_left.h264 interno ha lo stesso sha256 di session_..._left.h264 (stesso file, 2 copie)."
+  },
+  "20261107_145051": {
+   "sessione": "asmile-001/session_20261107_145051",
+   "cam": {
+    "left": {
+     "presente": true,
+     "path": "asmile-001/session_20261107_145051_left.h264",
+     "bytes": 19525632,
+     "sha256": "562b51d902c5fe3073a28864b5c41c3adec03b6cf5b5a19b4f072ae31d8befc2",
+     "risoluzione": "1280x800",
+     "frame_decodificati_count_frames": 4868,
+     "fps_nominale": 15,
+     "durata_s": 324.5,
+     "errori_decode": {
+      "eventi": 0
+     }
+    },
+    "right": {
+     "presente": true,
+     "path": "asmile-001/session_20261107_145051_right.h264",
+     "bytes": 19873792,
+     "sha256": "cba0c12033e1757440b71ae08b4e1850de963dba3d81b279ad0492ec870bbf2b",
+     "risoluzione": "1280x800",
+     "frame_decodificati_count_frames": 4861,
+     "fps_nominale": 15,
+     "durata_s": 324.1,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxNeN] corrupted macroblock N N (total_coeff=-N)",
+       "[hN @ NxNeN] error while decoding MB N N"
+      ]
+     }
+    }
+   },
+   "movimento_video": {
+    "left": {
+     "samples": 163,
+     "mad_med": 21.21,
+     "mad_p90": 42.98,
+     "mean_luma": 84.9,
+     "luma_min": 63.5
+    },
+    "right": {
+     "samples": 163,
+     "mad_med": 17.12,
+     "mad_p90": 37.05,
+     "mean_luma": 92.5,
+     "luma_min": 79.1
+    }
+   },
+   "classe": "buona",
+   "data_reale": "2026-11-07 14:50:51-14:56:18 (clock a posto; metadata end_time ok)",
+   "sensori": {
+    "file": "_sensors/speed_limiter/limiter_20261107_145050.csv + training_20261107.csv (finestra)",
+    "righe_limiter": 3258,
+    "righe_training": 3044,
+    "gps_fix_rows": 2962,
+    "limiter_gps_speed_max_ms": 4.542,
+    "limiter_enc_speed_p50_ms": 2.618,
+    "training_gps_speed_max_ms": 1.004,
+    "nota": "training CSV e limiter discordano sulla velocita GPS (1.0 vs 4.5 m/s); enc_speed non tarato quel giorno (circonferenza placeholder, tarata dopo): usare GPS/limiter con cautela"
+   },
+   "motivo": "moto reale: video con forte movimento (diff mediano 21/255 sx, 17 dx), accel std 0.22 g, GPS 4.5 m/s. 4868/4861 frame (324 s su 327 dichiarati; 7 frame di differenza sx/dx). Sync solo software_timestamp (non rpicam sync). 1 macroblock corrotto in dx."
+  },
+  "20261107_161628": {
+   "sessione": "asmile-001/session_20261107_161628",
+   "cam": {
+    "left": {
+     "presente": true,
+     "path": "asmile-001/session_20261107_161628_left.h264",
+     "bytes": 10366976,
+     "sha256": "0aa81f9abd070346219dea5ae7c7c59f8a0764050c02aa5da4f5d2c0308105a7",
+     "risoluzione": "1280x800",
+     "frame_decodificati_count_frames": 2278,
+     "fps_nominale": 15,
+     "durata_s": 151.9,
+     "errori_decode": {
+      "eventi": 0
+     }
+    },
+    "right": {
+     "presente": true,
+     "path": "asmile-001/session_20261107_161628_right.h264",
+     "bytes": 10608640,
+     "sha256": "dab1260cf0f1ec26982e70403edd771bac1436c6297ccc20dd26940a5057e28e",
+     "risoluzione": "1280x800",
+     "frame_decodificati_count_frames": 2277,
+     "fps_nominale": 15,
+     "durata_s": 151.8,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxNfN] corrupted macroblock N N (total_coeff=-N)",
+       "[hN @ NxNfN] error while decoding MB N N"
+      ]
+     }
+    }
+   },
+   "movimento_video": {
+    "left": {
+     "samples": 76,
+     "mad_med": 2.28,
+     "mad_p90": 19.5,
+     "mean_luma": 111.6,
+     "luma_min": 89.6
+    },
+    "right": {
+     "samples": 76,
+     "mad_med": 2.12,
+     "mad_p90": 17.53,
+     "mean_luma": 108.6,
+     "luma_min": 91.0
+    }
+   },
+   "classe": "bici ferma",
+   "data_reale": "2026-11-07 16:16:28-16:19:03 (clock a posto)",
+   "sensori": {
+    "file": "_sensors/speed_limiter/limiter_20261107_161627.csv + training_20261107.csv (finestra)",
+    "righe_limiter": 1532,
+    "righe_training": 1443,
+    "gps_fix_rows": 1226,
+    "limiter_gps_speed_max_ms": 0.816,
+    "limiter_enc_speed_max_ms": 0.832,
+    "training_gps_speed_max_ms": 0.036,
+    "accel_std_g": 0.05
+   },
+   "motivo": "velocita max 0.8 m/s (p50 0): bici ferma o spinta a mano; il video ha qualche cambio di scena (diff mediano 2.3, p90 19.5) ma niente guida. 2278/2277 frame (152 s su 155). Sync software_timestamp. 1 macroblock corrotto in dx."
+  },
+  "20261108_164438": {
+   "sessione": "asmile-001/session_20261108_164438",
+   "cam": {
+    "left": {
+     "presente": true,
+     "path": "asmile-001/session_20261108_164438/video_left.h264",
+     "bytes": 22810624,
+     "sha256": "8ee1b7c116dedbf82363c8f84d10c7b56514cd403ddf2d8a98be827048e9c80f",
+     "risoluzione": "1280x800",
+     "frame_decodificati_count_frames": 5176,
+     "fps_nominale": 15,
+     "durata_s": 345.1,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxN] out of range intra chroma pred mode",
+       "[hN @ NxN] error while decoding MB N N"
+      ]
+     }
+    },
+    "right": {
+     "presente": true,
+     "path": "asmile-001/session_20261108_164438/video_right.h264",
+     "bytes": 23547904,
+     "sha256": "b76b0776517d23931c0a32bef76fe67ac65cd0c1d66325681a69cfc97ccc2f52",
+     "risoluzione": "1280x800",
+     "frame_decodificati_count_frames": 4561,
+     "fps_nominale": 15,
+     "durata_s": 304.1,
+     "errori_decode": {
+      "eventi": 1,
+      "tipi": [
+       "[hN @ NxNceN] negative number of zero coeffs at N N",
+       "[hN @ NxNceN] error while decoding MB N N"
+      ]
+     }
+    }
+   },
+   "movimento_video": {
+    "left": {
+     "samples": 173,
+     "mad_med": 0.17,
+     "mad_p90": 28.5,
+     "mean_luma": 69.6,
+     "luma_min": 65.7
+    },
+    "right": {
+     "samples": 153,
+     "mad_med": 0.22,
+     "mad_p90": 0.4,
+     "mean_luma": 80.4,
+     "luma_min": 77.4
+    }
+   },
+   "classe": "incompleta",
+   "data_reale": "2026-11-08 16:44:38-16:50:34 CET (gps_utc 15:44:38 = wall-1h)",
+   "nota_file": "session_20261108_164438_left/right.h264 a radice sono copie byte-identiche (cmp) dei video_left/right.h264 interni, inode diversi; sha256 calcolato sui file interni",
+   "sensori": {
+    "file": "_sensors/sensors_20261108_160150.csv (finestra)",
+    "righe": 17797,
+    "gps_fix_rows": 3555,
+    "gps_speed_max_ms": 3.195,
+    "lim_speed_max_ms": 3.103,
+    "frames_left.csv_righe": 5184,
+    "frames_right.csv_righe": 4564,
+    "pts_left_righe": 4991,
+    "pts_right_righe": 4247
+   },
+   "difetti": {
+    "frame_metadata": {
+     "left": 5184,
+     "right": 4564,
+     "differenza": 620,
+     "differenza_s": 41.3
+    },
+    "frame_decodificati": {
+     "left": 5176,
+     "right": 4561,
+     "persi_rispetto_metadata": {
+      "left": 8,
+      "right": 3
+     }
+    },
+    "sync": "right sfasata -41.366 s (sync_achieved.right=-41366133us; left 0us): la camera destra e partita ~41 s dopo la sinistra; cam_right.log: RPiSync \"Unable to set socket options\" ripetuto, sync mai agganciata",
+    "buco_stereo": "tutto il movimento e nei primi ~40 s della sinistra (secondi 0-39, diff>5); la destra non mostra alcun movimento in 305 s (diff max 4.9): i frame in moto non hanno controparte destra. Stereo utilizzabile solo allineando i pts e comunque su scena ferma",
+    "pts_troncati": "pts_left 4991/5184, pts_right 4247/4564"
+   },
+   "motivo": "buco/difetto sync: dx sfasata di -41 s, 620 frame in meno, nessun frame destro durante il movimento. Utile solo mono sx per i primi 40 s."
+  }
+ },
+ "sessione_asmile_logger": {
+  "sessione": "asmile-logger/calib_20261108_160535 (+ clip_20261108_160535_*.h264 a radice asmile-logger/)",
+  "classe": "buona",
+  "data_reale": "2026-11-08 16:05:35 -> ~17:08 (frames.csv 3771.7 s; sensors wall 16:05:37->17:05:37, solo t_ms+wall: il logger non ha IMU/GPS)",
+  "clip_radice": {
+   "n": 114,
+   "frame_totali": 53010,
+   "frame_per_clip": [
+    465
+   ],
+   "risoluzione": "2560x800 SBS",
+   "fps_nominale": 15,
+   "bytes": 311845160,
+   "tutte_apribili": true
+  },
+  "copie_in_calib": {
+   "n": 42,
+   "clip": "00054-00095",
+   "identiche_sha256_alle_radice": true,
+   "nota": "COPIE (duplicati interni, stessi sha256)"
+  },
+  "metro_62-67_sbs.h264": {
+   "bytes": 18421609,
+   "sha256": "51fbd2f1f0da52b23b18e02e74c04741f2a6a1332dec95fc033b8485b5781eeb",
+   "frame": 2790
+  },
+  "frames_csv": {
+   "righe": 56580,
+   "t_ms_passo": 67,
+   "salti": 0,
+   "durata_s": 3771.7
+  },
+  "buchi": "frames.csv copre 56580 frame (121.7 clip) ma i video sono 114 clip x 465 = 53010: mancano ~3570 frame (clip 00114-00121 non scaricate); Pi offline, non recuperabili ora",
+  "contenuto": "clip 0-41 NERE (luma ~0.1), 42-66 con movimento (scacchiera/misure), 72 buia, 78-113 scena fissa luma ~91",
+  "motivo": "calibrazione/banco fisso, non guida: utile per calib (clip 42-67 e metro); non per training guida."
+ },
+ "clip_asmile_logger": {
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00054.h264": {
+   "bytes": 2742977,
+   "sha256": "5a5d91cec52b8f2e9eb26c72b072760fe6309e5b1456754a7200e0383d460e79",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00055.h264": {
+   "bytes": 2233810,
+   "sha256": "244a2926e7ad3f8c4b857721ec02d5e7d974f9776126887ad05a2a508463a447",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00056.h264": {
+   "bytes": 2261379,
+   "sha256": "1e101c4623ad0a57390699a8457af585d01cd395fa495bbaab7da47ef49c32b8",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00057.h264": {
+   "bytes": 2506033,
+   "sha256": "f123e013071fd1b86814aace6809a4bb2d5bf708adb086b9628e8c58c03d89a8",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00058.h264": {
+   "bytes": 2302988,
+   "sha256": "e0e41890373d42678f75010a9489d848d4c516a4d085a4cd2c726507988c6bf2",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00059.h264": {
+   "bytes": 2304120,
+   "sha256": "0587f7a1a009dee9981cbc433eccdc2064c1b644718232de7306f11b116acb17",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00060.h264": {
+   "bytes": 2310525,
+   "sha256": "43110ae6538ac7e7e9253b217afc25166fe479e95c257ef44bd294cb48b90ff3",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00061.h264": {
+   "bytes": 2382489,
+   "sha256": "b387b7b3e5eb3e6e97ce05b15aeff8b63f66e63114c9cd45b3d0ec1acfcf1c60",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00062.h264": {
+   "bytes": 3106695,
+   "sha256": "8c1c7ed6ac724d7e922ecfc4deba48c34fcd63a736387b6593b7f0b5ff4fa8a6",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00063.h264": {
+   "bytes": 2059062,
+   "sha256": "6dc1f537f02627dc26b49f723c534ac221612c5e84772430818d6ec3c66d4e71",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00064.h264": {
+   "bytes": 2782019,
+   "sha256": "2807d3a4c880d6d189a1d2d8dc2ecf78ac0448d09ac70e9c0a31ff1d4780c02f",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00065.h264": {
+   "bytes": 3002324,
+   "sha256": "496b74f6eb3a99e07fd4f8e3a07e0f40139982222f03862dc02e057654b7b3f7",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00066.h264": {
+   "bytes": 3445752,
+   "sha256": "9e76b65b826a3cd4ddad810469b48f5a8b3c0ccd11f7835f1dcea0829efe63bf",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00067.h264": {
+   "bytes": 4025757,
+   "sha256": "c2c34b882512558483f03bc9e802bf40c1ed152e40e68690fa973e981b4dfda2",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00068.h264": {
+   "bytes": 6330694,
+   "sha256": "9072b8a5ed572adda0261455d69e87754aa474e40535225dd3b8c56b8ff6eb44",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00069.h264": {
+   "bytes": 6099867,
+   "sha256": "b3a43b22e896e57f972b50bad404c031955ac1df11dfc64684c07c06ec725445",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00070.h264": {
+   "bytes": 5526953,
+   "sha256": "39aa054f3b641b06d67510078af475e5a01e5fa5760ae0d57ea2917dc74f9a8c",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00071.h264": {
+   "bytes": 3572237,
+   "sha256": "7954c5190d1af72494470314dc07cc41758e62e1bd9743a86f194fab2fd4b691",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00072.h264": {
+   "bytes": 476584,
+   "sha256": "3bd387086e2c0149f234d51b6e964d8c2eb127212f8aae28a18b7d5c4401bacb",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00073.h264": {
+   "bytes": 488955,
+   "sha256": "1f08a72a5310007d8d387c91ca2115f5c5d9292b6dbc5309e264cd2a93900fdc",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00074.h264": {
+   "bytes": 479911,
+   "sha256": "c998b2c0a0c864a761be7f46214fe84de65a0048e3defa00797a60a62b113fba",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00075.h264": {
+   "bytes": 470625,
+   "sha256": "912feca6a43dbf9187ae582f2d66e99c14cbe0330b194d42fbc49a1cb4005bb3",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00076.h264": {
+   "bytes": 461431,
+   "sha256": "649e3e55c5db7f0b23480538826b346253b0a5349ad583431f56b0e4b9594596",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00077.h264": {
+   "bytes": 2047932,
+   "sha256": "2015aacd60e1250bdb3b02e28771a603b2d2047a990bf860e82fc062c3c8ddb6",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00078.h264": {
+   "bytes": 2619737,
+   "sha256": "12b89a8f166031b0d96d783d4ed37ad0cb6c110ea7525304b80f059ad0001d4e",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00079.h264": {
+   "bytes": 2647916,
+   "sha256": "7fedc484900e761549f2b7def3f8c822b35dc0d6b8ff246f3c78d2b684828a89",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00080.h264": {
+   "bytes": 2703123,
+   "sha256": "cbae3d21d3bb86d478bc43e7d5068aa835ee97f4d21abf894847526fc21e5164",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00081.h264": {
+   "bytes": 2763431,
+   "sha256": "51be00a5f250c8f52e34a72570019c8d417dcc674f8c5f4febae1bf5492db712",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00082.h264": {
+   "bytes": 2829529,
+   "sha256": "bb746c0f1baf2f9c12b47b82d6befbb6b22ffa36c873954d2d523207878247d5",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00083.h264": {
+   "bytes": 2883469,
+   "sha256": "2e2534e49fc040af6b9d3647bd78fa3091293bfbb46760603dce94a893f38a63",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00084.h264": {
+   "bytes": 2927175,
+   "sha256": "fc87660d301bb14277ed06c88c7775feecb39e64e81c15d639005fc4362548ee",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00085.h264": {
+   "bytes": 2958658,
+   "sha256": "2144a985de1f0e19149c6b200cdc920d844f3f45afccbb43cff15dcfd4e4b39b",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00086.h264": {
+   "bytes": 2970745,
+   "sha256": "0dd5f8be64d1cba8a614613db1c74dacd63b3b9722d1b07daa2f802134b614b2",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00087.h264": {
+   "bytes": 2979414,
+   "sha256": "2f788f950f6bf4f24bc80d2571546c310c9aec3420e4008041b85004f05d45e4",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00088.h264": {
+   "bytes": 2961507,
+   "sha256": "e85702fca9208b235ea20a97ef33d2b1bcb101e2cae4a8840915ab1b30c518bc",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00089.h264": {
+   "bytes": 2985727,
+   "sha256": "28fe1f82a5fe4594ef352a1cc0f4c09aaa023f1b7a2ad9ac132bac332dd025b4",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00090.h264": {
+   "bytes": 2993816,
+   "sha256": "40d0aa9d7ea18d1937d07a9318b4e9f03c4ad183cd4160fbe64675fd7e868b6e",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00091.h264": {
+   "bytes": 2996031,
+   "sha256": "5cd88e6b3d2a96deda68b432f8db03c2ea6e1890b3adfc99115920ecf38b0dd0",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00092.h264": {
+   "bytes": 3006437,
+   "sha256": "31720ecf75ea0517386922f766dc755bedc6552bcc94a786ff1214d074eba69e",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00093.h264": {
+   "bytes": 3002459,
+   "sha256": "ab6910273f77d2f9ab322576fbe48a29b689f8fe3e26bca2e354dbda4925691f",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00094.h264": {
+   "bytes": 3011584,
+   "sha256": "3b55e5af1bdc0540d301b24ed8240800a82d33b09e3290dae247fbb1f12e7170",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/clip_20261108_160535_00095.h264": {
+   "bytes": 3007795,
+   "sha256": "2bed1f4cc0b1805c1887e16db4eba88097d506bc7989da5a9a5776df1e0bd29b",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/calib_20261108_160535/metro_62-67_sbs.h264": {
+   "bytes": 18421609,
+   "sha256": "51fbd2f1f0da52b23b18e02e74c04741f2a6a1332dec95fc033b8485b5781eeb",
+   "frame": 2790,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00000.h264": {
+   "bytes": 2007905,
+   "sha256": "51191aa4e90065c5431a96a887884c70fc16e678df475e91f9b16875a03e1800",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00001.h264": {
+   "bytes": 2016759,
+   "sha256": "edcd93e274f1f35dc4b50e5148ce75ae9a9551a197ab20dd5dc7d591ae2fd1ae",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00002.h264": {
+   "bytes": 2005154,
+   "sha256": "61f1703c038eae0d5026c1e4d7da6a62567054731355a98c59bf543bcedaf1cf",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00003.h264": {
+   "bytes": 1991256,
+   "sha256": "33c27238e54f5f2e515682a1351593ce33c71d6e5fd5dc0839943d53a233c11c",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00004.h264": {
+   "bytes": 1981892,
+   "sha256": "612d8c58d702b340c943d6344242aeeb2152bb844f8bd73e50102d262c90cf89",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00005.h264": {
+   "bytes": 1981058,
+   "sha256": "5a3f0c08d982f0ee7a8742519e48fc1e780090ca44e0d36ba10be4fbbec79c0c",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00006.h264": {
+   "bytes": 1966940,
+   "sha256": "e23e703c6def0560165c029c84cc535a82ec0204113cd9a00fe05f79db1201b4",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00007.h264": {
+   "bytes": 1973378,
+   "sha256": "4e3357c510ad583dbd21b06b031f51c8b2bf903f93b60e662f21d2c44c1eb0c7",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00008.h264": {
+   "bytes": 1966941,
+   "sha256": "5fed1de6ef4e1a20f1c028b347d3fdeebc8926ddfe06a54a6c2573687f93704d",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00009.h264": {
+   "bytes": 1964505,
+   "sha256": "d6323a58e52a62005b74842d690766de0a2088fedcd5a5b3681792e04aa2b0d6",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00010.h264": {
+   "bytes": 1964426,
+   "sha256": "011a6d50ebf064ea62d9b8233b6071c49dd10c3c7df2d45409db50e2ecafdf5e",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00011.h264": {
+   "bytes": 1967496,
+   "sha256": "44169ab3753bb7f0ff18162114b4d33b7bfea272585a7bb31e6a94e3e0a092ca",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00012.h264": {
+   "bytes": 1965232,
+   "sha256": "46f05bc4d42f42cab6177adb214c6701ad367d5f6d154fdb02d7d5178367758c",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00013.h264": {
+   "bytes": 1971474,
+   "sha256": "88532936909bb18733339012c9f82f9b790daa28387dbbaaca047fa62659be8b",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00014.h264": {
+   "bytes": 1967097,
+   "sha256": "d8dbc5e6dbc243c0316c4ad5c70c3bd0783c1880ebf3eeb00a707a24b1c92073",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00015.h264": {
+   "bytes": 1963119,
+   "sha256": "81900b9574829b4cf427a538bfa5352db5c40dc97ebe9c9ee606b9957d3eb19f",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00016.h264": {
+   "bytes": 1965075,
+   "sha256": "be13d7badd79b09aee6551544089feb7349d4edff7b87e4f0be492e99a53f33b",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00017.h264": {
+   "bytes": 1945628,
+   "sha256": "35b0e4f26b315553fe070d4fc5e0c7bad8153ea9b6fcac4dac54fe24a59118e7",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00018.h264": {
+   "bytes": 1952424,
+   "sha256": "02b2f3f7711862ae8f3228f61d1e428ca37612426c5a956478dc5e3e125bdbdb",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00019.h264": {
+   "bytes": 1956571,
+   "sha256": "93946ed3ed89f75b671bce2c426f7ba5135bf4469abe614e0842a679eb060783",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00020.h264": {
+   "bytes": 1958624,
+   "sha256": "842683c56799e2c167db2b9280ec199162bcd0e6051f6c032f70ad3317839437",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00021.h264": {
+   "bytes": 1957410,
+   "sha256": "aa20c3a8ad8c74e12d49299fc9dab2a6831016b43c19c7b00b798a0b1d90b1d1",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00022.h264": {
+   "bytes": 1963251,
+   "sha256": "791c90328fee086274daee8741717d8cbc7daf8f19899491e2c2d51426794da1",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00023.h264": {
+   "bytes": 1966533,
+   "sha256": "156518ac6f804024ec7d5143e4d4ea391cdde59255ab86f8f5304a519a3671d0",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00024.h264": {
+   "bytes": 1956800,
+   "sha256": "0ddc9f98394f4592820fcd9e81e91b3e71316d9d6d61af6ae807be16a87efd25",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00025.h264": {
+   "bytes": 1968555,
+   "sha256": "8f52f4dc8abe01f032d073fe094475ec6b84517fc39181f5991d61116cb38436",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00026.h264": {
+   "bytes": 1944869,
+   "sha256": "c3f565e0a3af95cac2fc035f1f685328a48c24757ce2624c112c8b554034021d",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00027.h264": {
+   "bytes": 1956580,
+   "sha256": "571aabc6c19b10f7fe8290074670b1b9329eb586763144a0c25b10285d23a959",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00028.h264": {
+   "bytes": 1950900,
+   "sha256": "43cc8cda3dfca8678162f89b1b84de804604c47f3285dd8f52e4a29b07948d7b",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00029.h264": {
+   "bytes": 1948087,
+   "sha256": "752f403c9211695b1c6e6246be6ce2d6d4770411ef25ea4d5a347e337af4e7ef",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00030.h264": {
+   "bytes": 1947745,
+   "sha256": "9bf26b20eac850cf1bbb77fca7888b628fd9d47c04dbb6f456ef9bf237b83a71",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00031.h264": {
+   "bytes": 1977007,
+   "sha256": "21af561f053dc924f8dac94821edefe974d59b3eb29b5c62895a770383c6baf3",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00032.h264": {
+   "bytes": 1959667,
+   "sha256": "837de48bb83e82510a59473c9557dbb31e4239b159e971e3e4eed10d0077915f",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00033.h264": {
+   "bytes": 1944089,
+   "sha256": "ffa8d5c012ce9e1d38c3a3ced1969ae9ba561698c996dc5bcda593c567e3f2a7",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00034.h264": {
+   "bytes": 1950819,
+   "sha256": "ff167b761341b1cd67a1f960b13e670311e3eff5a59378436aa34efcfa6e8cc9",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00035.h264": {
+   "bytes": 1953336,
+   "sha256": "b9c65fc937abd67f7fa599c82d1286af98697d25f189c93bcd140504fcb5841b",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00036.h264": {
+   "bytes": 1950737,
+   "sha256": "6641885c0dece754d8e7b998223313d04b518829e6f12ebb5112a736554bbb0f",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00037.h264": {
+   "bytes": 1939725,
+   "sha256": "dffd29038fca9995188c125250c5a003ef77a1d9fa08c593b8c6e3e7ab4bfb54",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00038.h264": {
+   "bytes": 3084145,
+   "sha256": "425c801b93949db445e15b97e91a2006557c7c1528e01ea30decb075d97e7b4b",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00039.h264": {
+   "bytes": 3280367,
+   "sha256": "3c4af9739a63e8430f69b1335b5852b2353e04ae9771ff61d4c8c70c9cd02f21",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00040.h264": {
+   "bytes": 2735483,
+   "sha256": "bdb432a62165514daf610a3d8351056f6d6cfb886d8fa3db03f6d8eaca9b3bd2",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00041.h264": {
+   "bytes": 2547810,
+   "sha256": "768ba0d2629be3cf92134fca13e365e423a37ab3521b1b8cbf10398302c5f3ae",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00042.h264": {
+   "bytes": 2523903,
+   "sha256": "46b49e6e54d1a4d788c79e55f9a7feec75419762e47ae3bcfad1df6037df7525",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00043.h264": {
+   "bytes": 2516050,
+   "sha256": "0d35d9bd1ed0a4cda05bc5d3926fb001965d6d833c5bd5f1321ee4beb0395a66",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00044.h264": {
+   "bytes": 2506612,
+   "sha256": "1199b050f96f866499fe133d57e34bc6ead81c045ac9bd138192354d8ab25421",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00045.h264": {
+   "bytes": 5657286,
+   "sha256": "1c0937bb2a2b6af634c14e16d0489b0bb66c5e0dc6d72ddeb576007d7470fdf7",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00046.h264": {
+   "bytes": 5363410,
+   "sha256": "5bed81684ca3a2cd79b8e7f69843d18e39e0a56a4fbcb6cbe8050bcca51ce36d",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00047.h264": {
+   "bytes": 5519646,
+   "sha256": "88251753a649869a00c9512887fcff653db9ddc6fc3b6a79df51086b4114fc8c",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00048.h264": {
+   "bytes": 5303531,
+   "sha256": "c3ec1bd13f637faad721c7a8e98496746874d980d9ddc51799004ae7ba41d799",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00049.h264": {
+   "bytes": 5970333,
+   "sha256": "2c092efd394d4864e448d79ff36cad793aae021fcdc1cb383c553e49271cd159",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00050.h264": {
+   "bytes": 4070493,
+   "sha256": "47bfaf12d39242d73e99fcda68339c49ae38aa914d00d44c2566d4229adab9f9",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00051.h264": {
+   "bytes": 5386081,
+   "sha256": "7024b99bb1fa96f7cc9bd2fdd4f61b34b54ffadac7352b1966e5ea64e8c25399",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00052.h264": {
+   "bytes": 5610222,
+   "sha256": "ef8ad6efa7fe60068ba8fd406910fdef948f9bf12d21a4cbe432b7cb079ff5e8",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00053.h264": {
+   "bytes": 3167655,
+   "sha256": "4a9731d34803dda3117c1de0f72c94a57e96b427b82e5a2abef6bec0dac0e224",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00054.h264": {
+   "bytes": 2742977,
+   "sha256": "5a5d91cec52b8f2e9eb26c72b072760fe6309e5b1456754a7200e0383d460e79",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00055.h264": {
+   "bytes": 2233810,
+   "sha256": "244a2926e7ad3f8c4b857721ec02d5e7d974f9776126887ad05a2a508463a447",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00056.h264": {
+   "bytes": 2261379,
+   "sha256": "1e101c4623ad0a57390699a8457af585d01cd395fa495bbaab7da47ef49c32b8",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00057.h264": {
+   "bytes": 2506033,
+   "sha256": "f123e013071fd1b86814aace6809a4bb2d5bf708adb086b9628e8c58c03d89a8",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00058.h264": {
+   "bytes": 2302988,
+   "sha256": "e0e41890373d42678f75010a9489d848d4c516a4d085a4cd2c726507988c6bf2",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00059.h264": {
+   "bytes": 2304120,
+   "sha256": "0587f7a1a009dee9981cbc433eccdc2064c1b644718232de7306f11b116acb17",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00060.h264": {
+   "bytes": 2310525,
+   "sha256": "43110ae6538ac7e7e9253b217afc25166fe479e95c257ef44bd294cb48b90ff3",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00061.h264": {
+   "bytes": 2382489,
+   "sha256": "b387b7b3e5eb3e6e97ce05b15aeff8b63f66e63114c9cd45b3d0ec1acfcf1c60",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00062.h264": {
+   "bytes": 3106695,
+   "sha256": "8c1c7ed6ac724d7e922ecfc4deba48c34fcd63a736387b6593b7f0b5ff4fa8a6",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00063.h264": {
+   "bytes": 2059062,
+   "sha256": "6dc1f537f02627dc26b49f723c534ac221612c5e84772430818d6ec3c66d4e71",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00064.h264": {
+   "bytes": 2782019,
+   "sha256": "2807d3a4c880d6d189a1d2d8dc2ecf78ac0448d09ac70e9c0a31ff1d4780c02f",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00065.h264": {
+   "bytes": 3002324,
+   "sha256": "496b74f6eb3a99e07fd4f8e3a07e0f40139982222f03862dc02e057654b7b3f7",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00066.h264": {
+   "bytes": 3445752,
+   "sha256": "9e76b65b826a3cd4ddad810469b48f5a8b3c0ccd11f7835f1dcea0829efe63bf",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00067.h264": {
+   "bytes": 4025757,
+   "sha256": "c2c34b882512558483f03bc9e802bf40c1ed152e40e68690fa973e981b4dfda2",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00068.h264": {
+   "bytes": 6330694,
+   "sha256": "9072b8a5ed572adda0261455d69e87754aa474e40535225dd3b8c56b8ff6eb44",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00069.h264": {
+   "bytes": 6099867,
+   "sha256": "b3a43b22e896e57f972b50bad404c031955ac1df11dfc64684c07c06ec725445",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00070.h264": {
+   "bytes": 5526953,
+   "sha256": "39aa054f3b641b06d67510078af475e5a01e5fa5760ae0d57ea2917dc74f9a8c",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00071.h264": {
+   "bytes": 3572237,
+   "sha256": "7954c5190d1af72494470314dc07cc41758e62e1bd9743a86f194fab2fd4b691",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00072.h264": {
+   "bytes": 476584,
+   "sha256": "3bd387086e2c0149f234d51b6e964d8c2eb127212f8aae28a18b7d5c4401bacb",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00073.h264": {
+   "bytes": 488955,
+   "sha256": "1f08a72a5310007d8d387c91ca2115f5c5d9292b6dbc5309e264cd2a93900fdc",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00074.h264": {
+   "bytes": 479911,
+   "sha256": "c998b2c0a0c864a761be7f46214fe84de65a0048e3defa00797a60a62b113fba",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00075.h264": {
+   "bytes": 470625,
+   "sha256": "912feca6a43dbf9187ae582f2d66e99c14cbe0330b194d42fbc49a1cb4005bb3",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00076.h264": {
+   "bytes": 461431,
+   "sha256": "649e3e55c5db7f0b23480538826b346253b0a5349ad583431f56b0e4b9594596",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00077.h264": {
+   "bytes": 2047932,
+   "sha256": "2015aacd60e1250bdb3b02e28771a603b2d2047a990bf860e82fc062c3c8ddb6",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00078.h264": {
+   "bytes": 2619737,
+   "sha256": "12b89a8f166031b0d96d783d4ed37ad0cb6c110ea7525304b80f059ad0001d4e",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00079.h264": {
+   "bytes": 2647916,
+   "sha256": "7fedc484900e761549f2b7def3f8c822b35dc0d6b8ff246f3c78d2b684828a89",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00080.h264": {
+   "bytes": 2703123,
+   "sha256": "cbae3d21d3bb86d478bc43e7d5068aa835ee97f4d21abf894847526fc21e5164",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00081.h264": {
+   "bytes": 2763431,
+   "sha256": "51be00a5f250c8f52e34a72570019c8d417dcc674f8c5f4febae1bf5492db712",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00082.h264": {
+   "bytes": 2829529,
+   "sha256": "bb746c0f1baf2f9c12b47b82d6befbb6b22ffa36c873954d2d523207878247d5",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00083.h264": {
+   "bytes": 2883469,
+   "sha256": "2e2534e49fc040af6b9d3647bd78fa3091293bfbb46760603dce94a893f38a63",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00084.h264": {
+   "bytes": 2927175,
+   "sha256": "fc87660d301bb14277ed06c88c7775feecb39e64e81c15d639005fc4362548ee",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00085.h264": {
+   "bytes": 2958658,
+   "sha256": "2144a985de1f0e19149c6b200cdc920d844f3f45afccbb43cff15dcfd4e4b39b",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00086.h264": {
+   "bytes": 2970745,
+   "sha256": "0dd5f8be64d1cba8a614613db1c74dacd63b3b9722d1b07daa2f802134b614b2",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00087.h264": {
+   "bytes": 2979414,
+   "sha256": "2f788f950f6bf4f24bc80d2571546c310c9aec3420e4008041b85004f05d45e4",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00088.h264": {
+   "bytes": 2961507,
+   "sha256": "e85702fca9208b235ea20a97ef33d2b1bcb101e2cae4a8840915ab1b30c518bc",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00089.h264": {
+   "bytes": 2985727,
+   "sha256": "28fe1f82a5fe4594ef352a1cc0f4c09aaa023f1b7a2ad9ac132bac332dd025b4",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00090.h264": {
+   "bytes": 2993816,
+   "sha256": "40d0aa9d7ea18d1937d07a9318b4e9f03c4ad183cd4160fbe64675fd7e868b6e",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00091.h264": {
+   "bytes": 2996031,
+   "sha256": "5cd88e6b3d2a96deda68b432f8db03c2ea6e1890b3adfc99115920ecf38b0dd0",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00092.h264": {
+   "bytes": 3006437,
+   "sha256": "31720ecf75ea0517386922f766dc755bedc6552bcc94a786ff1214d074eba69e",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00093.h264": {
+   "bytes": 3002459,
+   "sha256": "ab6910273f77d2f9ab322576fbe48a29b689f8fe3e26bca2e354dbda4925691f",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00094.h264": {
+   "bytes": 3011584,
+   "sha256": "3b55e5af1bdc0540d301b24ed8240800a82d33b09e3290dae247fbb1f12e7170",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00095.h264": {
+   "bytes": 3007795,
+   "sha256": "2bed1f4cc0b1805c1887e16db4eba88097d506bc7989da5a9a5776df1e0bd29b",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00096.h264": {
+   "bytes": 3030502,
+   "sha256": "c472973fee6070302088aa786f4c63a099bac0eb806c99d138d6f725b6c1c103",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00097.h264": {
+   "bytes": 3034464,
+   "sha256": "3ab6d315e0e35ecbb508b7cdae7b0ae79cb89a755da9cca6786d06e02cf0aec5",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00098.h264": {
+   "bytes": 3055259,
+   "sha256": "cc60367403f6bb497457c1c74a13cda0fca387054039b5b2bb0fc2cc566125ec",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00099.h264": {
+   "bytes": 3047142,
+   "sha256": "7a3cc9e19164d9924ee8b3e7d0d5de9a4ec286bce15a532295bf81b3277ee3b0",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00100.h264": {
+   "bytes": 3071003,
+   "sha256": "134902ccd96aa9812546c89424647dfcdd272d4218f111c2ae17e8bcdc5a00d5",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00101.h264": {
+   "bytes": 3077458,
+   "sha256": "7fff0be2340868b6b0a4bb763170ac3e9411439a8c724c07e3ed5553b99f3ee6",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00102.h264": {
+   "bytes": 3072208,
+   "sha256": "4e351ac69704bb9dc85d3c14e4dd73df43b7f14f7442c34f852c799aa2f6a282",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00103.h264": {
+   "bytes": 3093234,
+   "sha256": "797d03d9effebc279c63077b205ea86de9d0f948a6d36887ef340c4b3e3e00d7",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00104.h264": {
+   "bytes": 3104590,
+   "sha256": "866b74d708b0f1f66530f18e2ae5887556c514092e3d631efc521a23e7e5c9fb",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00105.h264": {
+   "bytes": 3107742,
+   "sha256": "f4b89d3ed1edb7788a7adb8ab331bede188b643037ab5b7fca95891de8de3333",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00106.h264": {
+   "bytes": 3109514,
+   "sha256": "6e3104c121810dd783f7d69af516f68197725914a79573ed088c1ad1f6c7b3ff",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00107.h264": {
+   "bytes": 3124521,
+   "sha256": "38b8dcce799621bdc448afba3cab04016585fe18a48be6befcbbf084413db1c9",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00108.h264": {
+   "bytes": 3120475,
+   "sha256": "1bba313d4b7aa32d0b4a726f8b94f94d19815d63e2c20af03fa7c0f22426ab98",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00109.h264": {
+   "bytes": 3106546,
+   "sha256": "defecf7ac6d5ee3001fb6b2a0b6d001341d2de61e6c89cffd456c929afe9bb64",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00110.h264": {
+   "bytes": 3136333,
+   "sha256": "1fd349dbe5ccd1ae8ef94c2df24c90d9c54aab4f83d171893581edd933794565",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00111.h264": {
+   "bytes": 3472485,
+   "sha256": "09ef91d86c133b63b6950a4a49cd25b59aa22790046efc39530c7e32d2390ec4",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00112.h264": {
+   "bytes": 3054525,
+   "sha256": "4530dfb27c2944e332ad4b551c8c492202ec96f72c7460dc51d24b4aa093b888",
+   "frame": 465,
+   "ok": true
+  },
+  "asmile-logger/clip_20261108_160535_00113.h264": {
+   "bytes": 3445396,
+   "sha256": "cd4acf16228376eb8d7a5d7b93824aa9df2dbf14ffce14dbcf5cf149942360f9",
+   "frame": 465,
+   "ok": true
+  }
+ },
+ "extra_non_richieste": [],
+ "riepilogo": {
+  "20261030_155729": "bici ferma",
+  "20261030_180019": "bici ferma",
+  "20261030_180023": "bici ferma",
+  "20261030_180215": "incompleta",
+  "20261030_180225": "buona",
+  "20261030_182802": "bici ferma",
+  "20261030_184541": "incompleta",
+  "20261107_165926": "buona",
+  "20261107_170056": "incompleta",
+  "20261108_163453": "incompleta",
+  "20261107_145051": "buona",
+  "20261107_161628": "bici ferma",
+  "20261108_164438": "incompleta",
+  "calib_20261108_160535": "buona"
+ },
+ "nota_decode": "ricontati con ffprobe -count_frames (decodifica reale): i conteggi coincidono con -count_packets in TUTTI i file, nessun frame perso dal decoder. ffprobe segnala 1 evento 'corrupted macroblock / error while decoding MB' per file in 17 file su 21 (distinti) (anche 180225 sx, 180019 sx/dx): un solo macroblock per file, non cambia il numero di frame; posizione non verificata, compatibile con coda troncata a blocco (le dimensioni sono multiple di 4096) o con un singolo pacchetto danneggiato. Senza errori: 180225 dx, 145051 sx, 161628 sx, 170056 dx.",
+ "versione": "v2 dopo veto 1"
+}

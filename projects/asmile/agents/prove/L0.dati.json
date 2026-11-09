@@ -1,0 +1,7 @@
+{
+ "gate": "L0.dati",
+ "artefatto": "agents/rapporti/L0.dati_indice_20261109.json",
+ "visto_critico": "asmile-ingest-critico",
+ "nota": "v2 riverificata: sha256 e frame ricontati (ffprobe -count_frames) coincidono per 145051 (4868/4861), 161628 (2278/2277), 164438 (5176/4561; metadata 5184/4564, sfasamento right -41.366 s confermato da metadata e cam_right.log). Tutte le sessioni su disco ora indicizzate; nessun duplicato; nessun file toccato. Limite: 164438 'solo mono sx' = destra parte 41 s tardi, non stereo sincrono. Buchi dichiarati: clip calib 114-121.",
+ "quando": "2026-11-09T07:46:00"
+}

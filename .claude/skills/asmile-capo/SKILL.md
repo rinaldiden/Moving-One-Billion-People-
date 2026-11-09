@@ -40,7 +40,8 @@ Se non risponde entro 10 minuti parte Telegram dal Doppio da solo. Non insistere
 
 ## 4. Fai girare le verticali (la palla)
 Per ogni lavoro del piano:
-1. **Produttore** (Agent, `subagent_type` = nome agente) con un brief completo: gate, artefatti di partenza, criterio
+1. **Produttore** (Agent, `subagent_type` = nome agente) con un brief che **apre con le sue lezioni**
+   (`python3 projects/asmile/agents/palla.py lezioni --da <agente>`: suoi VETO passati + decisioni di Daniele), poi: gate, artefatti di partenza, criterio
    di uscita, comando `palla.py passa` da eseguire alla fine.
 2. **Contro-agente** (Agent) con **solo** artefatto + gate + criterio, non il ragionamento del produttore.
    Lui registra `palla.py verdetto`.
@@ -48,6 +49,8 @@ Per ogni lavoro del piano:
 4. Verticali indipendenti → **in parallelo** (più Agent nello stesso messaggio). Dipendenti → in serie
    (es. calib → depth → occhio).
 5. Qualsiasi cosa vada sul Pi → prima **asmile-sicurezza** (ALLOW), poi **asmile-deploy** → **asmile-rollback-guardian**.
+   Ogni deploy finisce con `bash projects/asmile/deploy/registra_deploy.sh <ruolo> "<cosa>" [file]`: fotografa la
+   config che gira sul Pi in `fleet/<ruolo>/` + commit + push su GitHub (decisione di Daniele 2026-11-09).
 6. Video nuovi: dati (logger-ingest → ingest-critico → log-harvester → dati-auditor), poi percezione
    (skill `asmile-segmentazione-modello`, `asmile-depth` → `asmile-occhio`).
 7. Pipeline intere già esistenti: usa le loro skill (`asmile-sim2real-pipeline`, `asmile-segmentazione-modello`,
@@ -58,7 +61,8 @@ Per ogni lavoro del piano:
 - Commit del lavoro verificato (codice + prove + lavagna; mai video).
 - Quando un livello ha tutti i gate FATTO: prepara la voce DECISION_LOG (non firmarla) e chiedi a Daniele di firmare.
 - `avvisa.py info` con il riassunto in 3-5 righe semplici: fatto / non riuscito (con la prova) / cosa serve da lui.
-- Scrivi in `projects/asmile/agents/lezioni/asmile-capo.md` cosa hai previsto male.
+- Scrivi in `projects/asmile/agents/lezioni/asmile-capo.md` cosa hai previsto male. I VETO dei critici finiscono
+  da soli in `lezioni/<produttore>.md` (palla.py); le decisioni nuove di Daniele scrivile in `lezioni/daniele.md`.
 
 ## Regole del capo
 - Mai un gate chiuso senza il PASSA del contro-agente. Mai "fatto" senza prova: altrimenti NON VERIFICATO.

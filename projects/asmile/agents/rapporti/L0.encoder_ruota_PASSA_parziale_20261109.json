@@ -1,0 +1,7 @@
+{
+ "gate": "L0.encoder_ruota",
+ "artefatto": "agents/rapporti/L0.encoder_ruota_20261109.md",
+ "visto_critico": "asmile-pi-001-verifica",
+ "nota": "PASSA = il rapporto PARZIALE e' corretto e onesto, il gate NON e' chiuso. Rifatto con codice mio (2026-11-09): rapporto enc/gps mediano 145050 = 0.983 (rep 0.985) vs 6.21 nel log 30/10 (2.10/0.3374=6.22) -> 0.3374 attivo confermato (per rapporto, non da header). Errore mediano per blocchi GPS 1s, 6-16 km/h: 4.0% lag 1.0s (113 blocchi con mio raggruppamento, rep 80/3.9%), p90 ~12%; senza lag 5.6%. Accel: enc_accel e' rumore (std 6.5 m/s2, picchi 37) -> non verificabile, giusto. Restano da fare col Pi acceso: giro con codice attuale, >16 km/h, riferimento distanza indipendente, accel con GPS 10Hz/cronometro.",
+ "quando": "2026-11-09T07:36:52"
+}

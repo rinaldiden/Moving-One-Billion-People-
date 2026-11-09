@@ -103,3 +103,6 @@ sleep 4
 echo "== verifica"
 run "systemctl is-active sensor_hub; ls -t /data/logging/sensors | head -3; f=\$(ls -t /data/logging/sensors/sensors_*.csv 2>/dev/null | head -1); if [ -n \"\$f\" ]; then wc -l < \$f; tail -2 \$f; else echo 'nessun CSV ancora'; fi; cat /tmp/encoder_fw_version 2>/dev/null; true"
 echo "fatto. Backup: <file>.bak-$STAMP accanto a ogni file sostituito."
+
+# traccia su GitHub di cosa gira ora sul Pi (fotografia config + commit + push), mai in --dry-run
+[ "$DRY" != "--dry-run" ] && bash "$A/deploy/registra_deploy.sh" "$ROLE" "deploy_sensor_hub $STAMP" deploy/deploy_sensor_hub.sh $(for f in $FILES; do echo "${f%%=*}"; done)

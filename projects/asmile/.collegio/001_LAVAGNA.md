@@ -1,4 +1,4 @@
-# Lavagna asmile #001 — 2026-11-08 22:06
+# Lavagna asmile #001 — 2026-11-09 07:46
 
 **Livello raggiunto:** nessuno  ·  **Stiamo lavorando per:** L0 (registra)
 
@@ -16,7 +16,7 @@
 | ⬜ | L0.encoder_ruota | Encoder ruota tarato (velocità e accelerazione giuste) | asmile-pi-001 → asmile-pi-001-verifica |  |
 | ✅ | L0.calib_logger | Calibrazione stereo del logger col metro (±2% da fermi) | asmile-calib → asmile-calib-critico | calib_asmile-logger_metro.json: errore max 2.1% su 7 soste (fermo) |
 | 🟡 | L0.calib_001 | Calibrazione stereo di #001 col metro (±2% da fermi, 1-15 m) | asmile-calib → asmile-calib-critico | calib_asmile-001.json ha soste col metro: serve il visto di asmile-calib-critico |
-| ⬜ | L0.dati | Video nuovi scaricati, controllati e indicizzati | asmile-logger-ingest → asmile-ingest-critico | 11 sessioni da lavorare |
+| ✅ | L0.dati | Video nuovi scaricati, controllati e indicizzati | asmile-logger-ingest → asmile-ingest-critico | agents/rapporti/L0.dati_indice_20261109.json (visto asmile-ingest-critico, 2026-11-09) |
 | ⬜ | L1.banco_fisso | Banco di misura fisso: punti col metro MAI usati nel fit (4-6-8-12 m) + oggetti reali | asmile-calib → asmile-calib-critico |  |
 | ⬜ | L1.rettifica | Rettifica vera: scarto verticale L-R < 1 px su tutta l'immagine, anche in movimento | asmile-calib → asmile-calib-critico |  |
 | ⬜ | L1.depth_moto | Depth in movimento: ±2% <5 m, ±5% 5-10 m, ±10% 10-20 m sul banco fisso | asmile-depth → asmile-occhio |  |
