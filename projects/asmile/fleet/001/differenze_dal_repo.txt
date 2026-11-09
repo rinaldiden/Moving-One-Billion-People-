@@ -1,0 +1,6 @@
+≠ ./config/setup_new_raspi.sh
+≠ ./pi/autonomous/object_depth.py
+solo-Pi ./pi/braking/speed_limiter.py
+≠ ./pi/logging/training_recorder.py
+≠ ./pi/power/master_switch.py
+≠ ./training/shadow_analyzer.py

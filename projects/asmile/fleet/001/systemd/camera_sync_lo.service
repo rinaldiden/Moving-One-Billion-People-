@@ -1,0 +1,18 @@
+# Sincronismo camere stereo SENZA WiFi (2026-11-08).
+# rpicam --sync (libcamera rpi.sync) manda il segnale fra le due camere in multicast 239.255.255.250:
+# senza rete la camera client non riceve mai il "via" e NON registra (sessione #001 16:34: destra vuota,
+# partita 2 s dopo il ritorno del WiFi alle 16:45). Con questa rotta il segnale resta dentro il Pi (lo).
+[Unit]
+Description=Asmile: sync camere via loopback (multicast 239.255.255.250 su lo)
+DefaultDependencies=no
+After=local-fs.target
+Before=network-pre.target master_switch.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/ip link set lo multicast on
+ExecStart=/usr/sbin/ip route replace 239.255.255.250/32 dev lo
+
+[Install]
+WantedBy=multi-user.target
