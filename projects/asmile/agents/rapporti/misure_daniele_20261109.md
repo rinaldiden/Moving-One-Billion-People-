@@ -6,3 +6,4 @@
   Nota: `wheel_circum_m=0.3374` in /var/lib/asmile/encoder_calibration.json è in realtà metri per GIRO DI ENCODER
   (l'encoder fa più giri per giro ruota): 1.576/0.3374 = 4.67 giri encoder per giro ruota → da verificare coi conteggi.
 - Ordine prove dato (Telegram): A1 metro 1-2-3-4-5-6-7-8-10-12-15 m, A2 scacchi 29 mm, A3 10 giri ruota, B giro 10 min.
+- **asmile-logger001: stessa ruota/circonferenza di #001 → 1,576 m** (Daniele 2026-11-09). Vale per il CooSpo BK467 montato sul logger001.
