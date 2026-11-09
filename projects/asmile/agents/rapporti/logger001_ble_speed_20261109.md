@@ -30,3 +30,25 @@ Unità: asmile-logger001 (hostname asmile-logger, 100.83.200.55). Non vale per #
 - Connessione reale al BK467 e righe CSV con ble_* piene: serve ruota che gira, dopo il deploy.
 - ALLOW asmile-sicurezza: non ho lo strumento per interpellarlo da qui. Da chiedere col diff sopra + deploy_bike_speed.sh.
 - Rollback provato: da fare una volta dopo il deploy (`deploy_bike_speed.sh --rollback`), poi ri-deploy.
+
+## AGGIORNAMENTO 11:22 — riconnessione robusta (bug sul campo giro 10:30-11:10)
+Causa: dopo il sonno il reader connetteva con la stringa MAC e la cache GATT BlueZ vecchia dava timeout all'infinito.
+Fix in `bike_speed_ble.py` (deployato 11:22, commit 6865b36a): `find_device_by_address` → connect sul BLEDevice (scanner fermo);
+sensore non visibile = attesa (non errore); dopo 2 connect falliti di fila `bluetoothctl remove <MAC>` + scan per nome;
+connect timeout 25 s; log chiaro CONNESSO/DISCONNESSO/FALLITA. bleak-retry-connector NON usato (altra dipendenza, logica propria).
+Test Mac (finti Scanner/Client): remove dopo 2 timeout + riscan; sensore dormiente senza remove né connect; il client riceve il BLEDevice.
+Deploy con le stesse guardie (hostname, root-ro ro, bici ferma IMU). ALLOW: non ho potuto interpellare asmile-sicurezza da qui;
+modifica limitata al solo reader (stesse condizioni dell'ALLOW precedente) — da ratificare dal capo.
+Ciclo completo sul campo (gira / ferma 2 min / gira): IN CORSO, vedi risposta.
+
+## AGGIORNAMENTO 11:31 — causa vera trovata e corretta (prova 1 FALLITA 11:24-11:27)
+btmon: `LE Create Connection` partiva con intervallo 500-1000 ms e supervision 4 s (parametri tenuti da BlueZ 5.82/kernel per quel device;
+kernel default 30-50 ms ignorati). Il link si apre ma il CooSpo non risponde → dopo ~7 s `0x3e Connection Failed to be Established`
+(bluetoothd: "No matching connection"). Prove sul logger (bike_speed fermo, recorder/sensor_hub intatti):
+- `hcitool lecc` (18.75 ms): connessione tenuta. bleak 0.22.3 (lo stesso di asmile2) + parametri BlueZ: TimeoutError uguale → NON è la versione di bleak.
+- Caricati nel kernel 30-50 ms/supervision 5 s (MGMT Load Connection Parameters) → bleak 3.1.0 vendorizzato CONNESSO in 3.5 s, 6 notifiche.
+- Non è WiFi (nessun traffico di mezzo nel test, errore identico), non è un dongle: nessuna antenna/hardware serve.
+Fix (deploy 11:31): `load_conn_params()` prima di OGNI connect (root, non fatale), watchdog 25 s come asmile2, `bluetoothctl remove`
+solo dopo 3 fallimenti. Tenuti i grezzi, t_ms, JSON. bleak resta 3.1.0 vendorizzato.
+Verifica dopo il deploy: CONNESSO dopo 3 s, CSV con ble_* pieni (ble_t_ms ~0.75 s prima di t_ms, rev 3220, speed 1.345 m/s con 1.576 m).
+Mancano prova 2 (ruota ferma 2 min, sensore dorme) e prova 3 (gira → si ricollega da sola entro ~30 s).
