@@ -1,1 +1,3 @@
 session_20261109_093216  # metro #001, ferma apposta
+session_20261109_153251  # metro #001 vicino 1-5 m centro/sx/dx, ferma apposta
+clip_20261029_163306  # metro logger001 2026-11-09 pomeriggio (orologio Pi non sincronizzato al boot), ferma apposta
