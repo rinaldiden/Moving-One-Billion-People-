@@ -39,7 +39,8 @@ MODELS = os.path.expanduser("~/.asmile_seg_models")
 # Lista delle COSE (prompt testuali: identici per SAM 3, YOLOE maestro e allievo)
 THINGS = ["person", "child", "bicycle", "motorcycle", "car", "van", "truck", "bus", "tractor",
           "dog", "cat", "stop sign", "traffic sign", "traffic light", "traffic cone", "bollard",
-          "pole", "barrier", "trash can", "bench", "stroller", "wheelchair"]
+          "pole", "barrier", "trash can", "bench", "stroller", "wheelchair",
+          "gate", "fence"]   # cancelli aggiunti 2026-11-09 (provati "railing"/"metal grille": falsi positivi su spigoli edifici e calandre)
 TRACK_EVERY = {"traffic sign": 5, "stop sign": 5, "traffic light": 5}   # cartelli: 3 Hz basta
 
 # SFONDO: classi Mapillary → nostre superfici (colori Cityscapes dove esistono)
