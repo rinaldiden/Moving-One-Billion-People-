@@ -28,6 +28,17 @@ CAMPI = ["l_current_max", "l_current_min", "l_in_current_max", "l_in_current_min
 # valore iniziale prudente (A). power steering oggi: 0.5 A/step, max 5 A -> motore max 8 A (margine per
 # vincere l'attrito allo spunto, non per forzare il finecorsa), batteria 5 A / rigenerazione -2 A.
 PROPOSTA = {"l_current_max": 8.0, "l_current_min": -8.0, "l_in_current_max": 5.0, "l_in_current_min": -2.0}
+# Offset completi fw 5.02 da vedderb/bldc tag 5.02 confgenerator.c (serialize_mcconf), verificati 2026-11-09 sul backup
+# di #001: decodificano R=29.82 mOhm, L=18.28 uH, flux=1.318 mWb, foc_sensor_mode=2 (HALL) = esattamente i valori della
+# detection del 2026-10-26. E' la prova del layout (sostituisce il confronto con VESC Tool).
+OFF_SENSOR_MODE_FOC, OFF_L, OFF_R, OFF_FLUX, OFF_HALL_INTERP = 198, 207, 215, 219, 269
+DETECT_001 = {"r": 0.02982, "l": 18.28e-6, "flux": 1.318e-3}
+
+
+def layout_provato(blob):
+    f = lambda o: dec(bytes(blob[o:o + 4]))
+    return (blob[OFF_SENSOR_MODE_FOC] == 2 and abs(f(OFF_R) / DETECT_001["r"] - 1) < 0.02
+            and abs(f(OFF_L) / DETECT_001["l"] - 1) < 0.02 and abs(f(OFF_FLUX) / DETECT_001["flux"] - 1) < 0.02)
 
 
 def dec(b):
@@ -87,6 +98,7 @@ def main():
     ap.add_argument("--fw", default="5.2", help="versione fw attesa")
     ap.add_argument("--apply", action="store_true")
     for n in PROPOSTA: ap.add_argument("--" + n.replace("_", "-"), type=float, default=PROPOSTA[n])
+    ap.add_argument("--hall-interp-erpm", type=float, help="foc_hall_interp_erpm (solo abbassare, >=0): sotto questa velocita' il VESC non interpola fra gli hall -> scatti")
     a = ap.parse_args()
     ser = serial.Serial(PORT, BAUD, timeout=0.2); time.sleep(0.1)
     v = fw(ser); print(f"fw VESC {v[0]}.{v[1]}")
@@ -98,6 +110,7 @@ def main():
     cur = campi(blob)
     print(f"backup: {bk} ({len(blob)} B)")
     for n, v in cur.items(): print(f"  {n:20s} {v:8.2f}")
+    print(f"  {'foc_hall_interp_erpm':20s} {dec(bytes(blob[OFF_HALL_INTERP:OFF_HALL_INTERP + 4])):8.1f}   layout provato (R/L/flux/hall = detection): {layout_provato(blob)}")
     if not plausibile(blob):
         sys.exit("layout NON plausibile: non scrivo. Verifica offset con VESC Tool.")
     if a.cmd == "leggi": return
@@ -112,13 +125,20 @@ def main():
                 v = getattr(a, n)
                 if abs(v) > abs(cur[n]) + 1e-6: sys.exit(f"{n}: {v} ALZEREBBE il limite ({cur[n]:.2f}): rifiutato")
                 new[OFF0 + 4 * i:OFF0 + 4 * i + 4] = enc(v)
+        if a.hall_interp_erpm is not None:
+            hv = dec(bytes(blob[OFF_HALL_INTERP:OFF_HALL_INTERP + 4]))
+            if not 0 <= a.hall_interp_erpm <= hv: sys.exit(f"hall_interp_erpm {a.hall_interp_erpm} fuori da [0, {hv}]: rifiuto")
+            new[OFF_HALL_INTERP:OFF_HALL_INTERP + 4] = enc(a.hall_interp_erpm)
         if not plausibile(new): sys.exit("valori nuovi NON plausibili (segno sbagliato o zero): rifiuto")
     if len(new) != len(blob) or new[:4] != blob[:4]: sys.exit("signature/lunghezza incoerenti: rifiuto")
     print("DIFF:")
     for n, v in campi(new).items(): print(f"  {n:20s} {cur[n]:8.2f} -> {v:8.2f}")
+    print(f"  {'foc_hall_interp_erpm':20s} {dec(bytes(blob[OFF_HALL_INTERP:OFF_HALL_INTERP+4])):8.1f} -> {dec(bytes(new[OFF_HALL_INTERP:OFF_HALL_INTERP+4])):8.1f}")
+    ch = [i for i in range(len(new)) if new[i] != blob[i]]
+    print(f"  byte cambiati: {ch}")
     if not a.apply:
         print("DRY-RUN: nessuna scrittura (serve --apply e poi il 'vai' scritto a mano da Daniele)."); return
-    if not os.path.exists(VALIDATO): sys.exit(f"scrittura bloccata: 'leggi' non ancora validato contro VESC Tool (manca {VALIDATO}). Usa VESC Tool.")
+    if not (os.path.exists(VALIDATO) or layout_provato(blob)): sys.exit(f"scrittura bloccata: 'leggi' non ancora validato contro VESC Tool (manca {VALIDATO}). Usa VESC Tool.")
     ok_u, why = uart_libera(PORT)
     if not ok_u: sys.exit(f"UART VESC non libera ({why}): fermare power_steering/speed_limiter e ripetere. Nessuna scrittura.")
     if not vai_interattivo(f"SCRIVO la mcconf sul VESC ({a.cmd}): diff stampato sopra. Backup: {bk}"): sys.exit("annullato")
