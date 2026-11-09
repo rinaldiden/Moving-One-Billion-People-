@@ -335,3 +335,27 @@ si rinomina per non toccare il limiter); la proposta aggiunge `ruota_circonferen
 del JSON quando verifica-critico dà PASSA e il giro sta sotto il 5%.
 
 **Firma:** ______________________  **Data:** __________
+
+## D012 — Calibrazione camere: gate e metodo rivisti coi consigli di Daniele (per unità, prima #001)
+**Data proposta:** 2026-11-09 · **Autore:** doppio di Daniele (Claude) · **Stato:** DA FIRMARE
+
+**Scelta proposta.** Per ogni calib stereo per unità (prima #001, poi asmile-logger001):
+(a) ChArUco su **pannello rigido** con lato misurato, shutter corto e gain fisso nella clip di calibrazione;
+(b) **|T| non più riscalato a 200 mm**: dal tabellone, ROSSO fuori 200 mm ±3%, calibro se lo scarto supera l'1%;
+(c) gate su viste tenute fuori: RMS mono <0.5 px, RMS stereo <1 px, dy p50 <0.5 / p95 <1 px in tutte le 9 zone;
+(d) depth su griglia col metro 1-2-5-10 m × sx/centro/dx: centro ≤2% fino a 5 m e ≤3% a 10 m, bordi ≤3% a 2-5 m;
+(e) modello scelto sulle viste tenute fuori fra rational, rational+prism, rational+prism+tilted (fisheye solo se il FOV misurato è >100°);
+(f) export YAML OpenCV + mappe di rettifica accanto al JSON; la calib si sostituisce solo col PASSA di asmile-calib-critico
+e se nessun punto del banco fisso peggiora.
+
+**Evidenza.** Consigli di Daniele del 2026-11-09 sera; bordi #001 oggi +4…+17% e dy −4 px a sinistra
+(`agents/rapporti/calib_001_vicino_bordi_20261109.md`); sintetico VERDE con 9 zone e ROSSO col solo centro; correzioni
+del critico (riscalatura di T tautologica, falso verde coi file scambiati). Mappa completa:
+`agents/rapporti/calib_consigli_daniele_REVISIONE_20261109.md`.
+
+**Deroghe/limiti.** Il ≤3% ai bordi su dati veri NON è verificato. Le soglie depth ai bordi si allineano a quelle della
+SOLUZIONE_DEFINITIVA (punto 2 da firmare lì). Q11 (dima fornitore vs stazione nostra) resta aperta.
+
+**Cosa serve per firmare.** (a) soglie della tabella; (b) ok alla sessione di ~15 min con tabellone rigido su #001.
+
+**Firma:** ______________________  **Data:** __________

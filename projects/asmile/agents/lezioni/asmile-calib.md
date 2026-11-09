@@ -10,3 +10,11 @@ Scritte da palla.py dai VETO dei contro-agenti (e a mano dal capo quando manca i
 - Bordo sinistro #001: dy -4 px a x<430 identico mattina/pomeriggio = distorsione non radiale non modellata; fit joint coi
   parametri contro i limiti (dcy 40-80 px) = segnale che il modello è sbagliato, non che servono più punti centrali.
 - Fit fatto quasi solo con punti centrali: ai bordi il modello è libero. Servono viste che coprano TUTTE le 9 zone.
+
+## 2026-11-09 sera — consigli di Daniele (dettagli: rapporti/calib_consigli_daniele_REVISIONE_20261109.md)
+- La baseline NON si impone: |T| esce dal tabellone (lato misurato) e si controlla contro 200 mm ±3%. Riscalare T nasconde l'errore di scala.
+- RMS conta solo sulle viste tenute fuori: mono <0.5 px, stereo <1 px. RMS del fit = residuo, non prova.
+- Il modello si sceglie dal FOV MISURATO, non dal "tipico": #001 è ~58° → rational/prism/tilted, non fisheye.
+- Bersaglio rigido e piatto prima di tutto (foglio a mano = no). Shutter corto + gain fisso nella clip di calib.
+- Griglia depth 1-2-5-10 m × sx/centro/dx con la posizione laterale misurata in cm: ai bordi la Z nominale mente.
+- Librerie semplificate (calibrating, flusso Luxonis) = seconda opinione sugli stessi video, mai il giudice.

@@ -73,3 +73,11 @@ casi dubbi a Daniele. **Aperto:** aggiungere quelle classi al training di segmen
 classificatore dedicato) prima del primo giro, o accettare che quelle situazioni partano come
 casi dubbi finché il dato non c'è? Proposta: partire con `unknown`→umano, aggiungere le classi
 quando arrivano video con segnaletica sufficiente.
+
+## Q11 — "Jig fisso + target grande + script" per 15.000: dima del fornitore o stazione nostra? (calib, 2026-11-09)
+Nei consigli del 9/11 sera Daniele scrive "calibrazione di fabbrica ripetibile (jig fisso + target grande + script
+automatico)". Lo stesso giorno la **stazione di calibrazione nostra** era stata SCARTATA (calib15000_METODO →
+SOLUZIONE_DEFINITIVA: modulo calibrato dal fornitore + autoregistrazione in strada + collaudo a campione).
+Lettura compatibile proposta: la dima la fa il **fornitore**, il nostro script (`calib_charuco_dual.py` + gate) diventa
+il **collaudo a campione** e la verifica del file del fornitore. **Aperto:** confermare questa lettura, o Daniele vuole
+riaprire la stazione nostra? Gli agenti non decidono. Dettagli: `agents/rapporti/calib_consigli_daniele_REVISIONE_20261109.md` §2.4.

@@ -67,3 +67,17 @@ a 0.6-1.5 m, moiré del monitor, sync reale; poi punti 3-4 del piano.
   6) hold-out a blocchi di tempo contigui, non una vista ogni 5;
   7) il controllo di scala dello script è tautologico (T riscalata a 200 mm): la depth vera si prova col metro a
      1-5 m + SIFT in movimento.
+
+## 2026-11-09 sera: consigli di Daniele → strategia rivista (LEGGERE PRIMA DI RIPARTIRE)
+Daniele ha passato all'istanza calib una serie di consigli (ChArUco, board rigida, modello wide-FOV, RMS stereo <0.5-1 px,
+baseline ~200 mm, YAML + mappe, griglia depth 1-2-5-10 m centro/lati, WLS + subpixel + filtro confidenza, shutter corto,
+sync, librerie semplificate tipo `calibrating`/Luxonis, scala 15.000). Mappa consiglio per consiglio, piano A-E e gate:
+**`agents/rapporti/calib_consigli_daniele_REVISIONE_20261109.md`** (PROPOSTA, firme in D012 del DECISION_LOG).
+In breve, cosa cambia rispetto al piano sopra:
+- **niente più riscalatura di T**: |T| dal tabellone diventa un CONTROLLO (200 mm ±3%), non un'ipotesi;
+- RMS mono <0.5 e stereo <1 px **sulle viste tenute fuori** entrano nel gate;
+- fisheye NON serve su #001 (HFOV ≈58°); si aggiunge il candidato `rational+prism+tilted` (dy sinistro non radiale);
+- export YAML OpenCV + mappe `.npz`; Δt coppie nel report (scarto >1 ms); filtro confidenza WLS opzionale in depth.py;
+- ripresa solo con **tabellone rigido** (MDF/forex), shutter corto e gain fisso, 9 zone di ENTRAMBE le camere,
+  poi **griglia 12 punti** 1-2-5-10 m × sx/centro/dx con la posizione laterale in cm;
+- i numeri "RMS 1.27 / 7.8%" della nota sono della linea Camarray (logger001/asmile2), NON di #001.
