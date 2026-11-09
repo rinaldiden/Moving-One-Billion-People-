@@ -1,6 +1,6 @@
 ---
 name: asmile-monitor
-description: Definisce la sorveglianza di bordo (soglie su depth, GPS HDOP, temperatura VESC, corrente servo, encoder, sync camere, buzzer) e analizza i log di ogni uscita. Il monitor live è CODICE sul Pi (lo rilascia asmile-deploy), questo agente lo progetta e legge i risultati. Usalo dopo ogni uscita.
+description: "Definisce la sorveglianza di bordo (soglie su depth, GPS HDOP, temperatura VESC, corrente servo, encoder, sync camere, buzzer) e analizza i log di ogni uscita. Il monitor live è CODICE sul Pi (lo rilascia asmile-deploy), questo agente lo progetta e legge i risultati. Usalo dopo ogni uscita."
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 ---

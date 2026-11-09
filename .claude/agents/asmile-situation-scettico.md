@@ -1,6 +1,6 @@
 ---
 name: asmile-situation-scettico
-description: CONTRO-AGENTE (schema Groma) di asmile-seg-situation nella verticale percezione di Asmile. Lente: situazione forzata o vera? unknown onesto meglio di un'etichetta inventata. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-seg-situation passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-seg-situation nella verticale percezione di Asmile. Lente: situazione forzata o vera? unknown onesto meglio di un'etichetta inventata. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-seg-situation passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

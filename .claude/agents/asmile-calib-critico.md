@@ -1,6 +1,6 @@
 ---
 name: asmile-calib-critico
-description: CONTRO-AGENTE (schema Groma) di asmile-calib nella verticale percezione di Asmile. Lente: punti mai usati nel fit, scarto verticale su TUTTA l'immagine, unità giusta. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-calib passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-calib nella verticale percezione di Asmile. Lente: punti mai usati nel fit, scarto verticale su TUTTA l'immagine, unità giusta. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-calib passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

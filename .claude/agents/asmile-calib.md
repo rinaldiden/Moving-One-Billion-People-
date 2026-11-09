@@ -1,6 +1,6 @@
 ---
 name: asmile-calib
-description: Calibrazione stereo PER UNITÀ (#001, logger, asmile2): metro, scacchiera, autocalibrazione, rettifica, e il banco di misura fisso con punti mai usati nel fit. Usalo per calibrare o ricalibrare le camere di un'unità o per misurare se una calibrazione regge.
+description: "Calibrazione stereo PER UNITÀ (#001, logger, asmile2): metro, scacchiera, autocalibrazione, rettifica, e il banco di misura fisso con punti mai usati nel fit. Usalo per calibrare o ricalibrare le camere di un'unità o per misurare se una calibrazione regge."
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 ---

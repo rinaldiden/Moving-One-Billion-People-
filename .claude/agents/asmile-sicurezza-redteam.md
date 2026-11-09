@@ -1,6 +1,6 @@
 ---
 name: asmile-sicurezza-redteam
-description: CONTRO-AGENTE (schema Groma) di asmile-sicurezza nella verticale governo di Asmile. Lente: come si può aggirare questa regola, cosa succede se un sensore mente o un processo muore. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-sicurezza passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-sicurezza nella verticale governo di Asmile. Lente: come si può aggirare questa regola, cosa succede se un sensore mente o un processo muore. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-sicurezza passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

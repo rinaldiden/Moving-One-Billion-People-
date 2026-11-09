@@ -400,12 +400,17 @@ ESISTENTI = [
 ]
 
 
+def yq(t):
+    """Descrizione YAML fra virgolette: senza, '#001' diventa un commento e la descrizione si tronca."""
+    return '"' + t.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
 def scheda(titolo, voci):
     return f"## {titolo}\n" + "\n".join(f"- {v}" for v in voci)
 
 
 def file_produttore(s):
-    fm = f"---\nname: {s['nome']}\ndescription: {s['desc']}\ntools: {s['tools']}\n" + \
+    fm = f"---\nname: {s['nome']}\ndescription: {yq(s['desc'])}\ntools: {s['tools']}\n" + \
          (f"model: {s['model']}\n" if s["model"] else "") + "---\n"
     corpo = f"""{GENERATO}
 
@@ -447,7 +452,7 @@ def file_critico(c):
     desc = (f"CONTRO-AGENTE (schema Groma) di {', '.join(prod)} nella verticale {vert} di Asmile. Lente: {lente}. "
             f"Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. "
             f"Usalo ogni volta che {prod[0]} passa la palla.")
-    fm = f"---\nname: {nome}\ndescription: {desc}\ntools: Read, Write, Bash, Grep, Glob\nmodel: sonnet\n---\n"
+    fm = f"---\nname: {nome}\ndescription: {yq(desc)}\ntools: Read, Write, Bash, Grep, Glob\nmodel: sonnet\n---\n"
     corpo = f"""{GENERATO}
 
 # {nome} — contro-agente, verticale {vert}

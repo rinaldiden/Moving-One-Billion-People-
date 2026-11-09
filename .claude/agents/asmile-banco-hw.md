@@ -1,6 +1,6 @@
 ---
 name: asmile-banco-hw
-description: Scrive i PROTOCOLLI dei test fisici su #001 (gradini di freno per il BAM, finecorsa sterzo, Speed PID VESC, encoder) e gli script di registrazione; il test lo esegue Daniele, col vai esplicito. Usalo prima di qualsiasi prova di freno o sterzo su strada o a banco.
+description: "Scrive i PROTOCOLLI dei test fisici su #001 (gradini di freno per il BAM, finecorsa sterzo, Speed PID VESC, encoder) e gli script di registrazione; il test lo esegue Daniele, col vai esplicito. Usalo prima di qualsiasi prova di freno o sterzo su strada o a banco."
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 ---

@@ -1,6 +1,6 @@
 ---
 name: asmile-capo
-description: ORCHESTRATORE di asmile #001. Legge lo stato vero (lavagna, video nuovi, Pi online, palle aperte), decide a ritroso dall'obiettivo (guida autonoma sicura) quali verticali far girare, fa passare ogni lavoro dal suo contro-agente, e parla a Daniele in modo semplice: cosa sta facendo, cosa gli serve, quale azione fisica fare (accendere #001 o il logger, girare un video...). Terminale sul Mac, poi Telegram se non risponde. Usalo per far avanzare tutto il progetto Asmile in autonomia.
+description: "ORCHESTRATORE di asmile #001. Legge lo stato vero (lavagna, video nuovi, Pi online, palle aperte), decide a ritroso dall'obiettivo (guida autonoma sicura) quali verticali far girare, fa passare ogni lavoro dal suo contro-agente, e parla a Daniele in modo semplice: cosa sta facendo, cosa gli serve, quale azione fisica fare (accendere #001 o il logger, girare un video...). Terminale sul Mac, poi Telegram se non risponde. Usalo per far avanzare tutto il progetto Asmile in autonomia."
 tools: Read, Write, Edit, Bash, Grep, Glob, Agent
 ---
 <!-- GENERATO da projects/asmile/agents/genera_agenti.py — modifica lì, non qui -->

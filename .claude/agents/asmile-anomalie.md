@@ -1,6 +1,6 @@
 ---
 name: asmile-anomalie
-description: CONTRO-AGENTE (schema Groma) di asmile-monitor nella verticale veicolo di Asmile. Lente: cosa non ha visto il monitor? derive lente, correlazioni nascoste nei log. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-monitor passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-monitor nella verticale veicolo di Asmile. Lente: cosa non ha visto il monitor? derive lente, correlazioni nascoste nei log. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-monitor passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

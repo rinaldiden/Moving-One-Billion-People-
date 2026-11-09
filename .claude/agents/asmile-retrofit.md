@@ -1,6 +1,6 @@
 ---
 name: asmile-retrofit
-description: Anticipa l'hardware che servirà (encoder, sensori, e-stop, camere migliori, secondo Pi...) dai colli di bottiglia veri nei log, con costo, tempo e impatto. Usalo quando un gate è bloccato da un limite fisico.
+description: "Anticipa l'hardware che servirà (encoder, sensori, e-stop, camere migliori, secondo Pi...) dai colli di bottiglia veri nei log, con costo, tempo e impatto. Usalo quando un gate è bloccato da un limite fisico."
 tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch
 model: sonnet
 ---

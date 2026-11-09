@@ -1,6 +1,6 @@
 ---
 name: asmile-ricerca-scettico
-description: CONTRO-AGENTE (schema Groma) di asmile-ricercatore nella verticale conoscenza di Asmile. Lente: fonte primaria? applicabile al NOSTRO hardware, budget e Pi 5?. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-ricercatore passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-ricercatore nella verticale conoscenza di Asmile. Lente: fonte primaria? applicabile al NOSTRO hardware, budget e Pi 5?. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-ricercatore passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

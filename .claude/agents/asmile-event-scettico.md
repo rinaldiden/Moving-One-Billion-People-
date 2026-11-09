@@ -1,6 +1,6 @@
 ---
 name: asmile-event-scettico
-description: CONTRO-AGENTE (schema Groma) di asmile-event-miner nella verticale guida di Asmile. Lente: falsi positivi/negativi: questa è una frenata d'emergenza o solo un rallentamento?. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-event-miner passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-event-miner nella verticale guida di Asmile. Lente: falsi positivi/negativi: questa è una frenata d'emergenza o solo un rallentamento?. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-event-miner passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

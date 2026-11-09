@@ -1,6 +1,6 @@
 ---
 name: asmile-pi-001
-description: Inventario e stato di asmile #001: hardware (BOM, cablaggi, AMT22, encoder ruota, camere, GPS, IMU), servizi, versioni deployate, salute. Lettura via Tailscale; modifiche solo col deploy. Usalo per sapere cosa c'è davvero su #001 e cosa manca.
+description: "Inventario e stato di asmile #001: hardware (BOM, cablaggi, AMT22, encoder ruota, camere, GPS, IMU), servizi, versioni deployate, salute. Lettura via Tailscale; modifiche solo col deploy. Usalo per sapere cosa c'è davvero su #001 e cosa manca."
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 ---

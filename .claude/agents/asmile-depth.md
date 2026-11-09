@@ -1,6 +1,6 @@
 ---
 name: asmile-depth
-description: Depth di Asmile lavorando A RITROSO dall'obiettivo: distanza giusta di tutto ciò a cui ci avviciniamo o che incontriamo sul percorso, anche senza nome (cancelli, griglie, catene). Depth densa nel corridoio, distanza per oggetto, tracking + Kalman, tempo-al-contatto, etichette col senno di poi (chicche Tesla). Usalo per tutto il lavoro di distanza/TTC.
+description: "Depth di Asmile lavorando A RITROSO dall'obiettivo: distanza giusta di tutto ciò a cui ci avviciniamo o che incontriamo sul percorso, anche senza nome (cancelli, griglie, catene). Depth densa nel corridoio, distanza per oggetto, tracking + Kalman, tempo-al-contatto, etichette col senno di poi (chicche Tesla). Usalo per tutto il lavoro di distanza/TTC."
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 ---

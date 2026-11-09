@@ -1,6 +1,6 @@
 ---
 name: asmile-online-learner
-description: DORMIENTE finché l'ombra (L1) non gira: dopo ogni uscita decide cosa riallenare in delta e propone il candidato solo se non regredisce. Usalo da L1 in poi.
+description: "DORMIENTE finché l'ombra (L1) non gira: dopo ogni uscita decide cosa riallenare in delta e propone il candidato solo se non regredisce. Usalo da L1 in poi."
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 ---

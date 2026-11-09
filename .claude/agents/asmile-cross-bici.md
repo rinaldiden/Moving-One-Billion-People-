@@ -1,6 +1,6 @@
 ---
 name: asmile-cross-bici
-description: CONTRO-AGENTE (schema Groma) di asmile-flotta nella verticale veicolo di Asmile. Lente: quello che funziona su un'unità peggiora un'altra?. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-flotta passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-flotta nella verticale veicolo di Asmile. Lente: quello che funziona su un'unità peggiora un'altra?. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-flotta passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

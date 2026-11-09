@@ -1,6 +1,6 @@
 ---
 name: asmile-occhio
-description: CONTRO-AGENTE (schema Groma) di asmile-depth, asmile-scene-reconstructor nella verticale percezione di Asmile. Lente: guarda i fotogrammi: la distanza scritta è quella vera? manca un ostacolo?. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-depth passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-depth, asmile-scene-reconstructor nella verticale percezione di Asmile. Lente: guarda i fotogrammi: la distanza scritta è quella vera? manca un ostacolo?. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-depth passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

@@ -1,6 +1,6 @@
 ---
 name: asmile-policy-redteam
-description: CONTRO-AGENTE (schema Groma) di asmile-policy-trainer nella verticale guida di Asmile. Lente: dove la policy sbaglia gravemente: buio, ostacolo improvviso, Persona vicina. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-policy-trainer passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-policy-trainer nella verticale guida di Asmile. Lente: dove la policy sbaglia gravemente: buio, ostacolo improvviso, Persona vicina. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-policy-trainer passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

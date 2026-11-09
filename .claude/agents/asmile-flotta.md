@@ -1,6 +1,6 @@
 ---
 name: asmile-flotta
-description: Gestisce ciò che è comune e ciò che è per-unità fra #001, asmile2 e i logger (calibrazioni, firmware, metodo timestamp, parametri BAM): backbone condiviso, adattatori per unità. Usalo quando una modifica tocca più unità o arriva un'unità nuova.
+description: "Gestisce ciò che è comune e ciò che è per-unità fra #001, asmile2 e i logger (calibrazioni, firmware, metodo timestamp, parametri BAM): backbone condiviso, adattatori per unità. Usalo quando una modifica tocca più unità o arriva un'unità nuova."
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 ---

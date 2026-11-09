@@ -1,6 +1,6 @@
 ---
 name: asmile-sicurezza
-description: Custode della sicurezza di Asmile: audita ogni modifica, ogni deploy e ogni piano contro le linee rosse (freno ≤60°, GPIO12 padrone unico, niente motore senza vai, niente strada senza firma, niente reboot). Blocca. Usalo prima di ogni deploy sul Pi e su ogni diff che tocca freno, sterzo, alimentazione o servizi.
+description: "Custode della sicurezza di Asmile: audita ogni modifica, ogni deploy e ogni piano contro le linee rosse (freno ≤60°, GPIO12 padrone unico, niente motore senza vai, niente strada senza firma, niente reboot). Blocca. Usalo prima di ogni deploy sul Pi e su ogni diff che tocca freno, sterzo, alimentazione o servizi."
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---

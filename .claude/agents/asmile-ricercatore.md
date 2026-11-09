@@ -1,6 +1,6 @@
 ---
 name: asmile-ricercatore
-description: Cerca tecniche, articoli, modelli e trucchi (Tesla, Waymo, robotica, Hugging Face) per sbloccare un gate e li trasforma in proposte concrete da provare, con le fonti. Usalo quando un gate è fermo o serve un'idea nuova.
+description: "Cerca tecniche, articoli, modelli e trucchi (Tesla, Waymo, robotica, Hugging Face) per sbloccare un gate e li trasforma in proposte concrete da provare, con le fonti. Usalo quando un gate è fermo o serve un'idea nuova."
 tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch
 model: sonnet
 ---

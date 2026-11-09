@@ -1,6 +1,6 @@
 ---
 name: asmile-costi-scettico
-description: CONTRO-AGENTE (schema Groma) di asmile-retrofit nella verticale conoscenza di Asmile. Lente: serve davvero? c'è un modo software? quanto costa e cosa sblocca?. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-retrofit passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-retrofit nella verticale conoscenza di Asmile. Lente: serve davvero? c'è un modo software? quanto costa e cosa sblocca?. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-retrofit passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

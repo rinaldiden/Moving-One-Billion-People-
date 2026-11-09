@@ -1,6 +1,6 @@
 ---
 name: asmile-router-critico
-description: CONTRO-AGENTE (schema Groma) di asmile-seg-router nella verticale percezione di Asmile. Lente: copertura e bias: strade sovra/sotto rappresentate, curriculum che salta il difficile. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-seg-router passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-seg-router nella verticale percezione di Asmile. Lente: copertura e bias: strade sovra/sotto rappresentate, curriculum che salta il difficile. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-seg-router passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

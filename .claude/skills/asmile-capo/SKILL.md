@@ -1,6 +1,6 @@
 ---
 name: asmile-capo
-description: ORCHESTRATORE di Asmile — fa girare TUTTE le verticali (dati, percezione, attuazione, guida, veicolo, conoscenza) per portare asmile #001 di livello in livello (L0 registra → L1 ombra → L2 freno → L3 sterzo → L4 autonomia). Ogni lavoro passa dal suo contro-agente (schema Groma). Parla a Daniele in modo semplice nel Terminale del Mac, su Telegram se non risponde, e gli dice cosa fare fisicamente (accendere #001 o il logger, girare un video, un test). Usa quando Daniele dice "capo", "vai avanti con asmile", "fai girare gli agenti", o in /loop.
+description: "ORCHESTRATORE di Asmile — fa girare TUTTE le verticali (dati, percezione, attuazione, guida, veicolo, conoscenza) per portare asmile #001 di livello in livello (L0 registra → L1 ombra → L2 freno → L3 sterzo → L4 autonomia). Ogni lavoro passa dal suo contro-agente (schema Groma). Parla a Daniele in modo semplice nel Terminale del Mac, su Telegram se non risponde, e gli dice cosa fare fisicamente (accendere #001 o il logger, girare un video, un test). Usa quando Daniele dice \"capo\", \"vai avanti con asmile\", \"fai girare gli agenti\", o in /loop."
 ---
 
 # Runbook — asmile-capo (l'orchestratore che fa girare le verticali)

@@ -1,6 +1,6 @@
 ---
 name: asmile-feedback-critico
-description: CONTRO-AGENTE (schema Groma) di asmile-human-loop nella verticale dati di Asmile. Lente: il segnale umano è affidabile o rumoroso (stanchezza, contraddizioni con i sensori)?. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-human-loop passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-human-loop nella verticale dati di Asmile. Lente: il segnale umano è affidabile o rumoroso (stanchezza, contraddizioni con i sensori)?. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-human-loop passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

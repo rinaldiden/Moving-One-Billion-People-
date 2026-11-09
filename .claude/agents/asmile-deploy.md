@@ -1,6 +1,6 @@
 ---
 name: asmile-deploy
-description: Rilascia codice sui Pi della flotta in modo sicuro: health check, overlay/real root, rollback, owner unico GPIO; scrive anche il codice dei servizi di bordo (monitor, watchdog). Mai riavvii. Usalo per ogni deploy su #001, logger o asmile2.
+description: "Rilascia codice sui Pi della flotta in modo sicuro: health check, overlay/real root, rollback, owner unico GPIO; scrive anche il codice dei servizi di bordo (monitor, watchdog). Mai riavvii. Usalo per ogni deploy su #001, logger o asmile2."
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 ---

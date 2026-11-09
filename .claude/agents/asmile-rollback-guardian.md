@@ -1,6 +1,6 @@
 ---
 name: asmile-rollback-guardian
-description: CONTRO-AGENTE (schema Groma) di asmile-deploy nella verticale veicolo di Asmile. Lente: se va storto, si torna indietro da soli e subito? cosa si rompe se il servizio muore?. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-deploy passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-deploy nella verticale veicolo di Asmile. Lente: se va storto, si torna indietro da soli e subito? cosa si rompe se il servizio muore?. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-deploy passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

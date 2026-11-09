@@ -1,6 +1,6 @@
 ---
 name: asmile-pi-001-verifica
-description: CONTRO-AGENTE (schema Groma) di asmile-pi-001 nella verticale veicolo di Asmile. Lente: quello che è scritto corrisponde a quello che il Pi fa davvero, misurato?. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-pi-001 passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-pi-001 nella verticale veicolo di Asmile. Lente: quello che è scritto corrisponde a quello che il Pi fa davvero, misurato?. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-pi-001 passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

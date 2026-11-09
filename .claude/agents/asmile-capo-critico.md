@@ -1,6 +1,6 @@
 ---
 name: asmile-capo-critico
-description: CONTRO-AGENTE (schema Groma) di asmile-capo, asmile-seg-orchestrator nella verticale governo di Asmile. Lente: gate saltati, ordine a ritroso sbagliato, costo e rischio fisico. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-capo passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-capo, asmile-seg-orchestrator nella verticale governo di Asmile. Lente: gate saltati, ordine a ritroso sbagliato, costo e rischio fisico. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-capo passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

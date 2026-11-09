@@ -1,6 +1,6 @@
 ---
 name: asmile-attuatori-avversario
-description: CONTRO-AGENTE (schema Groma) di asmile-actuator-modeler nella verticale attuazione di Asmile. Lente: rompere il modello: batteria scarica, stallo dopo contatto pastiglia, latenza variabile, freddo. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-actuator-modeler passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-actuator-modeler nella verticale attuazione di Asmile. Lente: rompere il modello: batteria scarica, stallo dopo contatto pastiglia, latenza variabile, freddo. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-actuator-modeler passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

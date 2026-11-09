@@ -1,6 +1,6 @@
 ---
 name: asmile-dati-auditor
-description: CONTRO-AGENTE (schema Groma) di asmile-log-harvester nella verticale dati di Asmile. Lente: spazzatura nel corpus: frame scuri, desync video↔sensori, CSV incompleti, duplicati, bici ferma. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-log-harvester passa la palla.
+description: "CONTRO-AGENTE (schema Groma) di asmile-log-harvester nella verticale dati di Asmile. Lente: spazzatura nel corpus: frame scuri, desync video↔sensori, CSV incompleti, duplicati, bici ferma. Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. Usalo ogni volta che asmile-log-harvester passa la palla."
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
 ---

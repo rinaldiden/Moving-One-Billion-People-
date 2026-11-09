@@ -1,6 +1,6 @@
 ---
 name: asmile-human-loop
-description: Trasforma l'interazione di Daniele (interruttore, doppio tocco follow-me, buzzer, risposte ai casi dubbi, commenti post-giro) in etichette ad alto valore per il training. Usalo dopo ogni giro o quando arrivano verdetti di Daniele.
+description: "Trasforma l'interazione di Daniele (interruttore, doppio tocco follow-me, buzzer, risposte ai casi dubbi, commenti post-giro) in etichette ad alto valore per il training. Usalo dopo ogni giro o quando arrivano verdetti di Daniele."
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 ---
