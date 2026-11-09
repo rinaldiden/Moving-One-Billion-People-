@@ -35,6 +35,19 @@ def select(csvp, maxn, zlo, zhi, ulim, min_conf, f0, f1, classes=COMPACT):
     return chosen[::step][:maxn]
 
 
+def variants(rc, disp, mask):
+    """Z per varianti di misura sulla stessa maschera: [eroso p70 (v2), non eroso p70, p85, p90, p95]."""
+    out = []
+    for er in (True, False):
+        m = (cv2.erode(mask, np.ones((5, 5), np.uint8)) > 0) if er else (mask > 0)
+        v = disp[m]; v = v[v > 4]
+        if len(v) < 20:
+            out.append(float("nan") if er else None); continue
+        ps = (70,) if er else (70, 85, 90, 95)
+        out += [rc.Z(float(np.percentile(v, p))) for p in ps]
+    return [x if x is not None else float("nan") for x in out]
+
+
 def theil_sen(x, y):
     sl = [(y[j] - y[i]) / (x[j] - x[i]) for i in range(len(x)) for j in range(i + 1, len(x)) if abs(x[j] - x[i]) > 0.3]
     return float(np.median(sl)) if sl else float("nan")
@@ -47,10 +60,13 @@ def main():
     ap.add_argument("--zlo", type=float, default=8); ap.add_argument("--zhi", type=float, default=26)
     ap.add_argument("--ulim", type=float, default=450); ap.add_argument("--conf", type=float, default=0.7)
     ap.add_argument("--f0", type=int, default=1800); ap.add_argument("--f1", type=int, default=10000)
-    ap.add_argument("--classes", default=",".join(COMPACT)); ap.add_argument("--maxlen", type=int, default=150); ap.add_argument("--device", default="mps")
+    ap.add_argument("--only", default=""); ap.add_argument("--classes", default=",".join(COMPACT)); ap.add_argument("--maxlen", type=int, default=150); ap.add_argument("--device", default="mps")
     a = ap.parse_args()
     from seg_teacher_student import ThingsTeacher, THINGS
     sel = select(a.csv, a.maxn, a.zlo, a.zhi, a.ulim, a.conf, a.f0, a.f1, tuple(a.classes.split(",")))
+    if a.only:
+        keep = [int(x) for x in a.only.split(",")]
+        sel = [x for x in sel if any(abs(x[0] - k) <= 12 for k in keep)]
     print("oggetti scelti:", len(sel), [(s[0], s[1]) for s in sel], flush=True)
     rc = Rect(); tL = read_t(a.session, "right")
     Sf = enc_interp(tL[a.f0], tL[min(len(tL) - 1, a.f1 + a.maxlen)])
@@ -89,7 +105,7 @@ def main():
                 ob["why"] = "uscito"; active.remove(ob); done.append(ob); continue
             bw, bh = xs.max() - xs.min() + 1, ys.max() - ys.min() + 1
             md = mask_depth(rc, disp, ob["mask"], thin_frac=len(xs) / (bw * bh), classe=ob["cls"])
-            if md: ob["ser"].append((i, tL[i], md[0], float(Sf(tL[i])), float(xs.mean())))
+            if md: ob["ser"].append((i, tL[i], md[0], float(Sf(tL[i])), float(xs.mean()), len(xs) / bh, md[3], md[4], *variants(rc, disp, ob["mask"])))
             if len(ob["ser"]) and ob["ser"][-1][2] < 2.0 or i - ob["i0"] >= a.maxlen:
                 ob["why"] = "fine"; active.remove(ob); done.append(ob)
         # 2) nuovi oggetti: SAM 3 al frame di partenza
@@ -108,7 +124,7 @@ def main():
             ys, xs = np.nonzero(m)
             md = mask_depth(rc, disp, m, thin_frac=len(xs) / ((np.ptp(xs) + 1) * (np.ptp(ys) + 1)), classe=s[1])
             ob = dict(cls=s[1], i0=i, mask=m, pts=pts.astype(np.float32), ser=[], conf=0)
-            if md: ob["ser"].append((i, tL[i], md[0], float(Sf(tL[i])), float(xs.mean())))
+            if md: ob["ser"].append((i, tL[i], md[0], float(Sf(tL[i])), float(xs.mean()), len(xs) / (np.ptp(ys) + 1), md[3], md[4], *variants(rc, disp, m)))
             active.append(ob); print(f"f{i} avvio {s[1]} Z={s[3]}", flush=True)
         prevL = L
     done += active
@@ -126,7 +142,7 @@ def main():
                         Z0=round(float(Z[0]), 1), Z1=round(float(Z[-1]), 1), slope_ols=round(float(-ols[0]), 3),
                         slope_ts=round(-ts, 3), rms_m=round(float(np.sqrt(np.mean(r ** 2))), 2),
                         err_fix_mae_pct=round(float(np.mean(np.abs(e))), 1), u_med=int(np.median(ser[:, 4])), fine=ob.get("why"),
-                        pts=[(int(x[0]), round(float(x[2]), 2), round(float(x[3]), 2), int(x[4])) for x in ser]))
+                        pts=[(int(x[0]), round(float(x[2]), 2), round(float(x[3]), 2), int(x[4]), round(float(x[5]), 1), int(x[6]), round(float(x[7]), 2), *[round(float(q), 2) for q in x[8:]]) for x in ser]))
     json.dump(res, open(a.out, "w"), indent=1)
     print(f"tracce utili (n>=8, S>=3 m): {len(res)}  atteso pendenza {C:.3f}")
     for t in res:

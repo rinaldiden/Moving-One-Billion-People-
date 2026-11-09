@@ -66,6 +66,8 @@ class Rect:
         return self.f * B / d
 
 
+THIN_W = 25                             # larghezza media maschera (px) sotto cui l'oggetto e' 'sottile' (palo)
+THIN_MIN_FRAC, THIN_MIN_W = 0.5, 10     # oggetti sottili: frazione min di pixel con disparita' valida, larghezza min (px)
 EXTENDED = {"fence", "gate", "barrier", "bench", "railing"}      # oggetti estesi: conta il punto PIU' VICINO (Z basso)
 
 
@@ -78,6 +80,8 @@ def coherent_disp(v, kind):
     if kind == "thin":
         return float(np.percentile(v, 70)), v
     lv = np.log(v)
+    if lv.max() - lv.min() < 0.05:
+        return float(np.median(v)), v
     h, e = np.histogram(lv, bins=np.arange(lv.min(), lv.max() + 0.05, 0.05))
     if len(h) > 1:
         h = np.convolve(h, [1, 1, 1], "same")
@@ -86,7 +90,7 @@ def coherent_disp(v, kind):
     return (float(np.median(keep)) if len(keep) >= 20 else float(np.median(v))), keep
 
 
-def mask_depth(rc, disp, mask, dmin=4.0, thin_frac=None, classe=None):
+def mask_depth(rc, disp, mask, dmin=4.0, thin_frac=None, classe=None, width_px=None):
     """Distanza di un oggetto dalla sua maschera (erosa 2 px). Ritorna (Z, Zp25, Zp75, n_valid, frac_valid)."""
     m = cv2.erode(mask, np.ones((5, 5), np.uint8)) > 0
     if m.sum() < 40:
@@ -95,7 +99,10 @@ def mask_depth(rc, disp, mask, dmin=4.0, thin_frac=None, classe=None):
     v = v[v > dmin]
     if len(v) < 30 or len(v) < 0.10 * m.sum():
         return None
-    kind = "ext" if classe in EXTENDED else "thin" if (thin_frac is not None and thin_frac < 0.45) else "mid"
+    is_thin = (thin_frac is not None and thin_frac < 0.45) or (width_px is not None and width_px < THIN_W)
+    kind = "ext" if classe in EXTENDED else "thin" if is_thin else "mid"
+    if kind == "thin" and (len(v) / m.sum() < THIN_MIN_FRAC or (width_px is not None and width_px < THIN_MIN_W)):
+        return None          # palo sottile: SGBM (blocco 7) non aggancia una barra <10 px -> disparita' = sfondo, meglio nessuna Z
     d, keep = coherent_disp(v, kind)
     q1, q3 = np.percentile(keep, [25, 75])
     return rc.Z(d), rc.Z(q3), rc.Z(q1), int(len(v)), len(v) / m.sum()
@@ -119,7 +126,7 @@ def ground_vh(rc, disp):
     return float(np.median(vh[np.abs(vh - c) < 12])), a
 
 
-def obstacles(rc, disp, covered, corridor=3.0, zmin=2.0, zmax=15.0, hmin=0.25):
+def obstacles(rc, disp, covered, corridor=4.5, zmin=2.0, zmax=15.0, hmin=0.12):
     """Strato 'ostacolo senza classe' (veto 1/3): pixel nel corridoio davanti con altezza sopra la strada >= hmin e
     non gia' coperti da maschere SAM. Altezza y = CAM_H (d - d_g)/d (d_g = disparita' della strada nella stessa riga).
     Ritorna lista (Z_m_p20, box, mask, h_med_m)."""
@@ -133,7 +140,7 @@ def obstacles(rc, disp, covered, corridor=3.0, zmin=2.0, zmax=15.0, hmin=0.25):
     Z = np.where(valid, rc.f * B / np.maximum(disp, 1e-3), 0)
     X = (np.arange(W, dtype=np.float32)[None, :] - rc.cx) * Z / rc.f
     y = CAM_H * (disp - dg) / np.maximum(disp, 1e-3)
-    m = valid & (Z >= zmin) & (Z <= zmax) & (np.abs(X) <= corridor) & (y >= hmin) & (y <= 3.0)
+    m = valid & (Z >= zmin) & (Z <= zmax) & (np.abs(X) <= corridor) & (y >= hmin + 2 * CAM_H / np.maximum(disp, 1.0)) & (y <= 3.0)
     m &= ~(covered > 0)
     m = m.astype(np.uint8)
     m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
@@ -255,7 +262,7 @@ def cmd_run(a):
                     m = np.zeros((H, W), np.uint8)
                     cv2.fillPoly(m, [polys[k].astype(np.int32)], 1)
                     bw, bh = max(1, b[2] - b[0]), max(1, b[3] - b[1])
-                    md = mask_depth(rc, disp, m, thin_frac=float(m.sum()) / (bw * bh), classe=names[c])
+                    md = mask_depth(rc, disp, m, thin_frac=float(m.sum()) / (bw * bh), classe=names[c], width_px=float(m.sum()) / bh)
                     ys, xs = np.nonzero(m)
                     row = [i, tL[i], names[c], round(cf, 3), *[int(v) for v in b], int(xs.mean()), int(ys.mean())]
                     if md and md[0] <= a.zmax and cf >= 0.5 and md[3] >= 150:
