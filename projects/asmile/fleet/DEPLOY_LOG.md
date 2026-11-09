@@ -2,3 +2,4 @@
 - 2026-11-09 10:01 001: encoder ruota tarato coi 10 giri (15.760 m): wheel_circum_m 0.3374→0.3477 (m/giro encoder), m_per_count 2.1219e-5; backup .bak-20261109; ALLOW asmile-sicurezza, vai di Daniele agents/rapporti/encoder_calibration_PROPOSTA_20261109.json
 - 2026-11-09 10:09 logger: bike_speed BLE CooSpo BK467 20261109 deploy/deploy_bike_speed.sh pi/sensors/bike_speed_ble.py pi/sensors/sensor_hub.py config/bike_speed_logger.service
 - 2026-11-09 10:10 logger: bike_speed BLE CooSpo BK467 20261109 deploy/deploy_bike_speed.sh pi/sensors/bike_speed_ble.py pi/sensors/sensor_hub.py config/bike_speed_logger.service
+- 2026-11-09 11:22 logger: bike_speed BLE CooSpo BK467 20261109 deploy/deploy_bike_speed.sh pi/sensors/bike_speed_ble.py pi/sensors/sensor_hub.py config/bike_speed_logger.service

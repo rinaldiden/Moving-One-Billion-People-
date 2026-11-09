@@ -35,6 +35,8 @@ OUT_LEGACY = "/tmp/bike_speed"                 # "speed_ms iso" come bike_speed_
 NAME_PREFIX = "BK6LS"
 CIRC_PLACEHOLDER = 1.50                        # m — NON misurato per la bici del logger
 MAC_FILE = "/data/bike_speed_mac" if os.path.isdir("/data") else os.path.expanduser("~/.bike_speed_mac")
+CONNECT_TIMEOUT_S = 25.0                       # connect BLE (20-30 s)
+MAX_FAILS_BEFORE_REMOVE = 2                    # poi: bluetoothctl remove + riscan
 STOP_AFTER_S = 3.0                             # nessun giro nuovo da tanto → velocità 0
 
 
@@ -144,85 +146,125 @@ def save_mac(mac):
         print(f"[ERR] salvataggio MAC {MAC_FILE}: {e}", file=sys.stderr, flush=True)
 
 
-async def scan(BleakScanner, prefix):
-    print(f"[INFO] scan BLE '{prefix}*'...", file=sys.stderr, flush=True)
+def log(msg):
+    print(f"{time.strftime('%H:%M:%S')} {msg}", file=sys.stderr, flush=True)
+
+
+def bluez_remove(mac):
+    """Toglie il device dalla cache BlueZ (GATT vecchia dopo cambio modalità/sonno): bluetoothctl remove."""
+    import subprocess
+    try:
+        r = subprocess.run(["bluetoothctl", "remove", mac], capture_output=True, text=True, timeout=15)
+        log(f"[BLE] bluetoothctl remove {mac}: {(r.stdout + r.stderr).strip()[:120]}")
+        return r.returncode == 0
+    except Exception as e:                      # noqa: BLE001
+        log(f"[ERR] bluetoothctl remove fallito: {e!r}")
+        return False
+
+
+async def scan_by_name(BleakScanner, prefix):
+    """Scan per prefisso nome → BLEDevice (mai la sola stringa MAC), o None."""
+    log(f"[BLE] scan '{prefix}*'...")
     for d in await BleakScanner.discover(timeout=8.0):
         if d.name and d.name.startswith(prefix):
-            print(f"[INFO] trovato {d.name} @ {d.address}", file=sys.stderr, flush=True)
-            return d.address
+            log(f"[BLE] trovato {d.name} @ {d.address}")
+            return d
     return None
 
 
-async def session(BleakClient, tr, address):
-    """Connetti, iscriviti, mantieni. Ritorna True se ha ricevuto almeno una notifica."""
-    got = False
+async def session(BleakClient, tr, device):
+    """Connetti al BLEDevice (scanner già fermo), iscriviti, mantieni. Ritorna (connesso_ok, notifiche_ricevute)."""
+    n = 0
 
     def cb(_h, data):
-        nonlocal got
+        nonlocal n
         if tr.feed(bytes(data)) is not None:
-            got = True
+            n += 1
             tr.publish()
 
-    client = BleakClient(address, timeout=10.0)
+    client = BleakClient(device, timeout=CONNECT_TIMEOUT_S)
     try:
-        await asyncio.wait_for(client.connect(), 20.0)
+        await asyncio.wait_for(client.connect(), CONNECT_TIMEOUT_S + 5)
         await asyncio.wait_for(client.start_notify(CSC_MEASUREMENT, cb), 15.0)
-    except Exception as e:                      # noqa: BLE001
-        print(f"[ERR] connessione: {e!r}", file=sys.stderr, flush=True)
+    except BaseException as e:                  # noqa: BLE001  (TimeoutError, discover services, ...)
+        log(f"[BLE] connessione FALLITA a {device.address}: {type(e).__name__}: {e}")
         try:
             await asyncio.wait_for(client.disconnect(), 5.0)
-        except Exception:                       # noqa: BLE001
+        except BaseException:                   # noqa: BLE001
             pass
-        return False
-    print(f"[INFO] connesso a {address}", file=sys.stderr, flush=True)
+        if isinstance(e, (KeyboardInterrupt, SystemExit, asyncio.CancelledError)):
+            raise
+        return False, 0
+    log(f"[BLE] CONNESSO a {device.address}")
     tr.notify_mono = time.monotonic()
     try:
         while client.is_connected:
             await asyncio.sleep(1.0)
             tr.publish()                        # porta a 0 la velocità se la ruota si è fermata
             if time.monotonic() - tr.notify_mono > 60:
-                break                           # connesso ma muto da 60 s: riconnetti
+                log("[BLE] connesso ma muto da 60 s: riconnetto")
+                break
     finally:
         try:
             await asyncio.wait_for(client.disconnect(), 5.0)
-        except Exception:                       # noqa: BLE001
+        except BaseException:                   # noqa: BLE001
             pass
-    return got
+    log(f"[BLE] DISCONNESSO da {device.address} (notifiche in sessione: {n})")
+    return True, n
+
+
+async def connection_loop(BleakClient, BleakScanner, circ, ph, name, address, remove=bluez_remove,
+                          save=None, sleep=asyncio.sleep, max_iter=None):
+    """Riconnessione infinita robusta dopo ogni sonno del sensore.
+    - cerca il BLEDevice con find_device_by_address (scanner fermo a connect), mai MAC nudo;
+    - sensore non visibile (dorme) = attesa, NON è un errore;
+    - dopo 2 connessioni fallite di fila: bluetoothctl remove <MAC> + nuovo scan per nome."""
+    save = save or save_mac
+    fails = it = 0
+    while max_iter is None or it < max_iter:
+        it += 1
+        device = None
+        if address and fails < MAX_FAILS_BEFORE_REMOVE:
+            try:
+                device = await BleakScanner.find_device_by_address(address, timeout=8.0)
+            except Exception as e:              # noqa: BLE001
+                log(f"[BLE] ricerca {address}: {type(e).__name__}: {e}")
+            if device is None:
+                await sleep(1)                  # non visibile: il sensore dorme, si riprova
+                continue
+        else:
+            if address and fails >= MAX_FAILS_BEFORE_REMOVE:
+                remove(address)
+                await sleep(2)
+            try:
+                device = await scan_by_name(BleakScanner, name)
+            except Exception as e:              # noqa: BLE001
+                log(f"[ERR] scan: {type(e).__name__}: {e}")
+            if device is None:
+                await sleep(3)
+                continue
+            if device.address != address:
+                address = device.address
+                save(address)
+            fails = 0
+        tr = Tracker(circ, ph, address)
+        ok, n = await session(BleakClient, tr, device)
+        if ok:
+            fails = 0
+        else:
+            fails += 1
+        await sleep(1 if ok else min(5, 1 + fails))
 
 
 async def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--name", default=NAME_PREFIX)
     ap.add_argument("--address")
-    ap.add_argument("--probe-scan", action="store_true", help="solo scan, stampa e salva MAC")
     args = ap.parse_args()
     from bleak import BleakClient, BleakScanner
     circ, ph = unit_circ()
-    print(f"[INFO] circonferenza {circ} m ({'PLACEHOLDER, non misurata' if ph else 'da config'})",
-          file=sys.stderr, flush=True)
-    address = args.address or load_mac()
-    fails = 0
-    while True:
-        if not address or fails >= 3:
-            try:
-                found = await scan(BleakScanner, args.name)
-            except Exception as e:              # noqa: BLE001
-                print(f"[ERR] scan: {e!r}", file=sys.stderr, flush=True)
-                found = None
-            if found:
-                address, fails = found, 0
-                save_mac(address)
-            elif args.probe_scan:
-                return 1
-            else:
-                await asyncio.sleep(5)          # il sensore dorme: riprova all'infinito
-                continue
-            if args.probe_scan:
-                return 0
-        tr = Tracker(circ, ph, address)
-        ok = await session(BleakClient, tr, address)
-        fails = 0 if ok else fails + 1
-        await asyncio.sleep(min(10, 2 + fails))
+    log(f"[INFO] circonferenza {circ} m ({'PLACEHOLDER, non misurata' if ph else 'da config'})")
+    await connection_loop(BleakClient, BleakScanner, circ, ph, args.name, args.address or load_mac())
 
 
 if __name__ == "__main__":
