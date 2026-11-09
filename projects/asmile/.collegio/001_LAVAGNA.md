@@ -1,4 +1,4 @@
-# Lavagna asmile #001 — 2026-11-09 08:09
+# Lavagna asmile #001 — 2026-11-09 09:58
 
 **Livello raggiunto:** nessuno  ·  **Stiamo lavorando per:** L0 (registra)
 
@@ -13,7 +13,7 @@
 | ⬜ | L0.sync_001 | Camere di #001 sincronizzate anche nei video in movimento | asmile-pi-001 → asmile-pi-001-verifica |  |
 | ✅ | L0.sensori_001 | sensor_hub a 50 Hz attivo su #001 (camere+sensori stesso ms) | asmile-pi-001 → asmile-pi-001-verifica | agents/rapporti/L0.sensori_sync_001_20261109.md (visto asmile-pi-001-verifica, 2026-11-09) |
 | ⬜ | L0.encoder_ruota | Encoder ruota tarato (velocità e accelerazione giuste) | asmile-pi-001 → asmile-pi-001-verifica |  |
-| ✅ | L0.calib_logger | Calibrazione stereo del logger col metro (±2% da fermi) | asmile-calib → asmile-calib-critico | calib_asmile-logger_metro.json: errore max 2.1% su 7 soste (fermo) |
+| 🟡 | L0.calib_logger | Calibrazione stereo del logger col metro (±2% da fermi) | asmile-calib → asmile-calib-critico | calib_asmile-logger_metro.json: residui del fit ≤2.1%, mancano soste di verifica fuori fit (4-6-8-12 m) |
 | 🟡 | L0.calib_001 | Calibrazione stereo di #001 col metro (±2% da fermi, 1-15 m) | asmile-calib → asmile-calib-critico | calib_asmile-001.json ha soste col metro: serve il visto di asmile-calib-critico |
 | ✅ | L0.dati | Video nuovi scaricati, controllati e indicizzati | asmile-logger-ingest → asmile-ingest-critico | agents/rapporti/L0.dati_indice_20261109.json (visto asmile-ingest-critico, 2026-11-09) |
 | ⬜ | L1.banco_fisso | Banco di misura fisso: punti col metro MAI usati nel fit (4-6-8-12 m) + oggetti reali | asmile-calib → asmile-calib-critico |  |
@@ -32,6 +32,6 @@
 | ⬜ | L3.ombra_sterzo | 5 sessioni in ombra dello sterzo | asmile-sim-validator → asmile-regressione |  |
 | ⬜ | L4.sim2real | Policy validata in sim + banco virtuale senza regressioni | asmile-sim-validator → asmile-regressione |  |
 
-**Video da lavorare:** 12  ·  **Decisioni da firmare:** 9  ·  **Pi online:** nessuno
+**Video da lavorare:** 15  ·  **Decisioni da firmare:** 10  ·  **Pi online:** nessuno
 
 _Generata da projects/asmile/agents/stato.py — non modificarla a mano._

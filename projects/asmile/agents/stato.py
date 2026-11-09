@@ -99,13 +99,12 @@ def prova(gid):
 def auto(gid):
     """Controlli automatici sui file veri. Ritorna (stato, prova) o None se non c'è un controllo."""
     if gid == "L0.calib_logger":
+        # mai FATTO in automatico: i tape_points sono i punti del FIT (residui), serve il visto di asmile-calib-critico
+        # con soste di verifica mai usate nel fit (lezione 2026-11-09)
         p = ASMILE / "logger/depth/calib_asmile-logger_metro.json"
-        if p.exists():
-            pts = json.loads(p.read_text()).get("tape_points", [])
-            errs = [abs(t["Z_stereo_m"] - t["Z_m"]) / t["Z_m"] for t in pts if t.get("Z_stereo_m")]
-            if errs and max(errs) <= 0.025:
-                return "FATTO", f"{p.name}: errore max {100 * max(errs):.1f}% su {len(errs)} soste (fermo)"
-            return "MANCA", f"{p.name}: errore max {100 * max(errs):.1f}%" if errs else "nessuna sosta col metro"
+        if p.exists() and json.loads(p.read_text()).get("tape_points"):
+            return "DA VERIFICARE", f"{p.name}: residui del fit ≤2.1%, mancano soste di verifica fuori fit (4-6-8-12 m)"
+        return "MANCA", "calib del logger senza soste col metro"
     if gid == "L0.calib_001":
         p = ASMILE / "logger/depth/calib_asmile-001.json"
         if p.exists() and json.loads(p.read_text()).get("tape_points"):
