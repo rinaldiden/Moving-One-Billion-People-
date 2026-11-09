@@ -1,4 +1,49 @@
-# depth + segmentazione #001, giro 2026-11-09 (session_20261109_094146)
+# depth + segmentazione #001, giro 2026-11-09 — RAPPORTO v2 (dopo VETO 1/3 di asmile-occhio)
+Solo #001. Calib `calib_asmile-001.json` (PASSA asmile-calib-critico). v1 sotto, in fondo, invariata ma SUPERATA nella parte "in moto".
+
+## Risposta al veto
+**1) Odometria SENZA filtro su Z, non circolare.** v1 sbagliava: associava le maschere SAM fra passate (IoU + filtro |Z-Zpred|) e decideva "fermo" dalla pendenza.
+Ora: oggetti compatti scelti SOLO per classe/conf/posizione (palo, bollard, cestino); SAM 3 al frame di partenza, poi la maschera e' SEGUITA
+frame per frame (15 fps) con KLT + similitudine (nessun uso di Z o encoder per seguire); per ogni frame SGBM rettificato + stessa misura Z della pipeline.
+Z contro S (metri encoder ruota), componente lungo l'asse OTTICO, atteso cos(7.4°)=0.992 (pitch gestito). Script `training/depth/odometria_klt_001.py`.
+- Giro intero, 40 oggetti avviati, **25 tracce utili (10 pali, 9 bollard, 6 cestini; ≥8 punti, ≥3 m percorsi; max 18 m)**. Nessuna esclusa nel conteggio sotto "TUTTE".
+- **Pendenza ΔZ_stereo/Δs_encoder (Theil-Sen): mediana 1.007 (p25-p75 0.88-1.07)** su 25 tracce; 1.044 (0.98-1.10) sulle 21 con rms<3 m. Atteso 0.992.
+  Tracce pulite: bollard f7674 pend 1.04 rms 0.05 m; bollard f6270 1.07 rms 0.14 m; bollard f9162 1.01 rms 0.14 m; palo f7434 0.98 rms 0.25 m; cestino f1806 1.16 rms 0.57 m (S 15.8 m, Z 24->6.3).
+  4 tracce con rms 4-6 m (pali f2922, f6018, f6402; bollard f8724): il tracker KLT ha perso l'oggetto (maschera scivolata sullo sfondo / oggetto a <2 m); le tengo in "TUTTE".
+- **Causa delle pendenze 0.27-0.34 del critico**: NON encoder ne' scala ne' pitch. Era l'associazione IoU fra passate SAM 3 su oggetti estesi/in fila
+  (fence/gate/barrier, bollard allineati: la traccia salta da un elemento all'altro, Z cresce) + mediana su oggetto esteso che cambia con l'angolo.
+  Con tracking continuo le stesse classi danno pendenza ~1 (vedi sopra). Controllo "estesi" (fence/gate/barrier, KLT, 5 tracce, 1 gate Z 21.9->2.9 m): TS mediana 0.99 (0.81-1.15); 1 su 5 fallita (persi punti, rms 5 m); le 3 barrier f6285-6318 sono lo stesso oggetto.
+- Errore % per fascia di Z predetto (retta a pendenza fissa 0.992, A pesata 1/Z², TUTTE le tracce / senza i 4 tracker persi):
+  | fascia | TUTTE (n punti) | senza 4 persi | obiettivo |
+  |---|---|---|---|
+  | <5 m | MAE 132%, bias +73% (37) | MAE 27.6%, bias +18% (14) | ±2% **NON VERIFICATO / non raggiunto** |
+  | 5-10 m | MAE 29%, bias -0.9% (261) | MAE 6.5%, p90 15.7% (190) | ±5% **NON raggiunto** |
+  | 10-20 m | MAE 10.1%, bias +1.9% (567) | MAE 5.4%, p90 12.4% (475) | ±10% ok sul MAE (p90 12-17%) |
+  | 20-30 m | MAE 5.9% (159) | MAE 6.1% (135) | - |
+  | bordi: centro <200 px / 200-400 / >400 | 4.5% / 27% / 25% | 4.2% / 5.5% / 11.8% | - |
+  Il "3.9% a 5-10 m e 2.6% a 10-20 m" della v1 e' RITIRATO (filtro circolare). Numeri onesti: ~5-6% sotto 20 m al centro-medio, ~12% ai bordi, <5 m inaffidabile in moto
+  (oggetti che escono dal frame con maschera tagliata + tracker che scivola quando l'oggetto cresce: non posso separare errore del tracker da errore stereo).
+  La scala complessiva stereo-vs-encoder pero' torna (pendenza ~1.0-1.04): non c'e' un errore sistematico grosso di scala o di odometria.
+- Banco fisso (a) invariato: |err| ≤1.2% fino a 12 m, 15 m -2.8% (`banco_sgbm.json`).
+
+**2) Oggetti estesi: punto piu' vicino.** `fence, gate, barrier, bench`: disparita' percentile 85 (Z basso) invece della mediana (`coherent_disp`, `depth_seg_001.py`). Validato solo con le 5 tracce KLT sopra.
+**3) Strato "ostacolo senza classe"** dalla disparita' densa (`obstacles()`): piano strada con pendenza nota dalla geometria (h cam 0.825 m, pitch 7.4°; solo l'orizzonte vh si stima, moda per frame),
+altezza sopra strada y = h(d-d_g)/d ≥ 0.25 m, |X|≤3 m, Z 2-15 m, base a terra (esclude cornicioni), nuvola coerente in Z, non gia' coperta da maschere SAM. Magenta nel video, "ostacolo (senza classe)".
+Clip v2: 909 rilevazioni "ostacolo" in 430 passate su 900. **Non trova ancora** botte/vasi/fioriere di frame 4600 (a destra, X≈2-3 m, disparita' al bordo non affidabile) -> NON risolto; l'auto davanti (9.7 m) la trova ma e' gia' coperta da SAM. Possibili falsi positivi (es. "2.6 m" a frame 5900: gradino/bordo?) non classificati: a te la lente.
+**4) Maschere con sfondo**: Z = MODA dell'istogramma della disparita' (log) + mediana entro ±10%, maschera erosa 2 px (`coherent_disp`). Auto gialla (clip idx 1400): 4.7 m (v1 4.9 m); la maschera SAM include ancora l'edificio di sfondo ma la distanza no. Rimane da fare: tagliare la maschera anche graficamente.
+
+## Da Daniele (non mi blocco)
+- Banco <5 m fuori centro e ritaratura dei bordi: serve un video col metro (tabellone a 1-5 m a sinistra/destra del frame, non solo al centro). Servono anche soste a 15-20 m per stringere l'errore lontano.
+- Con quel video si puo' anche tarare il dy ai bordi (oggi 2-5 px) e rifare i 6.8-12% ai bordi.
+
+## File v2 (locali)
+`training/depth/out_20261109/fuso_clip.mp4` (RIFATTO con punti 2-4; v1 in `v1/`), `odo_klt_giro.json`, `odo_klt_estesi.json`, `objects_clip.csv` (nuovo, include "ostacolo"),
+`fuso_giro.mp4`/`objects_giro.csv` = v1 (non rigirati: 55 min; stesse misure Z con mediana, non con moda/percentile). Script: `odometria_klt_001.py`, `analisi_movimento_v2_001.py` (IoU-only, per riprodurre il veto), `depth_seg_001.py`.
+Fotogrammi: `agents/rapporti/img/depth_seg_001_v2_clip_{100,1400,1700,2400}.jpg`.
+
+---------------- v1 (2026-11-09 mattina), invariata sotto ----------------
+
+## v1
 Solo #001 (2 OV9281, order RL, calib `logger/depth/calib_asmile-001.json` di oggi, PASSA del critico). Nessun dato del logger.
 
 ## Risposta: la depth e' perfetta? NO. E' buona al centro e da fermi, meno ai bordi e da vicino in moto

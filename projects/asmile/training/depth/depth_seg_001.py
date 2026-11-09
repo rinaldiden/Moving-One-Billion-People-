@@ -66,8 +66,28 @@ class Rect:
         return self.f * B / d
 
 
-def mask_depth(rc, disp, mask, dmin=4.0, thin_frac=None):
-    """Mediana robusta della disparita' sulla maschera (erosa 3 px). Ritorna (Z, Zp25, Zp75, n_valid, frac_valid)."""
+EXTENDED = {"fence", "gate", "barrier", "bench", "railing"}      # oggetti estesi: conta il punto PIU' VICINO (Z basso)
+
+
+def coherent_disp(v, kind):
+    """Disparita' rappresentativa. kind: 'ext' = oggetto esteso (muro/recinzione): percentile 85 (punto piu' vicino);
+    'thin' = sottile (palo): lo sfondo trapela nella maschera -> percentile 70; altrimenti MODA (picco dell'istogramma in
+    scala log) + mediana dei pixel entro ±10% dal picco: scarta lo sfondo che la maschera si porta dietro (auto con sfondo)."""
+    if kind == "ext":
+        return float(np.percentile(v, 85)), v
+    if kind == "thin":
+        return float(np.percentile(v, 70)), v
+    lv = np.log(v)
+    h, e = np.histogram(lv, bins=np.arange(lv.min(), lv.max() + 0.05, 0.05))
+    if len(h) > 1:
+        h = np.convolve(h, [1, 1, 1], "same")
+    c = 0.5 * (e[h.argmax()] + e[min(h.argmax() + 1, len(e) - 1)])
+    keep = v[np.abs(lv - c) < 0.10]
+    return (float(np.median(keep)) if len(keep) >= 20 else float(np.median(v))), keep
+
+
+def mask_depth(rc, disp, mask, dmin=4.0, thin_frac=None, classe=None):
+    """Distanza di un oggetto dalla sua maschera (erosa 2 px). Ritorna (Z, Zp25, Zp75, n_valid, frac_valid)."""
     m = cv2.erode(mask, np.ones((5, 5), np.uint8)) > 0
     if m.sum() < 40:
         m = mask > 0
@@ -75,23 +95,81 @@ def mask_depth(rc, disp, mask, dmin=4.0, thin_frac=None):
     v = v[v > dmin]
     if len(v) < 30 or len(v) < 0.10 * m.sum():
         return None
-    thin = thin_frac is not None and thin_frac < 0.45        # oggetto sottile (palo): lo sfondo trapela nella maschera
-    d = float(np.percentile(v, 70 if thin else 50))           # sfondo = disparita' minore -> si prende il percentile alto
-    q1, q3 = np.percentile(v, [25, 75])
+    kind = "ext" if classe in EXTENDED else "thin" if (thin_frac is not None and thin_frac < 0.45) else "mid"
+    d, keep = coherent_disp(v, kind)
+    q1, q3 = np.percentile(keep, [25, 75])
     return rc.Z(d), rc.Z(q3), rc.Z(q1), int(len(v)), len(v) / m.sum()
+
+
+CAM_H = 0.825          # altezza camera #001 (calib)
+PITCH = np.radians(7.4)
+
+
+def ground_vh(rc, disp):
+    """Orizzonte del piano strada nel frame rettificato. Pendenza del piano NOTA dalla geometria (d_g = B (v-vh)/h_perp),
+    si stima solo vh: per i pixel validi sotto riga 450, vh_i = v - d/a; la strada e' la moda."""
+    a = B / (CAM_H * np.cos(PITCH))
+    vs, us = np.nonzero(disp[450:, 200:1080] > 6)
+    if len(vs) < 2000:
+        return None
+    d = disp[450:, 200:1080][vs, us]
+    vh = (vs + 450) - d / a
+    h, e = np.histogram(vh, bins=np.arange(-200, 700, 4))
+    c = 0.5 * (e[h.argmax()] + e[h.argmax() + 1])
+    return float(np.median(vh[np.abs(vh - c) < 12])), a
+
+
+def obstacles(rc, disp, covered, corridor=3.0, zmin=2.0, zmax=15.0, hmin=0.25):
+    """Strato 'ostacolo senza classe' (veto 1/3): pixel nel corridoio davanti con altezza sopra la strada >= hmin e
+    non gia' coperti da maschere SAM. Altezza y = CAM_H (d - d_g)/d (d_g = disparita' della strada nella stessa riga).
+    Ritorna lista (Z_m_p20, box, mask, h_med_m)."""
+    g = ground_vh(rc, disp)
+    if g is None:
+        return []
+    vh, a = g
+    v = np.arange(H, dtype=np.float32)[:, None]
+    dg = np.maximum(a * (v - vh), 0.1)
+    valid = disp > 4
+    Z = np.where(valid, rc.f * B / np.maximum(disp, 1e-3), 0)
+    X = (np.arange(W, dtype=np.float32)[None, :] - rc.cx) * Z / rc.f
+    y = CAM_H * (disp - dg) / np.maximum(disp, 1e-3)
+    m = valid & (Z >= zmin) & (Z <= zmax) & (np.abs(X) <= corridor) & (y >= hmin) & (y <= 3.0)
+    m &= ~(covered > 0)
+    m = m.astype(np.uint8)
+    m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+    m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8))
+    n, lab, st, _ = cv2.connectedComponentsWithStats(m, 8)
+    out = []
+    for k in range(1, n):
+        x0, y0, bw, bh, area = st[k]
+        if area < 700:
+            continue
+        mk = (lab == k).astype(np.uint8)
+        zz = Z[mk > 0]
+        # coerenza: la nuvola deve stare in una fascia di Z stretta (un oggetto, non un pezzo di fondale)
+        z20, z80 = np.percentile(zz, [20, 80])
+        if z80 > 1.5 * z20 + 0.5:
+            continue
+        ys_, xs_ = np.nonzero(mk)
+        base = ys_ >= np.percentile(ys_, 85)                       # la base deve poggiare a terra (no cornicioni/cavi)
+        if float(np.median(y[ys_[base], xs_[base]])) > 0.5:
+            continue
+        out.append((float(z20), [int(x0), int(y0), int(x0 + bw), int(y0 + bh)], mk, float(np.median(y[mk > 0]))))
+    return out
 
 
 def enc_interp(t_lo, t_hi):
     """distanza cumulativa (m) dall'encoder ruota, interpolata a t_ms. Ritorna f(t_ms)."""
-    import pandas as pd
-    fs = []
-    for f in sorted(os.listdir(os.path.join(LOGS, "_sensors", "sensors"))):
+    T, Sc = [], []
+    d = os.path.join(LOGS, "_sensors", "sensors")
+    for f in sorted(os.listdir(d)):
         if f.startswith("sensors_20261109") and f.endswith(".csv"):
-            d = pd.read_csv(os.path.join(LOGS, "_sensors", "sensors", f), usecols=["t_ms", "enc_wheel_cum"])
-            fs.append(d)
-    d = pd.concat(fs).drop_duplicates("t_ms").sort_values("t_ms")
-    d = d[(d.t_ms >= t_lo - 5000) & (d.t_ms <= t_hi + 5000)]
-    t, s = d.t_ms.values.astype(float), d.enc_wheel_cum.values.astype(float) * M_PER_COUNT
+            for r in csv.DictReader(open(os.path.join(d, f))):
+                t = float(r["t_ms"])
+                if t_lo - 5000 <= t <= t_hi + 5000 and r["enc_wheel_cum"]:
+                    T.append(t); Sc.append(float(r["enc_wheel_cum"]))
+    o = np.argsort(T)
+    t, s = np.array(T)[o], np.array(Sc)[o] * M_PER_COUNT
     return lambda x: np.interp(x, t, s)
 
 
@@ -117,7 +195,9 @@ def iou(a, b):
     return i / ((a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - i + 1e-9)
 
 
-def zcol(Z):
+def zcol(Z, cls=None):
+    if cls == "ostacolo":
+        return (255, 0, 255)
     return (60, 60, 255) if Z < 4 else (0, 165, 255) if Z < 8 else (0, 220, 0)
 
 
@@ -175,7 +255,7 @@ def cmd_run(a):
                     m = np.zeros((H, W), np.uint8)
                     cv2.fillPoly(m, [polys[k].astype(np.int32)], 1)
                     bw, bh = max(1, b[2] - b[0]), max(1, b[3] - b[1])
-                    md = mask_depth(rc, disp, m, thin_frac=float(m.sum()) / (bw * bh))
+                    md = mask_depth(rc, disp, m, thin_frac=float(m.sum()) / (bw * bh), classe=names[c])
                     ys, xs = np.nonzero(m)
                     row = [i, tL[i], names[c], round(cf, 3), *[int(v) for v in b], int(xs.mean()), int(ys.mean())]
                     if md and md[0] <= a.zmax and cf >= 0.5 and md[3] >= 150:
@@ -188,18 +268,29 @@ def cmd_run(a):
                     row += [int(m.sum())]
                     fo.writerow(row)
                     seen[names[c]] += 1
+            covered = np.zeros((H, W), np.uint8)
+            for o in cur:
+                covered |= cv2.dilate(o[5], np.ones((15, 15), np.uint8))
+            for z, bx, mk, hh in obstacles(rc, disp, covered):       # strato "ostacolo senza classe" dalla disparita' densa
+                ys, xs = np.nonzero(mk)
+                fo.writerow([i, tL[i], "ostacolo", 1.0, *bx, int(xs.mean()), int(ys.mean()), round(z, 2), None, None,
+                             int(len(xs)), 1.0, int(len(xs))])
+                cnts, _ = cv2.findContours(mk, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                poly = max(cnts, key=cv2.contourArea).reshape(-1, 2).astype(np.float32)
+                cur.append(("ostacolo", 1.0, poly, z, bx, mk))
+                seen["ostacolo"] += 1
             if i % 150 == 0:
                 print(f"frame {i}  {1000*np.mean(t_sam[-20:]):.0f} ms/passata  oggetti {len(cur)}", flush=True)
         img = cv2.cvtColor(L, cv2.COLOR_GRAY2BGR)
         ov = img.copy()
         for cls, cf, poly, Z, b, m in cur:
-            ov[m > 0] = zcol(Z)
+            ov[m > 0] = zcol(Z, cls)
         img = cv2.addWeighted(img, 0.6, ov, 0.4, 0)
         placed = []
         for cls, cf, poly, Z, b, m in sorted(cur, key=lambda o: -o[3]):     # i vicini sopra i lontani
-            col = zcol(Z)
+            col = zcol(Z, cls)
             cv2.polylines(img, [poly.astype(np.int32)], True, col, 2)
-            placed.append(label_img(img, b[0], b[1] - 44, f"{Z:.1f} m", f"{cls} {cf:.2f}", col))
+            placed.append(label_img(img, b[0], b[1] - 44, f"{Z:.1f} m", (f"{cls} (senza classe)" if cls == "ostacolo" else f"{cls} {cf:.2f}"), col))
         cv2.putText(img, f"#001 depth stereo rettificata | f={i} t={tL[i]/1000:.1f}s", (10, 24),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2)
         panel = np.zeros((ph, PW, 3), np.uint8)
@@ -207,7 +298,7 @@ def cmd_run(a):
         cv2.putText(panel, "OGGETTI (vicini prima)", (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
         for cls, cf, poly, Z, b, m in sorted(cur, key=lambda o: o[3])[:16]:
             y += 24
-            cv2.rectangle(panel, (10, y - 14), (24, y), zcol(Z), -1)
+            cv2.rectangle(panel, (10, y - 14), (24, y), zcol(Z, cls), -1)
             cv2.putText(panel, f"{Z:5.1f} m  {cls}  ({cf:.2f})", (32, y), cv2.FONT_HERSHEY_SIMPLEX, 0.55,
                         (230, 230, 230), 1)
         y = ph - 60 - 18 * min(len(seen), 8)
