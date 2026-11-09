@@ -1,0 +1,1 @@
+- 2026-11-09 08:50 logger: IMU HW-123 (MPU6050 0x68) su I2C1: dtparam=i2c_arm=on in config.txt + i2c-dev in modules-load.d (live+root-ro); sensor_hub la logga nello stesso CSV/t_ms deploy/registra_deploy.sh

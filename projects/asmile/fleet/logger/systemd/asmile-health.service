@@ -1,0 +1,12 @@
+[Unit]
+Description=Asmile health logger (temp/5V/power/throttle -> /data/asmile_health.csv)
+After=multi-user.target
+[Service]
+Type=simple
+User=root
+Environment=ASMILE_HEALTH_LOG=/data/asmile_health.csv
+ExecStart=/usr/bin/python3 /home/asmile-logger/Moving-One-Billion-People-/projects/asmile/pi/power/health_logger.py
+Restart=always
+RestartSec=3
+[Install]
+WantedBy=multi-user.target

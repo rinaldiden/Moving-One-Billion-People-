@@ -1,0 +1,7 @@
+[Unit]
+Description=Asmile logger - pulizia clip vecchie (>10gg) + safety spazio
+
+[Service]
+Type=oneshot
+User=asmile-logger
+ExecStart=/usr/bin/python3 /home/asmile-logger/logger/cleanup.py

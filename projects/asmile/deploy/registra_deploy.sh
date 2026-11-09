@@ -30,6 +30,7 @@ if $SSH true 2>/dev/null; then
   echo "== fotografo $ROLE ($HOST)"
   $SSH "cd /var/lib/asmile 2>/dev/null && tar cf - --exclude='*.env' *.json *.conf 2>/dev/null" | tar xf - -C "$OUT/var_lib_asmile" 2>/dev/null
   $SSH "cat ~/asmile_id.conf 2>/dev/null" > "$OUT/asmile_id.conf"
+  $SSH "cat /boot/firmware/config.txt 2>/dev/null; echo '# --- modules-load.d ---'; cat /etc/modules-load.d/*.conf 2>/dev/null" > "$OUT/boot_config.txt"
   $SSH "cd /etc/systemd/system && tar cf - \$(ls *.service 2>/dev/null | grep -Ei 'asmile|sensor|encoder|speed|servo|steer|master|camera|logger|record|shutdown') 2>/dev/null" \
     | tar xf - -C "$OUT/systemd" 2>/dev/null
   {
@@ -56,10 +57,10 @@ if $SSH true 2>/dev/null; then
 else
   echo "⚠ $ROLE ($HOST) non raggiungibile: registro solo il messaggio e i file passati"
 fi
-echo "- $(date '+%Y-%m-%d %H:%M') $ROLE: $MSG ${EXTRA[*]:-}" >> "$A/fleet/DEPLOY_LOG.md"
+echo "- $(date '+%Y-%m-%d %H:%M') $ROLE: $MSG ${EXTRA[*]+${EXTRA[*]}}" >> "$A/fleet/DEPLOY_LOG.md"
 
 cd "$A"
-PATHS=("fleet/$ROLE" "fleet/DEPLOY_LOG.md" "${EXTRA[@]}")
+PATHS=("fleet/$ROLE" "fleet/DEPLOY_LOG.md" ${EXTRA[@]+"${EXTRA[@]}"})   # bash 3.2 del Mac: array vuoto + set -u
 git add -- "${PATHS[@]}"
 if git diff --cached --quiet -- "${PATHS[@]}"; then echo "niente di nuovo da registrare"; exit 0; fi
 git commit -q -m "deploy $ROLE: $MSG" -m "Fotografia config dal Pi in projects/asmile/fleet/$ROLE (registra_deploy.sh)." -- "${PATHS[@]}" \

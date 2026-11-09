@@ -1,0 +1,15 @@
+[Unit]
+Description=Asmile sensor_hub: CSV unico 50 Hz di tutti i sensori (t_ms = orologio dei frame camera)
+After=multi-user.target data.mount
+# /home/asmile-logger/logger viene sostituito dal deploy (repo su asmile/asmile2, ~/logger sul logger)
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 -u /home/asmile-logger/logger/sensor_hub.py
+Restart=always
+RestartSec=2
+Nice=-5
+
+[Install]
+WantedBy=multi-user.target

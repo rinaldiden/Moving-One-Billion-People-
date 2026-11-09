@@ -1,0 +1,3 @@
+solo-Pi ./actuator_log.py
+solo-Pi ./hub_client.py
+solo-Pi ./sensor_hub.py

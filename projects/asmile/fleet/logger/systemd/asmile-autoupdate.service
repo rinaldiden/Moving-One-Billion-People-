@@ -1,0 +1,13 @@
+[Unit]
+Description=Asmile - auto-update del repo al boot (git pull --ff-only)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=ASMILE_REPO=/home/asmile-logger/Moving-One-Billion-People-
+ExecStart=/bin/bash /home/asmile-logger/Moving-One-Billion-People-/projects/asmile/config/autoupdate.sh
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target
