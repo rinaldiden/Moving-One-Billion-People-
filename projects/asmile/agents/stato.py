@@ -38,7 +38,7 @@ GATES = [
     ("L0.encoder_ruota", 0, "Encoder ruota tarato (velocità e accelerazione giuste)", "veicolo",
      "asmile-pi-001", "asmile-pi-001-verifica", None),
     ("L0.calib_logger", 0, "Calibrazione stereo del logger col metro (±2% da fermi)", "percezione",
-     "asmile-calib", "asmile-calib-critico", None),
+     "asmile-calib", "asmile-calib-critico", "video col metro col logger: soste 1-2-3-4-5-6-7-8-10-12-15 m + tabellone"),
     ("L0.calib_001", 0, "Calibrazione stereo di #001 col metro (±2% da fermi, 1-15 m)", "percezione",
      "asmile-calib", "asmile-calib-critico", "video col metro con #001: soste a 1-2-3-5-7-10-15 m"),
     ("L0.dati", 0, "Video nuovi scaricati, controllati e indicizzati", "dati",

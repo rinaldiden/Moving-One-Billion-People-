@@ -4,6 +4,7 @@
 
 ## Cosa serve da te (parte fisica)
 - accendi asmile #001 e fai un giro di 5 minuti  ← per: Camere di #001 sincronizzate anche nei video in movimento
+- video col metro col logger: soste 1-2-3-4-5-6-7-8-10-12-15 m + tabellone  ← per: Calibrazione stereo del logger col metro (±2% da fermi)
 - video col metro con #001: soste a 1-2-3-5-7-10-15 m  ← per: Calibrazione stereo di #001 col metro (±2% da fermi, 1-15 m)
 
 ## Gate
