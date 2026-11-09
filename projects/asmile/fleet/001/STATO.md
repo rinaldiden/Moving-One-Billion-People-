@@ -1,4 +1,4 @@
-# 001 — stato fotografato 2026-11-09 17:35 dopo: sterzo fluido tarato: KD 0.6, filtro 0.35/0.05, niente dither/ripple, vel default 15 deg/s (variazione 8-12%, nessuna vibrazione); VESC invariato (±30 A, hall_interp 20, salvato in flash)
+# 001 — stato fotografato 2026-11-09 17:37 dopo: STERZO APPROVATO da Daniele (così è perfetto): sterzo_fluido_001 400 Hz, 15 deg/s, KD 0.6, kp 3; parametri in /data/sterzo_001_parametri.json; VESC ±30 A + hall_interp 20 in flash
 kernel: 6.12.75+rpt-rpi-2712
 git sul Pi: 1967cbf 2026-05-13 fix: separate boot config for asmile (ov9281 dual cam, no arducam HAT)
 overlay: si

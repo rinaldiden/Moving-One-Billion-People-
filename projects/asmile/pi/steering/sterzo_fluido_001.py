@@ -45,7 +45,7 @@ FINECORSA = (4304, 8884)        # finecorsa meccanici veri
 MARGINE_FC = 60                 # count (1.3 deg): mai piu' vicino di cosi' al finecorsa vero
 COMM_GET_VALUES_SELECTIVE = 50  # fw 5.02 datatypes.h
 MASK_I_MOTOR = 1 << 2           # avg motor current (float32 * 100)
-HZ = 200
+HZ = 400                        # comandi al secondo (2.5 ms) — Daniele 2026-11-09: "così è perfetto" a 400 Hz, 15 deg/s
 VEL_MAX_DEG_S = 30.0
 WRONG_COUNTS = 10
 
@@ -136,6 +136,7 @@ def main(argv=None):
     ap.add_argument("--kd", type=float, default=KD, help="A/(deg/s), vai")
     ap.add_argument("--rip", type=int, default=0, choices=(0, 1), help="compensazione ripple (vai)")
     ap.add_argument("--tag", default="", help="etichetta nel nome del log")
+    ap.add_argument("--hz", type=float, default=HZ, help="comandi al secondo (max 500)")
     ap.add_argument("--ab", type=float, nargs=2, default=(0.35, 0.05), help="filtro velocita' alfa beta")
     ap.add_argument("--sign", type=int, default=-1, choices=(-1, 1), help="segno corrente VESC per far SALIRE l'encoder")
     ap.add_argument("--dry-run", action="store_true")
@@ -239,7 +240,7 @@ def main(argv=None):
             send_current(ser, a.sign * i_cmd)
             k += 1
 
-            if k % 5 == 1:                                                # telemetria 40 Hz
+            if k % max(5, int(a.hz / 40)) == 1:                                                # telemetria 40 Hz
                 im = q_imotor(ser)
                 if im is None:
                     q_fail += 1
@@ -270,7 +271,7 @@ def main(argv=None):
                 if abs(lag) > SGANCIO_H: reason = f"spostato di {lag:+.1f} deg (> {SGANCIO_H}): mollo"; break
                 if abs(i_mot) > 20.0: t_caldo += dt
                 if t_caldo > 8.0: reason = "caldo: > 8 s sopra 20 A"; break
-            time.sleep(max(0.0, 1.0 / HZ - (time.monotonic() - tc)))
+            time.sleep(max(0.0, 1.0 / min(a.hz, 500) - (time.monotonic() - tc)))
     except KeyboardInterrupt:
         reason = "Ctrl-C/segnale"
     finally:
