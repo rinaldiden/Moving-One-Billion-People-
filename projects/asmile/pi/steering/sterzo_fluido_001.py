@@ -47,8 +47,9 @@ COMM_GET_VALUES_SELECTIVE = 50  # fw 5.02 datatypes.h
 MASK_I_MOTOR = 1 << 2           # avg motor current (float32 * 100)
 # telemetria UART (fw 5.02 GET_VALUES_SELECTIVE): bit0 temp FET, bit1 temp motore (f16 x10), bit2 corrente motore,
 # bit3 corrente BATTERIA (f32 x100), bit8 tensione batteria (f16 x10)
-MASK_TEL = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 8)
-TEL = {"t_fet": 0.0, "t_mot": 0.0, "i_batt": 0.0, "v_batt": 0.0}
+MASK_TEL = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7) | (1 << 8) | (1 << 13)
+# + Id, Iq (f32 x100), duty (f16 x1000), ERPM (f32), tachimetro motore (int32): per vedere se il motore gira mentre il piantone e' fermo
+TEL = {"t_fet": 0.0, "t_mot": 0.0, "i_batt": 0.0, "v_batt": 0.0, "id": 0.0, "iq": 0.0, "duty": 0.0, "erpm": 0.0, "tach": 0}
 HZ = 400                        # comandi al secondo (2.5 ms) — Daniele 2026-11-09: "così è perfetto" a 400 Hz, 15 deg/s
 VEL_MAX_DEG_S = 30.0
 WRONG_COUNTS = 10
@@ -99,14 +100,19 @@ def q_imotor(ser):
         ser.write(pkt(struct.pack(">BI", COMM_GET_VALUES_SELECTIVE, MASK_TEL)))
         if ser.read(1) != b"\x02": return None
         n = ser.read(1)
-        if not n or n[0] != 19: return None
+        if not n or n[0] != 37: return None
         pl = ser.read(n[0] + 3)[:n[0]]
-        if len(pl) < 19 or pl[0] != COMM_GET_VALUES_SELECTIVE: return None
+        if len(pl) < 37 or pl[0] != COMM_GET_VALUES_SELECTIVE: return None
         TEL["t_fet"] = struct.unpack(">h", pl[5:7])[0] / 10.0
         TEL["t_mot"] = struct.unpack(">h", pl[7:9])[0] / 10.0
         im = struct.unpack(">i", pl[9:13])[0] / 100.0
         TEL["i_batt"] = struct.unpack(">i", pl[13:17])[0] / 100.0
-        TEL["v_batt"] = struct.unpack(">h", pl[17:19])[0] / 10.0
+        TEL["id"] = struct.unpack(">i", pl[17:21])[0] / 100.0
+        TEL["iq"] = struct.unpack(">i", pl[21:25])[0] / 100.0
+        TEL["duty"] = struct.unpack(">h", pl[25:27])[0] / 1000.0
+        TEL["erpm"] = struct.unpack(">i", pl[27:31])[0] / 1.0
+        TEL["v_batt"] = struct.unpack(">h", pl[31:33])[0] / 10.0
+        TEL["tach"] = struct.unpack(">i", pl[33:37])[0]
         return im
     except (serial.SerialException, OSError, struct.error):
         return None
@@ -191,7 +197,7 @@ def main(argv=None):
 
     os.makedirs("/data/logging/vesc", exist_ok=True)
     log = open(time.strftime(f"/data/logging/vesc/sterzo_fluido_{a.modo}_%Y%m%d_%H%M%S{a.tag}.csv"), "w")
-    log.write("t,pos,lag_deg,v_est,v_ref,sp_deg,i_cmd,i_motor,i_coul,i_int,i_batt,v_batt,t_fet,t_mot\n")
+    log.write("t,pos,lag_deg,v_est,v_ref,sp_deg,i_cmd,i_motor,i_coul,i_int,i_batt,v_batt,t_fet,t_mot,id,iq,duty,erpm,tach\n")
     ser = serial.Serial(UART, BAUD, timeout=0.01)
 
     def stop():
@@ -266,7 +272,7 @@ def main(argv=None):
                     if q_fail >= 3: reason = "VESC muto"; break
                 else:
                     q_fail = 0; i_mot = im
-            log.write(f"{tc - t0:.4f},{p},{lag:.3f},{v:.2f},{v_ref:.2f},{sp:.3f},{i_cmd:.2f},{i_mot:.2f},{i_coul:.2f},{i_int:.2f},{TEL['i_batt']:.2f},{TEL['v_batt']:.1f},{TEL['t_fet']:.1f},{TEL['t_mot']:.1f}\n")
+            log.write(f"{tc - t0:.4f},{p},{lag:.3f},{v:.2f},{v_ref:.2f},{sp:.3f},{i_cmd:.2f},{i_mot:.2f},{i_coul:.2f},{i_int:.2f},{TEL['i_batt']:.2f},{TEL['v_batt']:.1f},{TEL['t_fet']:.1f},{TEL['t_mot']:.1f},{TEL['id']:.2f},{TEL['iq']:.2f},{TEL['duty']:.3f},{TEL['erpm']:.0f},{TEL['tach']}\n")
 
             # ---------------- sicurezze ----------------
             if a.modo == "vai" and (p - p0) * d <= -WRONG_COUNTS: reason = f"VERSO SBAGLIATO: encoder {p - p0:+d} count"; break

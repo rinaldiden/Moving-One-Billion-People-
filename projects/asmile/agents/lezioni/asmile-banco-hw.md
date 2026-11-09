@@ -22,3 +22,13 @@ Scritte da palla.py dai VETO dei contro-agenti. Leggile prima di ogni lavoro.
 - Prima di una serie automatica sul motore: max 2 prove per configurazione nuova e STOP alla prima prova violenta.
 - KD alto amplifica il rumore della velocità stimata: oltre 0.5 serve un filtro velocità migliore, non più guadagno.
 - pkill -f dentro ssh uccide anche la sessione ssh (il pattern è nella riga di comando).
+
+## 2026-11-09 19:05 — coppia bassa sullo sterzo #001 (Daniele: "non sterza", "il vesc non mente")
+- Probabile colpa mia: ho abbassato foc_hall_interp_erpm 500 -> 20 per la fluidità. Codice bldc 5.02 (mcpwm_foc.c ~3978):
+  sotto quella soglia il VESC usa l'hall più vicino; sopra INTERPOLA, e il commento avverte "might get stuck at 60
+  degrees off if a direction change happens". Con manubrio trattenuto/stick-slip (ERPM -74..+129 rumorosi) l'angolo può
+  stare fino a 60° fuori -> Iq dichiarata 45 A ma coppia vera molto minore (cos 60° = 0.5 o peggio). Tutte le prove di
+  resistenza (15/20/30/45 A) sono state fatte DOPO il cambio. asmile2 aveva 500 e coppia piena con 8-18 A.
+- Prossima volta: rimettere 500 (valore di asmile2) e ripetere la resistenza a 30 A. Mai cambiare un parametro FOC
+  di commutazione per la fluidità senza ripetere una prova di COPPIA.
+- Non accusare l'hardware ("il VESC mente") prima di aver escluso i parametri cambiati da me.
