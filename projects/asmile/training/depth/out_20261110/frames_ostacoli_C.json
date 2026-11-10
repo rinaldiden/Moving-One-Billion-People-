@@ -1,0 +1,353 @@
+{
+ "sessione": "session_20261109_094146",
+ "unita": "asmile-001",
+ "calib": "PROVVISORIA, punto A in corso",
+ "uso": "TEST C alla cieca v3 (mai usato per sviluppo)",
+ "criterio": "Set C (L1.ostacoli v3, 2026-11-10) \u2014 FISSATO PRIMA di far girare la v3. Nessuna lettura di verita_occhio*.json, nessun uso del rilevatore.\nCandidati: come B (tenuto, v_enc>0.3 m/s su finestra +-0.5 s e in 5 istanti, sessione #001 094146).\nEsclusi: frame entro +-30 da A, B, dev e tra C stessi.\nArricchimento (criterio AUTOMATICO, indipendente dal rilevatore v3): classi SAM 3 gia' salvate in out_20261109/objects_giro.csv:\n  score(frame) = n oggetti person/car con conf>=0.5 e 2<=Z_m<=12; si prendono avidamente (score decrescente, frame crescente) fino a N_ENRICH=17.\nIl resto (fino a 57) a passo regolare (offset 0.5, poi passate con offset 0.25, 0.75, ... se mancano) dai candidati.",
+ "n_candidati": 3683,
+ "n_arricchiti": 15,
+ "frames": [
+  {
+   "frame": 1879,
+   "t_ms": 6644011,
+   "v_enc_ms": 0.357,
+   "origine": "regolare"
+  },
+  {
+   "frame": 1942,
+   "t_ms": 6648211,
+   "v_enc_ms": 103.384,
+   "origine": "regolare"
+  },
+  {
+   "frame": 2224,
+   "t_ms": 6667011,
+   "v_enc_ms": 20.702,
+   "origine": "regolare"
+  },
+  {
+   "frame": 2278,
+   "t_ms": 6670611,
+   "v_enc_ms": 3.114,
+   "origine": "regolare"
+  },
+  {
+   "frame": 2525,
+   "t_ms": 6687078,
+   "v_enc_ms": 0.77,
+   "origine": "regolare"
+  },
+  {
+   "frame": 2597,
+   "t_ms": 6691878,
+   "v_enc_ms": 0.797,
+   "origine": "regolare"
+  },
+  {
+   "frame": 2732,
+   "t_ms": 6700879,
+   "v_enc_ms": 0.709,
+   "origine": "regolare"
+  },
+  {
+   "frame": 2764,
+   "t_ms": 6703012,
+   "v_enc_ms": 17.847,
+   "origine": "regolare"
+  },
+  {
+   "frame": 2956,
+   "t_ms": 6715812,
+   "v_enc_ms": 3.42,
+   "origine": "regolare"
+  },
+  {
+   "frame": 3008,
+   "t_ms": 6719279,
+   "v_enc_ms": 0.764,
+   "origine": "regolare"
+  },
+  {
+   "frame": 5315,
+   "t_ms": 6873082,
+   "v_enc_ms": 0.943,
+   "origine": "regolare"
+  },
+  {
+   "frame": 5379,
+   "t_ms": 6877348,
+   "v_enc_ms": 3.303,
+   "origine": "regolare"
+  },
+  {
+   "frame": 5440,
+   "t_ms": 6881415,
+   "v_enc_ms": 0.84,
+   "origine": "regolare"
+  },
+  {
+   "frame": 5538,
+   "t_ms": 6887948,
+   "v_enc_ms": 2.941,
+   "origine": "arricchito_SAM3_person_car"
+  },
+  {
+   "frame": 5574,
+   "t_ms": 6890349,
+   "v_enc_ms": 2.116,
+   "origine": "arricchito_SAM3_person_car"
+  },
+  {
+   "frame": 5700,
+   "t_ms": 6898749,
+   "v_enc_ms": 1.369,
+   "origine": "arricchito_SAM3_person_car"
+  },
+  {
+   "frame": 5841,
+   "t_ms": 6908149,
+   "v_enc_ms": 2.66,
+   "origine": "regolare"
+  },
+  {
+   "frame": 5874,
+   "t_ms": 6910349,
+   "v_enc_ms": 2.532,
+   "origine": "arricchito_SAM3_person_car"
+  },
+  {
+   "frame": 5996,
+   "t_ms": 6918482,
+   "v_enc_ms": 0.68,
+   "origine": "regolare"
+  },
+  {
+   "frame": 6143,
+   "t_ms": 6928283,
+   "v_enc_ms": 2.445,
+   "origine": "regolare"
+  },
+  {
+   "frame": 6252,
+   "t_ms": 6935549,
+   "v_enc_ms": 4.182,
+   "origine": "arricchito_SAM3_person_car"
+  },
+  {
+   "frame": 6405,
+   "t_ms": 6945750,
+   "v_enc_ms": 3.131,
+   "origine": "regolare"
+  },
+  {
+   "frame": 6462,
+   "t_ms": 6949550,
+   "v_enc_ms": 3.395,
+   "origine": "regolare"
+  },
+  {
+   "frame": 6558,
+   "t_ms": 6955950,
+   "v_enc_ms": 3.156,
+   "origine": "arricchito_SAM3_person_car"
+  },
+  {
+   "frame": 6594,
+   "t_ms": 6958350,
+   "v_enc_ms": 2.87,
+   "origine": "arricchito_SAM3_person_car"
+  },
+  {
+   "frame": 6696,
+   "t_ms": 6965150,
+   "v_enc_ms": 2.806,
+   "origine": "arricchito_SAM3_person_car"
+  },
+  {
+   "frame": 6728,
+   "t_ms": 6967283,
+   "v_enc_ms": 2.389,
+   "origine": "regolare"
+  },
+  {
+   "frame": 6903,
+   "t_ms": 6978950,
+   "v_enc_ms": 2.077,
+   "origine": "regolare"
+  },
+  {
+   "frame": 7005,
+   "t_ms": 6985750,
+   "v_enc_ms": 1.235,
+   "origine": "regolare"
+  },
+  {
+   "frame": 7038,
+   "t_ms": 6987950,
+   "v_enc_ms": 1.942,
+   "origine": "arricchito_SAM3_person_car"
+  },
+  {
+   "frame": 7167,
+   "t_ms": 6996550,
+   "v_enc_ms": 2.749,
+   "origine": "regolare"
+  },
+  {
+   "frame": 7206,
+   "t_ms": 6999150,
+   "v_enc_ms": 59.212,
+   "origine": "arricchito_SAM3_person_car"
+  },
+  {
+   "frame": 7242,
+   "t_ms": 7001551,
+   "v_enc_ms": 2.281,
+   "origine": "arricchito_SAM3_person_car"
+  },
+  {
+   "frame": 7386,
+   "t_ms": 7011151,
+   "v_enc_ms": 57.312,
+   "origine": "arricchito_SAM3_person_car"
+  },
+  {
+   "frame": 7532,
+   "t_ms": 7020884,
+   "v_enc_ms": 1.53,
+   "origine": "regolare"
+  },
+  {
+   "frame": 7645,
+   "t_ms": 7028418,
+   "v_enc_ms": 0.319,
+   "origine": "regolare"
+  },
+  {
+   "frame": 7786,
+   "t_ms": 7037818,
+   "v_enc_ms": 0.358,
+   "origine": "regolare"
+  },
+  {
+   "frame": 7827,
+   "t_ms": 7040551,
+   "v_enc_ms": 2.123,
+   "origine": "regolare"
+  },
+  {
+   "frame": 7945,
+   "t_ms": 7048418,
+   "v_enc_ms": 0.332,
+   "origine": "regolare"
+  },
+  {
+   "frame": 8088,
+   "t_ms": 7057952,
+   "v_enc_ms": 2.565,
+   "origine": "arricchito_SAM3_person_car"
+  },
+  {
+   "frame": 8119,
+   "t_ms": 7060018,
+   "v_enc_ms": 0.339,
+   "origine": "regolare"
+  },
+  {
+   "frame": 8225,
+   "t_ms": 7067085,
+   "v_enc_ms": 2.69,
+   "origine": "regolare"
+  },
+  {
+   "frame": 8273,
+   "t_ms": 7070285,
+   "v_enc_ms": 2.57,
+   "origine": "regolare"
+  },
+  {
+   "frame": 8386,
+   "t_ms": 7077819,
+   "v_enc_ms": 0.698,
+   "origine": "regolare"
+  },
+  {
+   "frame": 8526,
+   "t_ms": 7087152,
+   "v_enc_ms": 2.473,
+   "origine": "arricchito_SAM3_person_car"
+  },
+  {
+   "frame": 8557,
+   "t_ms": 7089219,
+   "v_enc_ms": 0.681,
+   "origine": "regolare"
+  },
+  {
+   "frame": 8657,
+   "t_ms": 7095886,
+   "v_enc_ms": 3.176,
+   "origine": "regolare"
+  },
+  {
+   "frame": 8688,
+   "t_ms": 7097952,
+   "v_enc_ms": 2.488,
+   "origine": "arricchito_SAM3_person_car"
+  },
+  {
+   "frame": 8794,
+   "t_ms": 7105019,
+   "v_enc_ms": 0.538,
+   "origine": "regolare"
+  },
+  {
+   "frame": 8942,
+   "t_ms": 7114886,
+   "v_enc_ms": 2.366,
+   "origine": "regolare"
+  },
+  {
+   "frame": 8983,
+   "t_ms": 7117619,
+   "v_enc_ms": 0.564,
+   "origine": "regolare"
+  },
+  {
+   "frame": 9092,
+   "t_ms": 7124886,
+   "v_enc_ms": 2.517,
+   "origine": "regolare"
+  },
+  {
+   "frame": 9215,
+   "t_ms": 7133086,
+   "v_enc_ms": 2.477,
+   "origine": "regolare"
+  },
+  {
+   "frame": 9369,
+   "t_ms": 7143353,
+   "v_enc_ms": 0.549,
+   "origine": "regolare"
+  },
+  {
+   "frame": 9532,
+   "t_ms": 7154220,
+   "v_enc_ms": 0.556,
+   "origine": "regolare"
+  },
+  {
+   "frame": 9684,
+   "t_ms": 7164354,
+   "v_enc_ms": 0.881,
+   "origine": "regolare"
+  },
+  {
+   "frame": 9840,
+   "t_ms": 7174754,
+   "v_enc_ms": 1.182,
+   "origine": "regolare"
+  }
+ ]
+}
