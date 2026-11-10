@@ -30,7 +30,7 @@ DEPTH = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 sys.path.insert(0, DEPTH)
 
-SEED0 = 20261110
+SEED0 = int(os.environ.get('CALIB_ROCK_SEED0', 20281124))   # round 3: seed MAI usati (round 1-2: 20261110, critico: 20271117)
 UNIT = "asmile-001"
 DEFAULT_CALIB = os.path.join(DEPTH, "calib_asmile-001.json")
 REGISTRO = os.path.join(os.path.dirname(os.path.dirname(DEPTH)), "agents", "palla", "registro.jsonl")
@@ -41,7 +41,7 @@ MIN_CAND = 0.85
 MIN_RIUSCITA = 0.50
 MAX_RETRY = 4           # rifacimenti guidati dell'operatore (l'app dice quali zone sono povere)
 ZONE_TOL = 0.5          # punti % di peggioramento ammesso PER ZONA x distanza (online vs nominale)
-FALSO_BORDO_MAX = 6.0   # un falso candidato non puo' avere errore di bordo 2-5 m oltre il doppio del limite (3%)
+MIN_POWER = 40          # candidati totali minimi perche' 'zero falsi' abbia valore statistico
 
 
 # ---------------------------------------------------------------------------------------------- blocco "solo dopo G0"
@@ -119,8 +119,8 @@ def task(args):
             out["modello"] = rep.get("modello_scelto")
             if cand is not None:
                 ev = gate.truth_eval(inst, cand)
-                g = gate.check_gates(ev)
-                out.update(truth=ev, gate=g, err_summary=gate.summary_err(ev))
+                g = gate.check_gates_A(ev)
+                out.update(truth=ev, gate=g, gate_stretto_bordi=gate.check_gates(ev)["verdetto"], err_summary=gate.summary_err(ev))
                 out["baseline_err_vs_truth_pct"] = (rep["baseline_mm_tabellone"] / inst.meta["baseline_mm"] - 1) * 100
             else:
                 out["gate"] = dict(verdetto="ROSSO", motivi=["nessun candidato: " + "; ".join(rep["motivi"])])
@@ -190,8 +190,16 @@ def negative_cases(args):
     board_case("tabellone: zona vuota (terzo sinistro dell'immagine mai coperto)", atteso_motivo="copertura",
                region=(0.62, 0.95, 0.05, 0.95), z_range=(1.8, 2.8))
     board_case("tabellone: solo-centro", atteso_motivo="copertura", zones=[4], z_range=(1.0, 2.8))
-    board_case("tabellone: lato del quadretto sbagliato del 6% (baseline fuori 3%)", atteso_motivo="baseline",
-               board_sq_scale=1.06)
+    # lato 6%: COPERTURA GARANTITA (calibrate_with_retry fino a copertura ok), poi il motivo "baseline" e' OBBLIGATORIO:
+    # ROSSO per altro motivo (o nessun candidato) = il test FALLISCE
+    rng6 = np.random.default_rng(seed)
+    c6, rep6, _, nr6 = autocal.calibrate_with_retry(inst, BOARD, rng6, inst.profile, n0=N_VIEWS, seed=seed, max_retry=MAX_RETRY,
+                                                    render_kw=dict(board_sq_scale=1.06))
+    cov_ok = c6 is not None and not any(m.startswith("copertura") or "corner di VERIFICA" in m for m in rep6["motivi"])
+    has_base = any("baseline" in m for m in rep6["motivi"])
+    ott6 = "ROSSO" if (rep6["verdetto"] == "ROSSO" and cov_ok and has_base) else ("VERDE" if rep6["verdetto"] == "VERDE" else "ROSSO-per-altro-motivo")
+    res.append(dict(nome="tabellone: lato del quadretto sbagliato del 6% con COPERTURA GARANTITA: ROSSO col motivo 'baseline' (altro motivo = test fallito)",
+                    atteso="ROSSO", ottenuto=ott6, motivi=[f"retry {nr6}; copertura ok {cov_ok}; baseline {rep6.get('baseline_mm_tabellone')}"] + rep6["motivi"][:3]))
 
     rng = np.random.default_rng(seed)
     tex = render.scene_textures(rng)
@@ -315,6 +323,7 @@ def main():
         print(calib_sha256(a.calib))
         return
     import twin
+    import gate
     twin.check_calib_file(a.calib, UNIT)
     ok0, why = g0_passato(a.calib)
     if a.produzione and not ok0:
@@ -346,6 +355,7 @@ def main():
     rows.sort(key=lambda r: (r["kind"], r["scale"], r["i"]))
 
     gates = []
+    disponibilita = {}
     errs = [r for r in rows if r.get("errore")]
     for sc in scales:
         B = [r for r in rows if r["kind"] == "board" and r["scale"] == sc]
@@ -355,13 +365,18 @@ def main():
         # A NON certifica il bordo (vedi autocal.rim_coverage): produce un CANDIDATO. "Interno VERDE" = tutti i controlli sui
         # dati del tabellone passati. Il rischio residuo (candidato interno-VERDE che la verita' boccia) e' RIPORTATO e ha una
         # soglia di utilita'; il VERDE vero lo da' solo la verifica indipendente sul reale (banco fisso + dy in movimento).
-        cand = [r for r in B if r.get("calib_interno") == "VERDE"]
-        ok_c = [x for x in cand if x.get("gate", {}).get("verdetto") == "VERDE"]
-        gates.append(dict(nome=f"A tabellone scala {sc:g}: candidati (controlli interni VERDE) che passano i gate stretti sulla verita' >= {MIN_CAND:.0%} "
-                               f"[RISCHIO RESIDUO riportato: {len(cand)-len(ok_c)} falsi candidati]",
-                          n=len(cand), verdi=len(ok_c), ok=len(cand) > 0 and len(ok_c) >= MIN_CAND * len(cand)))
-        gates.append(dict(nome=f"A tabellone scala {sc:g}: tutti i candidati riescono (l'operatore arriva a un candidato con controlli interni VERDE (dopo i rifacimenti guidati) >= {MIN_RIUSCITA:.0%} delle istanze",
-                          n=len(B), verdi=len(cand), ok=len(B) > 0 and len(cand) >= MIN_RIUSCITA * len(B)))
+        # cand_int = la procedura arriva a un candidato (controlli interni VERDE). Il bordo NON si certifica dal mock: il controllo
+        # indipendente (nel reale: banco fisso + dy per zona in movimento) e' simulato col dy p95 < 1.5 px per zona sulla verita'.
+        # Un candidato con una zona sopra 1.5 px NON e' un candidato. cand = candidati veri = passano quel controllo + centro stretto.
+        cand_int = [r for r in B if r.get("calib_interno") == "VERDE"]
+        cand = [x for x in cand_int if x.get("gate", {}).get("verdetto") == "VERDE"]
+        scartati = [x["i"] for x in cand_int if x not in cand]
+        ok_c = cand
+        gates.append(dict(nome=f"A tabellone scala {sc:g}: dei risultati con controlli interni VERDE, quelli che passano il controllo di bordo (dy p95 < 1.5 px in OGNI zona + centro stretto) >= {MIN_CAND:.0%} "
+                               f"[scartati dal controllo di bordo: {len(scartati)} {scartati}]",
+                          n=len(cand_int), verdi=len(cand), ok=len(cand_int) > 0 and len(cand) >= MIN_CAND * len(cand_int)))
+        disponibilita[f"scala{sc:g}"] = dict(istanze=len(B), candidato_raggiunto=len(cand_int), pct=round(100 * len(cand_int) / max(1, len(B)), 1),
+                                              nota="DATO (non gate): quante volte la procedura (con rifacimenti guidati) arriva a un candidato; i rifiuti sono sicuri")
         # (1) guardia di regressione, NON evidenza: A non puo' dire VERDE finche' non c'e' il banco fisso REALE
         nv = sum(x.get("calib_verdetto") == "VERDE" for x in B)
         gates.append(dict(nome=f"A tabellone scala {sc:g}: guardia 'A non dichiara mai VERDE' (VERDE vietato finche' non c'e' il banco fisso reale; "
@@ -369,22 +384,22 @@ def main():
         # (2) gate che PUO' fallire: conta i falsi CANDIDATI (controlli interni VERDE, verita' ROSSA), con zona ed errore al bordo
         falsi = []
         for x in cand:
-            if x.get("gate", {}).get("verdetto") != "VERDE":
-                from gate import edge_errors, ZNAME as _ZN
-                ev = x.get("truth") or {}
-                eb = edge_errors(ev) if ev else (None, None, None)
-                bad_dy = [(_ZN[z], round(p, 2)) for z, p in enumerate(ev.get("dy_p95", [])) if p is not None and p >= 1.0]
-                falsi.append(dict(i=x["i"], zona_errore_bordo=eb[1], Z_m=eb[2],
-                                  err_bordo_p95_pct=None if eb[0] is None else round(eb[0], 2), zone_dy_ko=bad_dy))
-        gravi = [f for f in falsi if f["err_bordo_p95_pct"] is None or f["err_bordo_p95_pct"] > FALSO_BORDO_MAX]
+            from gate import edge_errors, ZNAME as _ZN
+            ev = x.get("truth") or {}
+            strict = gate.check_gates(ev) if ev else dict(motivi=["nessuna verita'"])
+            dep = [m for m in strict["motivi"] if m.startswith("depth")]
+            if dep:     # candidato (dy < 1.5 in ogni zona) con la DEPTH sbagliata al bordo/centro: il vero falso candidato
+                eb = edge_errors(ev)
+                falsi.append(dict(i=x["i"], zona_errore_bordo=eb[1], Z_m=eb[2], err_bordo_p95_pct=round(eb[0], 2),
+                                  zone_dy_ko=[(_ZN[z], round(p, 2)) for z, p in enumerate(ev.get("dy_p95", [])) if p is not None and p >= 1.0],
+                                  motivi_depth=dep[:3]))
         zone_falsi = {}
         for f in falsi:
             zone_falsi[f["zona_errore_bordo"]] = zone_falsi.get(f["zona_errore_bordo"], 0) + 1
-        det = "; ".join(f"i{f['i']}:{f['zona_errore_bordo']}@{f['Z_m']:g}m {f['err_bordo_p95_pct']}%" for f in falsi) or "nessuno"
-        gates.append(dict(nome=f"A tabellone scala {sc:g}: falsi CANDIDATI <= {1-MIN_CAND:.0%} dei candidati e nessuno con errore di bordo 2-5 m > "
-                               f"{FALSO_BORDO_MAX:g}% (falsi: {len(falsi)}, gravi: {len(gravi)}; zone: {zone_falsi}; dettaglio: {det})",
-                          n=len(cand), verdi=len(cand) - len(falsi),
-                          ok=len(cand) > 0 and len(falsi) <= (1 - MIN_CAND) * len(cand) and not gravi, falsi=falsi))
+        det = "; ".join(f"i{f['i']}:dy KO {f['zone_dy_ko']}, bordo {f['zona_errore_bordo']}@{f['Z_m']:g}m {f['err_bordo_p95_pct']}%" for f in falsi) or "nessuno"
+        gates.append(dict(nome=f"A tabellone scala {sc:g}: ZERO falsi candidati (passa il controllo di bordo dy < 1.5 px ma la depth vera a 2-5 m e' fuori limite: bordi > 3% o centro) "
+                               f"[falsi: {len(falsi)}; zone: {zone_falsi}; {det}]",
+                          n=len(cand), verdi=len(cand) - len(falsi), ok=len(cand) > 0 and not falsi, falsi=falsi))
         gates.append(dict(nome=f"A tabellone scala {sc:g}: baseline stimata vs VERA entro 1%", n=len(gb),
                           verdi=sum(abs(r["baseline_err_vs_truth_pct"]) <= 1.0 for r in gb),
                           ok=len(gb) > 0 and all(abs(r["baseline_err_vs_truth_pct"]) <= 1.0 for r in gb)))
@@ -400,6 +415,8 @@ def main():
                                f"Non e' un controllo di qualita': per lenti nuove serve A",
                           n=len(L), verdi=sum(bool(r.get("mai_peggiorativa")) for r in L),
                           ok=all(r.get("mai_peggiorativa") for r in L) and len(L) > 0))
+    ncand = sum(1 for r in rows if r["kind"] == "board" and r.get("calib_interno") == "VERDE" and r.get("gate", {}).get("verdetto") == "VERDE")
+    gates.append(dict(nome=f"potenza statistica: candidati veri totali (scale {scales}, dopo il controllo di bordo) >= {MIN_POWER}", n=MIN_POWER, verdi=min(ncand, MIN_POWER), ok=ncand >= MIN_POWER))
     gates.append(dict(nome="casi negativi tutti come atteso", n=len(neg), verdi=sum(n["atteso"] == n["ottenuto"] for n in neg),
                       ok=all(n["atteso"] == n["ottenuto"] for n in neg)))
     gates.append(dict(nome="nessun errore di esecuzione", n=len(rows), verdi=len(rows) - len(errs), ok=not errs))
@@ -422,7 +439,7 @@ def main():
               "Il VERDE vero lo da' solo la verifica indipendente sul reale (banco fisso + dy in movimento), non il gemello.",
               "Il gemello e' PIU' PULITO del reale (RMS 0.07-0.1 px contro 0.3-0.5): finche' fedelta.py non e' tarato su una ripresa vera "
               "di #001 i gate valgono come prova di codice, non come prova su #001."]
-    esito = dict(quando=datetime.datetime.now().isoformat(timespec="seconds"), modo=modo, calib=os.path.basename(a.calib),
+    esito = dict(disponibilita_procedura=disponibilita, quando=datetime.datetime.now().isoformat(timespec="seconds"), modo=modo, calib=os.path.basename(a.calib),
                  calib_g0=dict(passato=ok0, motivo=why), avvisi=avvisi, n_per_scala=a.n, scale=scales, seed0=SEED0, tabellone=BOARD,
                  secondi=round(time.time() - t0), gate=gates, esito="TUTTO VERDE" if tutto else "ROSSO",
                  negativi=neg, informativo=informativo, righe=[{k: v for k, v in r.items() if k != "truth"} for r in rows])

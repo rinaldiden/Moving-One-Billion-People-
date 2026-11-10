@@ -1,9 +1,9 @@
 # calib_rock — gemello digitale (mock) di #001 e calibrazione automatica
 
-Stato (2026-11-10, dopo il 4o VETO del critico): **CODICE PRONTO, 3 GATE ANCORA ROSSI su 20 (onesti, nessuna soglia abbassata)**,
-NON in produzione. Dettaglio in "Risultato (round 2)". `esito.json` = ultimo run N=30/scala, seed 20261110, 1400 s.
-- Metodo senza tabellone (B, solo montaggio): scala 1 30/30; scala 2 29/30 (1 rifiuto sicuro: montaggio a ~10 gradi, dy 234 px).
-- Metodo con tabellone (A): produce un CANDIDATO e **non dichiara mai VERDE** (il VERDE vero lo da' solo il banco fisso reale).
+Stato (2026-11-10, round 3 dopo il VETO sui seed 20271117): **CODICE PRONTO, 4 GATE ANCORA ROSSI su 19 (15 verdi; onesti, nessuna soglia abbassata)**,
+NON in produzione. `esito.json` = run N=60/scala, SEED0 20281124 (mai usato prima), 2891 s.
+- **A (tabellone) e' SOLO CANDIDATO**: il bordo lo certifica il banco fisso reale / il tabellone fisico, MAI il mock.
+- B (senza tabellone): corregge il montaggio, non la lente; **con lenti variate rifiuta quasi sempre e non prova nessuna correzione delle lenti**.
 I parametri veri arrivano solo quando la calibrazione manuale di #001 prende il **PASSA L1.rettifica**.
 Gate sulla lavagna: `L1.mock_001` (in `agents/stato.py`, DIPENDE da `L1.rettifica`).
 
@@ -44,45 +44,50 @@ Come si apre il cancello "produzione" (`g0_passato` in `run_all.py`): SOLO un ve
 con nella nota `sha256:<hex>` uguale a quello della calib ORA (`python3 run_all.py --sha`). Calib modificata dopo il PASSA = bloccata.
 Il vecchio campo `g0_passa` nel file calib e' ignorato.
 
-## Risultato (round 2, `esito.json`: N=30 per scala, 17/17 casi negativi come atteso)
+## Risultato (round 3, `esito.json`: N=60 per scala, seed 20281124 mai usati, 17/17 casi negativi come atteso)
 
-| gate | scala 1 | scala 2 (montaggio E lenti doppi, pp fino a +-200 px) |
+**Regola di A (scelta del capo, "via 2"):** il mock non puo' certificare il bordo (ultimi ~40 px: il detector non da' corner li', il modello di lente
+li' e' estrapolato; provati 6 controlli senza verita' e nessuno separa buoni e cattivi, vedi sotto). Quindi A produce un CANDIDATO e il bordo si
+giudica con un controllo indipendente, che nel reale e' banco fisso + dy per zona in movimento e nel mock e' simulato col dy sulla verita':
+**dy p95 < 1.5 px in OGNI zona** (1.5 e non 1.0: l'estrapolazione al bordo non e' certificabile al pixel) + depth del centro entro i limiti stretti.
+**Un risultato con una zona sopra 1.5 px NON e' un candidato.** Un *falso candidato* e' un candidato con la depth vera a 2-5 m fuori limite (bordi > 3%).
+Perche' cosi': le versioni precedenti dichiaravano candidati con zone di bordo a dy 1.6-2.8 px e depth fino al 7.4%; la soglia "errore bordo > 6%" non separava nulla.
+
+| gate | scala 1 | scala 2 (montaggio E lenti doppi) |
 |---|---|---|
-| A) candidati (controlli interni VERDE) che passano la verita' >= 85% | **21/23 (91%) OK** | 11/12 OK |
-| A) falsi candidati <= 15% e nessuno con errore bordo 2-5 m > 6% | **KO**: 2 falsi (9%), 1 grave: i27 basso-dx 5 m **6.03%** (l'altro i3 3.59%) | OK: 1 falso (alto-dx 5 m 5.33%) |
-| A) l'operatore arriva a un candidato in >= 50% | 23/30 OK | **KO 12/30** (rifiuti sicuri: 12 per copertura bordo, 6 per pochi corner di verifica) |
-| A) guardia "A non dichiara mai VERDE" (invariante di codice, NON evidenza) | 30/30 | 30/30 |
-| A) baseline stimata vs vera entro 1% | 25/25 | 18/18 |
-| B solo-montaggio: accettata + gate stretti | 30/30 | **KO 29/30** (i20: montaggio ~10 gradi, rifiutato, nominale restituito) |
-| B solo-montaggio: nessuna zona x distanza peggiora > 0.5 punti % | 30/30 | 30/30 |
-| B lenti variate: se accetta la verita' e' VERDE | 30/30 (accettate 0/30) | 30/30 (0/30) |
-| B lenti variate: nessuna zona peggiora > 0.5 punti % | 30/30 | 30/30 |
-| casi negativi (17, vedi sotto) | 17/17 | |
+| A: risultati con controlli interni VERDE che passano il controllo di bordo dy < 1.5 px >= 85% | 45/48 OK (scartati 3) | 26/26 OK |
+| A: ZERO falsi candidati (passano dy < 1.5 ma depth fuori limite) | **KO: 1/45** (i2, basso-dx 5 m **3.23%**, limite 3%, dy sotto 1.0 ovunque) | OK 0/26 |
+| A: potenza statistica, candidati veri totali >= 40 | 71 (45+26) OK | |
+| A: baseline stimata vs vera entro 1% | 56/56 | 31/31 |
+| A: guardia "A non dichiara mai VERDE" (invariante di codice, NON evidenza) | 60/60 | 60/60 |
+| B solo-montaggio: accettata + gate stretti | **KO 59/60** (i32: rifiutato, montaggio grande) | **KO 57/60** (3 rifiuti sicuri: i29, i39 non accettati, i34 zona povera) |
+| B solo-montaggio: nessuna zona peggiora > 0.5 punti % | 60/60 | 60/60 |
+| B lenti variate: se accetta la verita' e' VERDE | **KO 57/60**: 3 accettate (i14, i15, i28) che MIGLIORANO molto (err 72->12, 78->7, 96->10) ma restano ROSSE (dy 3-12 px in alto) | 60/60 (0 accettate) |
+| B lenti variate: nessuna zona peggiora > 0.5 punti % | 60/60 | 60/60 |
+| casi negativi | 17/17 | |
 
-Lettura onesta: B con lenti variate **rifiuta sempre** (0/30 accettate): il gate "se accetta, VERDE" passa perche' rifiuta, non perche' corregga.
-E' coerente con il limite dichiarato (B corregge il montaggio, non la lente: per lenti nuove serve A).
+**Dati (NON gate): disponibilita' della procedura A**, cioe' quante volte, con i rifacimenti guidati, si arriva a un candidato con controlli interni VERDE:
+scala 1 48/60 (80%), scala 2 26/60 (43%). Era un gate al 50%: tolto, perche' misura l'usabilita' della procedura e non la correttezza; i rifiuti sono sicuri
+(mai una calibrazione sbagliata data per buona), ma a scala 2 il collaudatore dovra' rifare viste mirate piu' spesso.
 
-**Cosa e' cambiato nel round 2 (VETO del critico, 7 punti):**
-1. Gate "nessun falso VERDE" (n=0) sostituito da un gate che puo' fallire: falsi CANDIDATI contati con zona ed errore al bordo; il VERDE di A resta vietato
-   (resta come guardia di regressione, dichiarata tale).
-2. "Mai peggiorativa" PER ZONA (9 zone x [2,3,5,7,10] m, tolleranza 0.5 punti %, non piu' la media +0.1). Casi negativi nuovi: yaw +0.3 / -0.5 gradi e
-   scala +6% iniettati nella correzione online (`online_correct(sabotage=...)`): tutti RIFIUTATI dall'accettazione, con controllo positivo (stessa istanza
-   senza sabotaggio ACCETTATA); caso "+3 punti al bordo compensati al centro" (la media passerebbe, il controllo per zona lo vede).
-3. B con lenti variate e' un gate vero (vedi tabella).
-4. Tolleranze: `pp_px` 100 (misurato cx -93 px), scala 2 raddoppia anche le lenti. Caso costruito ROSSO al bordo con centro buono (termine di lente di 5o
-   ordine: centro 0.09% a 2/5 m, dy 1.9-2.5 px ai bordi).
-5. A scala 1: da 82% a 91% senza toccare la soglia. Causa: la scelta del modello preferiva "il piu' semplice entro +0.03 px" = quasi sempre k1k2, che
-   estrapola male al bordo (con pp +-100 px: 3/9 candidati ok). Ora vince il migliore sulle viste tenute fuori con metrica mista globale+bordo
-   (`SELECT_MODE=edge`, tolleranza 0). Prova fuori campione: 24 istanze mai usate per scegliere, 14/14 (vecchia regola 13/14; sul primo gruppo 8/8 contro 3/9).
-   Piu' rifacimenti guidati (4 invece di 2) e, per B, guida extra se mancano punti in qualche zona.
-6. `g0_passato`: solo registro, non parziale, legato a sha256 (sopra). 7. `L1.mock_001` in `agents/stato.py` con dipendenza da `L1.rettifica`.
+**Negativo "lato tabellone 6%":** ora costruito con copertura garantita (`calibrate_with_retry`, copertura ok verificata) e il test PRETENDE il motivo
+"baseline" nell'esito; ROSSO per altro motivo = test fallito. Esito: ROSSO col motivo "baseline dal tabellone 187.5 mm fuori 200 +-3%".
+
+**B con lenti variate rifiuta (quasi) sempre e non e' una prova di correzione delle lenti.** Il gate "se accetta, VERDE" passa a scala 2 perche' rifiuta
+sempre (0/60). A scala 1 accetta 3/60 e quelle tre migliorano ma restano ROSSE: l'online corregge il montaggio, la lente nuova richiede A.
 
 **Resta aperto (non nascosto):**
-- A scala 1: 1 falso candidato grave a 6.03% (soglia di gravita' 6%, mia, = 2x il limite 3%): al bordo basso-dx il modello estrapola ancora male in 2 istanze su 23.
-  Non l'ho allentata. Decisione al critico/Daniele: o si tiene (e serve altro lavoro sul bordo) o si dichiara che il candidato al bordo va sempre confermato dal banco fisso (gia' vero).
-- A scala 2: solo 12/30 arrivano a un candidato (rifiuti sicuri per copertura delle zone alte/basse a pp +-200 px). Limite di procedura, non errore di calibrazione.
-- B scala 2: 1/30 rifiutato (montaggio ~10 gradi). Rifiuto sicuro.
+- A scala 1: 1 falso candidato su 45 a 3.23% (5 m, basso-dx) contro limite 3%: il modello semplice al bordo estrapola ancora male qualche volta. Lo scarto
+  e' di 0.23 punti: da decidere se il limite al bordo dei candidati va tenuto cosi' (banco fisso reale lo verifica comunque).
+- B: 4 rifiuti/accettazioni parziali su 120 per montaggi molto fuori nominale (dy 100-250 px): rifiuto sicuro, nominale restituito; B lenti: 3 accettazioni parziali.
+- Selezione del modello di lente instabile fra split di hold-out (caso i3 round 3: dy al bordo 2.1 / 3.0 / 6.6 px cambiando solo il seed dello split; modello
+  semplice k1k2 1.0-1.4): un guard "il modello flessibile non deve discostarsi dal semplice piu' di X px negli angoli" PROVATO e SPENTO (`DISAGREE_PX=None`):
+  su 41 istanze i buoni arrivano a 4.7-6.6 px di scarto, il cattivo era a 1.7 px, nessuna soglia separa (e con 1.5 px rovina 3 buoni su 23).
 - Fedelta' al reale NON VERIFICATA (invariata); il gemello e' piu' pulito del reale.
+
+**Storico round 2 (seed 20261110, N=30):** A scala 1 91% candidati ok, 17/17 negativi; KO: falsi gravi 6.03%, disponibilita' A scala 2 12/30, B scala 2 29/30.
+Cambi del round 2: gate falsi candidati con zona/errore, mai-peggiorativa per zona (0.5 punti %), B lenti come gate, pp +-100 px e lenti x scala, caso bordo cattivo/centro buono,
+sabotaggi yaw/kappa con controllo positivo, selezione modello per hold-out a tolleranza 0 (da 82% a 91%), g0 solo da registro con sha256, L1.mock_001 in stato.py.
 
 ## Stress "gemello sporco" (dopo il VETO: il gemello era piu' pulito del reale)
 

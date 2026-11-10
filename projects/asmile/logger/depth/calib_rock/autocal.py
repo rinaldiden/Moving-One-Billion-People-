@@ -119,11 +119,12 @@ def collect_rendered(inst, board_name, poses, rng, board_sq_scale=1.0, swap_file
     return views
 
 
-def collect_adaptive(inst, board_name, rng, n0=100, rounds=5, add=14, z_range=(0.9, 2.8)):
+def collect_adaptive(inst, board_name, rng, n0=100, rounds=5, add=14, z_range=(0.9, 2.8), render_kw=None):
     """Come l'operatore con l'app: dopo il primo giro si guarda quali zone (per camera) sono povere di corner e si
     aggiungono viste MIRATE su quelle. Soglie piu' alte di quelle del gate (il 25% va in hold-out)."""
     poses = sample_poses_zoned(rng, n0, board_name, z_range=z_range, inst=inst)
-    views = collect_rendered(inst, board_name, poses, rng)
+    render_kw = render_kw or {}
+    views = collect_rendered(inst, board_name, poses, rng, **render_kw)
     for _ in range(rounds):
         need = []   # (zona, camera)
         both = [v for v in views if v["L"] is not None and v["R"] is not None]    # conta solo le viste STEREO
@@ -138,14 +139,15 @@ def collect_adaptive(inst, board_name, rng, n0=100, rounds=5, add=14, z_range=(0
             zb = ZONE_BOX[z]
             zr = z_range if z == 4 else (z_range[0] * 0.85, min(z_range[1], 1.9))
             new += sample_poses(rng, 1, board_name, region=zb, z_range=zr, inst=inst, cam=ci)
-        views += collect_rendered(inst, board_name, new, rng)
+        views += collect_rendered(inst, board_name, new, rng, **render_kw)
     return views
 
 
-def calibrate_with_retry(inst, board_name, rng, profile, n0=100, max_retry=2, seed=0):
+def calibrate_with_retry(inst, board_name, rng, profile, n0=100, max_retry=2, seed=0, render_kw=None):
     """Il ciclo dell'operatore con l'app: se la calibrazione e' ROSSO per copertura o dy di zona, si aggiungono viste
     MIRATE alle zone deboli (per camera) e si riprova, al massimo max_retry volte. Ritorna (calib, rep, views, n_retry)."""
-    views = collect_adaptive(inst, board_name, rng, n0=n0)
+    render_kw = render_kw or {}
+    views = collect_adaptive(inst, board_name, rng, n0=n0, render_kw=render_kw)
     for k in range(max_retry + 1):
         cand, rep = board_calibrate(views, profile, board_name, seed=seed + k)
         weak = rep.get("zone_deboli") or []
@@ -156,7 +158,7 @@ def calibrate_with_retry(inst, board_name, rng, profile, n0=100, max_retry=2, se
             z, ci = weak[j % len(weak)]
             zr = (0.9 * 0.85, 1.9) if z != 4 else (0.9, 2.8)
             new += sample_poses(rng, 1, board_name, region=ZONE_BOX[z], z_range=zr, inst=inst, cam=ci)
-        views += collect_rendered(inst, board_name, new, rng)
+        views += collect_rendered(inst, board_name, new, rng, **render_kw)
     return cand, rep, views, max_retry
 
 
@@ -199,6 +201,9 @@ def radial_monotone(K, D, margin=1.08):
 
 SELECT_MODE = "edge"      # "all": hold-out su tutti i corner; "edge": metrica sul bordo (corner oltre EDGE_R del raggio massimo)
 EDGE_R = 0.55             # frazione del raggio-angolo oltre la quale un corner di hold-out conta come "bordo"
+DISAGREE_PX = None  # (PROVATO e SPENTO: non separa, vedi README) # un modello flessibile e' eleggibile solo se NON si discosta dal modello semplice di riferimento (primo eleggibile
+                    # in MODEL_FLAGS) di piu' di tanti pixel in NESSUN punto dell'immagine, angoli inclusi: l'hold-out non vede gli angoli
+                    # (nessun corner entro ~40 px), li' un modello flessibile estrapola (dy 3-8 px visti sul gemello). None = spento.
 TOL_ABS, TOL_REL = 0.0, 0.0   # "il piu' semplice entro" la tolleranza dal migliore (sul punteggio di scelta)
 EDGE_W = 1.0              # peso del bordo nella metrica di scelta: sqrt((rms_all^2 + W*rms_bordo^2)/(1+W))
 
@@ -226,6 +231,16 @@ def holdout_edge_rms(hold, key, K, D, edge_r=None):
     ra = float(np.sqrt(np.mean(np.square(e_all))))
     re_ = float(np.sqrt(np.mean(np.square(e_edge)))) if len(e_edge) >= 15 else ra
     return ra, re_, len(e_edge)
+
+
+def model_disagreement_px(K1, D1, K2, D2, n=(33, 21)):
+    """Scarto massimo (px, nel piano immagine con K1) fra due modelli di lente, su una griglia che include i 4 angoli."""
+    xs = np.linspace(0, W - 1, n[0])
+    ys = np.linspace(0, H - 1, n[1])
+    P = np.array([[x, y] for y in ys for x in xs], np.float64).reshape(-1, 1, 2)
+    a = cv2.undistortPoints(P, K1, D1, P=K1).reshape(-1, 2)
+    b = cv2.undistortPoints(P, K2, D2, P=K1).reshape(-1, 2)
+    return float(np.max(np.linalg.norm(a - b, axis=1)))
 
 
 def _k0(profile):
@@ -324,6 +339,12 @@ def board_calibrate(views, profile, board_name, sq_declared=None, seed=0, holdou
             red(f"nessun modello di lente eleggibile per la cam {key}")
             return None, rep
         order = list(MODEL_FLAGS)
+        if DISAGREE_PX is not None and res:
+            ref = next(n for n in order if n in res)
+            for n_, r_ in res.items():
+                r_["disaccordo_px"] = 0.0 if n_ == ref else model_disagreement_px(res[ref]["K"], res[ref]["D"], r_["K"], r_["D"])
+            table.setdefault(key + "_disaccordo_px", {n_: round(r_["disaccordo_px"], 2) for n_, r_ in res.items()})
+            res = {n_: r_ for n_, r_ in res.items() if r_["disaccordo_px"] <= DISAGREE_PX}
         # sceglie sul HOLD-OUT; a parita' (entro 3%) il piu' semplice
         bestn = min(res, key=lambda n: res[n]["score"])
         # il piu' semplice entro +0.03 px (o 5%) dal migliore: sotto il rumore del detector la complessita' extra e' overfit

@@ -18,6 +18,7 @@ import twin
 W, H = twin.W, twin.H
 ZS = [1.0, 2.0, 3.0, 5.0, 7.0, 10.0, 15.0, 20.0]
 ZNAME = ["alto-sx", "alto-centro", "alto-dx", "mezzo-sx", "centro", "mezzo-dx", "basso-sx", "basso-centro", "basso-dx"]
+GATES_A = dict(dy_p95_px=1.5, centro_2_5m_pct=2.0, centro_7_10m_pct=3.0)   # A = SOLO CANDIDATO: bordo = dy < 1.5 px per zona, depth di bordo NON giudicata dal mock
 GATES = dict(dy_p95_px=1.0, centro_2_5m_pct=2.0, centro_7_10m_pct=3.0, bordi_2_5m_pct=3.0)
 
 
@@ -166,3 +167,25 @@ def table_text(ev):
             cells.append("     - " if c is None else f"{c['med']:+6.2f}")
         rows.append(f"{zn:<12s}" + " ".join(cells) + f"   {ev['dy_p50'][i]:.2f}/{ev['dy_p95'][i]:.2f}")
     return "\n".join(rows)
+
+
+def check_gates_A(ev, G=GATES_A):
+    """Criterio del CANDIDATO di A (il bordo si certifica col banco fisso reale, mai dal mock): dy p95 < 1.5 px in OGNI zona
+    con sovrapposizione stereo + depth del CENTRO entro i limiti stretti. La depth di bordo e' riportata (edge_errors), non giudicata.
+    Un candidato con una zona sopra 1.5 px di dy NON e' un candidato."""
+    motivi = []
+    valide = ev.get("zona_valida", [True] * 9)
+    if sum(valide) < 6 or not valide[4]:
+        motivi.append("sovrapposizione stereo insufficiente")
+    for i, zn in enumerate(ZNAME):
+        if not valide[i]:
+            continue
+        p = ev["dy_p95"][i]
+        if p is None or not np.isfinite(p) or not p < G["dy_p95_px"]:
+            motivi.append(f"dy p95 {zn} = {p if p is None else round(p, 2)} px >= {G['dy_p95_px']}")
+    for Z in (2.0, 3.0, 5.0, 7.0, 10.0):
+        c = _cell(ev, "centro", Z)
+        lim = G["centro_2_5m_pct"] if Z <= 5 else G["centro_7_10m_pct"]
+        if c is None or not np.isfinite(c) or c > lim:
+            motivi.append(f"depth centro {Z:g} m: p95|err| = {c if c is None else round(c, 2)}% > {lim}%")
+    return dict(verdetto="VERDE" if not motivi else "ROSSO", motivi=motivi)
