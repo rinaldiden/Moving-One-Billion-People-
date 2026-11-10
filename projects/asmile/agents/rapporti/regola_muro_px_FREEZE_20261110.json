@@ -1,0 +1,13 @@
+{
+ "unita": "asmile-001 (OV9281 x2, B=0.2 m)  -- NON valida per il logger",
+ "versione": "R1-2026-11-10",
+ "piano": "d = a*u + b*v + c, per lato (sx/dx), fino a 3 piani sequenziali (RANSAC) per lato",
+ "tau_px": 1.5,
+ "assorbito_come_muro": "residuo = d_pixel - d_piano <= +1.5 px",
+ "oggetto_sporge": "residuo > +1.5 px  (nessuna banda morta, nessuna tolleranza in percento)",
+ "pixel_piu_lontani_del_piano": "residuo < -1.5: non assorbiti, non contano come sporgenza (nicchie)",
+ "piano_valido_se": {"supporto_colonne_min": 150, "delta_d_min_px": 6, "pendenza_a_px_per_col": [0.05, 0.5], "segno_pendenza": "destra +, sinistra -", "supporto_sopra_m": 2.2},
+ "ransac_inlier_px": 1.5,
+ "ipotesi_da_verificare_su_dev_prima_di_D": "sigma SGBM residuo su muro <= 0.5 px; se 3*sigma > 1.5 STOP e nuova regola con nuovo sha256",
+ "nota": "congelato PRIMA di D; ogni modifica cambia lo sha256 e invalida D"
+}
