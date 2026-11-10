@@ -42,25 +42,25 @@
      "verde": true,
      "falso_verde": false,
      "verita_ok": true,
-     "modello": "rational",
+     "modello": "std5",
      "dy_n_min": 124,
      "patch_n_min": 8,
-     "dy_patch_p95_peggiore": 0.8702756360491075,
-     "dy_p95_grezzo_peggiore": 1.4132930905883028,
-     "rumore_corner_sigma_px": 0.6572382205965857,
+     "dy_patch_p95_peggiore": 0.9608354198711414,
+     "dy_p95_grezzo_peggiore": 1.4273591404436614,
+     "rumore_corner_sigma_px": 0.657536814246433,
      "rms_mono_gate": [
-      0.4885995388031006,
-      0.49222660064697266
+      0.48754459619522095,
+      0.49243274331092834
      ],
-     "rms_stereo_gate": 0.49374552248359493,
-     "baseline_dev_pct": -0.01656640400088394,
-     "verita_dy_p95_peggiore": 0.349,
-     "verita_depth_p95_peggiore": 1.739,
+     "rms_stereo_gate": 0.49329587372380307,
+     "baseline_dev_pct": -0.01491690521789879,
+     "verita_dy_p95_peggiore": 0.31,
+     "verita_depth_p95_peggiore": 1.477,
      "problemi": [],
      "avvisi_margine": [
-      "RMS mono L 0.489 px = 98% della soglia 0.5: poco margine",
+      "RMS mono L 0.488 px = 98% della soglia 0.5: poco margine",
       "RMS mono R 0.492 px = 98% della soglia 0.5: poco margine",
-      "dy p95 zona alto-sx 0.87 px = 87% della soglia 1.0 (media per vista)"
+      "dy p95 zona alto-sx 0.96 px = 96% della soglia 1.0 (media per vista)"
      ],
      "n_viste": {
       "fit": 91,
@@ -74,27 +74,27 @@
      "gate": "ROSSO",
      "verde": false,
      "falso_verde": false,
-     "verita_ok": true,
-     "modello": "rational",
-     "dy_n_min": 90,
+     "verita_ok": false,
+     "modello": "rational+prism+tilted",
+     "dy_n_min": 86,
      "patch_n_min": 5,
-     "dy_patch_p95_peggiore": 0.48238452272846155,
-     "dy_p95_grezzo_peggiore": 1.262420929688762,
-     "rumore_corner_sigma_px": 0.5194921985199896,
+     "dy_patch_p95_peggiore": 0.559836368779058,
+     "dy_p95_grezzo_peggiore": 1.2517080502058953,
+     "rumore_corner_sigma_px": 0.5259407745730167,
      "rms_mono_gate": [
-      0.479138046503067,
-      0.47077029943466187
+      0.47897136211395264,
+      0.47037574648857117
      ],
-     "rms_stereo_gate": 0.472124177804381,
-     "baseline_dev_pct": -0.019810326198677064,
-     "verita_dy_p95_peggiore": 0.485,
-     "verita_depth_p95_peggiore": 0.955,
+     "rms_stereo_gate": 0.47494098064424106,
+     "baseline_dev_pct": -0.026019072619609673,
+     "verita_dy_p95_peggiore": 0.44,
+     "verita_depth_p95_peggiore": 2.464,
      "problemi": [
-      "hold-out stereo: zona basso-sx INSUFFICIENTE: 90 punti / 5 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona basso-sx"
+      "hold-out stereo: zona basso-sx INSUFFICIENTE: 86 punti / 5 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona basso-sx"
      ],
      "avvisi_margine": [
       "RMS mono L 0.479 px = 96% della soglia 0.5: poco margine",
-      "RMS mono R 0.471 px = 94% della soglia 0.5: poco margine"
+      "RMS mono R 0.470 px = 94% della soglia 0.5: poco margine"
      ],
      "n_viste": {
       "fit": 94,
@@ -109,20 +109,20 @@
      "verde": true,
      "falso_verde": false,
      "verita_ok": true,
-     "modello": "rational",
+     "modello": "std5",
      "dy_n_min": 90,
      "patch_n_min": 6,
-     "dy_patch_p95_peggiore": 0.45305272210173103,
-     "dy_p95_grezzo_peggiore": 1.3657166209407017,
-     "rumore_corner_sigma_px": 0.566084962414016,
+     "dy_patch_p95_peggiore": 0.4493927334014967,
+     "dy_p95_grezzo_peggiore": 1.3662669233717217,
+     "rumore_corner_sigma_px": 0.5659902819488579,
      "rms_mono_gate": [
-      0.47056570649147034,
-      0.4838312268257141
+      0.47088706493377686,
+      0.4836512506008148
      ],
-     "rms_stereo_gate": 0.4700995698966244,
-     "baseline_dev_pct": 0.04168935999337986,
-     "verita_dy_p95_peggiore": 0.334,
-     "verita_depth_p95_peggiore": 1.224,
+     "rms_stereo_gate": 0.47003474075264856,
+     "baseline_dev_pct": 0.04190185814798575,
+     "verita_dy_p95_peggiore": 0.402,
+     "verita_depth_p95_peggiore": 1.167,
      "problemi": [],
      "avvisi_margine": [
       "RMS mono L 0.471 px = 94% della soglia 0.5: poco margine",
@@ -144,20 +144,20 @@
      "modello": "rational",
      "dy_n_min": 77,
      "patch_n_min": 6,
-     "dy_patch_p95_peggiore": 0.3805732083604659,
-     "dy_p95_grezzo_peggiore": 1.182381040651269,
-     "rumore_corner_sigma_px": 0.546927330336699,
+     "dy_patch_p95_peggiore": 0.3731148811342944,
+     "dy_p95_grezzo_peggiore": 1.1856702156385721,
+     "rumore_corner_sigma_px": 0.5494435390634851,
      "rms_mono_gate": [
-      0.47076424956321716,
-      0.4847680926322937
+      0.47020643949508667,
+      0.4847676455974579
      ],
-     "rms_stereo_gate": 0.47465520168913106,
-     "baseline_dev_pct": -0.004291873496375942,
-     "verita_dy_p95_peggiore": 0.377,
-     "verita_depth_p95_peggiore": 1.473,
+     "rms_stereo_gate": 0.4746241517402347,
+     "baseline_dev_pct": -0.0028730649319741453,
+     "verita_dy_p95_peggiore": 0.182,
+     "verita_depth_p95_peggiore": 1.171,
      "problemi": [],
      "avvisi_margine": [
-      "RMS mono L 0.471 px = 94% della soglia 0.5: poco margine",
+      "RMS mono L 0.470 px = 94% della soglia 0.5: poco margine",
       "RMS mono R 0.485 px = 97% della soglia 0.5: poco margine"
      ],
      "n_viste": {
@@ -173,98 +173,29 @@
      "verde": true,
      "falso_verde": false,
      "verita_ok": true,
-     "modello": "rational",
+     "modello": "rational+prism",
      "dy_n_min": 121,
      "patch_n_min": 7,
-     "dy_patch_p95_peggiore": 0.4360924814337369,
-     "dy_p95_grezzo_peggiore": 1.55909984284076,
-     "rumore_corner_sigma_px": 0.5740542926247576,
+     "dy_patch_p95_peggiore": 0.4258169137612974,
+     "dy_p95_grezzo_peggiore": 1.568040999849529,
+     "rumore_corner_sigma_px": 0.5759063305814199,
      "rms_mono_gate": [
-      0.48778632283210754,
-      0.49575275182724
+      0.48893705010414124,
+      0.49381548166275024
      ],
-     "rms_stereo_gate": 0.4806322182233042,
-     "baseline_dev_pct": 0.01474905556457795,
-     "verita_dy_p95_peggiore": 0.44,
-     "verita_depth_p95_peggiore": 1.089,
+     "rms_stereo_gate": 0.48097336474317903,
+     "baseline_dev_pct": 0.0013590165388821518,
+     "verita_dy_p95_peggiore": 0.353,
+     "verita_depth_p95_peggiore": 0.86,
      "problemi": [],
      "avvisi_margine": [
-      "RMS mono L 0.488 px = 98% della soglia 0.5: poco margine",
-      "RMS mono R 0.496 px = 99% della soglia 0.5: poco margine"
+      "RMS mono L 0.489 px = 98% della soglia 0.5: poco margine",
+      "RMS mono R 0.494 px = 99% della soglia 0.5: poco margine"
      ],
      "n_viste": {
       "fit": 91,
       "select": 42,
       "gate": 63
-     }
-    },
-    {
-     "seed": 11,
-     "in_criterio": false,
-     "gate": "ROSSO",
-     "verde": false,
-     "falso_verde": false,
-     "verita_ok": true,
-     "modello": "rational",
-     "dy_n_min": 94,
-     "patch_n_min": 8,
-     "dy_patch_p95_peggiore": 0.5597204519253266,
-     "dy_p95_grezzo_peggiore": 1.320521081788564,
-     "rumore_corner_sigma_px": 0.557044106433387,
-     "rms_mono_gate": [
-      0.5060096979141235,
-      0.49670863151550293
-     ],
-     "rms_stereo_gate": 0.4865594066832785,
-     "baseline_dev_pct": -0.028359753435514,
-     "verita_dy_p95_peggiore": 0.487,
-     "verita_depth_p95_peggiore": 0.99,
-     "problemi": [
-      "RMS mono L (tenute fuori) 0.506 px (>= 0.5)"
-     ],
-     "avvisi_margine": [
-      "RMS mono L 0.506 px = 101% della soglia 0.5: poco margine",
-      "RMS mono R 0.497 px = 99% della soglia 0.5: poco margine"
-     ],
-     "n_viste": {
-      "fit": 92,
-      "select": 41,
-      "gate": 61
-     }
-    },
-    {
-     "seed": 12,
-     "in_criterio": false,
-     "gate": "ROSSO",
-     "verde": false,
-     "falso_verde": false,
-     "verita_ok": true,
-     "modello": "rational",
-     "dy_n_min": 72,
-     "patch_n_min": 6,
-     "dy_patch_p95_peggiore": 0.5346592600998785,
-     "dy_p95_grezzo_peggiore": 1.2613826066167066,
-     "rumore_corner_sigma_px": 0.5921414196729092,
-     "rms_mono_gate": [
-      0.520634114742279,
-      0.5042312741279602
-     ],
-     "rms_stereo_gate": 0.49934153014766175,
-     "baseline_dev_pct": -0.026229706964331356,
-     "verita_dy_p95_peggiore": 0.849,
-     "verita_depth_p95_peggiore": 1.456,
-     "problemi": [
-      "RMS mono L (tenute fuori) 0.521 px (>= 0.5)",
-      "RMS mono R (tenute fuori) 0.504 px (>= 0.5)"
-     ],
-     "avvisi_margine": [
-      "RMS mono L 0.521 px = 104% della soglia 0.5: poco margine",
-      "RMS mono R 0.504 px = 101% della soglia 0.5: poco margine"
-     ],
-     "n_viste": {
-      "fit": 96,
-      "select": 42,
-      "gate": 64
      }
     }
    ],
@@ -273,19 +204,27 @@
   "solo_centro": {
    "atteso": "ROSSO",
    "gate_script": "ROSSO",
-   "modello": "rational",
+   "modello": "rational+prism+tilted",
    "problemi": [
     "copertura L insufficiente (<150 corner) in: alto-sx, alto-dx, basso-sx, basso-dx",
     "copertura R insufficiente (<150 corner) in: alto-sx, alto-centro, alto-dx, mezzo-dx, basso-dx",
     "hold-out stereo: zona alto-sx INSUFFICIENTE: 45 punti / 0 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona alto-sx",
-    "dy zona alto-centro: p50 |dy| 0.52 px (>= 0.5)",
+    "dy zona alto-centro: p50 |dy| 11.36 px (>= 0.5)",
+    "dy zona alto-centro: p95 |dy| (media per vista) 10.63 px (>= 1.0) [PRIORITARIO] (p95 grezzo 34.23)",
     "hold-out stereo: zona alto-dx INSUFFICIENTE: 34 punti / 2 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona alto-dx",
-    "dy zona mezzo-sx: p50 |dy| 0.51 px (>= 0.5)",
+    "dy zona mezzo-sx: p50 |dy| 10.62 px (>= 0.5)",
+    "dy zona mezzo-sx: p95 |dy| (media per vista) 20.54 px (>= 1.0) [PRIORITARIO] (p95 grezzo 44.58)",
+    "dy zona centro: p50 |dy| 10.51 px (>= 0.5)",
+    "dy zona centro: p95 |dy| (media per vista) 12.41 px (>= 1.0) [PRIORITARIO] (p95 grezzo 41.68)",
+    "dy zona mezzo-dx: p50 |dy| 9.73 px (>= 0.5)",
+    "dy zona mezzo-dx: p95 |dy| (media per vista) 10.81 px (>= 1.0) [PRIORITARIO] (p95 grezzo 41.43)",
     "hold-out stereo: zona basso-sx INSUFFICIENTE: 47 punti / 2 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona basso-sx",
+    "dy zona basso-centro: p50 |dy| 10.18 px (>= 0.5)",
+    "dy zona basso-centro: p95 |dy| (media per vista) 13.03 px (>= 1.0) [PRIORITARIO] (p95 grezzo 35.95)",
     "hold-out stereo: zona basso-dx INSUFFICIENTE: 28 punti / 1 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona basso-dx",
     "scala zona basso-dx con 17 coppie (<30) -> non verificata",
-    "RMS mono L (tenute fuori) 0.848 px (>= 0.5)",
-    "RMS mono R (tenute fuori) 0.717 px (>= 0.5)"
+    "RMS mono L (tenute fuori) 0.847 px (>= 0.5)",
+    "RMS mono R (tenute fuori) 0.718 px (>= 0.5)"
    ],
    "avvisi": [],
    "checks": {
@@ -299,7 +238,7 @@
   "file_scambiati": {
    "atteso": "ROSSO (T[0]>=0)",
    "gate_script": "ROSSO",
-   "modello": "rational",
+   "modello": "std5",
    "problemi": [
     "scala zona alto-sx VUOTA (nessuna coppia di corner triangolabile) -> non verificata",
     "scala zona alto-centro VUOTA (nessuna coppia di corner triangolabile) -> non verificata",
@@ -324,7 +263,7 @@
   "tilt_auto": {
    "atteso": "gate concorda con la verita' 3D (VERDE solo se verita' ok; falso VERDE = FAIL)",
    "gate_script": "VERDE",
-   "modello": "rational",
+   "modello": "rational+prism",
    "problemi": [],
    "avvisi": [],
    "checks": {
@@ -346,129 +285,230 @@
      "basso-dx"
     ],
     "B_dy_abs_p95": [
-     0.447,
-     0.04,
-     0.18,
-     0.075,
-     0.038,
-     0.08,
-     0.281,
-     0.058,
-     0.132
+     0.123,
+     0.126,
+     0.38,
+     0.086,
+     0.077,
+     0.125,
+     0.15,
+     0.109,
+     0.084
     ],
     "B_dy_median": [
-     -0.005,
-     -0.021,
-     0.034,
-     0.006,
-     -0.025,
-     0.038,
-     0.051,
-     -0.002,
-     0.063
+     0.02,
+     0.056,
+     0.117,
+     -0.023,
+     -0.03,
+     0.007,
+     -0.05,
+     -0.07,
+     -0.027
     ],
     "C_depth_pct_p95": [
-     0.81,
-     0.309,
-     1.029,
-     0.436,
-     0.18,
-     0.372,
-     0.623,
-     0.315,
-     0.263
+     0.395,
+     0.193,
+     0.343,
+     0.461,
+     0.257,
+     0.367,
+     0.496,
+     0.288,
+     0.422
     ],
     "C_depth_pct_median": [
-     0.064,
-     0.182,
-     0.367,
-     -0.196,
-     -0.011,
-     0.105,
-     -0.33,
-     -0.193,
-     -0.07
+     -0.137,
+     -0.0,
+     0.148,
+     -0.257,
+     -0.085,
+     0.045,
+     -0.292,
+     -0.149,
+     -0.027
     ],
     "info_depth_pct_p95_1m": [
-     0.164,
-     0.363,
-     0.723,
-     0.317,
-     0.168,
-     0.382,
-     0.45,
-     0.313,
-     0.157
+     0.123,
+     0.097,
+     0.105,
+     0.093,
+     0.066,
+     0.062,
+     0.149,
+     0.118,
+     0.112
     ],
     "info_depth_pct_p95_10m": [
-     2.671,
-     0.109,
-     2.564,
-     2.31,
-     0.243,
-     0.663,
-     3.1,
-     0.351,
-     0.875
+     1.052,
+     0.643,
+     1.053,
+     1.113,
+     0.68,
+     1.339,
+     1.114,
+     0.652,
+     1.553
     ],
     "focal_rect_est_true": [
-     1305.7444878562467,
+     1305.8265139699845,
      1304.071473970076
     ],
     "baseline_dir_ok": true,
-    "baseline_est_mm": 199.99,
+    "baseline_est_mm": 200.04,
     "baseline_true_mm": 200.01
    },
    "tilt_stato": "VERDE VERO",
    "holdout_rms_modelli": {
-    "rational": {
+    "k1k2": {
      "rms_fit": [
-      0.48874224097933106,
-      0.5211781882817199
+      0.4982810035739691,
+      0.522489939976369
      ],
+     "sel_score": 0.9746001025755714,
      "select_rms": [
-      0.4849090278148651,
-      0.4853360950946808
+      0.4843016564846039,
+      0.48645803332328796
      ],
      "select_zone_rms_L": [
-      0.47324204444885254,
-      0.47097912430763245,
-      0.5079759359359741,
-      0.5113626718521118,
-      0.4767347574234009,
-      0.4875020384788513,
-      0.4232439398765564,
-      0.51056969165802,
-      0.47471749782562256
+      0.4764743447303772,
+      0.47847265005111694,
+      0.5007601976394653,
+      0.5039570331573486,
+      0.4851265251636505,
+      0.4759252369403839,
+      0.4183604121208191,
+      0.5217045545578003,
+      0.46852967143058777
      ],
      "select_zone_rms_R": [
-      0.5256279706954956,
-      0.48775824904441833,
-      0.536834716796875,
-      0.47812122106552124,
-      0.4485730528831482,
-      0.4547499120235443,
-      0.47454628348350525,
-      0.4774327874183655,
-      0.5278714299201965
+      0.5282259583473206,
+      0.4881182610988617,
+      0.5353040099143982,
+      0.47866180539131165,
+      0.4505477845668793,
+      0.4562264382839203,
+      0.478069931268692,
+      0.47871485352516174,
+      0.5269051790237427
+     ]
+    },
+    "k1k2k3": {
+     "rms_fit": [
+      0.49790163462192005,
+      0.5214725140820836
+     ],
+     "sel_score": 0.973468186653187,
+     "select_rms": [
+      0.48390841484069824,
+      0.4855164587497711
+     ],
+     "select_zone_rms_L": [
+      0.47624921798706055,
+      0.47816431522369385,
+      0.5007809996604919,
+      0.5028442740440369,
+      0.4839944541454315,
+      0.47561925649642944,
+      0.4177021384239197,
+      0.5217511057853699,
+      0.46896955370903015
+     ],
+     "select_zone_rms_R": [
+      0.5255771279335022,
+      0.48808375000953674,
+      0.5373561382293701,
+      0.478310227394104,
+      0.4487219452857971,
+      0.45527398586273193,
+      0.47387853264808655,
+      0.47780364751815796,
+      0.5281942486763
+     ]
+    },
+    "std5": {
+     "rms_fit": [
+      0.4903051912295938,
+      0.5211899680995412
+     ],
+     "sel_score": 0.9675777434127856,
+     "select_rms": [
+      0.4781695008277893,
+      0.48531651496887207
+     ],
+     "select_zone_rms_L": [
+      0.47234460711479187,
+      0.47021037340164185,
+      0.4968997836112976,
+      0.4985429644584656,
+      0.4763956367969513,
+      0.47418463230133057,
+      0.4127301871776581,
+      0.5105641484260559,
+      0.4618493616580963
+     ],
+     "select_zone_rms_R": [
+      0.5255519151687622,
+      0.4877430498600006,
+      0.5368822813034058,
+      0.47810569405555725,
+      0.4485475718975067,
+      0.4547429382801056,
+      0.4744511544704437,
+      0.4774434268474579,
+      0.5278834700584412
+     ]
+    },
+    "rational": {
+     "rms_fit": [
+      0.4891279675621489,
+      0.5211738978469684
+     ],
+     "sel_score": 0.9723965582257781,
+     "select_rms": [
+      0.4826250970363617,
+      0.4853571653366089
+     ],
+     "select_zone_rms_L": [
+      0.4752638638019562,
+      0.47038549184799194,
+      0.5028871297836304,
+      0.5060185790061951,
+      0.4767111539840698,
+      0.48572832345962524,
+      0.42227014899253845,
+      0.5106031894683838,
+      0.46571072936058044
+     ],
+     "select_zone_rms_R": [
+      0.5256679654121399,
+      0.48779234290122986,
+      0.5368659496307373,
+      0.4781254827976227,
+      0.4486483037471771,
+      0.4547300636768341,
+      0.47454047203063965,
+      0.47746527194976807,
+      0.5278593301773071
      ]
     },
     "rational+prism": {
      "rms_fit": [
-      0.4894543004909424,
-      0.5208094079170538
+      0.48945430049094374,
+      0.5208094079170515
      ],
+     "sel_score": 0.9672784693072378,
      "select_rms": [
-      0.47859495878219604,
-      0.48550450801849365
+      0.4776442348957062,
+      0.48550453782081604
      ],
      "select_zone_rms_L": [
       0.47150367498397827,
       0.4706217348575592,
-      0.5033004283905029,
+      0.49719172716140747,
       0.49748989939689636,
-      0.4745674431324005,
-      0.47467538714408875,
+      0.4745674729347229,
+      0.4745466113090515,
       0.41407424211502075,
       0.509501576423645,
       0.4595078229904175
@@ -476,9 +516,9 @@
      "select_zone_rms_R": [
       0.5273734331130981,
       0.4878132939338684,
-      0.5350403785705566,
+      0.5350407958030701,
       0.4789021909236908,
-      0.44850075244903564,
+      0.44850072264671326,
       0.45466864109039307,
       0.4749995172023773,
       0.47823023796081543,
@@ -487,38 +527,39 @@
     },
     "rational+prism+tilted": {
      "rms_fit": [
-      0.4888808541506713,
-      0.52041134982808
+      0.489043979564078,
+      0.5204205605331239
      ],
+     "sel_score": 0.9718970507826504,
      "select_rms": [
-      0.4794255793094635,
-      0.48579373955726624
+      0.48110508918762207,
+      0.4857810437679291
      ],
      "select_zone_rms_L": [
-      0.4716469347476959,
-      0.4705899953842163,
-      0.5063021183013916,
-      0.49764934182167053,
-      0.4747014045715332,
-      0.4747525453567505,
-      0.41429388523101807,
-      0.5097746253013611,
-      0.46342453360557556
+      0.4711143672466278,
+      0.47042983770370483,
+      0.49791181087493896,
+      0.497700572013855,
+      0.47486814856529236,
+      0.4760253429412842,
+      0.4149814546108246,
+      0.5100018382072449,
+      0.49782654643058777
      ],
      "select_zone_rms_R": [
-      0.527006208896637,
-      0.48812276124954224,
-      0.5362036824226379,
-      0.4790116548538208,
-      0.4487771987915039,
-      0.45467114448547363,
-      0.47642627358436584,
-      0.4779261350631714,
-      0.5271896719932556
+      0.5272050499916077,
+      0.48817166686058044,
+      0.5358920693397522,
+      0.4790347218513489,
+      0.448774129152298,
+      0.4545609951019287,
+      0.47647368907928467,
+      0.4779197573661804,
+      0.527131199836731
      ]
     }
    },
-   "modello_scelto": "rational"
+   "modello_scelto": "rational+prism"
   },
   "tilt_rational": {
    "atteso": "gate concorda con la verita' 3D (VERDE solo se verita' ok; falso VERDE = FAIL)",
@@ -545,73 +586,73 @@
      "basso-dx"
     ],
     "B_dy_abs_p95": [
-     0.447,
-     0.04,
-     0.18,
+     0.444,
+     0.035,
+     0.183,
      0.075,
-     0.038,
-     0.08,
-     0.281,
-     0.058,
+     0.036,
+     0.083,
+     0.279,
+     0.059,
      0.132
     ],
     "B_dy_median": [
-     -0.005,
-     -0.021,
-     0.034,
-     0.006,
-     -0.025,
-     0.038,
+     -0.003,
+     -0.018,
+     0.037,
+     0.007,
+     -0.023,
+     0.041,
      0.051,
      -0.002,
-     0.063
+     0.066
     ],
     "C_depth_pct_p95": [
-     0.81,
+     0.789,
      0.309,
-     1.029,
-     0.436,
-     0.18,
-     0.372,
-     0.623,
-     0.315,
-     0.263
+     1.018,
+     0.419,
+     0.178,
+     0.371,
+     0.616,
+     0.313,
+     0.253
     ],
     "C_depth_pct_median": [
-     0.064,
+     0.06,
      0.182,
-     0.367,
-     -0.196,
-     -0.011,
-     0.105,
-     -0.33,
-     -0.193,
-     -0.07
+     0.37,
+     -0.197,
+     -0.008,
+     0.109,
+     -0.329,
+     -0.188,
+     -0.065
     ],
     "info_depth_pct_p95_1m": [
-     0.164,
-     0.363,
-     0.723,
-     0.317,
-     0.168,
+     0.165,
+     0.364,
+     0.721,
+     0.311,
+     0.166,
      0.382,
-     0.45,
-     0.313,
+     0.441,
+     0.309,
      0.157
     ],
     "info_depth_pct_p95_10m": [
-     2.671,
-     0.109,
-     2.564,
-     2.31,
-     0.243,
-     0.663,
-     3.1,
-     0.351,
-     0.875
+     2.625,
+     0.106,
+     2.553,
+     2.284,
+     0.246,
+     0.654,
+     3.086,
+     0.353,
+     0.835
     ],
     "focal_rect_est_true": [
-     1305.7444878562467,
+     1305.7827917408988,
      1304.071473970076
     ],
     "baseline_dir_ok": true,
@@ -622,34 +663,35 @@
    "holdout_rms_modelli": {
     "rational": {
      "rms_fit": [
-      0.48874224097933106,
-      0.5211781882817199
+      0.4891279675621489,
+      0.5211738978469684
      ],
+     "sel_score": 0.9723965582257781,
      "select_rms": [
-      0.4849090278148651,
-      0.4853360950946808
+      0.4826250970363617,
+      0.4853571653366089
      ],
      "select_zone_rms_L": [
-      0.47324204444885254,
-      0.47097912430763245,
-      0.5079759359359741,
-      0.5113626718521118,
-      0.4767347574234009,
-      0.4875020384788513,
-      0.4232439398765564,
-      0.51056969165802,
-      0.47471749782562256
+      0.4752638638019562,
+      0.47038549184799194,
+      0.5028871297836304,
+      0.5060185790061951,
+      0.4767111539840698,
+      0.48572832345962524,
+      0.42227014899253845,
+      0.5106031894683838,
+      0.46571072936058044
      ],
      "select_zone_rms_R": [
-      0.5256279706954956,
-      0.48775824904441833,
-      0.536834716796875,
-      0.47812122106552124,
-      0.4485730528831482,
-      0.4547499120235443,
-      0.47454628348350525,
-      0.4774327874183655,
-      0.5278714299201965
+      0.5256679654121399,
+      0.48779234290122986,
+      0.5368659496307373,
+      0.4781254827976227,
+      0.4486483037471771,
+      0.4547300636768341,
+      0.47454047203063965,
+      0.47746527194976807,
+      0.5278593301773071
      ]
     }
    },
@@ -680,73 +722,73 @@
      "basso-dx"
     ],
     "B_dy_abs_p95": [
-     0.118,
-     0.119,
-     0.406,
-     0.088,
-     0.078,
-     0.121,
-     0.177,
-     0.104,
-     0.116
+     0.123,
+     0.126,
+     0.38,
+     0.086,
+     0.077,
+     0.125,
+     0.15,
+     0.109,
+     0.084
     ],
     "B_dy_median": [
-     0.014,
-     0.051,
-     0.11,
-     -0.027,
-     -0.033,
-     0.003,
-     -0.043,
-     -0.065,
-     -0.029
+     0.02,
+     0.056,
+     0.117,
+     -0.023,
+     -0.03,
+     0.007,
+     -0.05,
+     -0.07,
+     -0.027
     ],
     "C_depth_pct_p95": [
-     0.364,
-     0.18,
-     0.351,
-     0.413,
-     0.24,
-     0.333,
-     0.45,
-     0.271,
+     0.395,
+     0.193,
+     0.343,
+     0.461,
+     0.257,
+     0.367,
+     0.496,
+     0.288,
      0.422
     ],
     "C_depth_pct_median": [
-     -0.105,
-     0.001,
-     0.136,
-     -0.225,
-     -0.088,
-     0.018,
-     -0.267,
-     -0.153,
-     -0.059
+     -0.137,
+     -0.0,
+     0.148,
+     -0.257,
+     -0.085,
+     0.045,
+     -0.292,
+     -0.149,
+     -0.027
     ],
     "info_depth_pct_p95_1m": [
-     0.142,
-     0.098,
-     0.108,
-     0.087,
-     0.063,
-     0.071,
-     0.153,
-     0.117,
-     0.12
+     0.123,
+     0.097,
+     0.105,
+     0.093,
+     0.066,
+     0.062,
+     0.149,
+     0.118,
+     0.112
     ],
     "info_depth_pct_p95_10m": [
-     0.964,
-     0.609,
-     1.123,
-     0.996,
-     0.639,
-     1.304,
-     1.007,
-     0.608,
-     1.616
+     1.052,
+     0.643,
+     1.053,
+     1.113,
+     0.68,
+     1.339,
+     1.114,
+     0.652,
+     1.553
     ],
     "focal_rect_est_true": [
-     1305.8214238419855,
+     1305.8265139699845,
      1304.071473970076
     ],
     "baseline_dir_ok": true,
@@ -757,20 +799,21 @@
    "holdout_rms_modelli": {
     "rational+prism": {
      "rms_fit": [
-      0.4894543004909424,
-      0.5208094079170538
+      0.48945430049094374,
+      0.5208094079170515
      ],
+     "sel_score": 0.9672784693072378,
      "select_rms": [
-      0.47859495878219604,
-      0.48550450801849365
+      0.4776442348957062,
+      0.48550453782081604
      ],
      "select_zone_rms_L": [
       0.47150367498397827,
       0.4706217348575592,
-      0.5033004283905029,
+      0.49719172716140747,
       0.49748989939689636,
-      0.4745674431324005,
-      0.47467538714408875,
+      0.4745674729347229,
+      0.4745466113090515,
       0.41407424211502075,
       0.509501576423645,
       0.4595078229904175
@@ -778,9 +821,9 @@
      "select_zone_rms_R": [
       0.5273734331130981,
       0.4878132939338684,
-      0.5350403785705566,
+      0.5350407958030701,
       0.4789021909236908,
-      0.44850075244903564,
+      0.44850072264671326,
       0.45466864109039307,
       0.4749995172023773,
       0.47823023796081543,
@@ -793,26 +836,26 @@
   "camera_mossa": {
    "atteso": "ROSSO (dy sistematico dopo il colpo); VERDE = falso verde",
    "gate_script": "ROSSO",
-   "modello": "rational",
+   "modello": "rational+prism",
    "problemi": [
-    "dy zona alto-sx: p50 |dy| 1.43 px (>= 0.5)",
-    "dy zona alto-sx: p95 |dy| (media per vista) 1.66 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.35)",
-    "dy zona alto-centro: p50 |dy| 1.40 px (>= 0.5)",
-    "dy zona alto-centro: p95 |dy| (media per vista) 1.58 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.36)",
-    "dy zona alto-dx: p50 |dy| 1.38 px (>= 0.5)",
-    "dy zona alto-dx: p95 |dy| (media per vista) 1.62 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.29)",
+    "dy zona alto-sx: p50 |dy| 1.41 px (>= 0.5)",
+    "dy zona alto-sx: p95 |dy| (media per vista) 1.62 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.29)",
+    "dy zona alto-centro: p50 |dy| 1.41 px (>= 0.5)",
+    "dy zona alto-centro: p95 |dy| (media per vista) 1.63 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.38)",
+    "dy zona alto-dx: p50 |dy| 1.41 px (>= 0.5)",
+    "dy zona alto-dx: p95 |dy| (media per vista) 1.67 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.27)",
     "dy zona mezzo-sx: p50 |dy| 1.43 px (>= 0.5)",
-    "dy zona mezzo-sx: p95 |dy| (media per vista) 1.85 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.39)",
-    "dy zona centro: p50 |dy| 1.39 px (>= 0.5)",
-    "dy zona centro: p95 |dy| (media per vista) 1.95 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.50)",
-    "dy zona mezzo-dx: p50 |dy| 1.43 px (>= 0.5)",
-    "dy zona mezzo-dx: p95 |dy| (media per vista) 1.85 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.34)",
-    "dy zona basso-sx: p50 |dy| 1.66 px (>= 0.5)",
-    "dy zona basso-sx: p95 |dy| (media per vista) 2.41 px (>= 1.0) [PRIORITARIO] (p95 grezzo 3.11)",
+    "dy zona mezzo-sx: p95 |dy| (media per vista) 1.83 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.39)",
+    "dy zona centro: p50 |dy| 1.36 px (>= 0.5)",
+    "dy zona centro: p95 |dy| (media per vista) 1.92 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.46)",
+    "dy zona mezzo-dx: p50 |dy| 1.40 px (>= 0.5)",
+    "dy zona mezzo-dx: p95 |dy| (media per vista) 1.81 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.33)",
+    "dy zona basso-sx: p50 |dy| 1.69 px (>= 0.5)",
+    "dy zona basso-sx: p95 |dy| (media per vista) 2.45 px (>= 1.0) [PRIORITARIO] (p95 grezzo 3.13)",
     "dy zona basso-centro: p50 |dy| 1.62 px (>= 0.5)",
-    "dy zona basso-centro: p95 |dy| (media per vista) 1.96 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.59)",
-    "dy zona basso-dx: p50 |dy| 1.51 px (>= 0.5)",
-    "dy zona basso-dx: p95 |dy| (media per vista) 2.24 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.74)"
+    "dy zona basso-centro: p95 |dy| (media per vista) 1.97 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.60)",
+    "dy zona basso-dx: p50 |dy| 1.49 px (>= 0.5)",
+    "dy zona basso-dx: p95 |dy| (media per vista) 2.13 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.65)"
    ],
    "avvisi": [],
    "checks": {
@@ -835,77 +878,77 @@
      "basso-dx"
     ],
     "B_dy_abs_p95": [
-     1.444,
-     1.65,
-     1.644,
-     1.051,
-     1.137,
-     1.19,
-     0.956,
-     0.978,
-     1.172
+     1.333,
+     1.364,
+     1.331,
+     1.066,
+     1.142,
+     1.263,
+     1.134,
+     1.139,
+     1.665
     ],
     "B_dy_median": [
-     -1.165,
-     -1.377,
-     -1.36,
-     -0.947,
-     -0.998,
-     -1.072,
-     -0.881,
-     -0.915,
-     -0.949
+     -1.099,
+     -1.209,
+     -1.185,
+     -0.973,
+     -1.071,
+     -1.187,
+     -0.984,
+     -1.035,
+     -1.317
     ],
     "C_depth_pct_p95": [
-     2.182,
-     0.736,
+     4.346,
+     1.004,
+     1.279,
+     3.207,
      1.055,
-     2.145,
-     0.77,
-     0.939,
-     2.755,
-     0.585,
-     0.874
+     2.66,
+     4.053,
+     1.491,
+     3.847
     ],
     "C_depth_pct_median": [
-     -0.346,
-     0.477,
-     0.558,
-     -0.551,
-     0.362,
-     0.656,
-     -0.953,
-     0.096,
-     0.574
+     -1.545,
+     -0.347,
+     0.111,
+     -0.727,
+     0.442,
+     1.394,
+     -0.409,
+     0.938,
+     2.099
     ],
     "info_depth_pct_p95_1m": [
-     0.446,
-     0.36,
-     0.82,
-     0.598,
-     0.261,
-     0.643,
-     0.81,
-     0.363,
-     0.574
+     1.339,
+     0.842,
+     0.732,
+     0.499,
+     0.774,
+     1.447,
+     0.827,
+     1.241,
+     2.079
     ],
     "info_depth_pct_p95_10m": [
-     5.978,
-     1.588,
-     1.667,
-     5.477,
-     1.77,
-     1.825,
-     6.854,
-     1.59,
-     1.968
+     10.758,
+     1.563,
+     3.093,
+     8.827,
+     2.062,
+     6.136,
+     13.35,
+     2.436,
+     8.752
     ],
     "focal_rect_est_true": [
-     1303.479160823817,
+     1300.7418494924982,
      1304.6187991987217
     ],
     "baseline_dir_ok": true,
-    "baseline_est_mm": 199.74,
+    "baseline_est_mm": 199.86,
     "baseline_true_mm": 200.01
    },
    "verita_cattiva": true
@@ -913,7 +956,7 @@
   "scala_2pct": {
    "atteso": "ARANCIO",
    "gate_script": "ARANCIO",
-   "modello": "rational",
+   "modello": "std5",
    "problemi": [],
    "avvisi": [
     "|T| dal tabellone 204.0 mm = +1.98% da 200 mm (fra +-1.0% e +-3.0%): calibro + annotazione"
@@ -925,14 +968,14 @@
    },
    "OK": true,
    "verita": null,
-   "baseline_dev_pct": 1.9846523196517252
+   "baseline_dev_pct": 1.9842965978276172
   },
   "scala_5pct": {
    "atteso": "ROSSO",
    "gate_script": "ROSSO",
-   "modello": "rational",
+   "modello": "std5",
    "problemi": [
-    "|T| dal tabellone 210.0 mm = +4.99% da 200 mm (> +-3.0%): misura col calibro la baseline e controlla --square-len (T NON viene riscalata)"
+    "|T| dal tabellone 210.0 mm = +4.98% da 200 mm (> +-3.0%): misura col calibro la baseline e controlla --square-len (T NON viene riscalata)"
    ],
    "avvisi": [],
    "checks": {
@@ -942,17 +985,19 @@
    },
    "OK": true,
    "verita": null,
-   "baseline_dev_pct": 4.986719459338662
+   "baseline_dev_pct": 4.983818057507872
   },
   "sync_3pct": {
-   "atteso": "VERDE",
-   "gate_script": "VERDE",
-   "modello": "rational",
-   "problemi": [],
+   "atteso": "nessun problema di sync (colore: statistica di zona marginale su 40 viste)",
+   "gate_script": "ROSSO",
+   "modello": "std5",
+   "problemi": [
+    "dy zona alto-sx: p95 |dy| (media per vista) 1.05 px (>= 1.0) [PRIORITARIO] (p95 grezzo 1.05)"
+   ],
    "avvisi": [],
    "checks": {
     "rc0": true,
-    "gate VERDE": true,
+    "nessun problema di sync": true,
     "coppie scartate = iniettate": true,
     "frame scartati in collect = iniettati": true
    },
@@ -973,7 +1018,7 @@
   "sync_20pct": {
    "atteso": "ROSSO",
    "gate_script": "ROSSO",
-   "modello": "rational",
+   "modello": "rational+prism",
    "problemi": [
     "sync: p95 delta t coppie 3.000 ms (>= 1.0); 80/400 coppie scartate"
    ],
@@ -1033,9 +1078,64 @@
    "verita": null,
    "HAS_WLS_reale": false,
    "NON_VERIFICATO": "getConfidenceMap del WLS vero: opencv-contrib (ximgproc) assente su questo Mac, provato solo con stub"
+  },
+  "regr_001_180306": {
+   "atteso": "ROSSO (copertura/RMS), fit finito, numeri del rapporto",
+   "gate_script": "ROSSO",
+   "modello": "std5",
+   "problemi": [
+    "copertura R insufficiente (<150 corner) in: alto-sx, alto-centro",
+    "hold-out stereo: zona basso-sx VUOTA (dy non misurabile) -> non verificata",
+    "scala zona basso-sx VUOTA (nessuna coppia di corner triangolabile) -> non verificata",
+    "hold-out stereo: zona basso-dx INSUFFICIENTE: 29 punti / 0 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona basso-dx",
+    "scala zona basso-dx con 29 coppie (<30) -> non verificata",
+    "RMS mono L (tenute fuori) 0.567 px (>= 0.5)",
+    "RMS mono R (tenute fuori) 0.550 px (>= 0.5)"
+   ],
+   "avvisi": [
+    "|T| dal tabellone 197.1 mm = -1.47% da 200 mm (fra +-1.0% e +-3.0%): calibro + annotazione"
+   ],
+   "checks": {
+    "fit finito (RMS fit di ogni modello < 2 px)": true,
+    "RMS mono hold-out 0.50-0.65 (L,R)": true,
+    "RMS stereo hold-out 0.50-0.65": true,
+    "|T| 195-200 mm": true,
+    "T[0] < 0": true,
+    "gate ROSSO (non esplosione)": true,
+    "ROSSO per copertura/RMS": true,
+    "lati degeneri (<12 corner) scartati": true
+   },
+   "OK": true,
+   "verita": null,
+   "valori": {
+    "rms_mono_holdout": [
+     0.5668330192565918,
+     0.5499961972236633
+    ],
+    "rms_stereo_holdout": 0.5730240638012167,
+    "T_mm": 197.05589324084312,
+    "modello": "std5",
+    "modelli_scartati": {}
+   }
+  },
+  "ffmpeg_passthrough": {
+   "atteso": "tutti i frame letti, -fps_mode passthrough nel comando",
+   "gate_script": null,
+   "modello": null,
+   "problemi": null,
+   "avvisi": null,
+   "checks": {
+    "-fps_mode passthrough nel comando ffmpeg": true,
+    "frame letti == frame scritti": true
+   },
+   "OK": true,
+   "verita": null,
+   "frame_letti": 400,
+   "attesi": 400,
+   "NON_VERIFICATO": "PTS uguali dei raw rpicam non riproducibili col sintetico: coperti dal comando (opzione presente) e dal caso reale 8641 frame"
   }
  },
  "casi_falliti": [],
- "quando": "2026-11-10T12:16:24",
+ "quando": "2026-11-10T22:00:01",
  "criteri": "ogni caso ha esito atteso dichiarato; nessuna soglia modificata per far passare; verita' = punti 3D indipendenti 1-5 m (dy p95<1 px e depth p95<=2% in OGNI zona 3x3); exit code != 0 se un caso fallisce"
 }

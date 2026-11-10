@@ -63,9 +63,9 @@ BASELINE_M = 0.200
 UNITS = {
     "asmile-001": dict(mode="dual", phys_left_file="video_right.h264", phys_right_file="video_left.h264",
                        phys_left_csv="frames_right.csv", phys_right_csv="frames_left.csv",
-                       order="RL", flip180=False,
+                       order="RL", flip180=False, f0=1130.0,
                        hw="Inno-Maker CAM-MIPIOV9281V2, 2 moduli separati, rpicam --sync"),
-    "asmile-logger001": dict(mode="sbs", order="LR", flip180=False,
+    "asmile-logger001": dict(mode="sbs", order="LR", flip180=False, f0=930.0,   # f0: solo avvio del fit (nota di progetto, da confermare)
                              hw="Arducam Camarray OV9281 SBS 2560x800, 1 CSI"),
 }
 
@@ -75,10 +75,21 @@ DEF_SX, DEF_SY = 11, 8
 DEF_SQ, DEF_MK = 0.050, 0.037
 
 MODELS = {
+    # nessuna preferenza per il semplice: vince il punteggio piu' basso sul blocco SCELTA (globale + bordo)
+    "k1k2": cv2.CALIB_FIX_K3 | cv2.CALIB_ZERO_TANGENT_DIST,
+    "k1k2k3": cv2.CALIB_ZERO_TANGENT_DIST,
+    "std5": 0,
     "rational": cv2.CALIB_RATIONAL_MODEL,
     "rational+prism": cv2.CALIB_RATIONAL_MODEL | cv2.CALIB_THIN_PRISM_MODEL,
     "rational+prism+tilted": cv2.CALIB_RATIONAL_MODEL | cv2.CALIB_THIN_PRISM_MODEL | cv2.CALIB_TILTED_MODEL,
 }
+DEF_MODELS = "k1k2,k1k2k3,std5,rational,rational+prism,rational+prism+tilted"
+# guardie (sessione reale #001 2026-11-10: rational libero su viste da 8 corner e senza focale iniziale -> RMS 2.7e28)
+MIN_CORNERS = 12        # viste con meno corner: geometria degenere (PnP 1e5 px), scartate in TUTTI i blocchi (regola geometrica)
+PRUNE_PNP_PX = 1.5      # scarto PnP rms > 1.5 px: SOLO nel fit e nella scelta, MAI nel gate
+MAX_FIT_RMS_PX = 2.0    # un candidato con RMS di fit non finito o >= 2 px e' scartato (non converge)
+F0_DEFAULT = 1130.0     # focale iniziale (px) per USE_INTRINSIC_GUESS; sovrascritta dal profilo unita' / --f0
+F0 = {"v": F0_DEFAULT}
 # fisheye (cv2.fisheye) solo con FOV MISURATO > 100 deg: #001 e' ~58 deg -> NON usato (D012/consigli di Daniele).
 
 
@@ -101,7 +112,10 @@ def detect(det, board, gray):
 
 # ---------------------------------------------------------------------------- video
 def gray_frames(path, w, h):
-    p = subprocess.Popen(["ffmpeg", "-v", "quiet", "-i", path, "-f", "rawvideo", "-pix_fmt", "gray", "-"],
+    # -fps_mode passthrough OBBLIGATORIO: i raw .h264 di rpicam hanno PTS uguali e senza di esso ffmpeg scarta i
+    # "duplicati" (sessione reale #001 2026-11-10: 3 frame letti su 8641).
+    p = subprocess.Popen(["ffmpeg", "-v", "quiet", "-i", path, "-fps_mode", "passthrough",
+                          "-f", "rawvideo", "-pix_fmt", "gray", "-"],
                          stdout=subprocess.PIPE)
     while True:
         b = p.stdout.read(w * h)
@@ -259,18 +273,26 @@ def cap_views(views, key, max_views):
 
 
 # ---------------------------------------------------------------------------- fit mono + verifica hold-out
+def k0_guess():
+    f = F0["v"]
+    return np.array([[f, 0, CAM_W / 2], [0, f, CAM_H / 2], [0, 0, 1.0]])
+
+
 def calib_mono(views, key, flags):
     obj = [v[key]["obj"] for v in views]
     img = [v[key]["img"] for v in views]
     crit = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 200, 1e-9)
-    rms, K, D, rv, tv = cv2.calibrateCamera(obj, img, (CAM_W, CAM_H), None, None, flags=flags, criteria=crit)
+    # focale iniziale + USE_INTRINSIC_GUESS: senza, con viste povere la focale/le distorsioni divergono (fx 5500-7500)
+    rms, K, D, rv, tv = cv2.calibrateCamera(obj, img, (CAM_W, CAM_H), k0_guess(), None,
+                                            flags=flags | cv2.CALIB_USE_INTRINSIC_GUESS, criteria=crit)
     if flags & cv2.CALIB_TILTED_MODEL:
         # Il modello tilted (tauX, tauY) e' mal condizionato: da un avvio generico LM si pianta in minimi locali
         # (rms 3-4 px invece di 0.4, verificato sul sintetico). Si parte dal fit SENZA tilt e si prova una griglia
         # 5x5 di (tauX, tauY) iniziali (+-0.4 deg); vince il rms di fit piu' basso (la scelta del modello resta
         # sulle viste tenute fuori).
         f0 = flags & ~cv2.CALIB_TILTED_MODEL
-        _, K0, D0, _, _ = cv2.calibrateCamera(obj, img, (CAM_W, CAM_H), None, None, flags=f0, criteria=crit)
+        _, K0, D0, _, _ = cv2.calibrateCamera(obj, img, (CAM_W, CAM_H), k0_guess(), None,
+                                              flags=f0 | cv2.CALIB_USE_INTRINSIC_GUESS, criteria=crit)
         D0 = D0.ravel()
         crit2 = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 500, 1e-12)
         grid = np.radians([-0.4, -0.2, 0.0, 0.2, 0.4])
@@ -296,6 +318,66 @@ def calib_mono(views, key, flags):
             if r2 < rms:
                 rms, K, D = r2, K2, D2
     return float(rms), K, D.ravel()
+
+
+def drop_degenerate(views, min_corners=MIN_CORNERS):
+    """Regola GEOMETRICA (non dipende dall'errore): una camera con < min_corners corner in una vista non da' una posa
+    affidabile (PnP fino a 1e5 px). Vale per TUTTI i blocchi (fit, scelta, gate) ugualmente. Le viste restano nella
+    lista (gli indici dei blocchi non cambiano), solo il lato degenere diventa None. Ritorna (viste, n lati scartati)."""
+    out, n = [], 0
+    for v in views:
+        v = dict(v)
+        for k in ("L", "R"):
+            if v[k] is not None and len(v[k]["ids"]) < min_corners:
+                v[k] = None
+                n += 1
+        out.append(v)
+    return out, n
+
+
+def prune_pnp(views, key, K, D, thr=PRUNE_PNP_PX):
+    """Scarto robusto: vista con rms PnP > thr px (con gli intrinseci K,D) -> lato None. SOLO per fit/scelta, MAI sul
+    blocco del gate (li' un errore alto deve restare visibile). Ritorna (viste, n scartati)."""
+    out, n = [], 0
+    for v in views:
+        d = v[key]
+        if d is not None:
+            try:
+                ok, rv, tv = cv2.solvePnP(d["obj"], d["img"], K, D, flags=cv2.SOLVEPNP_ITERATIVE)
+                pr = cv2.projectPoints(d["obj"], rv, tv, K, D)[0].reshape(-1, 2)
+                e = float(np.sqrt(np.mean(np.sum((pr - d["img"]) ** 2, 1))))
+            except cv2.error:
+                ok, e = False, np.inf
+            if not ok or not np.isfinite(e) or e > thr:
+                v = dict(v)
+                v[key] = None
+                n += 1
+        out.append(v)
+    return out, n
+
+
+def robust_mono(views, key, flags, max_views):
+    """cap -> fit -> scarto PnP > 1.5 px sull'insieme -> cap -> rifit. Ritorna (rms, K, D, viste potate, n scartate).
+    Solleva ValueError se il fit non converge (RMS non finito o >= MAX_FIT_RMS_PX): la guardia che ferma il 'rational'."""
+    try:
+        v1 = cap_views(views, key, max_views)
+        if len(v1) < 10:
+            raise ValueError(f"solo {len(v1)} viste valide per {key} (< 10)")
+        # primo passaggio solo per individuare le viste da scartare: senza tilt (il fit tilted e' ~25x piu' lento e per
+        # lo scarto PnP basta un modello equivalente)
+        _, K, D = calib_mono(v1, key, flags & ~cv2.CALIB_TILTED_MODEL)
+        pv, n1 = prune_pnp(views, key, K, D)
+        v2 = cap_views(pv, key, max_views)
+        if len(v2) < 10:
+            raise ValueError(f"dopo lo scarto PnP restano {len(v2)} viste per {key} (< 10)")
+        rms, K, D = calib_mono(v2, key, flags)
+    except cv2.error as e:
+        raise ValueError(f"calibrateCamera fallita ({key}): {str(e).splitlines()[-1][:80]}")
+    if not np.isfinite(rms) or rms >= MAX_FIT_RMS_PX or not np.all(np.isfinite(D)) or not np.isfinite(K).all():
+        raise ValueError(f"fit {key} non converge: RMS {rms:.3g} px (limite {MAX_FIT_RMS_PX}), "
+                         f"|coef| max {float(np.max(np.abs(D))):.3g}")
+    pv, n2 = prune_pnp(views, key, K, D)
+    return float(rms), K, D.ravel(), pv, n2
 
 
 def holdout_reproj(views, key, K, D):
@@ -616,8 +698,140 @@ def export_yaml_maps(base, cal, rep, files):
     return base + ".yaml", base + ".maps.npz"
 
 
+# ---------------------------------------------------------------------------- analisi
+def analyze(views, info, a, prof):
+    """Da viste estratte (collect) a rapporto + gate. Separato da main() cosi' il test di regressione puo' girare su
+    corner gia' estratti (npz) senza video. Ritorna (rep, s, best, sel, hold)."""
+    views, n_degen = drop_degenerate(views)
+    fit, sel, hold, hinfo = split_three(views, a.holdout_blocks, a.holdout_guard)
+    fitL, fitR = cap_views(fit, "L", a.max_views), cap_views(fit, "R", a.max_views)
+    sy = info.get("sync")
+    print(f"    frame {info.get('frames_decoded')}, viste diverse {len(views)} (lati con < {MIN_CORNERS} corner scartati: {n_degen}) "
+          f"-> fit L {len(fitL)} R {len(fitR)}, "
+          f"scelta {len(sel)}, GATE {len(hold)} (blocchi gate {hinfo['hold_view_ranges']}, scelta {hinfo['select_view_ranges']}, "
+          f"guard {hinfo['guard']})"
+          + (f"\n    sync dt p50 {sy['dt_ms_p50']:.3f} p95 {sy['dt_ms_p95']:.3f} max {sy['dt_ms_max']:.3f} ms, "
+             f"coppie scartate (>{a.max_sync_ms} ms): {sy['pairs_over']}/{sy['n_pairs']}" if sy else
+             "\n    sync dt: n/d (SBS, un solo sensore)" if prof["mode"] == "sbs" else "\n    sync dt: NON verificabile (nessun csv)"))
+    if len(fitL) < 10 or len(fitR) < 10:
+        raise SystemExit("troppe poche viste per camera (servono >= 10, meglio 40-60)")
+
+    print(f"[2] intrinseche per modello (fit, focale iniziale {F0['v']:.0f} px, scarto PnP > {PRUNE_PNP_PX} px solo in fit/scelta), "
+          "scelta sul blocco SCELTA (mai sul blocco del gate)...")
+    cand, scartati = {}, {}
+    for name in a.models.split(","):
+        fl = MODELS[name]
+        try:
+            rL, KL, DL, fitLp, nL = robust_mono(fit, "L", fl, a.max_views)
+            rR, KR, DR, fitRp, nR = robust_mono(fit, "R", fl, a.max_views)
+            selp, _ = prune_pnp(sel, "L", KL, DL)
+            selp, _ = prune_pnp(selp, "R", KR, DR)
+            hL, tiltL = holdout_reproj(selp, "L", KL, DL)
+            hR, _ = holdout_reproj(selp, "R", KR, DR)
+            if not (np.isfinite(hL["rms"]) and np.isfinite(hR["rms"])):
+                raise ValueError("RMS sul blocco SCELTA non misurabile")
+        except ValueError as e:
+            scartati[name] = str(e)
+            print(f"    {name:22s} SCARTATO: {e}")
+            continue
+        cand[name] = dict(flags=fl, KL=KL, DL=DL, KR=KR, DR=DR, rms_fit=(rL, rR), sel=(hL, hR), tiltL=tiltL,
+                          n_pruned=(nL, nR))
+        print(f"    {name:22s} fit rms L {rL:.3f} R {rR:.3f} | scelta L {hL['rms']:.3f} R {hR['rms']:.3f} px  "
+              f"fx L {KL[0,0]:.1f} R {KR[0,0]:.1f}  (scartate PnP: L {nL} R {nR})")
+    if not cand:
+        raise SystemExit("nessun modello di lente converge: " + "; ".join(f"{k}: {v}" for k, v in scartati.items()))
+    # scelta SOLO sul blocco SCELTA: punteggio = meta' RMS globale + meta' RMS delle zone di bordo (8 zone esterne con
+    # >= 20 punti), somma L+R, vince il minimo SENZA preferenza per il modello semplice (come in calib_rock: con
+    # 'semplice se entro +x%' si sceglieva k1k2, che estrapola male al bordo -> falso VERDE sul sintetico con tilt).
+    # Sui dati veri di #001 i modelli sono equivalenti (0.558-0.560 px): la scelta non pesa, la guardia RMS < 2 px si'.
+    def sel_score(h):
+        ez = [h["zone_rms"][z] for z in range(9) if z != 4 and h["zone_rms"][z] is not None and h["zone_n"][z] >= 20]
+        return 0.5 * h["rms"] + 0.5 * (float(np.sqrt(np.mean(np.square(ez)))) if ez else h["rms"])
+    for nm in cand:
+        cand[nm]["sel_score"] = sum(sel_score(h) for h in cand[nm]["sel"])
+        print(f"    {nm:22s} punteggio SCELTA (globale+bordo) {cand[nm]['sel_score']:.3f}")
+    best = min(cand, key=lambda nm: cand[nm]["sel_score"])
+    c = cand[best]
+    print(f"    scelto: {best}")
+
+    print("[3] modalita' stereo scelta sul blocco SCELTA; poi rifit finale su fit+scelta; verifica SOLO sul blocco GATE...")
+    fitp, _ = prune_pnp(fit, "L", c["KL"], c["DL"])
+    fitp, _ = prune_pnp(fitp, "R", c["KR"], c["DR"])
+    selp, _ = prune_pnp(sel, "L", c["KL"], c["DL"])
+    selp, _ = prune_pnp(selp, "R", c["KR"], c["DR"])
+    stereo_views = [v for v in fitp if common_pts(v) is not None]
+    trial = {}
+    for joint in (False, True):
+        rms, K1, D1, K2, D2, R, T, nv = stereo_fit(stereo_views, c["KL"], c["DL"], c["KR"], c["DR"], c["flags"], joint)
+        sr = stereo_pose_rms(selp, K1, D1, K2, D2, R, T)
+        trial[joint] = sr["rms"] if sr["rms"] is not None else 1e9
+        print(f"    {'congiunta' if joint else 'intr. fissi':11s} (fit) rms {rms:.3f} px, viste {nv}, RMS stereo sul blocco scelta {trial[joint]:.3f}")
+    joint_best = trial[True] <= trial[False]
+    print(f"    scelta stereo: {'congiunta' if joint_best else 'intrinseci fissi'}")
+    # rifit finale con fit + scelta (il gate non e' stato toccato)
+    final = fit + sel
+    try:
+        _, KL, DL, finL, nfL = robust_mono(final, "L", c["flags"], a.max_views)
+        _, KR, DR, finR, nfR = robust_mono(final, "R", c["flags"], a.max_views)
+    except ValueError as e:
+        raise SystemExit(f"rifit finale del modello {best} non converge ({e}): rilanciare con --models piu' semplici")
+    fin = [dict(v, L=l["L"], R=r_["R"]) for v, l, r_ in zip(final, finL, finR)]
+    rms, K1, D1, K2, D2, R, T, nv = stereo_fit([v for v in fin if common_pts(v) is not None], KL, DL, KR, DR, c["flags"], joint_best)
+    hL, tiltL = holdout_reproj(hold, "L", KL, DL)   # RMS mono sul blocco GATE (intrinseci del fit mono finale): MAI potato
+    hR, _ = holdout_reproj(hold, "R", KR, DR)
+    # T NON riscalata (D012): |T| dal tabellone e' un controllo contro 200 mm +-3%
+    hs = holdout_stereo(hold, K1, D1, K2, D2, R, T, a.square_len)
+    srms = stereo_pose_rms(hold, K1, D1, K2, D2, R, T)
+    wp95 = max(d for d in hs["dy_patch_abs_p95"] if d is not None) if any(d is not None for d in hs["dy_patch_abs_p95"]) else 1e9
+    s = dict(rms=rms, K1=K1, D1=D1, K2=K2, D2=D2, R=R, T=T, T_raw_m=float(np.linalg.norm(T)), n=nv, hold=hs,
+             worst_dy_p95=wp95, srms=srms)
+    print(f"    FINALE su fit+scelta: rms fit {rms:.3f} px, viste stereo {nv}, |T| {np.linalg.norm(T)*1000:.1f} mm | GATE: "
+          f"dy p95 peggior zona {wp95:.2f} px, RMS stereo {srms['rms']}, punti per zona {hs['dy_n']}")
+
+    fL, fR = cap_views(fin, "L", a.max_views), cap_views(fin, "R", a.max_views)
+    covL, vL = coverage(fL, "L")
+    covR, vR = coverage(fR, "R")
+    rep = dict(
+        unit=a.unit, model=best, stereo_mode="congiunta" if joint_best else "intrinseci fissi",
+        input=info, n_views=len(views), n_fit=dict(L=len(fL), R=len(fR), stereo=s["n"]),
+        n_holdout=len(hold), n_holdout_stereo=sum(common_pts(v) is not None for v in hold),
+        holdout=hinfo, holdout_frames=[v["frame"] for v in hold], select_frames=[v["frame"] for v in sel],
+        robustezza=dict(lati_scartati_meno_di_corner=n_degen, min_corners=MIN_CORNERS, prune_pnp_px=PRUNE_PNP_PX,
+                        scartate_pnp_fit_finale=dict(L=nfL, R=nfR), f0_px=F0["v"], max_fit_rms_px=MAX_FIT_RMS_PX,
+                        nota="scarto PnP SOLO in fit/scelta; il blocco GATE non e' mai filtrato per errore (solo regola geometrica)"),
+        modelli_scartati=scartati,
+        coverage_fit=dict(L_corners=covL.tolist(), R_corners=covR.tolist(), L_views=vL.tolist(), R_views=vR.tolist()),
+        models={nm: dict(rms_fit=cand[nm]["rms_fit"], sel_score=cand[nm]["sel_score"], select_rms=(cand[nm]["sel"][0]["rms"], cand[nm]["sel"][1]["rms"]),
+                         select_zone_rms_L=cand[nm]["sel"][0]["zone_rms"], select_zone_rms_R=cand[nm]["sel"][1]["zone_rms"])
+                for nm in cand},
+        stereo_select_rms=dict(fissi=trial[False], congiunta=trial[True]),
+        rms_mono_holdout=[hL["rms"], hR["rms"]],
+        rms_stereo_holdout=s["srms"],
+        tilt_deg_fit_L=[round(t, 1) for t in tiltL],
+        stereo_rms_fit=s["rms"], T_from_board_mm=s["T_raw_m"] * 1000, T_m=[float(x) for x in s["T"].ravel()],
+        stereo_holdout=s["hold"], zone_names=ZNAME,
+    )
+    red, orange = gate(rep, a)
+    # margini (INFORMATIVI, non cambiano il colore): RMS mono / dy p95 vicino alla soglia, bootstrap sopra soglia
+    marg = []
+    for nm_, val in zip(("L", "R"), rep["rms_mono_holdout"]):
+        if val is not None and np.isfinite(val) and val >= 0.8 * a.max_rms_mono:
+            marg.append(f"RMS mono {nm_} {val:.3f} px = {100*val/a.max_rms_mono:.0f}% della soglia {a.max_rms_mono}: poco margine")
+    for z in range(9):
+        p95, hi = hs["dy_patch_abs_p95"][z], hs["dy_patch_abs_p95_boot_hi"][z]
+        if p95 is not None and p95 >= 0.8 * a.max_dy_p95_px:
+            marg.append(f"dy p95 zona {ZNAME[z]} {p95:.2f} px = {100*p95/a.max_dy_p95_px:.0f}% della soglia {a.max_dy_p95_px} (media per vista)")
+        elif hi is not None and hi >= a.max_dy_p95_px:
+            marg.append(f"dy p95 zona {ZNAME[z]} {p95:.2f} px ma limite alto bootstrap {hi:.2f} >= soglia {a.max_dy_p95_px}: ripetere con piu' viste")
+    rep["avvisi_margine"] = marg
+    rep["gate_problemi"] = red
+    rep["gate_avvisi"] = orange
+    rep["gate"] = "ROSSO" if red else ("ARANCIO" if orange else "VERDE")
+    return rep, s, best, sel, hold
+
+
 # ---------------------------------------------------------------------------- main
-def main():
+def build_parser():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--make-board", metavar="PNG")
     ap.add_argument("--unit", choices=sorted(UNITS))
@@ -646,7 +860,48 @@ def main():
     ap.add_argument("--max-sync-ms", type=float, default=1.0)
     ap.add_argument("--baseline-tol-orange", type=float, default=1.0)
     ap.add_argument("--baseline-tol-red", type=float, default=3.0)
-    ap.add_argument("--models", default="rational,rational+prism,rational+prism+tilted")
+    ap.add_argument("--models", default=DEF_MODELS, help="candidati, dal piu' semplice al piu' ricco; "
+                    "scelta sul blocco SCELTA; un candidato che non converge (RMS fit non finito o >= 2 px) e' scartato col motivo")
+    ap.add_argument("--f0", type=float, default=None, help="focale iniziale in px (solo avvio del fit); default dal profilo unita'")
+    return ap
+
+
+def load_views_npz(path):
+    """Viste (corner gia' estratti) salvate da save_views_npz: per la regressione sui dati veri, senza video.
+    obj si ricostruisce dagli id del tabellone (--squares/--square-len/--marker-len/--dict come nella sessione)."""
+    z = np.load(path, allow_pickle=False)
+    meta = json.loads(str(z["meta"]))
+    board = make_board(meta["dict"], meta["sx"], meta["sy"], meta["square_len"], meta["marker_len"])
+    cc = board.getChessboardCorners().reshape(-1, 3).astype(np.float32)
+    views = []
+    for i, fr in enumerate(z["frame"]):
+        v = dict(frame=int(fr), L=None, R=None)
+        for k in ("L", "R"):
+            o0, o1 = int(z[k + "_off"][i]), int(z[k + "_off"][i + 1])
+            if o1 > o0:
+                ids = z[k + "_ids"][o0:o1].astype(int)
+                v[k] = dict(ids=ids, obj=cc[ids], img=z[k + "_img"][o0:o1].astype(np.float32))
+        views.append(v)
+    return views, meta
+
+
+def save_views_npz(path, views, meta):
+    out = dict(frame=np.array([v["frame"] for v in views], np.int32), meta=np.array(json.dumps(meta)))
+    for k in ("L", "R"):
+        ids, img, off = [], [], [0]
+        for v in views:
+            d = v[k]
+            if d is not None:
+                ids.append(d["ids"].astype(np.int16)); img.append(d["img"].astype(np.float32))
+            off.append(off[-1] + (len(d["ids"]) if d is not None else 0))
+        out[k + "_ids"] = np.concatenate(ids) if ids else np.zeros(0, np.int16)
+        out[k + "_img"] = np.concatenate(img) if img else np.zeros((0, 2), np.float32)
+        out[k + "_off"] = np.array(off, np.int64)
+    np.savez_compressed(path, **out)
+
+
+def main():
+    ap = build_parser()
     a = ap.parse_args()
 
     sx, sy = map(int, a.squares.lower().split("x"))
@@ -666,6 +921,7 @@ def main():
     if "CANDIDATO" not in os.path.basename(a.out):
         ap.error("il file di uscita deve contenere 'CANDIDATO' (la calib vera la sostituisce solo il PASSA del critico)")
     prof = UNITS[a.unit]
+    F0["v"] = a.f0 or prof.get("f0", F0_DEFAULT)
     if prof["mode"] == "dual" and not (a.session or (a.left_file and a.right_file)):
         ap.error(f"{a.unit}: servono --session (o --left-file e --right-file)")
     if prof["mode"] == "sbs" and not a.sbs:
@@ -673,99 +929,9 @@ def main():
 
     print(f"[1] unità {a.unit} ({prof['hw']}): detect ChArUco 1 frame ogni {a.step}...")
     views, info = collect(a, prof, board)
-    fit, sel, hold, hinfo = split_three(views, a.holdout_blocks, a.holdout_guard)
-    fitL, fitR = cap_views(fit, "L", a.max_views), cap_views(fit, "R", a.max_views)
-    sy = info.get("sync")
-    print(f"    frame {info.get('frames_decoded')}, viste diverse {len(views)} -> fit L {len(fitL)} R {len(fitR)}, "
-          f"scelta {len(sel)}, GATE {len(hold)} (blocchi gate {hinfo['hold_view_ranges']}, scelta {hinfo['select_view_ranges']}, "
-          f"guard {hinfo['guard']})"
-          + (f"\n    sync dt p50 {sy['dt_ms_p50']:.3f} p95 {sy['dt_ms_p95']:.3f} max {sy['dt_ms_max']:.3f} ms, "
-             f"coppie scartate (>{a.max_sync_ms} ms): {sy['pairs_over']}/{sy['n_pairs']}" if sy else
-             "\n    sync dt: n/d (SBS, un solo sensore)" if prof["mode"] == "sbs" else "\n    sync dt: NON verificabile (nessun csv)"))
-    if len(fitL) < 10 or len(fitR) < 10:
-        raise SystemExit("troppe poche viste per camera (servono >= 10, meglio 40-60)")
-
-    print("[2] intrinseche per modello (fit), scelta sul blocco SCELTA (mai sul blocco del gate)...")
-    cand = {}
-    for name in a.models.split(","):
-        fl = MODELS[name]
-        rL, KL, DL = calib_mono(fitL, "L", fl)
-        rR, KR, DR = calib_mono(fitR, "R", fl)
-        hL, tiltL = holdout_reproj(sel, "L", KL, DL)
-        hR, _ = holdout_reproj(sel, "R", KR, DR)
-        cand[name] = dict(flags=fl, KL=KL, DL=DL, KR=KR, DR=DR, rms_fit=(rL, rR), sel=(hL, hR), tiltL=tiltL)
-        print(f"    {name:22s} fit rms L {rL:.3f} R {rR:.3f} | scelta L {hL['rms']:.3f} R {hR['rms']:.3f} px  fx L {KL[0,0]:.1f} R {KR[0,0]:.1f}")
-    names = list(cand)
-    best = names[0]
-    for nm in names[1:]:   # modello più ricco solo se migliora il blocco SCELTA di almeno il 5%
-        s_b = sum(h["rms"] for h in cand[best]["sel"])
-        s_n = sum(h["rms"] for h in cand[nm]["sel"])
-        if s_n < 0.95 * s_b:
-            best = nm
-    c = cand[best]
-    print(f"    scelto: {best}")
-
-    print("[3] modalita' stereo scelta sul blocco SCELTA; poi rifit finale su fit+scelta; verifica SOLO sul blocco GATE...")
-    stereo_views = [v for v in fit if common_pts(v) is not None]
-    trial = {}
-    for joint in (False, True):
-        rms, K1, D1, K2, D2, R, T, nv = stereo_fit(stereo_views, c["KL"], c["DL"], c["KR"], c["DR"], c["flags"], joint)
-        sr = stereo_pose_rms(sel, K1, D1, K2, D2, R, T)
-        trial[joint] = sr["rms"] if sr["rms"] is not None else 1e9
-        print(f"    {'congiunta' if joint else 'intr. fissi':11s} (fit) rms {rms:.3f} px, viste {nv}, RMS stereo sul blocco scelta {trial[joint]:.3f}")
-    joint_best = trial[True] <= trial[False]
-    print(f"    scelta stereo: {'congiunta' if joint_best else 'intrinseci fissi'}")
-    # rifit finale con fit + scelta (il gate non e' stato toccato)
-    final = fit + sel
-    fL, fR = cap_views(final, "L", a.max_views), cap_views(final, "R", a.max_views)
-    _, KL, DL = calib_mono(fL, "L", c["flags"])
-    _, KR, DR = calib_mono(fR, "R", c["flags"])
-    rms, K1, D1, K2, D2, R, T, nv = stereo_fit([v for v in final if common_pts(v) is not None], KL, DL, KR, DR, c["flags"], joint_best)
-    hL, tiltL = holdout_reproj(hold, "L", KL, DL)   # RMS mono sul blocco GATE (intrinseci del fit mono finale)
-    hR, _ = holdout_reproj(hold, "R", KR, DR)
-    # T NON riscalata (D012): |T| dal tabellone e' un controllo contro 200 mm +-3%
-    hs = holdout_stereo(hold, K1, D1, K2, D2, R, T, a.square_len)
-    srms = stereo_pose_rms(hold, K1, D1, K2, D2, R, T)
-    wp95 = max(d for d in hs["dy_patch_abs_p95"] if d is not None) if any(d is not None for d in hs["dy_patch_abs_p95"]) else 1e9
-    s = dict(rms=rms, K1=K1, D1=D1, K2=K2, D2=D2, R=R, T=T, T_raw_m=float(np.linalg.norm(T)), n=nv, hold=hs,
-             worst_dy_p95=wp95, srms=srms)
-    print(f"    FINALE su fit+scelta: rms fit {rms:.3f} px, viste stereo {nv}, |T| {np.linalg.norm(T)*1000:.1f} mm | GATE: "
-          f"dy p95 peggior zona {wp95:.2f} px, RMS stereo {srms['rms']}, punti per zona {hs['dy_n']}")
-
-    covL, vL = coverage(fL, "L")
-    covR, vR = coverage(fR, "R")
-    rep = dict(
-        unit=a.unit, model=best, stereo_mode="congiunta" if joint_best else "intrinseci fissi",
-        input=info, n_views=len(views), n_fit=dict(L=len(fL), R=len(fR), stereo=s["n"]),
-        n_holdout=len(hold), n_holdout_stereo=sum(common_pts(v) is not None for v in hold),
-        holdout=hinfo, holdout_frames=[v["frame"] for v in hold], select_frames=[v["frame"] for v in sel],
-        coverage_fit=dict(L_corners=covL.tolist(), R_corners=covR.tolist(), L_views=vL.tolist(), R_views=vR.tolist()),
-        models={nm: dict(rms_fit=cand[nm]["rms_fit"], select_rms=(cand[nm]["sel"][0]["rms"], cand[nm]["sel"][1]["rms"]),
-                         select_zone_rms_L=cand[nm]["sel"][0]["zone_rms"], select_zone_rms_R=cand[nm]["sel"][1]["zone_rms"])
-                for nm in cand},
-        stereo_select_rms=dict(fissi=trial[False], congiunta=trial[True]),
-        rms_mono_holdout=[hL["rms"], hR["rms"]],
-        rms_stereo_holdout=s["srms"],
-        tilt_deg_fit_L=[round(t, 1) for t in tiltL],
-        stereo_rms_fit=s["rms"], T_from_board_mm=s["T_raw_m"] * 1000, T_m=[float(x) for x in s["T"].ravel()],
-        stereo_holdout=s["hold"], zone_names=ZNAME,
-    )
-    red, orange = gate(rep, a)
-    # margini (INFORMATIVI, non cambiano il colore): RMS mono / dy p95 vicino alla soglia, bootstrap sopra soglia
-    marg = []
-    for nm_, val in zip(("L", "R"), rep["rms_mono_holdout"]):
-        if val is not None and np.isfinite(val) and val >= 0.8 * a.max_rms_mono:
-            marg.append(f"RMS mono {nm_} {val:.3f} px = {100*val/a.max_rms_mono:.0f}% della soglia {a.max_rms_mono}: poco margine")
-    for z in range(9):
-        p95, hi = hs["dy_patch_abs_p95"][z], hs["dy_patch_abs_p95_boot_hi"][z]
-        if p95 is not None and p95 >= 0.8 * a.max_dy_p95_px:
-            marg.append(f"dy p95 zona {ZNAME[z]} {p95:.2f} px = {100*p95/a.max_dy_p95_px:.0f}% della soglia {a.max_dy_p95_px} (media per vista)")
-        elif hi is not None and hi >= a.max_dy_p95_px:
-            marg.append(f"dy p95 zona {ZNAME[z]} {p95:.2f} px ma limite alto bootstrap {hi:.2f} >= soglia {a.max_dy_p95_px}: ripetere con piu' viste")
-    rep["avvisi_margine"] = marg
-    rep["gate_problemi"] = red
-    rep["gate_avvisi"] = orange
-    rep["gate"] = "ROSSO" if red else ("ARANCIO" if orange else "VERDE")
+    rep, s, best, sel, hold = analyze(views, info, a, prof)
+    hs = s["hold"]
+    red, orange, marg = rep["gate_problemi"], rep["gate_avvisi"], rep["avvisi_margine"]
 
     cal = Calib(s["K1"], s["D1"], s["K2"], s["D2"], s["R"], s["T"], size=(CAM_W, CAM_H), baseline_mm=s["T_raw_m"] * 1000)
     cal.save(a.out)

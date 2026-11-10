@@ -22,9 +22,14 @@ Casi (esito atteso fra parentesi):
   camera_mossa     camera destra toccata (0.12 deg) a meta' sessione: ROSSO (dy sistematico); VERDE = falso verde
   scala_2pct       --square-len sbagliato del +2% -> |T| 2% fuori (ARANCIO: calibro + annotazione)
   scala_5pct       --square-len sbagliato del +5% -> ROSSO
-  sync_3pct        3% coppie con dt 3 ms (VERDE, coppie scartate = iniettate)
+  sync_3pct        3% coppie con dt 3 ms (nessun problema di sync, coppie scartate = iniettate; colore non vincolato dal 2026-11-10)
   sync_20pct       20% coppie con dt 3 ms (ROSSO p95, coppie scartate = iniettate)
   export           YAML OpenCV + .maps.npz esistono, CANDIDATO nel nome, K1 coincide col JSON; --out senza CANDIDATO rifiutato
+  regr_001_180306  REGRESSIONE DAI DATI VERI: i corner reali della prima sessione di #001 (2026-11-10, session_20261030_180306,
+                   regressione_views_asmile-001_180306.npz, nessun video) devono dare un fit FINITO e ripetere i numeri del
+                   rapporto calib001_A3_20261110 (RMS mono hold-out 0.50-0.65, stereo 0.50-0.65, |T| 195-200 mm); esito atteso
+                   ROSSO (copertura / RMS), mai esplosione (RMS fit < 2 px per ogni modello o candidato scartato con motivo)
+  ffmpeg_passthrough  gray_frames legge TUTTI i frame (e usa -fps_mode passthrough: i raw h264 di rpicam hanno PTS uguali)
   depth_default    depth.py con default = copia bit-identica del vecchio codice; filtro confidenza (stub) opzionale
 
 Uso: python3 test_calib_charuco_dual_synth.py --work <cartella temporanea fuori da git>
@@ -460,10 +465,16 @@ def main():
                              bool(rep) and abs(rep["baseline_dev_pct"] - (k_ - 1) * 100) < 0.7)],
              extra=dict(baseline_dev_pct=(rep or {}).get("baseline_dev_pct")))
     # 6) sync
-    for nm, ninj, exp in (("sync_3pct", ninj3, "VERDE"), ("sync_20pct", ninj20, "ROSSO")):
+    # sync_3pct: il caso prova lo SCARTO delle coppie fuori sync, non la copertura: dal 2026-11-10 (regola <12 corner) la sessione
+    # sintetica da 131 viste (40 nel gate) ha dy p95 alto-sx 1.05 px, marginale, che dipende da QUALI 12 coppie cadono: il colore
+    # puo' essere ROSSO per statistica di zona. Atteso: nessun problema di SYNC e scarti = iniettati (colore = quello dei dati).
+    for nm, ninj, exp in (("sync_3pct", ninj3, "nessun problema di sync (colore: statistica di zona marginale su 40 viste)"),
+                          ("sync_20pct", ninj20, "ROSSO")):
         rep, r = res_run[nm]
         sy_ = (rep or {}).get("input", {}).get("sync") or {}
-        case(nm, exp, rep, [("rc0", r.returncode == 0), (f"gate {exp}", bool(rep) and rep["gate"] == exp),
+        gate_chk = (("nessun problema di sync", bool(rep) and not any("sync" in m_.lower() for m_ in rep["gate_problemi"]))
+                    if nm == "sync_3pct" else (f"gate {exp}", bool(rep) and rep["gate"] == exp))
+        case(nm, exp, rep, [("rc0", r.returncode == 0), gate_chk,
                             ("coppie scartate = iniettate", sy_.get("pairs_over") == ninj),
                             ("frame scartati in collect = iniettati", (rep or {}).get("input", {}).get("pairs_discarded_sync") == ninj)],
              extra=dict(iniettate=ninj, sync=sy_))
@@ -495,6 +506,42 @@ def main():
           ("(stub) conf_min scarta sotto soglia", dc_["conf_stub_scarta_sotto_soglia"])],
          extra=dict(HAS_WLS_reale=dc_["HAS_WLS_reale"],
                     NON_VERIFICATO="getConfidenceMap del WLS vero: opencv-contrib (ximgproc) assente su questo Mac, provato solo con stub"))
+
+    # 9) REGRESSIONE dai dati veri di #001 (sessione 180306): fit finito, numeri del rapporto, ROSSO atteso
+    npz = os.path.join(HERE, "regressione_views_asmile-001_180306.npz")
+    ra = ccd.build_parser().parse_args(["--unit", "asmile-001", "--out", "x_CANDIDATO.json", "--square-len", "0.05",
+                                        "--models", "k1k2,k1k2k3,std5,rational"])
+    ccd.F0["v"] = ccd.UNITS["asmile-001"]["f0"]
+    rv_, meta_ = ccd.load_views_npz(npz)
+    print("\n>>>> regressione dati veri #001 (180306): analyze() su corner salvati")
+    rrep, rs_, rbest, _, _ = ccd.analyze(rv_, meta_, ra, ccd.UNITS["asmile-001"])
+    mono, ster, Tn = rrep["rms_mono_holdout"], rrep["rms_stereo_holdout"]["rms"], rrep["T_from_board_mm"]
+    fitrms = [x for m_ in rrep["models"].values() for x in m_["rms_fit"]]
+    case("regr_001_180306", "ROSSO (copertura/RMS), fit finito, numeri del rapporto", rrep,
+         [("fit finito (RMS fit di ogni modello < 2 px)", all(np.isfinite(x) and x < ccd.MAX_FIT_RMS_PX for x in fitrms)),
+          ("RMS mono hold-out 0.50-0.65 (L,R)", all(np.isfinite(x) and 0.50 <= x <= 0.65 for x in mono)),
+          ("RMS stereo hold-out 0.50-0.65", ster is not None and 0.50 <= ster <= 0.65),
+          ("|T| 195-200 mm", 195.0 <= Tn <= 200.0), ("T[0] < 0", rrep["T_m"][0] < 0),
+          ("gate ROSSO (non esplosione)", rrep["gate"] == "ROSSO"),
+          ("ROSSO per copertura/RMS", any(("copertura" in m_ or "RMS mono" in m_) for m_ in rrep["gate_problemi"])),
+          ("lati degeneri (<12 corner) scartati", rrep["robustezza"]["lati_scartati_meno_di_corner"] > 0)],
+         extra=dict(valori=dict(rms_mono_holdout=mono, rms_stereo_holdout=ster, T_mm=Tn, modello=rbest,
+                                modelli_scartati=rrep["modelli_scartati"])))
+    # 10) lettura video: tutti i frame, con -fps_mode passthrough
+    calls = []
+    _Popen = ccd.subprocess.Popen
+    def _spy(cmd, *a_, **k_):
+        calls.append(list(cmd)); return _Popen(cmd, *a_, **k_)
+    ccd.subprocess.Popen = _spy
+    try:
+        nfr = sum(1 for _ in ccd.gray_frames(os.path.join(d9, "video_left.h264"), W, H))
+    finally:
+        ccd.subprocess.Popen = _Popen
+    case("ffmpeg_passthrough", "tutti i frame letti, -fps_mode passthrough nel comando", None,
+         [("-fps_mode passthrough nel comando ffmpeg", bool(calls) and "-fps_mode" in calls[0] and calls[0][calls[0].index("-fps_mode") + 1] == "passthrough"),
+          ("frame letti == frame scritti", nfr == 2 * a.views)],
+         extra=dict(frame_letti=nfr, attesi=2 * a.views,
+                    NON_VERIFICATO="PTS uguali dei raw rpicam non riproducibili col sintetico: coperti dal comando (opzione presente) e dal caso reale 8641 frame"))
 
     ok = all(c["OK"] for c in cases.values())
     res = dict(TEST="VERDE" if ok else "ROSSO", casi=cases, casi_falliti=[k for k, c in cases.items() if not c["OK"]],
