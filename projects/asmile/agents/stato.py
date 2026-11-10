@@ -47,6 +47,8 @@ GATES = [
      "percezione", "asmile-calib", "asmile-calib-critico", "video col metro a 4, 6, 8, 12 m (logger e #001)"),
     ("L1.rettifica", 1, "Rettifica vera: scarto verticale L-R < 1 px su tutta l'immagine, anche in movimento",
      "percezione", "asmile-calib", "asmile-calib-critico", None),
+    ("L1.mock_001", 1, "Mock/gemello di #001 (logger/depth/calib_rock): gate Monte Carlo verdi, calibrazione automatica per set futuri",
+     "percezione", "asmile-calib", "asmile-calib-critico", None),
     ("L1.depth_moto", 1, "Depth in movimento: ±2% <5 m, ±5% 5-10 m, ±10% 10-20 m sul banco fisso",
      "percezione", "asmile-depth", "asmile-occhio", None),
     ("L1.ostacoli", 1, "Ostacoli SENZA nome nel corridoio davanti (depth densa / occupazione)",
@@ -75,6 +77,7 @@ GATES = [
     ("L4.sim2real", 4, "Policy validata in sim + banco virtuale senza regressioni", "guida",
      "asmile-sim-validator", "asmile-regressione", None),
 ]
+DIPENDE = {"L1.mock_001": ["L1.rettifica"]}   # il mock con parametri veri parte SOLO dopo il PASSA della rettifica
 FIRME_LIVELLO = {1: "L1", 2: "L2", 3: "L3", 4: "L4"}   # firma di Daniele per entrare nel livello (DECISION_LOG)
 
 
@@ -152,6 +155,9 @@ def main():
             r = auto(gid)
             if r:
                 st, pr = r
+        bloccanti = [d for d in DIPENDE.get(gid, []) if not prova(d)]
+        if bloccanti:
+            st, pr = "MANCA", "bloccato: dipende da " + ", ".join(bloccanti) + " (serve il PASSA)"
         gates.append({"id": gid, "livello": liv, "cosa": cosa, "verticale": vert, "agente": ag,
                       "contro_agente": crit, "fisico": fisico, "stato": st, "prova": pr})
 
