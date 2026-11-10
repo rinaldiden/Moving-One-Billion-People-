@@ -56,7 +56,9 @@ SESSIONS_DIR = Path.home() / "training_sessions"
 CAM_WIDTH = 1280
 CAM_HEIGHT = 800
 FPS = 15
-BITRATE = 500_000  # 500kbps per camera
+BITRATE = 500_000  # 500kbps per camera (guida normale)
+# Calibrazione: a 500 kbps i corner ChArUco si spostano ~0.3 px (RMS mono 0.55 > gate 0.5, sessione 2026-11-10)
+BITRATE_CALIB = 6_000_000
 
 # Cameras mounted upright (Inno-Maker OV9281)
 VFLIP = False
@@ -296,7 +298,16 @@ def main():
                         help="Recording duration in minutes")
     parser.add_argument("--preview", action="store_true",
                         help="Show live preview")
+    parser.add_argument("--calib", action="store_true",
+                        help=f"sessione di calibrazione: bitrate {BITRATE_CALIB // 1_000_000} Mbps per camera")
+    parser.add_argument("--bitrate", type=int, default=None, help="bitrate per camera in bit/s")
     args = parser.parse_args()
+
+    global BITRATE
+    if args.bitrate:
+        BITRATE = args.bitrate
+    elif args.calib:
+        BITRATE = BITRATE_CALIB
 
     recorder = DualCamRecorder(duration_min=args.duration, preview=args.preview)
 
