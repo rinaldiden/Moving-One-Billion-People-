@@ -1,0 +1,160 @@
+{
+ "sessione": "session_20261109_094146",
+ "unita": "asmile-001",
+ "calib": "PROVVISORIA, punto A in corso",
+ "n_candidati": 3683,
+ "uso": "TEST B alla cieca (mai usato per sviluppo)",
+ "criterio": "come set A, offset 0.75, nessun frame entro +-30 da A e dev",
+ "frames": [
+  {
+   "frame": 2179,
+   "t_ms": 6664011,
+   "v_enc_ms": 0.979
+  },
+  {
+   "frame": 2566,
+   "t_ms": 6689812,
+   "v_enc_ms": 3.477
+  },
+  {
+   "frame": 2848,
+   "t_ms": 6708612,
+   "v_enc_ms": 3.51
+  },
+  {
+   "frame": 5348,
+   "t_ms": 6875282,
+   "v_enc_ms": 1.434
+  },
+  {
+   "frame": 5506,
+   "t_ms": 6885815,
+   "v_enc_ms": 0.785
+  },
+  {
+   "frame": 5663,
+   "t_ms": 6896282,
+   "v_enc_ms": 0.864
+  },
+  {
+   "frame": 5810,
+   "t_ms": 6906082,
+   "v_enc_ms": 1.633
+  },
+  {
+   "frame": 6083,
+   "t_ms": 6924282,
+   "v_enc_ms": 1.784
+  },
+  {
+   "frame": 6219,
+   "t_ms": 6933349,
+   "v_enc_ms": 4.09
+  },
+  {
+   "frame": 6374,
+   "t_ms": 6943683,
+   "v_enc_ms": 2.469
+  },
+  {
+   "frame": 6527,
+   "t_ms": 6953883,
+   "v_enc_ms": 2.864
+  },
+  {
+   "frame": 6664,
+   "t_ms": 6963016,
+   "v_enc_ms": 0.411
+  },
+  {
+   "frame": 6872,
+   "t_ms": 6976883,
+   "v_enc_ms": 1.542
+  },
+  {
+   "frame": 7133,
+   "t_ms": 6994284,
+   "v_enc_ms": 2.824
+  },
+  {
+   "frame": 7346,
+   "t_ms": 7008484,
+   "v_enc_ms": 2.962
+  },
+  {
+   "frame": 7584,
+   "t_ms": 7024351,
+   "v_enc_ms": 0.928
+  },
+  {
+   "frame": 7754,
+   "t_ms": 7035684,
+   "v_enc_ms": 2.506
+  },
+  {
+   "frame": 7891,
+   "t_ms": 7044818,
+   "v_enc_ms": 0.375
+  },
+  {
+   "frame": 8046,
+   "t_ms": 7055152,
+   "v_enc_ms": 2.525
+  },
+  {
+   "frame": 8193,
+   "t_ms": 7064952,
+   "v_enc_ms": 2.568
+  },
+  {
+   "frame": 8345,
+   "t_ms": 7075085,
+   "v_enc_ms": 2.764
+  },
+  {
+   "frame": 8490,
+   "t_ms": 7084752,
+   "v_enc_ms": 2.436
+  },
+  {
+   "frame": 8626,
+   "t_ms": 7093819,
+   "v_enc_ms": 0.72
+  },
+  {
+   "frame": 8763,
+   "t_ms": 7102952,
+   "v_enc_ms": 2.475
+  },
+  {
+   "frame": 8911,
+   "t_ms": 7112819,
+   "v_enc_ms": 0.502
+  },
+  {
+   "frame": 9048,
+   "t_ms": 7121953,
+   "v_enc_ms": 1.755
+  },
+  {
+   "frame": 9184,
+   "t_ms": 7131020,
+   "v_enc_ms": 0.828
+  },
+  {
+   "frame": 9435,
+   "t_ms": 7147753,
+   "v_enc_ms": 1.207
+  },
+  {
+   "frame": 9645,
+   "t_ms": 7161753,
+   "v_enc_ms": 0.818
+  },
+  {
+   "frame": 9871,
+   "t_ms": 7176820,
+   "v_enc_ms": 0.711
+  }
+ ]
+}
