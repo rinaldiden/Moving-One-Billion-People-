@@ -22,3 +22,10 @@ Il modo di pilotare via UART è lo stesso (stesso comando, stessa scala, solo pi
 1. Etichetta KV del motore di #001 (e di asmile2): R, L e flux diversi dicono avvolgimento diverso.
 2. Rapporto di riduzione di asmile2 (il valore 0.105 tach/step dice ~1:10; #001 misurato 1:5).
 Se confermato: o motore 140 KV su #001, o riduzione maggiore, o (non consigliato) correnti molto più alte del FSESC.
+
+## Correzione 2026-11-10 (Daniele)
+Riduzione asmile2 = **1:5 identica** a #001 (il valore 0.105 tach/step non dava il rapporto: scartato). Motore montato su #001 dichiarato
+6354 140 KV come asmile2. Allora la sola differenza misurata è il flux (1.32 vs 5.04 mWb) con R/L diversi:
+asmile2 ~0.26 Nm/A, #001 ~0.07 Nm/A (3.8x). 30 A su #001 ~ 8 A asmile2; 45 A ~ 12 A.
+Prova decisiva: Daniele collega il 6354 140 KV di scorta al VESC di #001 al posto del motore montato -> measure_res / measure_ind via UART
+(motore fermo). Se R/L del ricambio ~47 mOhm / ~56 uH e il montato resta 29 / 20 -> il montato non è un 140 KV: si cambia.
