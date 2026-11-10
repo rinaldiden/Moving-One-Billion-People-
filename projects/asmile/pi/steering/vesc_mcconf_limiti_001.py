@@ -102,7 +102,7 @@ def main():
     for n in PROPOSTA: ap.add_argument("--" + n.replace("_", "-"), type=float, default=PROPOSTA[n])
     ap.add_argument("--consenti-alzare", type=float, default=0.0, help="A: permette di ALZARE l_current fino a questo valore (max 60). Solo col vai esplicito di Daniele")
     ap.add_argument("--spid", nargs="*", default=[], help="nome=valore per i campi del PID velocita' (s_pid_kp, s_pid_ki, s_pid_kd, s_pid_kd_filter, s_pid_min_erpm, s_pid_ramp_erpms_s)")
-    ap.add_argument("--hall-interp-erpm", type=float, help="foc_hall_interp_erpm (solo abbassare, >=0): sotto questa velocita' il VESC non interpola fra gli hall -> scatti")
+    ap.add_argument("--hall-interp-erpm", type=float, help="foc_hall_interp_erpm (0-500; 500 = originale): sotto questa velocita' il VESC non interpola fra gli hall -> scatti")
     a = ap.parse_args()
     ser = serial.Serial(PORT, BAUD, timeout=0.2); time.sleep(0.1)
     v = fw(ser); print(f"fw VESC {v[0]}.{v[1]}")
@@ -132,7 +132,8 @@ def main():
                 new[OFF0 + 4 * i:OFF0 + 4 * i + 4] = enc(v)
         if a.hall_interp_erpm is not None:
             hv = dec(bytes(blob[OFF_HALL_INTERP:OFF_HALL_INTERP + 4]))
-            if not 0 <= a.hall_interp_erpm <= hv: sys.exit(f"hall_interp_erpm {a.hall_interp_erpm} fuori da [0, {hv}]: rifiuto")
+            # si puo' risalire fino a 500 = valore originale di fabbrica/asmile2 (2026-11-10: 20 sospettato di togliere coppia)
+            if not 0 <= a.hall_interp_erpm <= max(hv, 500.0): sys.exit(f"hall_interp_erpm {a.hall_interp_erpm} fuori da [0, {max(hv, 500.0)}]: rifiuto")
             new[OFF_HALL_INTERP:OFF_HALL_INTERP + 4] = enc(a.hall_interp_erpm)
         for kv in a.spid:
             n_, v_ = kv.split("="); v_ = float(v_)

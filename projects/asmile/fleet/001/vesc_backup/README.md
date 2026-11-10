@@ -19,3 +19,9 @@ Verifica 2026-11-09 18:40 (manubrio collegato, solo movimenti lenti agganciati, 
 - hall_analyze 25 -> 6 stati, scarti 57-65° el., deviazione max 4°: "good alignment".
 - foc_sensors_detect_apply 25 -> tabella praticamente identica: la tabella hall NON era sfasata.
 - asmile2 (maggio): R 46.8 mOhm, L 55.9 uH, flux 5.04 mWb -> motore diverso (KV ~150-190) da #001 (flux 1.32 mWb ~ KV ~600): coppia per ampere ~3.8 volte più bassa su #001. Da verificare l'etichetta KV dei due motori.
+| vesc_mcconf_backup_20261110_180449.bin | 2026-11-10 (prima della scrittura) | 45 / -45 | 99 / -60 | 150 | 20 |
+| vesc_mcconf_backup_20261110_180450.bin | 2026-11-10 **NUOVA, scritta e verificata** (Daniele: "ripristina 500"): solo byte 269-270 | 45 / -45 | 99 / -60 | 150 | **500** |
+
+2026-11-10: foc_hall_interp_erpm 20 -> 500 (valore originale/asmile2). Motivo: con 20 il fw 5.02 interpola gia' a velocita' quasi nulla e con
+cambi di verso "puo' restare 60° fuori" (commento mcpwm_foc.c) -> Iq letto 45 A ma coppia vera ridotta. Tutte le prove di resistenza del 9/11
+erano con 20. Ora la prova di resistenza va rifatta. Nota: su #001 la root e' overlay, gli script in ~/wip spariscono al riavvio (copiati in /tmp/steering).
