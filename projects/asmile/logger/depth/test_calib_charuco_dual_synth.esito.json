@@ -1,147 +1,1041 @@
 {
- "synth_9zone": {
-  "gate_script": "VERDE",
-  "gate_problemi": [],
-  "verita": {
-   "zone": [
-    "alto-sx",
-    "alto-centro",
-    "alto-dx",
-    "mezzo-sx",
-    "centro",
-    "mezzo-dx",
-    "basso-sx",
-    "basso-centro",
-    "basso-dx"
-   ],
-   "B_dy_abs_p95": [
-    0.288,
-    0.09,
-    0.145,
-    0.043,
-    0.043,
-    0.067,
-    0.773,
-    0.062,
-    0.325
-   ],
-   "B_dy_median": [
-    0.006,
-    -0.055,
-    -0.003,
-    -0.015,
-    -0.011,
-    0.018,
-    0.021,
-    -0.009,
-    0.069
-   ],
-   "C_depth_pct_p95": [
-    0.435,
-    0.24,
-    0.964,
-    0.404,
-    0.173,
-    0.633,
-    0.978,
-    0.258,
-    1.115
-   ],
-   "C_depth_pct_median": [
-    -0.189,
-    0.123,
-    0.407,
-    -0.266,
-    0.031,
-    0.212,
-    -0.262,
-    -0.062,
-    0.11
-   ],
-   "focal_rect_est_true": [
-    1296.9003736950463,
-    1304.6187991987217
-   ],
-   "baseline_dir_ok": true
-  }
- },
- "synth_solo_centro": {
-  "gate_script": "ROSSO",
-  "gate_problemi": [
-   "copertura L insufficiente (<150 corner) in: alto-sx, alto-dx, basso-sx, basso-dx",
-   "copertura R insufficiente (<150 corner) in: alto-sx, alto-centro, alto-dx, mezzo-dx, basso-dx",
-   "hold-out stereo: zona alto-sx con 12 punti (<20) -> non verificata",
-   "hold-out stereo: zona alto-dx con 8 punti (<20) -> non verificata",
-   "hold-out stereo: zona basso-sx con 4 punti (<20) -> non verificata",
-   "hold-out stereo: zona basso-dx con 8 punti (<20) -> non verificata"
-  ],
-  "verita": {
-   "zone": [
-    "alto-sx",
-    "alto-centro",
-    "alto-dx",
-    "mezzo-sx",
-    "centro",
-    "mezzo-dx",
-    "basso-sx",
-    "basso-centro",
-    "basso-dx"
-   ],
-   "B_dy_abs_p95": [
-    3.729,
-    0.112,
-    4.079,
-    0.606,
-    0.118,
-    0.845,
-    3.079,
-    0.188,
-    3.418
-   ],
-   "B_dy_median": [
-    0.012,
-    0.022,
-    -0.026,
-    -0.159,
-    -0.071,
-    -0.255,
-    -0.205,
-    -0.121,
-    -0.358
-   ],
-   "C_depth_pct_p95": [
-    10.715,
-    0.398,
-    12.179,
-    4.703,
-    0.254,
-    4.643,
-    8.596,
-    0.365,
-    8.259
-   ],
-   "C_depth_pct_median": [
-    -0.571,
-    0.133,
-    0.793,
-    -0.517,
-    0.017,
-    0.464,
-    -0.536,
-    -0.116,
-    0.238
-   ],
-   "focal_rect_est_true": [
-    1308.9807954207872,
-    1304.6187991987217
-   ],
-   "baseline_dir_ok": true
-  }
- },
  "TEST": "VERDE",
- "criteri": "obiettivo HANDOFF in OGNI zona 3x3 (punti 1-5 m): dy |p95| < 1 px e depth |p95| <= 2%; gate script VERDE; baseline col segno giusto; controllo negativo solo-centro -> gate script ROSSO",
- "margine_interno_0.5px_1pct": [
-  "basso-sx NO",
-  "basso-dx NO"
- ]
+ "casi": {
+  "stat_dy_unit": {
+   "atteso": "rumore 0.44 px: media-per-vista <1 ma p95 grezzo ~0.9; offset 1.2 px: >=1; offset 0.6: <1",
+   "gate_script": null,
+   "modello": null,
+   "problemi": null,
+   "avvisi": null,
+   "checks": {
+    "solo rumore -> p95 media-per-vista < 0.5": true,
+    "solo rumore -> p95 grezzo >= 0.8 (pavimento di rumore)": true,
+    "offset sistematico 1.2 px -> media-per-vista >= 1.0 (gate ROSSO)": true,
+    "offset 0.6 px -> media-per-vista < 1.0": true
+   },
+   "OK": true,
+   "verita": null,
+   "valori": {
+    "rumore": 0.1935783698283067,
+    "off12": 1.2831874811068278,
+    "off06": 0.8267498660373251
+   }
+  },
+  "9zone_5seed": {
+   "atteso": ">= 4/5 VERDE, 0 falsi verdi",
+   "gate_script": null,
+   "modello": null,
+   "problemi": null,
+   "avvisi": null,
+   "checks": {
+    "VERDE su 4/5 (>= 4)": true,
+    "zero falsi verdi (verita' 3D)": true,
+    "ogni ROSSO ha un motivo": true
+   },
+   "OK": true,
+   "verita": null,
+   "seed_tabella": [
+    {
+     "seed": 20261109,
+     "in_criterio": true,
+     "gate": "VERDE",
+     "verde": true,
+     "falso_verde": false,
+     "verita_ok": true,
+     "modello": "rational",
+     "dy_n_min": 124,
+     "patch_n_min": 8,
+     "dy_patch_p95_peggiore": 0.8702756360491075,
+     "dy_p95_grezzo_peggiore": 1.4132930905883028,
+     "rumore_corner_sigma_px": 0.6572382205965857,
+     "rms_mono_gate": [
+      0.4885995388031006,
+      0.49222660064697266
+     ],
+     "rms_stereo_gate": 0.49374552248359493,
+     "baseline_dev_pct": -0.01656640400088394,
+     "verita_dy_p95_peggiore": 0.349,
+     "verita_depth_p95_peggiore": 1.739,
+     "problemi": [],
+     "avvisi_margine": [
+      "RMS mono L 0.489 px = 98% della soglia 0.5: poco margine",
+      "RMS mono R 0.492 px = 98% della soglia 0.5: poco margine",
+      "dy p95 zona alto-sx 0.87 px = 87% della soglia 1.0 (media per vista)"
+     ],
+     "n_viste": {
+      "fit": 91,
+      "select": 42,
+      "gate": 63
+     }
+    },
+    {
+     "seed": 1,
+     "in_criterio": true,
+     "gate": "ROSSO",
+     "verde": false,
+     "falso_verde": false,
+     "verita_ok": true,
+     "modello": "rational",
+     "dy_n_min": 90,
+     "patch_n_min": 5,
+     "dy_patch_p95_peggiore": 0.48238452272846155,
+     "dy_p95_grezzo_peggiore": 1.262420929688762,
+     "rumore_corner_sigma_px": 0.5194921985199896,
+     "rms_mono_gate": [
+      0.479138046503067,
+      0.47077029943466187
+     ],
+     "rms_stereo_gate": 0.472124177804381,
+     "baseline_dev_pct": -0.019810326198677064,
+     "verita_dy_p95_peggiore": 0.485,
+     "verita_depth_p95_peggiore": 0.955,
+     "problemi": [
+      "hold-out stereo: zona basso-sx INSUFFICIENTE: 90 punti / 5 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona basso-sx"
+     ],
+     "avvisi_margine": [
+      "RMS mono L 0.479 px = 96% della soglia 0.5: poco margine",
+      "RMS mono R 0.471 px = 94% della soglia 0.5: poco margine"
+     ],
+     "n_viste": {
+      "fit": 94,
+      "select": 41,
+      "gate": 63
+     }
+    },
+    {
+     "seed": 2,
+     "in_criterio": true,
+     "gate": "VERDE",
+     "verde": true,
+     "falso_verde": false,
+     "verita_ok": true,
+     "modello": "rational",
+     "dy_n_min": 90,
+     "patch_n_min": 6,
+     "dy_patch_p95_peggiore": 0.45305272210173103,
+     "dy_p95_grezzo_peggiore": 1.3657166209407017,
+     "rumore_corner_sigma_px": 0.566084962414016,
+     "rms_mono_gate": [
+      0.47056570649147034,
+      0.4838312268257141
+     ],
+     "rms_stereo_gate": 0.4700995698966244,
+     "baseline_dev_pct": 0.04168935999337986,
+     "verita_dy_p95_peggiore": 0.334,
+     "verita_depth_p95_peggiore": 1.224,
+     "problemi": [],
+     "avvisi_margine": [
+      "RMS mono L 0.471 px = 94% della soglia 0.5: poco margine",
+      "RMS mono R 0.484 px = 97% della soglia 0.5: poco margine"
+     ],
+     "n_viste": {
+      "fit": 95,
+      "select": 42,
+      "gate": 62
+     }
+    },
+    {
+     "seed": 3,
+     "in_criterio": true,
+     "gate": "VERDE",
+     "verde": true,
+     "falso_verde": false,
+     "verita_ok": true,
+     "modello": "rational",
+     "dy_n_min": 77,
+     "patch_n_min": 6,
+     "dy_patch_p95_peggiore": 0.3805732083604659,
+     "dy_p95_grezzo_peggiore": 1.182381040651269,
+     "rumore_corner_sigma_px": 0.546927330336699,
+     "rms_mono_gate": [
+      0.47076424956321716,
+      0.4847680926322937
+     ],
+     "rms_stereo_gate": 0.47465520168913106,
+     "baseline_dev_pct": -0.004291873496375942,
+     "verita_dy_p95_peggiore": 0.377,
+     "verita_depth_p95_peggiore": 1.473,
+     "problemi": [],
+     "avvisi_margine": [
+      "RMS mono L 0.471 px = 94% della soglia 0.5: poco margine",
+      "RMS mono R 0.485 px = 97% della soglia 0.5: poco margine"
+     ],
+     "n_viste": {
+      "fit": 95,
+      "select": 42,
+      "gate": 62
+     }
+    },
+    {
+     "seed": 4,
+     "in_criterio": true,
+     "gate": "VERDE",
+     "verde": true,
+     "falso_verde": false,
+     "verita_ok": true,
+     "modello": "rational",
+     "dy_n_min": 121,
+     "patch_n_min": 7,
+     "dy_patch_p95_peggiore": 0.4360924814337369,
+     "dy_p95_grezzo_peggiore": 1.55909984284076,
+     "rumore_corner_sigma_px": 0.5740542926247576,
+     "rms_mono_gate": [
+      0.48778632283210754,
+      0.49575275182724
+     ],
+     "rms_stereo_gate": 0.4806322182233042,
+     "baseline_dev_pct": 0.01474905556457795,
+     "verita_dy_p95_peggiore": 0.44,
+     "verita_depth_p95_peggiore": 1.089,
+     "problemi": [],
+     "avvisi_margine": [
+      "RMS mono L 0.488 px = 98% della soglia 0.5: poco margine",
+      "RMS mono R 0.496 px = 99% della soglia 0.5: poco margine"
+     ],
+     "n_viste": {
+      "fit": 91,
+      "select": 42,
+      "gate": 63
+     }
+    },
+    {
+     "seed": 11,
+     "in_criterio": false,
+     "gate": "ROSSO",
+     "verde": false,
+     "falso_verde": false,
+     "verita_ok": true,
+     "modello": "rational",
+     "dy_n_min": 94,
+     "patch_n_min": 8,
+     "dy_patch_p95_peggiore": 0.5597204519253266,
+     "dy_p95_grezzo_peggiore": 1.320521081788564,
+     "rumore_corner_sigma_px": 0.557044106433387,
+     "rms_mono_gate": [
+      0.5060096979141235,
+      0.49670863151550293
+     ],
+     "rms_stereo_gate": 0.4865594066832785,
+     "baseline_dev_pct": -0.028359753435514,
+     "verita_dy_p95_peggiore": 0.487,
+     "verita_depth_p95_peggiore": 0.99,
+     "problemi": [
+      "RMS mono L (tenute fuori) 0.506 px (>= 0.5)"
+     ],
+     "avvisi_margine": [
+      "RMS mono L 0.506 px = 101% della soglia 0.5: poco margine",
+      "RMS mono R 0.497 px = 99% della soglia 0.5: poco margine"
+     ],
+     "n_viste": {
+      "fit": 92,
+      "select": 41,
+      "gate": 61
+     }
+    },
+    {
+     "seed": 12,
+     "in_criterio": false,
+     "gate": "ROSSO",
+     "verde": false,
+     "falso_verde": false,
+     "verita_ok": true,
+     "modello": "rational",
+     "dy_n_min": 72,
+     "patch_n_min": 6,
+     "dy_patch_p95_peggiore": 0.5346592600998785,
+     "dy_p95_grezzo_peggiore": 1.2613826066167066,
+     "rumore_corner_sigma_px": 0.5921414196729092,
+     "rms_mono_gate": [
+      0.520634114742279,
+      0.5042312741279602
+     ],
+     "rms_stereo_gate": 0.49934153014766175,
+     "baseline_dev_pct": -0.026229706964331356,
+     "verita_dy_p95_peggiore": 0.849,
+     "verita_depth_p95_peggiore": 1.456,
+     "problemi": [
+      "RMS mono L (tenute fuori) 0.521 px (>= 0.5)",
+      "RMS mono R (tenute fuori) 0.504 px (>= 0.5)"
+     ],
+     "avvisi_margine": [
+      "RMS mono L 0.521 px = 104% della soglia 0.5: poco margine",
+      "RMS mono R 0.504 px = 101% della soglia 0.5: poco margine"
+     ],
+     "n_viste": {
+      "fit": 96,
+      "select": 42,
+      "gate": 64
+     }
+    }
+   ],
+   "n_verdi": 4
+  },
+  "solo_centro": {
+   "atteso": "ROSSO",
+   "gate_script": "ROSSO",
+   "modello": "rational",
+   "problemi": [
+    "copertura L insufficiente (<150 corner) in: alto-sx, alto-dx, basso-sx, basso-dx",
+    "copertura R insufficiente (<150 corner) in: alto-sx, alto-centro, alto-dx, mezzo-dx, basso-dx",
+    "hold-out stereo: zona alto-sx INSUFFICIENTE: 45 punti / 0 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona alto-sx",
+    "dy zona alto-centro: p50 |dy| 0.52 px (>= 0.5)",
+    "hold-out stereo: zona alto-dx INSUFFICIENTE: 34 punti / 2 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona alto-dx",
+    "dy zona mezzo-sx: p50 |dy| 0.51 px (>= 0.5)",
+    "hold-out stereo: zona basso-sx INSUFFICIENTE: 47 punti / 2 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona basso-sx",
+    "hold-out stereo: zona basso-dx INSUFFICIENTE: 28 punti / 1 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona basso-dx",
+    "scala zona basso-dx con 17 coppie (<30) -> non verificata",
+    "RMS mono L (tenute fuori) 0.848 px (>= 0.5)",
+    "RMS mono R (tenute fuori) 0.717 px (>= 0.5)"
+   ],
+   "avvisi": [],
+   "checks": {
+    "rc0": true,
+    "gate ROSSO": true,
+    "motivo copertura": true
+   },
+   "OK": true,
+   "verita": null
+  },
+  "file_scambiati": {
+   "atteso": "ROSSO (T[0]>=0)",
+   "gate_script": "ROSSO",
+   "modello": "rational",
+   "problemi": [
+    "scala zona alto-sx VUOTA (nessuna coppia di corner triangolabile) -> non verificata",
+    "scala zona alto-centro VUOTA (nessuna coppia di corner triangolabile) -> non verificata",
+    "scala zona alto-dx VUOTA (nessuna coppia di corner triangolabile) -> non verificata",
+    "scala zona mezzo-sx VUOTA (nessuna coppia di corner triangolabile) -> non verificata",
+    "scala zona centro VUOTA (nessuna coppia di corner triangolabile) -> non verificata",
+    "scala zona mezzo-dx VUOTA (nessuna coppia di corner triangolabile) -> non verificata",
+    "scala zona basso-sx VUOTA (nessuna coppia di corner triangolabile) -> non verificata",
+    "scala zona basso-centro VUOTA (nessuna coppia di corner triangolabile) -> non verificata",
+    "scala zona basso-dx VUOTA (nessuna coppia di corner triangolabile) -> non verificata",
+    "T[0] = +199.8 mm >= 0: camere scambiate (file L/R invertiti?) o ordine sbagliato"
+   ],
+   "avvisi": [],
+   "checks": {
+    "rc0": true,
+    "gate ROSSO": true,
+    "motivo T[0]>=0": true
+   },
+   "OK": true,
+   "verita": null
+  },
+  "tilt_auto": {
+   "atteso": "gate concorda con la verita' 3D (VERDE solo se verita' ok; falso VERDE = FAIL)",
+   "gate_script": "VERDE",
+   "modello": "rational",
+   "problemi": [],
+   "avvisi": [],
+   "checks": {
+    "rc0": true,
+    "falso VERDE = FAIL": true,
+    "ROSSO sempre motivato": true
+   },
+   "OK": true,
+   "verita": {
+    "zone": [
+     "alto-sx",
+     "alto-centro",
+     "alto-dx",
+     "mezzo-sx",
+     "centro",
+     "mezzo-dx",
+     "basso-sx",
+     "basso-centro",
+     "basso-dx"
+    ],
+    "B_dy_abs_p95": [
+     0.447,
+     0.04,
+     0.18,
+     0.075,
+     0.038,
+     0.08,
+     0.281,
+     0.058,
+     0.132
+    ],
+    "B_dy_median": [
+     -0.005,
+     -0.021,
+     0.034,
+     0.006,
+     -0.025,
+     0.038,
+     0.051,
+     -0.002,
+     0.063
+    ],
+    "C_depth_pct_p95": [
+     0.81,
+     0.309,
+     1.029,
+     0.436,
+     0.18,
+     0.372,
+     0.623,
+     0.315,
+     0.263
+    ],
+    "C_depth_pct_median": [
+     0.064,
+     0.182,
+     0.367,
+     -0.196,
+     -0.011,
+     0.105,
+     -0.33,
+     -0.193,
+     -0.07
+    ],
+    "info_depth_pct_p95_1m": [
+     0.164,
+     0.363,
+     0.723,
+     0.317,
+     0.168,
+     0.382,
+     0.45,
+     0.313,
+     0.157
+    ],
+    "info_depth_pct_p95_10m": [
+     2.671,
+     0.109,
+     2.564,
+     2.31,
+     0.243,
+     0.663,
+     3.1,
+     0.351,
+     0.875
+    ],
+    "focal_rect_est_true": [
+     1305.7444878562467,
+     1304.071473970076
+    ],
+    "baseline_dir_ok": true,
+    "baseline_est_mm": 199.99,
+    "baseline_true_mm": 200.01
+   },
+   "tilt_stato": "VERDE VERO",
+   "holdout_rms_modelli": {
+    "rational": {
+     "rms_fit": [
+      0.48874224097933106,
+      0.5211781882817199
+     ],
+     "select_rms": [
+      0.4849090278148651,
+      0.4853360950946808
+     ],
+     "select_zone_rms_L": [
+      0.47324204444885254,
+      0.47097912430763245,
+      0.5079759359359741,
+      0.5113626718521118,
+      0.4767347574234009,
+      0.4875020384788513,
+      0.4232439398765564,
+      0.51056969165802,
+      0.47471749782562256
+     ],
+     "select_zone_rms_R": [
+      0.5256279706954956,
+      0.48775824904441833,
+      0.536834716796875,
+      0.47812122106552124,
+      0.4485730528831482,
+      0.4547499120235443,
+      0.47454628348350525,
+      0.4774327874183655,
+      0.5278714299201965
+     ]
+    },
+    "rational+prism": {
+     "rms_fit": [
+      0.4894543004909424,
+      0.5208094079170538
+     ],
+     "select_rms": [
+      0.47859495878219604,
+      0.48550450801849365
+     ],
+     "select_zone_rms_L": [
+      0.47150367498397827,
+      0.4706217348575592,
+      0.5033004283905029,
+      0.49748989939689636,
+      0.4745674431324005,
+      0.47467538714408875,
+      0.41407424211502075,
+      0.509501576423645,
+      0.4595078229904175
+     ],
+     "select_zone_rms_R": [
+      0.5273734331130981,
+      0.4878132939338684,
+      0.5350403785705566,
+      0.4789021909236908,
+      0.44850075244903564,
+      0.45466864109039307,
+      0.4749995172023773,
+      0.47823023796081543,
+      0.5269614458084106
+     ]
+    },
+    "rational+prism+tilted": {
+     "rms_fit": [
+      0.4888808541506713,
+      0.52041134982808
+     ],
+     "select_rms": [
+      0.4794255793094635,
+      0.48579373955726624
+     ],
+     "select_zone_rms_L": [
+      0.4716469347476959,
+      0.4705899953842163,
+      0.5063021183013916,
+      0.49764934182167053,
+      0.4747014045715332,
+      0.4747525453567505,
+      0.41429388523101807,
+      0.5097746253013611,
+      0.46342453360557556
+     ],
+     "select_zone_rms_R": [
+      0.527006208896637,
+      0.48812276124954224,
+      0.5362036824226379,
+      0.4790116548538208,
+      0.4487771987915039,
+      0.45467114448547363,
+      0.47642627358436584,
+      0.4779261350631714,
+      0.5271896719932556
+     ]
+    }
+   },
+   "modello_scelto": "rational"
+  },
+  "tilt_rational": {
+   "atteso": "gate concorda con la verita' 3D (VERDE solo se verita' ok; falso VERDE = FAIL)",
+   "gate_script": "VERDE",
+   "modello": "rational",
+   "problemi": [],
+   "avvisi": [],
+   "checks": {
+    "rc0": true,
+    "falso VERDE = FAIL": true,
+    "ROSSO sempre motivato": true
+   },
+   "OK": true,
+   "verita": {
+    "zone": [
+     "alto-sx",
+     "alto-centro",
+     "alto-dx",
+     "mezzo-sx",
+     "centro",
+     "mezzo-dx",
+     "basso-sx",
+     "basso-centro",
+     "basso-dx"
+    ],
+    "B_dy_abs_p95": [
+     0.447,
+     0.04,
+     0.18,
+     0.075,
+     0.038,
+     0.08,
+     0.281,
+     0.058,
+     0.132
+    ],
+    "B_dy_median": [
+     -0.005,
+     -0.021,
+     0.034,
+     0.006,
+     -0.025,
+     0.038,
+     0.051,
+     -0.002,
+     0.063
+    ],
+    "C_depth_pct_p95": [
+     0.81,
+     0.309,
+     1.029,
+     0.436,
+     0.18,
+     0.372,
+     0.623,
+     0.315,
+     0.263
+    ],
+    "C_depth_pct_median": [
+     0.064,
+     0.182,
+     0.367,
+     -0.196,
+     -0.011,
+     0.105,
+     -0.33,
+     -0.193,
+     -0.07
+    ],
+    "info_depth_pct_p95_1m": [
+     0.164,
+     0.363,
+     0.723,
+     0.317,
+     0.168,
+     0.382,
+     0.45,
+     0.313,
+     0.157
+    ],
+    "info_depth_pct_p95_10m": [
+     2.671,
+     0.109,
+     2.564,
+     2.31,
+     0.243,
+     0.663,
+     3.1,
+     0.351,
+     0.875
+    ],
+    "focal_rect_est_true": [
+     1305.7444878562467,
+     1304.071473970076
+    ],
+    "baseline_dir_ok": true,
+    "baseline_est_mm": 199.99,
+    "baseline_true_mm": 200.01
+   },
+   "tilt_stato": "VERDE VERO",
+   "holdout_rms_modelli": {
+    "rational": {
+     "rms_fit": [
+      0.48874224097933106,
+      0.5211781882817199
+     ],
+     "select_rms": [
+      0.4849090278148651,
+      0.4853360950946808
+     ],
+     "select_zone_rms_L": [
+      0.47324204444885254,
+      0.47097912430763245,
+      0.5079759359359741,
+      0.5113626718521118,
+      0.4767347574234009,
+      0.4875020384788513,
+      0.4232439398765564,
+      0.51056969165802,
+      0.47471749782562256
+     ],
+     "select_zone_rms_R": [
+      0.5256279706954956,
+      0.48775824904441833,
+      0.536834716796875,
+      0.47812122106552124,
+      0.4485730528831482,
+      0.4547499120235443,
+      0.47454628348350525,
+      0.4774327874183655,
+      0.5278714299201965
+     ]
+    }
+   },
+   "modello_scelto": "rational"
+  },
+  "tilt_prism": {
+   "atteso": "gate concorda con la verita' 3D (VERDE solo se verita' ok; falso VERDE = FAIL)",
+   "gate_script": "VERDE",
+   "modello": "rational+prism",
+   "problemi": [],
+   "avvisi": [],
+   "checks": {
+    "rc0": true,
+    "falso VERDE = FAIL": true,
+    "ROSSO sempre motivato": true
+   },
+   "OK": true,
+   "verita": {
+    "zone": [
+     "alto-sx",
+     "alto-centro",
+     "alto-dx",
+     "mezzo-sx",
+     "centro",
+     "mezzo-dx",
+     "basso-sx",
+     "basso-centro",
+     "basso-dx"
+    ],
+    "B_dy_abs_p95": [
+     0.118,
+     0.119,
+     0.406,
+     0.088,
+     0.078,
+     0.121,
+     0.177,
+     0.104,
+     0.116
+    ],
+    "B_dy_median": [
+     0.014,
+     0.051,
+     0.11,
+     -0.027,
+     -0.033,
+     0.003,
+     -0.043,
+     -0.065,
+     -0.029
+    ],
+    "C_depth_pct_p95": [
+     0.364,
+     0.18,
+     0.351,
+     0.413,
+     0.24,
+     0.333,
+     0.45,
+     0.271,
+     0.422
+    ],
+    "C_depth_pct_median": [
+     -0.105,
+     0.001,
+     0.136,
+     -0.225,
+     -0.088,
+     0.018,
+     -0.267,
+     -0.153,
+     -0.059
+    ],
+    "info_depth_pct_p95_1m": [
+     0.142,
+     0.098,
+     0.108,
+     0.087,
+     0.063,
+     0.071,
+     0.153,
+     0.117,
+     0.12
+    ],
+    "info_depth_pct_p95_10m": [
+     0.964,
+     0.609,
+     1.123,
+     0.996,
+     0.639,
+     1.304,
+     1.007,
+     0.608,
+     1.616
+    ],
+    "focal_rect_est_true": [
+     1305.8214238419855,
+     1304.071473970076
+    ],
+    "baseline_dir_ok": true,
+    "baseline_est_mm": 200.04,
+    "baseline_true_mm": 200.01
+   },
+   "tilt_stato": "VERDE VERO",
+   "holdout_rms_modelli": {
+    "rational+prism": {
+     "rms_fit": [
+      0.4894543004909424,
+      0.5208094079170538
+     ],
+     "select_rms": [
+      0.47859495878219604,
+      0.48550450801849365
+     ],
+     "select_zone_rms_L": [
+      0.47150367498397827,
+      0.4706217348575592,
+      0.5033004283905029,
+      0.49748989939689636,
+      0.4745674431324005,
+      0.47467538714408875,
+      0.41407424211502075,
+      0.509501576423645,
+      0.4595078229904175
+     ],
+     "select_zone_rms_R": [
+      0.5273734331130981,
+      0.4878132939338684,
+      0.5350403785705566,
+      0.4789021909236908,
+      0.44850075244903564,
+      0.45466864109039307,
+      0.4749995172023773,
+      0.47823023796081543,
+      0.5269614458084106
+     ]
+    }
+   },
+   "modello_scelto": "rational+prism"
+  },
+  "camera_mossa": {
+   "atteso": "ROSSO (dy sistematico dopo il colpo); VERDE = falso verde",
+   "gate_script": "ROSSO",
+   "modello": "rational",
+   "problemi": [
+    "dy zona alto-sx: p50 |dy| 1.43 px (>= 0.5)",
+    "dy zona alto-sx: p95 |dy| (media per vista) 1.66 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.35)",
+    "dy zona alto-centro: p50 |dy| 1.40 px (>= 0.5)",
+    "dy zona alto-centro: p95 |dy| (media per vista) 1.58 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.36)",
+    "dy zona alto-dx: p50 |dy| 1.38 px (>= 0.5)",
+    "dy zona alto-dx: p95 |dy| (media per vista) 1.62 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.29)",
+    "dy zona mezzo-sx: p50 |dy| 1.43 px (>= 0.5)",
+    "dy zona mezzo-sx: p95 |dy| (media per vista) 1.85 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.39)",
+    "dy zona centro: p50 |dy| 1.39 px (>= 0.5)",
+    "dy zona centro: p95 |dy| (media per vista) 1.95 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.50)",
+    "dy zona mezzo-dx: p50 |dy| 1.43 px (>= 0.5)",
+    "dy zona mezzo-dx: p95 |dy| (media per vista) 1.85 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.34)",
+    "dy zona basso-sx: p50 |dy| 1.66 px (>= 0.5)",
+    "dy zona basso-sx: p95 |dy| (media per vista) 2.41 px (>= 1.0) [PRIORITARIO] (p95 grezzo 3.11)",
+    "dy zona basso-centro: p50 |dy| 1.62 px (>= 0.5)",
+    "dy zona basso-centro: p95 |dy| (media per vista) 1.96 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.59)",
+    "dy zona basso-dx: p50 |dy| 1.51 px (>= 0.5)",
+    "dy zona basso-dx: p95 |dy| (media per vista) 2.24 px (>= 1.0) [PRIORITARIO] (p95 grezzo 2.74)"
+   ],
+   "avvisi": [],
+   "checks": {
+    "rc0": true,
+    "gate ROSSO": true,
+    "falso VERDE = FAIL": true,
+    "motivo: dy": true
+   },
+   "OK": true,
+   "verita": {
+    "zone": [
+     "alto-sx",
+     "alto-centro",
+     "alto-dx",
+     "mezzo-sx",
+     "centro",
+     "mezzo-dx",
+     "basso-sx",
+     "basso-centro",
+     "basso-dx"
+    ],
+    "B_dy_abs_p95": [
+     1.444,
+     1.65,
+     1.644,
+     1.051,
+     1.137,
+     1.19,
+     0.956,
+     0.978,
+     1.172
+    ],
+    "B_dy_median": [
+     -1.165,
+     -1.377,
+     -1.36,
+     -0.947,
+     -0.998,
+     -1.072,
+     -0.881,
+     -0.915,
+     -0.949
+    ],
+    "C_depth_pct_p95": [
+     2.182,
+     0.736,
+     1.055,
+     2.145,
+     0.77,
+     0.939,
+     2.755,
+     0.585,
+     0.874
+    ],
+    "C_depth_pct_median": [
+     -0.346,
+     0.477,
+     0.558,
+     -0.551,
+     0.362,
+     0.656,
+     -0.953,
+     0.096,
+     0.574
+    ],
+    "info_depth_pct_p95_1m": [
+     0.446,
+     0.36,
+     0.82,
+     0.598,
+     0.261,
+     0.643,
+     0.81,
+     0.363,
+     0.574
+    ],
+    "info_depth_pct_p95_10m": [
+     5.978,
+     1.588,
+     1.667,
+     5.477,
+     1.77,
+     1.825,
+     6.854,
+     1.59,
+     1.968
+    ],
+    "focal_rect_est_true": [
+     1303.479160823817,
+     1304.6187991987217
+    ],
+    "baseline_dir_ok": true,
+    "baseline_est_mm": 199.74,
+    "baseline_true_mm": 200.01
+   },
+   "verita_cattiva": true
+  },
+  "scala_2pct": {
+   "atteso": "ARANCIO",
+   "gate_script": "ARANCIO",
+   "modello": "rational",
+   "problemi": [],
+   "avvisi": [
+    "|T| dal tabellone 204.0 mm = +1.98% da 200 mm (fra +-1.0% e +-3.0%): calibro + annotazione"
+   ],
+   "checks": {
+    "rc0": true,
+    "gate ARANCIO": true,
+    "|T| NON riscalata (dev ~ +2%)": true
+   },
+   "OK": true,
+   "verita": null,
+   "baseline_dev_pct": 1.9846523196517252
+  },
+  "scala_5pct": {
+   "atteso": "ROSSO",
+   "gate_script": "ROSSO",
+   "modello": "rational",
+   "problemi": [
+    "|T| dal tabellone 210.0 mm = +4.99% da 200 mm (> +-3.0%): misura col calibro la baseline e controlla --square-len (T NON viene riscalata)"
+   ],
+   "avvisi": [],
+   "checks": {
+    "rc0": true,
+    "gate ROSSO": true,
+    "|T| NON riscalata (dev ~ +5%)": true
+   },
+   "OK": true,
+   "verita": null,
+   "baseline_dev_pct": 4.986719459338662
+  },
+  "sync_3pct": {
+   "atteso": "VERDE",
+   "gate_script": "VERDE",
+   "modello": "rational",
+   "problemi": [],
+   "avvisi": [],
+   "checks": {
+    "rc0": true,
+    "gate VERDE": true,
+    "coppie scartate = iniettate": true,
+    "frame scartati in collect = iniettati": true
+   },
+   "OK": true,
+   "verita": null,
+   "iniettate": 12,
+   "sync": {
+    "n_pairs": 400,
+    "dt_ms_p50": 0.0,
+    "dt_ms_p95": 0.0,
+    "dt_ms_max": 3.0,
+    "max_ms": 1.0,
+    "pairs_over": 12,
+    "rows_left": 400,
+    "rows_right": 400
+   }
+  },
+  "sync_20pct": {
+   "atteso": "ROSSO",
+   "gate_script": "ROSSO",
+   "modello": "rational",
+   "problemi": [
+    "sync: p95 delta t coppie 3.000 ms (>= 1.0); 80/400 coppie scartate"
+   ],
+   "avvisi": [],
+   "checks": {
+    "rc0": true,
+    "gate ROSSO": true,
+    "coppie scartate = iniettate": true,
+    "frame scartati in collect = iniettati": true
+   },
+   "OK": true,
+   "verita": null,
+   "iniettate": 80,
+   "sync": {
+    "n_pairs": 400,
+    "dt_ms_p50": 0.0,
+    "dt_ms_p95": 3.0,
+    "dt_ms_max": 3.0,
+    "max_ms": 1.0,
+    "pairs_over": 80,
+    "rows_left": 400,
+    "rows_right": 400
+   }
+  },
+  "export": {
+   "atteso": "file creati e coerenti",
+   "gate_script": null,
+   "modello": null,
+   "problemi": null,
+   "avvisi": null,
+   "checks": {
+    "yaml esiste": true,
+    "maps esiste": true,
+    "CANDIDATO nel nome": true,
+    "chiavi K1,D1,K2,D2,R,T,R1,R2,P1,P2,Q": true,
+    "K1 yaml == JSON": true,
+    "T yaml == JSON": true,
+    "modello+hash": true,
+    "mappe 800x1280": true,
+    "--out senza CANDIDATO rifiutato": true
+   },
+   "OK": true,
+   "verita": null
+  },
+  "depth_default": {
+   "atteso": "default bit-identico, conf opzionale",
+   "gate_script": null,
+   "modello": null,
+   "problemi": null,
+   "avvisi": null,
+   "checks": {
+    "default bit-identico al vecchio codice": true,
+    "(stub) conf_min=None invariato": true,
+    "(stub) conf_min scarta sotto soglia": true
+   },
+   "OK": true,
+   "verita": null,
+   "HAS_WLS_reale": false,
+   "NON_VERIFICATO": "getConfidenceMap del WLS vero: opencv-contrib (ximgproc) assente su questo Mac, provato solo con stub"
+  }
+ },
+ "casi_falliti": [],
+ "quando": "2026-11-10T12:16:24",
+ "criteri": "ogni caso ha esito atteso dichiarato; nessuna soglia modificata per far passare; verita' = punti 3D indipendenti 1-5 m (dy p95<1 px e depth p95<=2% in OGNI zona 3x3); exit code != 0 se un caso fallisce"
 }

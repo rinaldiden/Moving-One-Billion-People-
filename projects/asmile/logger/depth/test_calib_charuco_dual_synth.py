@@ -7,12 +7,19 @@ Rende un tabellone ChArUco visto da una coppia stereo con distorsione NOTA (rati
 f~1150, k1~-0.37, rotazione relativa ~5 deg), lo codifica in DUE file h264 a 500 kbps con la convenzione di #001
 (video_left = camera fisicamente DESTRA), lancia lo script vero e confronta con la verita' (punti 3D indipendenti).
 
+CRITERIO FISSATO PRIMA di rilanciare (veto critico 2026-11-10, soglie D012 NON ritoccate):
+  9zone su SEEDS_9ZONE (5 seed, inclusi 1,2,3 che il critico aveva trovato ROSSI): >= MIN_VERDI VERDI (4/5), e ZERO falsi
+  verdi in tutti i casi (VERDE con verita' 3D fuori da dy p95<1 px o depth p95<=2%, o con modello/baseline sbagliati).
+  Gate: modello e stereo scelti su un blocco DIVERSO da quello del gate (fit 50% / scelta 20% / gate 30%).
+
 Casi (esito atteso fra parentesi):
-  9zone            9 zone di entrambe le camere (VERDE; verita': dy p95<1 px e depth p95<=2% a 1-5 m in OGNI zona)
+  9zone_5seed      9 zone, 5 seed (>= 4/5 VERDE; verita': dy p95<1 px e depth p95<=2% a 1-5 m in OGNI zona se VERDE)
+  stat_dy_unit     la statistica dy (media per vista) vede un errore sistematico di 1.2 px e non il solo rumore di corner
   solo_centro      viste solo al centro (ROSSO: copertura)
   file_scambiati   stessi video, --left-file/--right-file invertiti (ROSSO, T[0]>=0)  [falso verde del critico]
-  tilt_auto        sensore sinistro INCLINATO ~0.3 deg, 3 modelli in gara (sceglie rational+prism+tilted, VERDE)
-  tilt_rational    stessi video, solo rational (ROSSO)       tilt_prism   solo rational+prism (ROSSO)
+  tilt_auto/rational/prism  sensore sinistro INCLINATO ~0.3 deg: il gate deve CONCORDARE con la verita' 3D (rational assorbe
+                   il tilt: VERDE vero; VERDE con verita' fuori soglia = falso verde = FAIL)
+  camera_mossa     camera destra toccata (0.12 deg) a meta' sessione: ROSSO (dy sistematico); VERDE = falso verde
   scala_2pct       --square-len sbagliato del +2% -> |T| 2% fuori (ARANCIO: calibro + annotazione)
   scala_5pct       --square-len sbagliato del +5% -> ROSSO
   sync_3pct        3% coppie con dt 3 ms (VERDE, coppie scartate = iniettate)
@@ -40,6 +47,9 @@ import calib_charuco_dual as ccd  # noqa: E402
 from stereo_common import Calib  # noqa: E402
 
 W, H, SS = 1280, 800, 2
+SEEDS_9ZONE = [20261109, 1, 2, 3, 4]    # fissati PRIMA della regressione (non scelti dopo aver visto gli esiti)
+MIN_VERDI = 4                            # >= 4/5 VERDE
+MAX_JOBS = 3                             # processi di calibrazione in parallelo (il Mac allena il MAESTRO)
 rng = np.random.default_rng(20261109)
 
 # ---- verità (fisicamente SINISTRA = camera 1 della calib; DESTRA = camera 2) ----
@@ -110,7 +120,7 @@ def poses(n, center_only, board_wh):
     return out
 
 
-def make_session(work, name, center_only, nviews, board, sx, sy, sq, d1=D1, d2=D2):
+def make_session(work, name, center_only, nviews, board, sx, sy, sq, d1=D1, d2=D2, bump_deg=0.0):
     d = os.path.join(work, name)
     os.makedirs(d, exist_ok=True)
     ppsq = 120
@@ -120,10 +130,12 @@ def make_session(work, name, center_only, nviews, board, sx, sy, sq, d1=D1, d2=D
     rl, okl = ray_map(K1, d1)
     rr, okr = ray_map(K2, d2)
     frames = {"L": [], "R": []}
-    for Rb, tb in poses(nviews, center_only, (sx * sq, sy * sq)):
+    Rbump = cv2.Rodrigues(np.radians([bump_deg, 0.0, 0.0]))[0] @ R_TRUE      # camera destra 'toccata' a meta' sessione
+    for idx, (Rb, tb) in enumerate(poses(nviews, center_only, (sx * sq, sy * sq))):
+        Ruse = Rbump if (bump_deg and idx >= nviews // 2) else R_TRUE
         bg = rng.uniform(90, 160)
         a = render(rl, okl, tex, ppm, Rb, tb, bg)
-        b = render(rr, okr, tex, ppm, R_TRUE @ Rb, R_TRUE @ tb + T_TRUE, bg)
+        b = render(rr, okr, tex, ppm, Ruse @ Rb, Ruse @ tb + T_TRUE, bg)
         for _ in range(2):
             frames["L"].append(a); frames["R"].append(b)
     # convenzione #001: video_left.h264 = camera fisicamente DESTRA, video_right.h264 = fisicamente SINISTRA
@@ -287,7 +299,10 @@ def depth_checks(work_session):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--work", required=True)
-    ap.add_argument("--views", type=int, default=72)
+    ap.add_argument("--views", type=int, default=200)
+    ap.add_argument("--reuse", action="store_true", help="riusa sessioni e report gia' calcolati in --work (stesso codice calib): "
+                    "ricalcola solo verita', criteri e i job mancanti")
+    ap.add_argument("--extra-seeds", default="", help="seed 9zone ulteriori, solo informativi (non nel criterio)")
     ap.add_argument("--esito", default=os.path.join(HERE, "test_calib_charuco_dual_synth.esito.json"))
     ap.add_argument("--log", default=os.path.join(HERE, "test_calib_charuco_dual_synth.log"))
     a = ap.parse_args()
@@ -311,63 +326,155 @@ def main():
         return [("verita_dy_p95<1_in_9_zone", max(v["B_dy_abs_p95"]) < 1.0),
                 ("verita_depth_p95<=2%_in_9_zone", max(v["C_depth_pct_p95"]) <= 2.0), ("T[0]<0", v["baseline_dir_ok"])]
 
-    # ---------- sessioni
-    d9 = make_session(a.work, "synth_9zone", False, a.views, board, sx, sy, sq)
-    dc = make_session(a.work, "synth_solo_centro", True, a.views, board, sx, sy, sq)
-    dt = make_session(a.work, "synth_tilt", False, a.views, board, sx, sy, sq, D1T, D2T)
-    P = lambda n: os.path.join(a.work, f"calib_{n}.CANDIDATO.json")
+    # ---------- sessioni (generate in sequenza: rng globale), poi le calibrazioni in parallelo (max MAX_JOBS)
+    global rng
+    _ms = globals()["make_session"]
 
-    # 1) 9 zone
-    rep, r = run_script(d9, P("9zone"))
-    v = compare(P("9zone"), D1, D2) if rep else None
-    case("9zone", "VERDE", rep, [("rc0", r.returncode == 0), ("gate VERDE", bool(rep) and rep["gate"] == "VERDE")]
-         + (truth_ok(v) if v else [("verita", False)]) + ([("|T| entro 1% di 200", abs(rep["baseline_dev_pct"]) < 1.0)] if rep else []), v,
-         extra=dict(margine_interno_05px_1pct=([ccd.ZNAME[z] + " NO" for z in range(9)
-                                               if v["B_dy_abs_p95"][z] >= 0.5 or v["C_depth_pct_p95"][z] >= 1.0] or "tutte OK") if v else None,
-                    edge_script=(rep or {}).get("stereo_holdout", {}).get("depth_edge_informativo")))
+    def make_session(work, name, *args, **kw):          # noqa: F811 (con --reuse non rigenera una sessione gia' fatta)
+        dd_ = os.path.join(work, name)
+        if a.reuse and os.path.exists(os.path.join(dd_, "video_right.h264")):
+            return dd_
+        return _ms(work, name, *args, **kw)
+    P = lambda n: os.path.join(a.work, f"calib_{n}.CANDIDATO.json")
+    d9 = make_session(a.work, f"synth_9zone_s{SEEDS_9ZONE[0]}", False, a.views, board, sx, sy, sq)
+    dc = make_session(a.work, "synth_solo_centro", True, a.views, board, sx, sy, sq)
+    dt = make_session(a.work, "synth_tilt", False, int(a.views * 1.5), board, sx, sy, sq, D1T, D2T)
+    extra_seeds = [int(x) for x in a.extra_seeds.split(",") if x.strip()]
+    seed_dirs = {SEEDS_9ZONE[0]: d9}
+    for sd in SEEDS_9ZONE[1:] + extra_seeds:
+        rng = np.random.default_rng(sd)
+        seed_dirs[sd] = make_session(a.work, f"synth_9zone_s{sd}", False, a.views, board, sx, sy, sq)
+    sd3, ninj3 = sync_session(d9, os.path.join(a.work, "synth_sync_3pct"), 0.03, 7)
+    sd20, ninj20 = sync_session(d9, os.path.join(a.work, "synth_sync_20pct"), 0.20, 7)
+    rng = np.random.default_rng(4242)
+    dm = make_session(a.work, "synth_camera_mossa", False, a.views, board, sx, sy, sq, bump_deg=0.12)
+    jobs = {}
+    for sd, dd in seed_dirs.items():
+        jobs[f"9zone_s{sd}"] = (dd, [], sq)
+    jobs["camera_mossa"] = (dm, [], sq)
+    jobs["solo_centro"] = (dc, [], sq)
+    jobs["scambiati"] = (d9, ["--left-file", os.path.join(d9, "video_left.h264"), "--right-file", os.path.join(d9, "video_right.h264")], sq)
+    jobs["tilt_auto"] = (dt, [], sq)
+    jobs["tilt_rational"] = (dt, ["--models", "rational"], sq)
+    jobs["tilt_prism"] = (dt, ["--models", "rational+prism"], sq)
+    jobs["scala_2pct"] = (d9, [], round(sq * 1.02, 6))
+    jobs["scala_5pct"] = (d9, [], round(sq * 1.05, 6))
+    jobs["sync_3pct"] = (sd3, [], sq)
+    jobs["sync_20pct"] = (sd20, [], sq)
+    from concurrent.futures import ThreadPoolExecutor
+    def run_or_reuse(k, v):
+        if a.reuse and os.path.exists(P(k) + ".report.json"):
+            class _R:
+                returncode = 0
+            return json.load(open(P(k) + ".report.json")), _R()
+        return run_script(v[0], P(k), v[1], "asmile-001", v[2])
+    with ThreadPoolExecutor(max_workers=MAX_JOBS) as ex:
+        futs = {k: ex.submit(run_or_reuse, k, v) for k, v in jobs.items()}
+        res_run = {k: f.result() for k, f in futs.items()}
+
+    def truth(k, d1, d2):
+        rep_ = res_run[k][0]
+        if not rep_:
+            return None
+        globals()["rng"] = np.random.default_rng(777)     # punti di verita' riproducibili
+        return compare(P(k), d1, d2)
+
+    # 0) statistica dy: errore sistematico visto, rumore di corner no (unit test sul codice del gate)
+    r0 = np.random.default_rng(0)
+    mk = lambda off, sig: [{i: list(off + r0.normal(0, sig, 25)) for i in range(12)} for _ in range(9)]
+    st_a, st_b, st_c = ccd.dy_zone_stats(mk(0.0, 0.44)), ccd.dy_zone_stats(mk(1.2, 0.44)), ccd.dy_zone_stats(mk(0.6, 0.44))
+    case("stat_dy_unit", "rumore 0.44 px: media-per-vista <1 ma p95 grezzo ~0.9; offset 1.2 px: >=1; offset 0.6: <1", None,
+         [("solo rumore -> p95 media-per-vista < 0.5", max(st_a["dy_patch_abs_p95"]) < 0.5),
+          ("solo rumore -> p95 grezzo >= 0.8 (pavimento di rumore)", max(st_a["dy_abs_p95"]) >= 0.8),
+          ("offset sistematico 1.2 px -> media-per-vista >= 1.0 (gate ROSSO)", min(st_b["dy_patch_abs_p95"]) >= 1.0),
+          ("offset 0.6 px -> media-per-vista < 1.0", max(st_c["dy_patch_abs_p95"]) < 1.0)],
+         extra=dict(valori=dict(rumore=max(st_a["dy_patch_abs_p95"]), off12=min(st_b["dy_patch_abs_p95"]), off06=max(st_c["dy_patch_abs_p95"]))))
+
+    # 1) 9 zone x 5 seed (criterio fissato prima)
+    tab = []
+    for sd in SEEDS_9ZONE + extra_seeds:
+        k = f"9zone_s{sd}"
+        rep, r = res_run[k]
+        v = truth(k, D1, D2)
+        gtruth = bool(v) and all(c[1] for c in truth_ok(v))
+        verde = bool(rep) and rep["gate"] == "VERDE"
+        hs_ = (rep or {}).get("stereo_holdout", {})
+        tab.append(dict(seed=sd, in_criterio=sd in SEEDS_9ZONE, gate=(rep or {}).get("gate"), verde=verde,
+                        falso_verde=verde and not gtruth, verita_ok=gtruth, modello=(rep or {}).get("model"),
+                        dy_n_min=min(hs_["dy_n"]) if hs_ else None, patch_n_min=min(hs_["dy_patch_n"]) if hs_ else None,
+                        dy_patch_p95_peggiore=max([x for x in hs_.get("dy_patch_abs_p95", []) if x is not None] or [None]) if hs_ else None,
+                        dy_p95_grezzo_peggiore=max([x for x in hs_.get("dy_abs_p95", []) if x is not None] or [None]) if hs_ else None,
+                        rumore_corner_sigma_px=float(np.nanmedian([x for x in hs_.get("dy_noise_sigma_px", []) if x is not None] or [np.nan])) if hs_ else None,
+                        rms_mono_gate=(rep or {}).get("rms_mono_holdout"), rms_stereo_gate=((rep or {}).get("rms_stereo_holdout") or {}).get("rms"),
+                        baseline_dev_pct=(rep or {}).get("baseline_dev_pct"),
+                        verita_dy_p95_peggiore=max(v["B_dy_abs_p95"]) if v else None,
+                        verita_depth_p95_peggiore=max(v["C_depth_pct_p95"]) if v else None,
+                        problemi=(rep or {}).get("gate_problemi"), avvisi_margine=(rep or {}).get("avvisi_margine"),
+                        n_viste=(rep or {}).get("holdout", {}).get("n_views")))
+    crit_t = [t_ for t_ in tab if t_["in_criterio"]]
+    n_verdi = sum(t_["verde"] for t_ in crit_t)
+    case("9zone_5seed", f">= {MIN_VERDI}/5 VERDE, 0 falsi verdi", None,
+         [(f"VERDE su {n_verdi}/5 (>= {MIN_VERDI})", n_verdi >= MIN_VERDI),
+          ("zero falsi verdi (verita' 3D)", not any(t_["falso_verde"] for t_ in tab)),
+          ("ogni ROSSO ha un motivo", all(t_["verde"] or t_["problemi"] for t_ in tab))],
+         extra=dict(seed_tabella=tab, n_verdi=n_verdi))
+    rep9, r9 = res_run[f"9zone_s{SEEDS_9ZONE[0]}"]
     # 2) solo centro
-    rep, r = run_script(dc, P("solo_centro"))
+    rep, r = res_run["solo_centro"]
     case("solo_centro", "ROSSO", rep, [("rc0", r.returncode == 0), ("gate ROSSO", bool(rep) and rep["gate"] == "ROSSO"),
                                        ("motivo copertura", bool(rep) and any("copertura" in m for m in rep["gate_problemi"]))])
     # 3) file scambiati (falso verde del critico)
-    rep, r = run_script(d9, P("scambiati"), ["--left-file", os.path.join(d9, "video_left.h264"),
-                                             "--right-file", os.path.join(d9, "video_right.h264")])
+    rep, r = res_run["scambiati"]
     case("file_scambiati", "ROSSO (T[0]>=0)", rep, [("rc0", r.returncode == 0), ("gate ROSSO", bool(rep) and rep["gate"] == "ROSSO"),
                                                    ("motivo T[0]>=0", bool(rep) and any("T[0]" in m for m in rep["gate_problemi"]))])
-    # 4) sensore inclinato
-    rep, r = run_script(dt, P("tilt_auto"))
-    v = compare(P("tilt_auto"), D1T, D2T) if rep else None
-    case("tilt_auto", "VERDE col modello rational+prism+tilted", rep,
-         [("rc0", r.returncode == 0), ("gate VERDE", bool(rep) and rep["gate"] == "VERDE"),
-          ("modello tilted", bool(rep) and rep["model"] == "rational+prism+tilted")] + (truth_ok(v) if v else [("verita", False)]), v,
-         extra=dict(holdout_rms_modelli=(rep or {}).get("models")))
-    for nm, mdl in (("tilt_rational", "rational"), ("tilt_prism", "rational+prism")):
-        rep, r = run_script(dt, P(nm), ["--models", mdl])
-        v = compare(P(nm), D1T, D2T) if rep else None
-        case(nm, "ROSSO (senza tilted non rientra)", rep, [("rc0", r.returncode == 0), ("gate ROSSO", bool(rep) and rep["gate"] == "ROSSO")], v)
+    # 4) sensore inclinato ~0.3 deg. Con la statistica corretta (media per vista) il gate non e' piu' deciso dal rumore dei
+    # corner: il modello rational ASSORBE un tilt di 0.3 deg (verita' dy p95<0.5 px) e il VERDE e' VERO. Quindi il criterio
+    # non e' "ROSSO" ma "il gate concorda con la verita' 3D": VERDE con verita' fuori soglia = FALSO VERDE = FAIL; ROSSO con
+    # verita' buona = falso rosso, riportato (non fallisce: e' prudenza).
+    for nm, v_nm in (("tilt_auto", None), ("tilt_rational", None), ("tilt_prism", None)):
+        rep, r = res_run[nm]
+        v = truth(nm, D1T, D2T)
+        verde = bool(rep) and rep["gate"] == "VERDE"
+        truth_good = bool(v) and all(c[1] for c in truth_ok(v))
+        stato = "FALSO VERDE" if (verde and not truth_good) else ("VERDE VERO" if verde else
+                ("ROSSO prudente (verita' buona: falso rosso)" if truth_good else "ROSSO giusto (verita' cattiva)"))
+        case(nm, "gate concorda con la verita' 3D (VERDE solo se verita' ok; falso VERDE = FAIL)", rep,
+             [("rc0", r.returncode == 0), ("falso VERDE = FAIL", not (verde and not truth_good)),
+              ("ROSSO sempre motivato", verde or bool(rep and rep["gate_problemi"]))], v,
+             extra=dict(tilt_stato=stato, holdout_rms_modelli=(rep or {}).get("models"), modello_scelto=(rep or {}).get("model")))
+    # 4b) camera destra TOCCATA a meta' sessione (0.12 deg su x -> dy ~2.4 px): il gate vede dy sistematico nei blocchi
+    # dopo il colpo, la verita' (R originale) e' cattiva -> deve essere ROSSO; VERDE qui = FALSO VERDE.
+    rep, r = res_run["camera_mossa"]
+    v = truth("camera_mossa", D1, D2)
+    truth_good = bool(v) and all(c[1] for c in truth_ok(v))
+    verde = bool(rep) and rep["gate"] == "VERDE"
+    case("camera_mossa", "ROSSO (dy sistematico dopo il colpo); VERDE = falso verde", rep,
+         [("rc0", r.returncode == 0), ("gate ROSSO", bool(rep) and rep["gate"] == "ROSSO"), ("falso VERDE = FAIL", not (verde and not truth_good)),
+          ("motivo: dy", bool(rep) and any(m.startswith("dy zona") for m in rep["gate_problemi"]))], v,
+         extra=dict(verita_cattiva=not truth_good))
     # 5) scala del tabellone sbagliata (|T| fuori dal 200 mm)
-    for nm, k, exp in (("scala_2pct", 1.02, "ARANCIO"), ("scala_5pct", 1.05, "ROSSO")):
-        rep, r = run_script(d9, P(nm), sq=round(sq * k, 6))
+    for nm, k_, exp in (("scala_2pct", 1.02, "ARANCIO"), ("scala_5pct", 1.05, "ROSSO")):
+        rep, r = res_run[nm]
         case(nm, exp, rep, [("rc0", r.returncode == 0), (f"gate {exp}", bool(rep) and rep["gate"] == exp),
-                            ("|T| NON riscalata (dev ~ +%d%%)" % round((k - 1) * 100),
-                             bool(rep) and abs(rep["baseline_dev_pct"] - (k - 1) * 100) < 0.7)],
+                            ("|T| NON riscalata (dev ~ +%d%%)" % round((k_ - 1) * 100),
+                             bool(rep) and abs(rep["baseline_dev_pct"] - (k_ - 1) * 100) < 0.7)],
              extra=dict(baseline_dev_pct=(rep or {}).get("baseline_dev_pct")))
     # 6) sync
-    for nm, frac, exp in (("sync_3pct", 0.03, "VERDE"), ("sync_20pct", 0.20, "ROSSO")):
-        sd, ninj = sync_session(d9, os.path.join(a.work, "synth_" + nm), frac, 7)
-        rep, r = run_script(sd, P(nm))
+    for nm, ninj, exp in (("sync_3pct", ninj3, "VERDE"), ("sync_20pct", ninj20, "ROSSO")):
+        rep, r = res_run[nm]
         sy_ = (rep or {}).get("input", {}).get("sync") or {}
         case(nm, exp, rep, [("rc0", r.returncode == 0), (f"gate {exp}", bool(rep) and rep["gate"] == exp),
                             ("coppie scartate = iniettate", sy_.get("pairs_over") == ninj),
                             ("frame scartati in collect = iniettati", (rep or {}).get("input", {}).get("pairs_discarded_sync") == ninj)],
              extra=dict(iniettate=ninj, sync=sy_))
     # 7) export + rifiuto nome senza CANDIDATO
-    y, m = P("9zone")[:-5] + ".yaml", P("9zone")[:-5] + ".maps.npz"
+    K9 = f"9zone_s{SEEDS_9ZONE[0]}"
+    y, m = P(K9)[:-5] + ".yaml", P(K9)[:-5] + ".maps.npz"
     chk = [("yaml esiste", os.path.exists(y)), ("maps esiste", os.path.exists(m)),
            ("CANDIDATO nel nome", "CANDIDATO" in y and "CANDIDATO" in m)]
     if os.path.exists(y) and os.path.exists(m):
         fs = cv2.FileStorage(y, cv2.FILE_STORAGE_READ)
-        cal = Calib.load(P("9zone"))
+        cal = Calib.load(P(K9))
         keys = ["K1", "D1", "K2", "D2", "R", "T", "R1", "R2", "P1", "P2", "Q"]
         chk += [("chiavi " + ",".join(keys), all(not fs.getNode(k).empty() for k in keys)),
                 ("K1 yaml == JSON", np.allclose(fs.getNode("K1").mat(), cal.K1)),

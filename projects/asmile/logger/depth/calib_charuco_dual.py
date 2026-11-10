@@ -31,7 +31,12 @@ Uscita: <out> (formato Calib di stereo_common, T in METRI come calib_asmile-001.
 D012 firmato 2026-11-09 (punto A): |T| NON viene mai riscalato (e' un CONTROLLO: 200 mm +-3%, fra +-1% e +-3%
 ARANCIO "calibro + annotazione"); RMS mono<0.5 e stereo<1 px e dy (p50<0.5, p95<1) SOLO su viste tenute fuori
 (blocchi di tempo contigui); dy p95<1 px in tutte le 9 zone e' PRIORITARIO; sync p95 <1 ms con scarto automatico
-delle coppie oltre soglia; 3 modelli (rational, +prism, +prism+tilted) scelti sull'hold-out.
+delle coppie oltre soglia; 3 modelli (rational, +prism, +prism+tilted) scelti su un blocco SCELTA.
+Correzioni al veto 2026-11-10: TRE blocchi di tempo (fit 50% / scelta 20% / gate 30%, mai mescolati; rifit finale su
+fit+scelta, il gate resta intatto); dy p95 per zona valutato come p95 delle MEDIE PER VISTA (patch >= 5 corner) perche'
+il p95 del dy grezzo ha un pavimento di rumore dei corner ~1 px (soglia 1 px INVARIATA); zona con < 60 punti o < 6 viste
+nel blocco del gate = INSUFFICIENTE = ROSSO ("servono piu' viste in zona X"); margini (RMS mono vicino a soglia, bootstrap)
+elencati in report["avvisi_margine"].
 Non sovrascrive MAI una calib_<unità>.json: il nome deve contenere "CANDIDATO". La sostituzione la decide
 asmile-calib-critico (PASSA) — non questo script.
 """
@@ -173,7 +178,12 @@ def coverage(views, key):
 
 # ---------------------------------------------------------------------------- selezione viste
 def collect(args, prof, board):
-    det = cv2.aruco.CharucoDetector(board)
+    dp = cv2.aruco.DetectorParameters()
+    dp.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
+    dp.cornerRefinementWinSize = 5
+    dp.cornerRefinementMaxIterations = 100
+    dp.cornerRefinementMinAccuracy = 0.01
+    det = cv2.aruco.CharucoDetector(board, cv2.aruco.CharucoParameters(), dp)
     views, info, n, skipped = [], {}, 0, 0
     last_sig = None
     for i, L, R, info in paired_frames(args, prof):
@@ -199,25 +209,33 @@ def collect(args, prof, board):
     return views, info
 
 
-def split_holdout(views, n_blocks, guard):
-    """Hold-out a BLOCCHI DI TEMPO CONTIGUI (D012/critico #6): le viste (ordinate per frame) sono divise in
-    `n_blocks` blocchi; si tengono fuori il blocco n_blocks//2-1 e l'ultimo (~20%, lontani fra loro). Le `guard`
-    viste adiacenti a un blocco tenuto fuori NON entrano nel fit (quasi-duplicati temporali)."""
+def split_three(views, n_blocks, guard):
+    """TRE blocchi di tempo (veto critico 2026-11-10 #3): FIT / SCELTA / GATE, contigui e a due a due non adiacenti.
+    Le viste (ordinate per frame) sono divise in `n_blocks` (multiplo di 10) blocchi; per ogni decina di blocchi:
+    GATE = blocchi 1,5,9 (~30%), SCELTA = blocchi 3,7 (~20%), FIT = il resto (~50%). Modello e modalita' stereo si
+    scelgono sul blocco SCELTA; il blocco GATE non e' mai toccato prima del giudizio. Le `guard` viste adiacenti a un
+    blocco SCELTA/GATE non entrano nel fit (quasi-duplicati temporali)."""
+    if n_blocks % 10:
+        raise SystemExit("--holdout-blocks deve essere un multiplo di 10 (schema fit/scelta/gate 5-2-3)")
     n = len(views)
     edges = np.linspace(0, n, n_blocks + 1).astype(int)
-    hold_blocks = {n_blocks // 2 - 1, n_blocks - 1}
-    hold_idx = set()
-    for b in hold_blocks:
-        hold_idx.update(range(edges[b], edges[b + 1]))
+    gate_b = {b for b in range(n_blocks) if b % 10 in (1, 5, 9)}
+    sel_b = {b for b in range(n_blocks) if b % 10 in (3, 7)}
+    rng_of = lambda bs: {i for b in bs for i in range(edges[b], edges[b + 1])}
+    gate_idx, sel_idx = rng_of(gate_b), rng_of(sel_b)
     near = set()
-    for i in hold_idx:
+    for i in gate_idx | sel_idx:
         for g in range(1, guard + 1):
             near.update((i - g, i + g))
-    fit = [v for k, v in enumerate(views) if k not in hold_idx and k not in near]
-    hold = [v for k, v in enumerate(views) if k in hold_idx]
-    return fit, hold, dict(n_blocks=n_blocks, hold_blocks=sorted(hold_blocks), guard=guard,
-                           hold_view_ranges=[[int(edges[b]), int(edges[b + 1] - 1)] for b in sorted(hold_blocks)],
-                           guard_excluded=len(near - hold_idx & set(range(n))))
+    near -= gate_idx | sel_idx
+    pick = lambda idx: [v for k, v in enumerate(views) if k in idx]
+    fit = [v for k, v in enumerate(views) if k not in gate_idx and k not in sel_idx and k not in near]
+    return fit, pick(sel_idx), pick(gate_idx), dict(
+        n_blocks=n_blocks, gate_blocks=sorted(gate_b), select_blocks=sorted(sel_b), guard=guard,
+        hold_view_ranges=[[int(edges[b]), int(edges[b + 1] - 1)] for b in sorted(gate_b)],
+        select_view_ranges=[[int(edges[b]), int(edges[b + 1] - 1)] for b in sorted(sel_b)],
+        guard_excluded=len(near & set(range(n))),
+        n_views=dict(fit=len(fit), select=len(sel_idx), gate=len(gate_idx)))
 
 
 def cap_views(views, key, max_views):
@@ -246,6 +264,37 @@ def calib_mono(views, key, flags):
     img = [v[key]["img"] for v in views]
     crit = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 200, 1e-9)
     rms, K, D, rv, tv = cv2.calibrateCamera(obj, img, (CAM_W, CAM_H), None, None, flags=flags, criteria=crit)
+    if flags & cv2.CALIB_TILTED_MODEL:
+        # Il modello tilted (tauX, tauY) e' mal condizionato: da un avvio generico LM si pianta in minimi locali
+        # (rms 3-4 px invece di 0.4, verificato sul sintetico). Si parte dal fit SENZA tilt e si prova una griglia
+        # 5x5 di (tauX, tauY) iniziali (+-0.4 deg); vince il rms di fit piu' basso (la scelta del modello resta
+        # sulle viste tenute fuori).
+        f0 = flags & ~cv2.CALIB_TILTED_MODEL
+        _, K0, D0, _, _ = cv2.calibrateCamera(obj, img, (CAM_W, CAM_H), None, None, flags=f0, criteria=crit)
+        D0 = D0.ravel()
+        crit2 = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 500, 1e-12)
+        grid = np.radians([-0.4, -0.2, 0.0, 0.2, 0.4])
+        sols = []
+        for tx in grid:
+            for ty in grid:
+                Dg = np.zeros((1, 14))
+                n = min(12, D0.size)
+                Dg[0, :n] = D0[:n]
+                Dg[0, 12], Dg[0, 13] = tx, ty
+                try:
+                    r2, K2, D2, _, _ = cv2.calibrateCamera(obj, img, (CAM_W, CAM_H), K0.copy(), Dg,
+                                                           flags=flags | cv2.CALIB_USE_INTRINSIC_GUESS, criteria=crit2)
+                except cv2.error:
+                    continue
+                sols.append((r2, K2, D2.ravel()))
+        if sols:
+            rbest = min(s_[0] for s_ in sols)
+            # tau non e' ben identificabile (soluzioni con rms uguale e tau molto diverse): fra quelle entro il 3%
+            # dal rms migliore si prende la tau piu' piccola (nessuna inclinazione inventata dal rumore)
+            near = [s_ for s_ in sols if s_[0] <= 1.03 * rbest]
+            r2, K2, D2 = min(near, key=lambda s_: float(np.hypot(s_[2][12], s_[2][13])))
+            if r2 < rms:
+                rms, K, D = r2, K2, D2
     return float(rms), K, D.ravel()
 
 
@@ -291,6 +340,37 @@ def stereo_fit(views, K1, D1, K2, D2, flags_model, joint):
             obj.append(c[0]); iL.append(c[1]); iR.append(c[2])
     if len(obj) < 6:
         raise SystemExit(f"Poche viste stereo con corner comuni ({len(obj)}): servono >= 6 (meglio 20+).")
+    if flags_model & cv2.CALIB_TILTED_MODEL:
+        # cv2.stereoCalibrate con il modello tilted e' rotto (rms in migliaia di px anche con intrinseci fissi,
+        # verificato sul sintetico). Si raddrizzano i corner con la distorsione tilted gia' stimata (stesso K) e si
+        # stimano R,T con un pinhole puro. La rifinitura congiunta degli intrinseci non e' disponibile: joint = fisso.
+        crit = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 300, 1e-10)
+        crit_u = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 60, 1e-12)
+
+        def ideal(pts, K, D):
+            return cv2.undistortPointsIter(pts.reshape(-1, 1, 2).astype(np.float64), K,
+                                            np.asarray(D, np.float64).reshape(1, -1), None, K, crit_u).reshape(-1, 2).astype(np.float32)
+        def pinhole_rms(o, u, K):
+            ok, rv, tv = cv2.solvePnP(o.astype(np.float64), u.astype(np.float64), K, None)
+            if not ok:
+                return 1e9
+            pr = cv2.projectPoints(o.astype(np.float64), rv, tv, K, None)[0].reshape(-1, 2)
+            return float(np.sqrt(np.mean(np.sum((pr - u) ** 2, 1))))
+        keep = []
+        for j in range(len(obj)):
+            uL, uR = ideal(iL[j], K1, D1), ideal(iR[j], K2, D2)
+            # viste con pochi corner o posa ambigua (rms pinhole alto) rovinano stereoCalibrate: fuori
+            if len(obj[j]) >= 12 and max(pinhole_rms(obj[j], uL, K1), pinhole_rms(obj[j], uR, K2)) < 1.5:
+                keep.append((obj[j], uL, uR))
+        if len(keep) < 6:
+            raise SystemExit(f"tilted: troppe poche viste stereo valide ({len(keep)})")
+        obj = [k[0] for k in keep]
+        iLu = [k[1] for k in keep]
+        iRu = [k[2] for k in keep]
+        z = np.zeros((1, 5))
+        rms, _, _, _, _, R, T, _, _ = cv2.stereoCalibrate(obj, iLu, iRu, K1.copy(), z.copy(), K2.copy(), z.copy(),
+                                                          (CAM_W, CAM_H), flags=cv2.CALIB_FIX_INTRINSIC, criteria=crit)
+        return float(rms), K1, np.asarray(D1).ravel(), K2, np.asarray(D2).ravel(), R, T.reshape(3, 1), len(obj)
     flags = flags_model | (cv2.CALIB_USE_INTRINSIC_GUESS if joint else cv2.CALIB_FIX_INTRINSIC)
     crit = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 300, 1e-10)
     rms, K1, D1, K2, D2, R, T, _, _ = cv2.stereoCalibrate(obj, iL, iR, K1.copy(), D1.copy(), K2.copy(), D2.copy(),
@@ -333,6 +413,42 @@ def stereo_pose_rms(views, K1, D1, K2, D2, R, T):
                 rms_R=float(np.sqrt(np.mean(np.square(eR)))), n_points=int(len(eL)))
 
 
+PATCH_MIN = 5
+
+
+def dy_zone_stats(dyv_z):
+    """Statistica del dy per zona. `dyv_z` = 9 dict {id vista: [dy con segno dei corner della vista in zona]}.
+    PATCH = i corner di UNA vista dentro UNA zona (>= PATCH_MIN). Il dy di un corner = errore sistematico (calibrazione)
+    + rumore di localizzazione (~0.3-0.45 px per corner, due corner per dy). Il p95 del dy GREZZO ha un pavimento di
+    rumore ~1.96*sqrt(2)*sigma_corner (~0.9-1.4 px con RMS mono 0.45) anche con calibrazione perfetta (sintetico: verita'
+    p95 0.4 px, dy grezzo p95 0.9-1.4 px): su di esso la soglia D012 (1 px) da' VERDE/ROSSO a caso. L'errore che conta per
+    la depth e' quello sistematico: media di dy sul patch (rumore/sqrt(k)). Il GATE usa il p95 di |media patch| (soglia
+    invariata); il p95 grezzo, il rumore stimato e il limite alto bootstrap restano nel report."""
+    f = lambda arr, fn: (float(fn(np.array(arr))) if len(arr) else None)
+    raw = [np.concatenate([np.array(g) for g in d.values()] or [np.array([])]) for d in dyv_z]
+    patches = [[float(np.mean(g)) for g in d.values() if len(g) >= PATCH_MIN] for d in dyv_z]
+    resid = [np.concatenate([np.array(g) - np.mean(g) for g in d.values() if len(g) >= PATCH_MIN] or [np.array([])]) for d in dyv_z]
+
+    def boot_hi(pm, nb=400):
+        """Limite alto 97.5% del p95 di |media patch|: bootstrap sui patch (cluster = vista)."""
+        if len(pm) < 2:
+            return None
+        r = np.random.default_rng(12345)
+        a_ = np.abs(np.array(pm))
+        vals = [np.percentile(a_[r.integers(0, len(a_), len(a_))], 95) for _ in range(nb)]
+        return float(np.percentile(vals, 97.5))
+    p95 = lambda x: np.percentile(x, 95)
+    return dict(
+        dy_median=[f(a, np.median) for a in raw],
+        dy_abs_p50=[f(np.abs(a), np.median) for a in raw],
+        dy_abs_p95=[f(np.abs(a), p95) for a in raw],
+        dy_n=[len(a) for a in raw],
+        dy_patch_n=[len(pm) for pm in patches],
+        dy_patch_abs_p95=[f(np.abs(pm), p95) for pm in patches],
+        dy_patch_abs_p95_boot_hi=[boot_hi(pm) for pm in patches],
+        dy_noise_sigma_px=[(float(np.std(r_)) if len(r_) > 5 else None) for r_ in resid])
+
+
 def holdout_stereo(views, K1, D1, K2, D2, R, T, sq_m):
     """dy rettificato per zona (zona = posizione nel frame GREZZO sinistro, p50 e p95 di |dy|) + proxy di scala
     (distanza 3D fra corner vicini triangolati vs lato MISURATO) + bias di disparita' per zona rispetto alla
@@ -340,7 +456,7 @@ def holdout_stereo(views, K1, D1, K2, D2, R, T, sq_m):
     R1, R2, P1, P2, Q, _, _ = cv2.stereoRectify(K1, D1, K2, D2, (CAM_W, CAM_H), R, T,
                                                 flags=cv2.CALIB_ZERO_DISPARITY, alpha=0)
     fB = float(P1[0, 0]) * float(np.linalg.norm(T))
-    dy_z = [[] for _ in range(9)]
+    dyv_z = [dict() for _ in range(9)]      # per zona: vista -> dy con segno
     sc_z = [[] for _ in range(9)]
     dd_z = [[] for _ in range(9)]
     zdist = []
@@ -352,7 +468,7 @@ def holdout_stereo(views, K1, D1, K2, D2, R, T, sq_m):
         ra, rb = rect_points(K1, D1, R1, P1, a), rect_points(K2, D2, R2, P2, b)
         zs = zone_of(a)
         for z, dy in zip(zs, ra[:, 1] - rb[:, 1]):
-            dy_z[z].append(float(dy))
+            dyv_z[z].setdefault(id(v), []).append(float(dy))
         disp = ra[:, 0] - rb[:, 0]
         ok = disp > 0.5
         X = cv2.perspectiveTransform(np.c_[ra, disp].reshape(-1, 1, 3), Q).reshape(-1, 3)
@@ -372,13 +488,12 @@ def holdout_stereo(views, K1, D1, K2, D2, R, T, sq_m):
                 s = np.linalg.norm(X[j] - X[k]) / sq_m - 1.0
                 sc_z[zs[j]].append(float(s))
     f = lambda arr, fn: (float(fn(np.array(arr))) if arr else None)
+
+    f = lambda arr, fn: (float(fn(np.array(arr))) if arr else None)
     bias = [f(a, np.median) for a in dd_z]
     edge = lambda Z: [None if b is None else float(100 * (1 / (1 + Z * b / fB) - 1)) for b in bias]
     return dict(
-        dy_median=[f(a, np.median) for a in dy_z],
-        dy_abs_p50=[f(np.abs(a).tolist(), np.median) for a in dy_z],
-        dy_abs_p95=[f(np.abs(a).tolist(), lambda x: np.percentile(x, 95)) for a in dy_z],
-        dy_n=[len(a) for a in dy_z],
+        **dy_zone_stats(dyv_z),
         scale_err_pct_median=[f(a, lambda x: 100 * np.median(x)) for a in sc_z],
         scale_n=[len(a) for a in sc_z],
         disp_bias_px_median=bias,
@@ -402,16 +517,19 @@ def gate(rep, a):
             red.append(f"copertura {name} insufficiente (<{a.min_zone_corners} corner) in: {', '.join(bad)}")
     st = rep["stereo_holdout"]
     for z in range(9):
-        n, ns = st["dy_n"][z], st["scale_n"][z]
-        if n == 0 or st["dy_abs_p95"][z] is None:
+        n, ns, pn = st["dy_n"][z], st["scale_n"][z], st["dy_patch_n"][z]
+        if n == 0 or st["dy_abs_p50"][z] is None:
             red.append(f"hold-out stereo: zona {ZNAME[z]} VUOTA (dy non misurabile) -> non verificata")
-        elif n < a.min_zone_holdout:
-            red.append(f"hold-out stereo: zona {ZNAME[z]} con {n} punti (<{a.min_zone_holdout}) -> non verificata")
+        elif n < a.min_zone_holdout or pn < a.min_zone_patches or st["dy_patch_abs_p95"][z] is None:
+            red.append(f"hold-out stereo: zona {ZNAME[z]} INSUFFICIENTE: {n} punti / {pn} viste con >=5 corner nel blocco del gate "
+                       f"(servono >= {a.min_zone_holdout} punti e >= {a.min_zone_patches} viste) -> non verificata: "
+                       f"servono piu' viste in zona {ZNAME[z]}")
         else:
             if st["dy_abs_p50"][z] >= a.max_dy_p50_px:
                 red.append(f"dy zona {ZNAME[z]}: p50 |dy| {st['dy_abs_p50'][z]:.2f} px (>= {a.max_dy_p50_px})")
-            if st["dy_abs_p95"][z] >= a.max_dy_p95_px:
-                red.append(f"dy zona {ZNAME[z]}: p95 |dy| {st['dy_abs_p95'][z]:.2f} px (>= {a.max_dy_p95_px}) [PRIORITARIO]")
+            if st["dy_patch_abs_p95"][z] >= a.max_dy_p95_px:
+                red.append(f"dy zona {ZNAME[z]}: p95 |dy| (media per vista) {st['dy_patch_abs_p95'][z]:.2f} px (>= {a.max_dy_p95_px}) "
+                           f"[PRIORITARIO] (p95 grezzo {st['dy_abs_p95'][z]:.2f})")
         se = st["scale_err_pct_median"][z]
         if ns == 0 or se is None:
             red.append(f"scala zona {ZNAME[z]} VUOTA (nessuna coppia di corner triangolabile) -> non verificata")
@@ -514,11 +632,12 @@ def main():
     ap.add_argument("--marker-len", type=float, default=None, help="default = 0.74 * square-len")
     ap.add_argument("--step", type=int, default=3, help="analizza 1 frame ogni N")
     ap.add_argument("--min-move-px", type=float, default=12.0)
-    ap.add_argument("--holdout-blocks", type=int, default=10, help="blocchi di tempo contigui; ne tiene fuori 2 (~20%%)")
+    ap.add_argument("--holdout-blocks", type=int, default=10, help="blocchi di tempo contigui (multiplo di 10): gate 30%%, scelta 20%%, fit 50%%")
     ap.add_argument("--holdout-guard", type=int, default=1, help="viste adiacenti al blocco tenuto fuori escluse dal fit")
     ap.add_argument("--max-views", type=int, default=90)
     ap.add_argument("--min-zone-corners", type=int, default=150)
-    ap.add_argument("--min-zone-holdout", type=int, default=20)
+    ap.add_argument("--min-zone-holdout", type=int, default=60, help="punti minimi per zona nel blocco del gate (sotto: zona INSUFFICIENTE = ROSSO)")
+    ap.add_argument("--min-zone-patches", type=int, default=6, help="viste (>=5 corner) minime per zona nel gate")
     ap.add_argument("--max-dy-p50-px", type=float, default=0.5)
     ap.add_argument("--max-dy-p95-px", type=float, default=1.0)
     ap.add_argument("--max-scale-pct", type=float, default=2.0)
@@ -554,71 +673,96 @@ def main():
 
     print(f"[1] unità {a.unit} ({prof['hw']}): detect ChArUco 1 frame ogni {a.step}...")
     views, info = collect(a, prof, board)
-    fit, hold, hinfo = split_holdout(views, a.holdout_blocks, a.holdout_guard)
+    fit, sel, hold, hinfo = split_three(views, a.holdout_blocks, a.holdout_guard)
     fitL, fitR = cap_views(fit, "L", a.max_views), cap_views(fit, "R", a.max_views)
     sy = info.get("sync")
     print(f"    frame {info.get('frames_decoded')}, viste diverse {len(views)} -> fit L {len(fitL)} R {len(fitR)}, "
-          f"hold-out {len(hold)} (blocchi {hinfo['hold_view_ranges']}, guard {hinfo['guard']})"
+          f"scelta {len(sel)}, GATE {len(hold)} (blocchi gate {hinfo['hold_view_ranges']}, scelta {hinfo['select_view_ranges']}, "
+          f"guard {hinfo['guard']})"
           + (f"\n    sync dt p50 {sy['dt_ms_p50']:.3f} p95 {sy['dt_ms_p95']:.3f} max {sy['dt_ms_max']:.3f} ms, "
              f"coppie scartate (>{a.max_sync_ms} ms): {sy['pairs_over']}/{sy['n_pairs']}" if sy else
              "\n    sync dt: n/d (SBS, un solo sensore)" if prof["mode"] == "sbs" else "\n    sync dt: NON verificabile (nessun csv)"))
     if len(fitL) < 10 or len(fitR) < 10:
         raise SystemExit("troppe poche viste per camera (servono >= 10, meglio 40-60)")
 
-    print("[2] intrinseche per modello, scelta sulle viste TENUTE FUORI...")
+    print("[2] intrinseche per modello (fit), scelta sul blocco SCELTA (mai sul blocco del gate)...")
     cand = {}
     for name in a.models.split(","):
         fl = MODELS[name]
         rL, KL, DL = calib_mono(fitL, "L", fl)
         rR, KR, DR = calib_mono(fitR, "R", fl)
-        hL, tiltL = holdout_reproj(hold, "L", KL, DL)
-        hR, _ = holdout_reproj(hold, "R", KR, DR)
-        cand[name] = dict(flags=fl, KL=KL, DL=DL, KR=KR, DR=DR, rms_fit=(rL, rR), hold=(hL, hR), tiltL=tiltL)
-        print(f"    {name:22s} fit rms L {rL:.3f} R {rR:.3f} | hold-out L {hL['rms']:.3f} R {hR['rms']:.3f} px  fx L {KL[0,0]:.1f} R {KR[0,0]:.1f}")
+        hL, tiltL = holdout_reproj(sel, "L", KL, DL)
+        hR, _ = holdout_reproj(sel, "R", KR, DR)
+        cand[name] = dict(flags=fl, KL=KL, DL=DL, KR=KR, DR=DR, rms_fit=(rL, rR), sel=(hL, hR), tiltL=tiltL)
+        print(f"    {name:22s} fit rms L {rL:.3f} R {rR:.3f} | scelta L {hL['rms']:.3f} R {hR['rms']:.3f} px  fx L {KL[0,0]:.1f} R {KR[0,0]:.1f}")
     names = list(cand)
     best = names[0]
-    for nm in names[1:]:   # modello più ricco solo se migliora l'hold-out di almeno il 5%
-        s_b = sum(h["rms"] for h in cand[best]["hold"])
-        s_n = sum(h["rms"] for h in cand[nm]["hold"])
+    for nm in names[1:]:   # modello più ricco solo se migliora il blocco SCELTA di almeno il 5%
+        s_b = sum(h["rms"] for h in cand[best]["sel"])
+        s_n = sum(h["rms"] for h in cand[nm]["sel"])
         if s_n < 0.95 * s_b:
             best = nm
     c = cand[best]
     print(f"    scelto: {best}")
 
-    print("[3] stereo (prima intrinseci fissi, poi rifinitura congiunta) e verifica sulle viste tenute fuori...")
+    print("[3] modalita' stereo scelta sul blocco SCELTA; poi rifit finale su fit+scelta; verifica SOLO sul blocco GATE...")
     stereo_views = [v for v in fit if common_pts(v) is not None]
-    res = {}
+    trial = {}
     for joint in (False, True):
-        r = stereo_fit(stereo_views, c["KL"], c["DL"], c["KR"], c["DR"], c["flags"], joint)
-        rms, K1, D1, K2, D2, R, T, nv = r
-        # T NON riscalata (D012): |T| dal tabellone e' un controllo contro 200 mm +-3%
-        hs = holdout_stereo(hold, K1, D1, K2, D2, R, T, a.square_len)
-        srms = stereo_pose_rms(hold, K1, D1, K2, D2, R, T)
-        wp95 = max(d for d in hs["dy_abs_p95"] if d is not None) if any(d is not None for d in hs["dy_abs_p95"]) else 1e9
-        res[joint] = dict(rms=rms, K1=K1, D1=D1, K2=K2, D2=D2, R=R, T=T, T_raw_m=float(np.linalg.norm(T)),
-                          n=nv, hold=hs, worst_dy_p95=wp95, srms=srms)
-        print(f"    {'congiunta' if joint else 'intr. fissi':11s} rms fit {rms:.3f} px, viste {nv}, |T| {np.linalg.norm(T)*1000:.1f} mm, "
-              f"hold-out: dy p95 peggior zona {wp95:.2f} px, RMS stereo {srms['rms']}")
-    s = res[True] if res[True]["worst_dy_p95"] <= res[False]["worst_dy_p95"] else res[False]
+        rms, K1, D1, K2, D2, R, T, nv = stereo_fit(stereo_views, c["KL"], c["DL"], c["KR"], c["DR"], c["flags"], joint)
+        sr = stereo_pose_rms(sel, K1, D1, K2, D2, R, T)
+        trial[joint] = sr["rms"] if sr["rms"] is not None else 1e9
+        print(f"    {'congiunta' if joint else 'intr. fissi':11s} (fit) rms {rms:.3f} px, viste {nv}, RMS stereo sul blocco scelta {trial[joint]:.3f}")
+    joint_best = trial[True] <= trial[False]
+    print(f"    scelta stereo: {'congiunta' if joint_best else 'intrinseci fissi'}")
+    # rifit finale con fit + scelta (il gate non e' stato toccato)
+    final = fit + sel
+    fL, fR = cap_views(final, "L", a.max_views), cap_views(final, "R", a.max_views)
+    _, KL, DL = calib_mono(fL, "L", c["flags"])
+    _, KR, DR = calib_mono(fR, "R", c["flags"])
+    rms, K1, D1, K2, D2, R, T, nv = stereo_fit([v for v in final if common_pts(v) is not None], KL, DL, KR, DR, c["flags"], joint_best)
+    hL, tiltL = holdout_reproj(hold, "L", KL, DL)   # RMS mono sul blocco GATE (intrinseci del fit mono finale)
+    hR, _ = holdout_reproj(hold, "R", KR, DR)
+    # T NON riscalata (D012): |T| dal tabellone e' un controllo contro 200 mm +-3%
+    hs = holdout_stereo(hold, K1, D1, K2, D2, R, T, a.square_len)
+    srms = stereo_pose_rms(hold, K1, D1, K2, D2, R, T)
+    wp95 = max(d for d in hs["dy_patch_abs_p95"] if d is not None) if any(d is not None for d in hs["dy_patch_abs_p95"]) else 1e9
+    s = dict(rms=rms, K1=K1, D1=D1, K2=K2, D2=D2, R=R, T=T, T_raw_m=float(np.linalg.norm(T)), n=nv, hold=hs,
+             worst_dy_p95=wp95, srms=srms)
+    print(f"    FINALE su fit+scelta: rms fit {rms:.3f} px, viste stereo {nv}, |T| {np.linalg.norm(T)*1000:.1f} mm | GATE: "
+          f"dy p95 peggior zona {wp95:.2f} px, RMS stereo {srms['rms']}, punti per zona {hs['dy_n']}")
 
-    covL, vL = coverage(fitL, "L")
-    covR, vR = coverage(fitR, "R")
+    covL, vL = coverage(fL, "L")
+    covR, vR = coverage(fR, "R")
     rep = dict(
-        unit=a.unit, model=best, stereo_mode="congiunta" if s is res[True] else "intrinseci fissi",
-        input=info, n_views=len(views), n_fit=dict(L=len(fitL), R=len(fitR), stereo=s["n"]),
+        unit=a.unit, model=best, stereo_mode="congiunta" if joint_best else "intrinseci fissi",
+        input=info, n_views=len(views), n_fit=dict(L=len(fL), R=len(fR), stereo=s["n"]),
         n_holdout=len(hold), n_holdout_stereo=sum(common_pts(v) is not None for v in hold),
-        holdout=hinfo, holdout_frames=[v["frame"] for v in hold],
+        holdout=hinfo, holdout_frames=[v["frame"] for v in hold], select_frames=[v["frame"] for v in sel],
         coverage_fit=dict(L_corners=covL.tolist(), R_corners=covR.tolist(), L_views=vL.tolist(), R_views=vR.tolist()),
-        models={nm: dict(rms_fit=cand[nm]["rms_fit"], holdout_rms=(cand[nm]["hold"][0]["rms"], cand[nm]["hold"][1]["rms"]),
-                         holdout_zone_rms_L=cand[nm]["hold"][0]["zone_rms"], holdout_zone_rms_R=cand[nm]["hold"][1]["zone_rms"])
+        models={nm: dict(rms_fit=cand[nm]["rms_fit"], select_rms=(cand[nm]["sel"][0]["rms"], cand[nm]["sel"][1]["rms"]),
+                         select_zone_rms_L=cand[nm]["sel"][0]["zone_rms"], select_zone_rms_R=cand[nm]["sel"][1]["zone_rms"])
                 for nm in cand},
-        rms_mono_holdout=[cand[best]["hold"][0]["rms"], cand[best]["hold"][1]["rms"]],
+        stereo_select_rms=dict(fissi=trial[False], congiunta=trial[True]),
+        rms_mono_holdout=[hL["rms"], hR["rms"]],
         rms_stereo_holdout=s["srms"],
-        tilt_deg_fit_L=[round(t, 1) for t in c["tiltL"]],
+        tilt_deg_fit_L=[round(t, 1) for t in tiltL],
         stereo_rms_fit=s["rms"], T_from_board_mm=s["T_raw_m"] * 1000, T_m=[float(x) for x in s["T"].ravel()],
         stereo_holdout=s["hold"], zone_names=ZNAME,
     )
     red, orange = gate(rep, a)
+    # margini (INFORMATIVI, non cambiano il colore): RMS mono / dy p95 vicino alla soglia, bootstrap sopra soglia
+    marg = []
+    for nm_, val in zip(("L", "R"), rep["rms_mono_holdout"]):
+        if val is not None and np.isfinite(val) and val >= 0.8 * a.max_rms_mono:
+            marg.append(f"RMS mono {nm_} {val:.3f} px = {100*val/a.max_rms_mono:.0f}% della soglia {a.max_rms_mono}: poco margine")
+    for z in range(9):
+        p95, hi = hs["dy_patch_abs_p95"][z], hs["dy_patch_abs_p95_boot_hi"][z]
+        if p95 is not None and p95 >= 0.8 * a.max_dy_p95_px:
+            marg.append(f"dy p95 zona {ZNAME[z]} {p95:.2f} px = {100*p95/a.max_dy_p95_px:.0f}% della soglia {a.max_dy_p95_px} (media per vista)")
+        elif hi is not None and hi >= a.max_dy_p95_px:
+            marg.append(f"dy p95 zona {ZNAME[z]} {p95:.2f} px ma limite alto bootstrap {hi:.2f} >= soglia {a.max_dy_p95_px}: ripetere con piu' viste")
+    rep["avvisi_margine"] = marg
     rep["gate_problemi"] = red
     rep["gate_avvisi"] = orange
     rep["gate"] = "ROSSO" if red else ("ARANCIO" if orange else "VERDE")
@@ -631,7 +775,7 @@ def main():
         "focal_rect_px": s["hold"]["focal_rect_px"],
         "method": f"calib_charuco_dual.py: ChArUco {sx}x{sy} {a.dict} lato {a.square_len*1000:.1f} mm, modello {best}, "
                   f"stereo {rep['stereo_mode']}, T NON riscalata (|T| dal tabellone = {s['T_raw_m']*1000:.1f} mm, controllo 200+-3%); "
-                  f"verifica su {len(hold)} viste tenute fuori (blocchi di tempo)",
+                  f"modello e stereo scelti su blocco SCELTA ({len(sel)} viste), gate su blocco mai usato ({len(hold)} viste)",
         "valid_for": f"SOLO {a.unit} con QUESTO set di camere come montate al momento della sessione. Mai fallback su altre unità.",
         "camera_hw": prof["hw"],
         "stato": "CANDIDATO — non in uso finché asmile-calib-critico non dà PASSA",
@@ -649,17 +793,21 @@ def main():
     json.dump(rep, open(a.out + ".report.json", "w"), indent=1, default=float)
 
     st = s["hold"]
-    print("[4] dy hold-out per zona (p50|p95 di |dy|, px) / scala % / depth ai bordi (INFORMATIVO, 1 m | 10 m):")
+    print("[4] dy blocco GATE per zona (p50 grezzo | p95 media-per-vista | p95 grezzo, px; n punti/viste) / scala % / depth ai bordi (INFORMATIVO, 1 m | 10 m):")
     e1, e10 = st["depth_edge_informativo"]["err_pct_1m"], st["depth_edge_informativo"]["err_pct_10m"]
     for z in range(9):
         if st["dy_abs_p95"][z] is None:
             print(f"    {ZNAME[z]:12s} (vuota)")
             continue
         sc = st["scale_err_pct_median"][z]
-        print(f"    {ZNAME[z]:12s} dy {st['dy_abs_p50'][z]:.2f}|{st['dy_abs_p95'][z]:.2f}  scala {('%+.2f%%' % sc) if sc is not None else 'n/d'}"
+        pp = st["dy_patch_abs_p95"][z]
+        print(f"    {ZNAME[z]:12s} dy {st['dy_abs_p50'][z]:.2f}|{('%.2f' % pp) if pp is not None else 'n/d'}|{st['dy_abs_p95'][z]:.2f}"
+              f" (n {st['dy_n'][z]}/{st['dy_patch_n'][z]})  scala {('%+.2f%%' % sc) if sc is not None else 'n/d'}"
               f"  depth 1m {('%+.2f%%' % e1[z]) if e1[z] is not None else 'n/d'} | 10m {('%+.2f%%' % e10[z]) if e10[z] is not None else 'n/d'}")
     print(f"    RMS hold-out: mono L {rep['rms_mono_holdout'][0]:.3f} R {rep['rms_mono_holdout'][1]:.3f} px, stereo {rep['rms_stereo_holdout']['rms']}")
     print(f"    |T| {rep['T_from_board_mm']:.1f} mm ({rep.get('baseline_dev_pct', float('nan')):+.2f}% da 200), T[0] {rep['T_m'][0]*1000:+.1f} mm")
+    for m in marg:
+        print("    ! margine: " + m)
     print(f"[5] GATE {rep['gate']}" + "".join("\n    - " + m for m in red) + "".join("\n    ~ AVVISO: " + m for m in orange))
     print(f"    -> {a.out}  (+ .report.json, {os.path.basename(ypath)}, {os.path.basename(mpath)})")
 
