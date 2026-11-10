@@ -1,0 +1,160 @@
+{
+ "sessione": "session_20261109_094146",
+ "unita": "asmile-001",
+ "criterio": "tenuto & v_enc(+-0.5s)>0.3 & v_enc locale>0.3 su 5 istanti; passo regolare sui candidati",
+ "calib": "PROVVISORIA, punto A in corso",
+ "n_candidati": 3683,
+ "n_totale": 10066,
+ "frames": [
+  {
+   "frame": 2035,
+   "t_ms": 6654411,
+   "v_enc_ms": 1.391
+  },
+  {
+   "frame": 2483,
+   "t_ms": 6684278,
+   "v_enc_ms": 0.697
+  },
+  {
+   "frame": 2795,
+   "t_ms": 6705079,
+   "v_enc_ms": 0.927
+  },
+  {
+   "frame": 3113,
+   "t_ms": 6726279,
+   "v_enc_ms": 0.534
+  },
+  {
+   "frame": 5472,
+   "t_ms": 6883548,
+   "v_enc_ms": 3.813
+  },
+  {
+   "frame": 5624,
+   "t_ms": 6893682,
+   "v_enc_ms": 0.9
+  },
+  {
+   "frame": 5771,
+   "t_ms": 6903482,
+   "v_enc_ms": 1.577
+  },
+  {
+   "frame": 6027,
+   "t_ms": 6920549,
+   "v_enc_ms": 1.379
+  },
+  {
+   "frame": 6182,
+   "t_ms": 6930883,
+   "v_enc_ms": 2.827
+  },
+  {
+   "frame": 6336,
+   "t_ms": 6941149,
+   "v_enc_ms": 2.847
+  },
+  {
+   "frame": 6494,
+   "t_ms": 6951683,
+   "v_enc_ms": 2.892
+  },
+  {
+   "frame": 6631,
+   "t_ms": 6960816,
+   "v_enc_ms": 0.411
+  },
+  {
+   "frame": 6818,
+   "t_ms": 6973283,
+   "v_enc_ms": 1.854
+  },
+  {
+   "frame": 7082,
+   "t_ms": 6990884,
+   "v_enc_ms": 2.597
+  },
+  {
+   "frame": 7295,
+   "t_ms": 7005084,
+   "v_enc_ms": 2.404
+  },
+  {
+   "frame": 7499,
+   "t_ms": 7018684,
+   "v_enc_ms": 1.897
+  },
+  {
+   "frame": 7714,
+   "t_ms": 7033018,
+   "v_enc_ms": 0.37
+  },
+  {
+   "frame": 7859,
+   "t_ms": 7042685,
+   "v_enc_ms": 2.979
+  },
+  {
+   "frame": 8012,
+   "t_ms": 7052885,
+   "v_enc_ms": 2.724
+  },
+  {
+   "frame": 8158,
+   "t_ms": 7062618,
+   "v_enc_ms": 0.343
+  },
+  {
+   "frame": 8304,
+   "t_ms": 7072352,
+   "v_enc_ms": 2.524
+  },
+  {
+   "frame": 8452,
+   "t_ms": 7082219,
+   "v_enc_ms": 0.682
+  },
+  {
+   "frame": 8594,
+   "t_ms": 7091686,
+   "v_enc_ms": 3.207
+  },
+  {
+   "frame": 8731,
+   "t_ms": 7100819,
+   "v_enc_ms": 0.702
+  },
+  {
+   "frame": 8877,
+   "t_ms": 7110553,
+   "v_enc_ms": 1.269
+  },
+  {
+   "frame": 9014,
+   "t_ms": 7119686,
+   "v_enc_ms": 2.54
+  },
+  {
+   "frame": 9152,
+   "t_ms": 7128886,
+   "v_enc_ms": 2.419
+  },
+  {
+   "frame": 9297,
+   "t_ms": 7138553,
+   "v_enc_ms": 0.615
+  },
+  {
+   "frame": 9592,
+   "t_ms": 7158220,
+   "v_enc_ms": 0.793
+  },
+  {
+   "frame": 9808,
+   "t_ms": 7172620,
+   "v_enc_ms": 0.835
+  }
+ ]
+}
