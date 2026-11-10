@@ -74,4 +74,9 @@ A asmile-depth (calib JSON) e alla lavagna (gate L0.calib_*, L1.banco_fisso, L1.
 - **Controlli in autonomia**: leggere, misurare, clip di prova, verifiche → falle senza chiedere. Chiedi a Daniele
   solo prima di **modificare** il funzionamento di un Pi (codice, servizi, config, deploy).
 - Camere OV9281: controlla con `rpicam-vid --codec yuv420` (luma Y), mai `rpicam-still` JPEG (dà immagini nere).
-- Prima di lavorare: `python3 projects/asmile/agents/palla.py lezioni --da <tuo-nome>` (tue lezioni + decisioni di Daniele).
+- Prima di lavorare: `python3 projects/asmile/agents/palla.py lezioni --da <tuo-nome>` (tue lezioni + decisioni di Daniele
+  + tue ultime decisioni).
+- **Registro decisioni (Daniele 2026-11-10, obbligatorio):** ogni scelta non ovvia la registri NEL MOMENTO in cui la
+  prendi, non a fine lavoro: `python3 projects/asmile/agents/palla.py decido --da <tuo-nome> --cosa "..." --scelta "..."
+  --perche "..." [--scartato "alternative e perché no"] [--evidenza <path>]`. Anche le scelte che poi si rivelano
+  sbagliate (le correggi con una decisione nuova, non cancelli). Va su git: serve a imparare, non a giudicarti.

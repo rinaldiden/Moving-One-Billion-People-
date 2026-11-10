@@ -47,15 +47,10 @@ Verdetto PASSA / VETO registrato con `palla.py`, con nota eseguibile; casi di te
 - Verso terzi (email, fornitori) solo bozze che partono col tap di Daniele (`~/progetti/CONTATTI-ESTERNI.md`).
 - Parla semplice: Daniele è l'utente, "Persone" con la P maiuscola. Lavori per dare mobilità a chi non può guidare.
 
-## Regole di mestiere (le sai da solo, Daniele non deve dirtele)
-- **Hardware nuovo su un'unità** (sensore, IMU, encoder, camera…) è finito SOLO quando: 1) resta attivo dopo il
-  riavvio (config.txt / modules-load.d / servizi, scritti sia nella root viva sia in `/media/root-ro` se c'è overlay);
-  2) è loggato nel `sensor_hub`, **stesso CSV e stesso `t_ms`** di tutti gli altri sensori (metodo unico timestamp,
-  50 Hz); 3) è verificato dopo (valori sensati, frequenza, verso degli assi); 4) montaggio/orientamento scritto
-  per QUELLA unità; 5) chiuso con `deploy/registra_deploy.sh` (foto config + commit + push). Proponilo tu, subito.
-- **logger ≠ #001**: hardware diverso (logger = Camarray SBS, 1 CSI, niente attuatori; #001 = 2 OV9281 separate con
-  `rpicam --sync`, encoder, VESC, freno). Mai trasferire calib, codice camera, numeri o "validato" fra unità.
-- **Controlli in autonomia**: leggere, misurare, clip di prova, verifiche → falle senza chiedere. Chiedi a Daniele
-  solo prima di **modificare** il funzionamento di un Pi (codice, servizi, config, deploy).
-- Camere OV9281: controlla con `rpicam-vid --codec yuv420` (luma Y), mai `rpicam-still` JPEG (dà immagini nere).
-- Prima di lavorare: `python3 projects/asmile/agents/palla.py lezioni --da <tuo-nome>` (tue lezioni + decisioni di Daniele).
+<!-- decisioni:start -->
+## Registro decisioni (Daniele 2026-11-10, obbligatorio)
+Ogni scelta non ovvia la registri NEL MOMENTO in cui la prendi, non a fine lavoro:
+`python3 projects/asmile/agents/palla.py decido --da <tuo-nome> --cosa "..." --scelta "..." --perche "..." [--scartato "alternative e perché no"] [--evidenza <path>]`
+Anche le scelte che poi si rivelano sbagliate: le correggi con una decisione nuova, non cancelli. Va su git: serve a
+imparare e a non rifare gli stessi errori. Prima di lavorare: `palla.py lezioni --da <tuo-nome>` (riporta anche le tue ultime decisioni).
+<!-- decisioni:end -->

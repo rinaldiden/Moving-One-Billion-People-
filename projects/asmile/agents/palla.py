@@ -8,7 +8,13 @@ il suo PASSA. Dopo 3 VETO sullo stesso artefatto il capo smette di girare in ton
   passa    --verticale V --da PRODUTTORE --a CRITICO --artefatto PATH [--gate G] [--nota ...]
   verdetto --verticale V --critico CRITICO --artefatto PATH --esito PASSA|VETO [--gate G] [--parziale] [--nota ...]
   stato    [--verticale V]          palle aperte, giri, escalation
-  lezioni  --da AGENTE              lezioni da mettere nel brief di AGENTE (sue + di Daniele)
+  lezioni  --da AGENTE              lezioni da mettere nel brief di AGENTE (sue + di Daniele + sue ultime decisioni)
+  decido   --da AGENTE --cosa ... --scelta ... --perche ... [--scartato ...] [--evidenza PATH] [--verticale V]
+                                    registro delle DECISIONI (scelte prese e perché, alternative scartate)
+
+Decisioni (2026-11-10, Daniele): ogni agente registra OGNI scelta non ovvia mentre lavora (non a fine lavoro):
+agents/decisioni/<agente>.md + riga tipo "decisione" nel registro. Si committa su git: serve a imparare e a non
+rifare gli stessi errori. Il brief (`lezioni`) riporta le ultime decisioni dell'agente.
 
 Apprendimento (2026-11-09): ogni VETO scrive da solo la nota del critico in agents/lezioni/<produttore>.md;
 il PASSA che segue la chiude come "risolto". Il capo apre ogni brief con `palla.py lezioni --da <agente>`,
@@ -26,6 +32,8 @@ HERE = Path(__file__).resolve().parent
 REG = HERE / "palla" / "registro.jsonl"
 PROVE = HERE / "prove"
 LEZIONI = HERE / "lezioni"
+DECISIONI = HERE / "decisioni"
+N_DECISIONI_BRIEF = 15
 MAX_GIRI = 3
 
 
@@ -68,12 +76,34 @@ def impara(a):
         fh.write(riga)
 
 
+def decido(a):
+    DECISIONI.mkdir(exist_ok=True)
+    f = DECISIONI / f"{a.da}.md"
+    if not f.exists():
+        f.write_text(f"# Decisioni di {a.da}\n\nScritte con `palla.py decido` mentre lavora. Append-only: "
+                     "una decisione sbagliata non si cancella, se ne scrive una nuova che la corregge.\n\n")
+    ora = datetime.now().strftime("%Y-%m-%d %H:%M")
+    riga = f"- {ora} **{a.cosa}** → {a.scelta}. Perché: {a.perche}."
+    if a.scartato:
+        riga += f" Scartato: {a.scartato}."
+    if a.evidenza:
+        riga += f" Evidenza: `{a.evidenza}`."
+    with open(f, "a") as fh:
+        fh.write(riga + "\n")
+    scrivi({"tipo": "decisione", "verticale": a.verticale or "", "da": a.da, "artefatto": a.evidenza or "",
+            "cosa": a.cosa, "scelta": a.scelta, "perche": a.perche, "scartato": a.scartato or ""})
+
+
 def lezioni(chi):
     out = []
     for nome in (chi, "daniele"):
         f = LEZIONI / f"{nome}.md"
         if f.exists():
             out.append(f.read_text().strip())
+    f = DECISIONI / f"{chi}.md"
+    if f.exists():
+        righe = [l for l in f.read_text().splitlines() if l.startswith("- ")]
+        out.append(f"# Ultime decisioni di {chi}\n" + "\n".join(righe[-N_DECISIONI_BRIEF:]))
     return "\n\n".join(out) if out else f"nessuna lezione per {chi}"
 
 
@@ -99,13 +129,15 @@ def stato(vert=None):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["passa", "verdetto", "stato", "lezioni"])
+    ap.add_argument("cmd", choices=["passa", "verdetto", "stato", "lezioni", "decido"])
     ap.add_argument("--verticale")
     ap.add_argument("--da"); ap.add_argument("--a"); ap.add_argument("--critico")
     ap.add_argument("--artefatto")
     ap.add_argument("--esito", choices=["PASSA", "VETO"])
     ap.add_argument("--gate")
     ap.add_argument("--nota", default="")
+    ap.add_argument("--cosa"); ap.add_argument("--scelta"); ap.add_argument("--perche")
+    ap.add_argument("--scartato"); ap.add_argument("--evidenza")
     ap.add_argument("--parziale", action="store_true",
                     help="PASSA sul rapporto ma il gate resta aperto (nessuna prova scritta)")
     a = ap.parse_args()
@@ -117,6 +149,11 @@ def main():
     if a.cmd == "lezioni":
         assert a.da, "serve --da AGENTE"
         print(lezioni(a.da))
+        return
+    if a.cmd == "decido":
+        assert a.da and a.cosa and a.scelta and a.perche, "servono --da --cosa --scelta --perche"
+        decido(a)
+        print(f"decisione registrata: agents/decisioni/{a.da}.md")
         return
     if a.cmd == "passa":
         assert a.verticale and a.da and a.a and a.artefatto, "servono --verticale --da --a --artefatto"
