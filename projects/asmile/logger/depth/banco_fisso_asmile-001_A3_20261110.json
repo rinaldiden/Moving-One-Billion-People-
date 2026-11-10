@@ -1,0 +1,130 @@
+{
+ "unita": "asmile-001",
+ "calib": "calib_asmile-001.CANDIDATO.json",
+ "data": "2026-11-10",
+ "sessioni": [
+  "session_20261030_181547",
+  "session_20261030_181921"
+ ],
+ "metodo": "disparita SGBM mediana sul ROI torso+tabellone (foreground vs sfondo), frame ogni 6; Z lungo asse ottico rettificato; nessun punto nel fit",
+ "punti": [
+  {
+   "sosta": "1m-sx",
+   "D_m": 1,
+   "lat_nom_m": -0.37,
+   "X_misurata_m": -0.30880459812625993,
+   "Z_candidato_m": 0.855,
+   "err_pct": -14.46,
+   "Z_calib_attuale_m": 0.994,
+   "err_pct_attuale": -0.59,
+   "n_frame": 13,
+   "role": "verifica (mai nel fit)",
+   "nota": "1-2 m: riferimento nastro vs tabellone tenuto in mano, offset 0.1-0.15 m NON separabile"
+  },
+  {
+   "sosta": "1m-dx",
+   "D_m": 1,
+   "lat_nom_m": 0.37,
+   "X_misurata_m": 0.16065999318990137,
+   "Z_candidato_m": 0.915,
+   "err_pct": -8.52,
+   "Z_calib_attuale_m": 0.964,
+   "err_pct_attuale": -3.58,
+   "n_frame": 15,
+   "role": "verifica (mai nel fit)",
+   "nota": "1-2 m: riferimento nastro vs tabellone tenuto in mano, offset 0.1-0.15 m NON separabile"
+  },
+  {
+   "sosta": "2m-dx",
+   "D_m": 2,
+   "lat_nom_m": 0.75,
+   "X_misurata_m": 0.5595525057529893,
+   "Z_candidato_m": 1.896,
+   "err_pct": -5.2,
+   "Z_calib_attuale_m": 2.047,
+   "err_pct_attuale": 2.34,
+   "n_frame": 16,
+   "role": "verifica (mai nel fit)",
+   "nota": "1-2 m: riferimento nastro vs tabellone tenuto in mano, offset 0.1-0.15 m NON separabile"
+  },
+  {
+   "sosta": "2m-sx",
+   "D_m": 2,
+   "lat_nom_m": -0.75,
+   "X_misurata_m": -0.6617635817337159,
+   "Z_candidato_m": 1.918,
+   "err_pct": -4.1,
+   "Z_calib_attuale_m": 2.175,
+   "err_pct_attuale": 8.75,
+   "n_frame": 11,
+   "role": "verifica (mai nel fit)",
+   "nota": "1-2 m: riferimento nastro vs tabellone tenuto in mano, offset 0.1-0.15 m NON separabile"
+  },
+  {
+   "sosta": "5m-dx",
+   "D_m": 5,
+   "lat_nom_m": 1.85,
+   "X_misurata_m": 1.6528119177747083,
+   "Z_candidato_m": 4.977,
+   "err_pct": -0.46,
+   "Z_calib_attuale_m": 5.357,
+   "err_pct_attuale": 7.14,
+   "n_frame": 17,
+   "role": "verifica (mai nel fit)",
+   "nota": ""
+  },
+  {
+   "sosta": "10m-dx",
+   "D_m": 10,
+   "lat_nom_m": 3.7,
+   "X_misurata_m": 3.4937539725927316,
+   "Z_candidato_m": 9.917,
+   "err_pct": -0.83,
+   "Z_calib_attuale_m": 10.579,
+   "err_pct_attuale": 5.79,
+   "n_frame": 24,
+   "role": "verifica (mai nel fit)",
+   "nota": ""
+  },
+  {
+   "sosta": "10m-sx",
+   "D_m": 10,
+   "lat_nom_m": -2.5,
+   "X_misurata_m": -2.5363385042561393,
+   "Z_candidato_m": 9.917,
+   "err_pct": -0.83,
+   "Z_calib_attuale_m": 11.023,
+   "err_pct_attuale": 10.23,
+   "n_frame": 20,
+   "role": "verifica (mai nel fit)",
+   "nota": ""
+  },
+  {
+   "sosta": "2m-sx(bis)",
+   "D_m": 2,
+   "lat_nom_m": -0.75,
+   "X_misurata_m": -0.7304606966538246,
+   "Z_candidato_m": 1.887,
+   "err_pct": -5.67,
+   "Z_calib_attuale_m": 2.152,
+   "err_pct_attuale": 7.58,
+   "n_frame": 20,
+   "role": "verifica (mai nel fit)",
+   "nota": "1-2 m: riferimento nastro vs tabellone tenuto in mano, offset 0.1-0.15 m NON separabile"
+  },
+  {
+   "sosta": "2m-dx(bis)",
+   "D_m": 2,
+   "lat_nom_m": 0.75,
+   "X_misurata_m": 0.6234224935459894,
+   "Z_candidato_m": 1.871,
+   "err_pct": -6.47,
+   "Z_calib_attuale_m": 2.03,
+   "err_pct_attuale": 1.5,
+   "n_frame": 32,
+   "role": "verifica (mai nel fit)",
+   "nota": "1-2 m: riferimento nastro vs tabellone tenuto in mano, offset 0.1-0.15 m NON separabile"
+  }
+ ],
+ "lacune": "nessuna sosta CENTRO (1/2/5/10 m); 5 m sx e 10 m centro/non verificabili; 1-2 m affetti da offset di tenuta"
+}
