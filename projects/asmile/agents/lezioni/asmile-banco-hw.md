@@ -32,3 +32,9 @@ Scritte da palla.py dai VETO dei contro-agenti. Leggile prima di ogni lavoro.
 - Prossima volta: rimettere 500 (valore di asmile2) e ripetere la resistenza a 30 A. Mai cambiare un parametro FOC
   di commutazione per la fluidità senza ripetere una prova di COPPIA.
 - Non accusare l'hardware ("il VESC mente") prima di aver escluso i parametri cambiati da me.
+
+## 2026-11-10 — coppia bassa #001: confrontare Nm/A, non ampere
+Rimesso hall_interp 500: coppia invariata (Daniele "niente da fare"). Gli ampere non si confrontano fra unità: conta
+1.5 x flux x (giri elettrici per giro di piantone). asmile2 ~0.54 Nm/A, #001 ~0.07 Nm/A (flux 1.32 vs 5.04 mWb, 35 vs ~72 giri el.).
+Prima di cambiare parametri VESC per "più coppia", calcola Nm/A dai dati di detection e dal tach/encoder misurato.
+Report: agents/rapporti/sterzo_001_vs_asmile2_coppia_20261110.md
