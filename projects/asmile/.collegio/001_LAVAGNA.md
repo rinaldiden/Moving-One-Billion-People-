@@ -1,4 +1,4 @@
-# Lavagna asmile #001 — 2026-11-09 13:17
+# Lavagna asmile #001 — 2026-11-10 16:10
 
 **Livello raggiunto:** nessuno  ·  **Stiamo lavorando per:** L0 (registra)
 
@@ -17,6 +17,7 @@
 | ✅ | L0.dati | Video nuovi scaricati, controllati e indicizzati | asmile-logger-ingest → asmile-ingest-critico | agents/rapporti/L0.dati_indice_20261109.json (visto asmile-ingest-critico, 2026-11-09) |
 | ⬜ | L1.banco_fisso | Banco di misura fisso: punti col metro MAI usati nel fit (4-6-8-12 m) + oggetti reali | asmile-calib → asmile-calib-critico |  |
 | ⬜ | L1.rettifica | Rettifica vera: scarto verticale L-R < 1 px su tutta l'immagine, anche in movimento | asmile-calib → asmile-calib-critico |  |
+| ⬜ | L1.mock_001 | Mock/gemello di #001 (logger/depth/calib_rock): gate Monte Carlo verdi, calibrazione automatica per set futuri | asmile-calib → asmile-calib-critico | bloccato: dipende da L1.rettifica (serve il PASSA) |
 | ⬜ | L1.depth_moto | Depth in movimento: ±2% <5 m, ±5% 5-10 m, ±10% 10-20 m sul banco fisso | asmile-depth → asmile-occhio |  |
 | ⬜ | L1.ostacoli | Ostacoli SENZA nome nel corridoio davanti (depth densa / occupazione) | asmile-depth → asmile-occhio |  |
 | ⬜ | L1.ttc | Tracking + filtro: distanza, velocità di avvicinamento e tempo-al-contatto stabili | asmile-depth → asmile-occhio |  |
@@ -31,6 +32,6 @@
 | ⬜ | L3.ombra_sterzo | 5 sessioni in ombra dello sterzo | asmile-sim-validator → asmile-regressione |  |
 | ⬜ | L4.sim2real | Policy validata in sim + banco virtuale senza regressioni | asmile-sim-validator → asmile-regressione |  |
 
-**Video da lavorare:** 15  ·  **Decisioni da firmare:** 10  ·  **Pi online:** nessuno
+**Video da lavorare:** 16  ·  **Decisioni da firmare:** 11  ·  **Pi online:** nessuno
 
 _Generata da projects/asmile/agents/stato.py — non modificarla a mano._

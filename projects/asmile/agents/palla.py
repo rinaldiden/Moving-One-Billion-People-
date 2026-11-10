@@ -40,7 +40,11 @@ MAX_GIRI = 3
 def leggi():
     if not REG.exists():
         return []
-    return [json.loads(l) for l in REG.read_text().splitlines() if l.strip()]
+    evs = [json.loads(l) for l in REG.read_text().splitlines() if l.strip()]
+    for ev in evs:  # stesso artefatto scritto con o senza prefisso projects/asmile/
+        if isinstance(ev.get("artefatto"), str) and ev["artefatto"].startswith("projects/asmile/"):
+            ev["artefatto"] = ev["artefatto"][len("projects/asmile/"):]
+    return evs
 
 
 def scrivi(ev):
@@ -110,6 +114,8 @@ def lezioni(chi):
 def stato(vert=None):
     palle = defaultdict(lambda: {"veto": 0, "ultimo": None})
     for ev in leggi():
+        if ev.get("tipo") not in ("passa", "verdetto"):
+            continue  # le decisioni (palla.py decido) non sono palle
         k = (ev["verticale"], ev["artefatto"])
         if ev["tipo"] == "verdetto" and ev["esito"] == "VETO":
             palle[k]["veto"] += 1

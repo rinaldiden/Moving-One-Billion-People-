@@ -1,0 +1,1201 @@
+{
+ "meta": {
+  "agente": "asmile-log-harvester",
+  "data": "2026-11-10",
+  "unita": "asmile-001 (#001, 2 OV9281 separate; \"left\"=fisicamente DESTRA)",
+  "metodo": "misure di sola lettura; nessun grezzo toccato; ffmpeg decode 1 frame ogni ~K (dopo i primi 30) scalato 160x100 per luma; frame count = frames_*.csv o ffprobe -count_packets; v_encoder = |delta enc_wheel_cum| su 1 s x 2.1219e-5 m/count; soglia 0.3 m/s; tratto fermo = v<0.3 per >=5 s",
+  "avvertenze": [
+   "sensors_20261030_180024.csv NON e' contiguo: 24 s del 30/10 poi un salto di 10 giorni a righe del 09/11 15:23-16:23 (file riusato su due boot). Aggancio fatto per ora locale (wall), non per t_ms.",
+   "Prima del 07/11 non c'e' encoder ruota nei dati hub (enc_wheel_cum 0/1) e quello del limiter ha circonferenza provvisoria: v da GPS/limiter solo indicativa.",
+   "Sessioni 30/10 con \"software_timestamp\": niente frames_*.csv ne pts: sync L-R non misurabile, durata da conteggio frame/15.",
+   "\"left\"=cam0=fisicamente destra su #001; cavo freno davanti alla cam sinistra il 07/11 (noto).",
+   "Giudizi visivi su 4-8 frame per sessione, non su tutti i frame."
+  ],
+  "index_json_riusati": [
+   "_solo_movimento/asmile-001/session_20261109_093216/index.json",
+   "_solo_movimento/asmile-001/session_20261109_093909/index.json",
+   "_solo_movimento/asmile-001/session_20261109_094146/index.json"
+  ],
+  "index_json_assenti_per_questa_lista": [
+   "session_20261109_080401 e session_20261109_153251 (cartelle _solo_movimento vuote), le altre 12"
+  ]
+ },
+ "sessioni": {
+  "session_20261030_155729": {
+   "sessione": "session_20261030_155729",
+   "durata_s_metadata": 104.0,
+   "sync_method": "software_timestamp",
+   "start": "2026-10-30T15:57:29.140959",
+   "video": {
+    "left_bytes": 7868416,
+    "right_bytes": 8253440
+   },
+   "frame_h264": {
+    "L": 1491,
+    "R": 1489
+   },
+   "frame_csv": null,
+   "sync_LR": null,
+   "pts_righe_non_affidabili": {
+    "L": 0,
+    "R": 0
+   },
+   "luma_L": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 41,
+    "passo": 36,
+    "luma_media": 81.3,
+    "luma_min": 80.3,
+    "luma_max": 81.8,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 0.54,
+    "quota_campioni_scena_uguale_diff_lt1": 0.925
+   },
+   "luma_R": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 41,
+    "passo": 36,
+    "luma_media": 82.2,
+    "luma_min": 81.0,
+    "luma_max": 82.9,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 0.53,
+    "quota_campioni_scena_uguale_diff_lt1": 0.925
+   },
+   "sensori": null,
+   "fallback_velocita": [
+    {
+     "fonte": "training_20261030.csv",
+     "righe": 972,
+     "copertura_s": 103.9,
+     "gps_v_max_ms_validi_lt50": 0.0,
+     "righe_gps_glitch_gt50": 0,
+     "quota_gps_sopra_0p3": 0.0,
+     "gyro_z_std_dps": 0.08
+    }
+   ],
+   "index_json_riusato": null,
+   "verdetto": {
+    "classe": "SCARTARE",
+    "flag": "static_rig",
+    "motivo": "Officina, bici su cavalletto (visto a occhio su 4 frame); GPS 0 m/s per tutti i 104 s, gyro_z std 0.08, 92% dei campioni video identici. Nessun encoder ruota in quel periodo."
+   }
+  },
+  "session_20261030_180019": {
+   "sessione": "session_20261030_180019",
+   "durata_s_metadata": 94.0,
+   "sync_method": "software_timestamp",
+   "start": "2026-10-30T18:00:19.893326",
+   "video": {
+    "left_bytes": 203956224,
+    "right_bytes": 208850944
+   },
+   "frame_h264": {
+    "L": 1335,
+    "R": 1335
+   },
+   "frame_csv": null,
+   "sync_LR": null,
+   "pts_righe_non_affidabili": {
+    "L": 0,
+    "R": 0
+   },
+   "luma_L": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 41,
+    "passo": 32,
+    "luma_media": 89.2,
+    "luma_min": 88.6,
+    "luma_max": 89.4,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 0.22,
+    "quota_campioni_scena_uguale_diff_lt1": 1.0
+   },
+   "luma_R": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 41,
+    "passo": 32,
+    "luma_media": 86.3,
+    "luma_min": 85.6,
+    "luma_max": 86.4,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 0.23,
+    "quota_campioni_scena_uguale_diff_lt1": 1.0
+   },
+   "sensori": {
+    "durata_sensori_s": 23.7,
+    "quota_v_sopra_0p3": 0.0,
+    "v_max_ms": 0.0,
+    "v_media_in_moto_ms": 0.0,
+    "tratti_fermi_ge5s": 1,
+    "secondi_fermi_ge5s": 22.7,
+    "tratti_fermi": [
+     [
+      1.0,
+      23.7
+     ]
+    ],
+    "gyro_z_std_dps": 0.08,
+    "sterzo_raw_min_max": [
+     7160,
+     7264
+    ],
+    "metri_percorsi_encoder_ruota": 0.0,
+    "metri_netti": 0.0,
+    "file_sensor_hub": "sensors_20261030_180024.csv",
+    "aggancio": "wall da metadata start/end (approssimato: avvio camera ritarda 0.5-8 s)",
+    "copertura_sensori_s": 23.7,
+    "encoder_ruota_presente": false,
+    "minuti_in_moto_stima": 0.0
+   },
+   "fallback_velocita": [
+    {
+     "fonte": "training_20261030.csv",
+     "righe": 1292,
+     "copertura_s": 25.8,
+     "gps_v_max_ms_validi_lt50": 1.07,
+     "righe_gps_glitch_gt50": 0,
+     "quota_gps_sopra_0p3": 0.147,
+     "gyro_z_std_dps": 8.37
+    }
+   ],
+   "index_json_riusato": null,
+   "verdetto": {
+    "classe": "SCARTARE",
+    "flag": "static_rig",
+    "motivo": "Officina su cavalletto; 1335 frame (89 s) ma h264 da 195 MB (bitrate alto); hub 24 s con IMU ferma (gyro std 0.08); scena identica al 100%. Hub senza encoder ruota (enc_wheel_cum 0/1): v=0 non da encoder."
+   }
+  },
+  "session_20261030_180023": {
+   "sessione": "session_20261030_180023",
+   "durata_s_metadata": null,
+   "sync_method": "software_timestamp",
+   "start": "2026-10-30T18:00:23.868042",
+   "video": {
+    "left_bytes": 329347072,
+    "right_bytes": 352403456
+   },
+   "frame_h264": {
+    "L": 9376,
+    "R": 9612
+   },
+   "frame_csv": null,
+   "sync_LR": null,
+   "pts_righe_non_affidabili": {
+    "L": 0,
+    "R": 0
+   },
+   "luma_L": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 40,
+    "passo": 233,
+    "luma_media": 87.1,
+    "luma_min": 83.3,
+    "luma_max": 90.0,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 0.53,
+    "quota_campioni_scena_uguale_diff_lt1": 0.974
+   },
+   "luma_R": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 40,
+    "passo": 239,
+    "luma_media": 85.6,
+    "luma_min": 84.8,
+    "luma_max": 86.2,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 0.27,
+    "quota_campioni_scena_uguale_diff_lt1": 0.974
+   },
+   "sensori": {
+    "durata_sensori_s": 23.7,
+    "quota_v_sopra_0p3": 0.0,
+    "v_max_ms": 0.0,
+    "v_media_in_moto_ms": 0.0,
+    "tratti_fermi_ge5s": 1,
+    "secondi_fermi_ge5s": 22.7,
+    "tratti_fermi": [
+     [
+      1.0,
+      23.7
+     ]
+    ],
+    "gyro_z_std_dps": 0.08,
+    "sterzo_raw_min_max": [
+     7160,
+     7264
+    ],
+    "metri_percorsi_encoder_ruota": 0.0,
+    "metri_netti": 0.0,
+    "file_sensor_hub": "sensors_20261030_180024.csv",
+    "aggancio": "wall da metadata start/end (approssimato: avvio camera ritarda 0.5-8 s)",
+    "copertura_sensori_s": 23.7,
+    "encoder_ruota_presente": false,
+    "minuti_in_moto_stima": 0.0
+   },
+   "fallback_velocita": [
+    {
+     "fonte": "limiter_20261030_180214.csv",
+     "righe": 80,
+     "copertura_s": 7.9,
+     "gps_v_max_ms": 0.02,
+     "quota_gps_sopra_0p3": 0.0,
+     "enc_limiter_v_max_ms": 0.04,
+     "quota_enc_limiter_sopra_0p3": 0.0,
+     "nota": "enc limiter con circonferenza provvisoria prima del 2026-11-07: v enc NON affidabile"
+    },
+    {
+     "fonte": "limiter_20261030_180224.csv",
+     "righe": 4172,
+     "copertura_s": 417.1,
+     "gps_v_max_ms": 3.75,
+     "quota_gps_sopra_0p3": 0.719,
+     "enc_limiter_v_max_ms": 25.86,
+     "quota_enc_limiter_sopra_0p3": 0.874,
+     "nota": "enc limiter con circonferenza provvisoria prima del 2026-11-07: v enc NON affidabile"
+    },
+    {
+     "fonte": "training_20261030.csv",
+     "righe": 5927,
+     "copertura_s": 24.6,
+     "gps_v_max_ms_validi_lt50": 3.32,
+     "righe_gps_glitch_gt50": 84,
+     "quota_gps_sopra_0p3": 0.052,
+     "gyro_z_std_dps": 9.96
+    }
+   ],
+   "index_json_riusato": null,
+   "verdetto": {
+    "classe": "SCARTARE",
+    "flag": "static_rig",
+    "motivo": "625 s di officina con ruota/telaio inquadrati per tutto il file (40 campioni, diff 0.5). Sovrapposta nel tempo a 180225 (strada): timeline incoerente, non usare. Hub solo 24 s, senza encoder ruota. L 9376 vs R 9612 frame."
+   }
+  },
+  "session_20261030_180215": {
+   "sessione": "session_20261030_180215",
+   "durata_s_metadata": 9.0,
+   "sync_method": "software_timestamp",
+   "start": "2026-10-30T18:02:15.081844",
+   "video": {
+    "left_bytes": 225280,
+    "right_bytes": 241664
+   },
+   "frame_h264": {
+    "L": 46,
+    "R": 46
+   },
+   "frame_csv": null,
+   "sync_LR": null,
+   "pts_righe_non_affidabili": {
+    "L": 0,
+    "R": 0
+   },
+   "luma_L": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 16,
+    "passo": 1,
+    "luma_media": 99.6,
+    "luma_min": 99.6,
+    "luma_max": 99.6,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 0.06,
+    "quota_campioni_scena_uguale_diff_lt1": 1.0
+   },
+   "luma_R": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 16,
+    "passo": 1,
+    "luma_media": 101.5,
+    "luma_min": 101.5,
+    "luma_max": 101.5,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 0.06,
+    "quota_campioni_scena_uguale_diff_lt1": 1.0
+   },
+   "sensori": null,
+   "fallback_velocita": [
+    {
+     "fonte": "limiter_20261030_180214.csv",
+     "righe": 70,
+     "copertura_s": 6.9,
+     "gps_v_max_ms": 0.02,
+     "quota_gps_sopra_0p3": 0.0,
+     "enc_limiter_v_max_ms": 0.04,
+     "quota_enc_limiter_sopra_0p3": 0.0,
+     "nota": "enc limiter con circonferenza provvisoria prima del 2026-11-07: v enc NON affidabile"
+    },
+    {
+     "fonte": "training_20261030.csv",
+     "righe": 84,
+     "copertura_s": 8.9,
+     "gps_v_max_ms_validi_lt50": 0.13,
+     "righe_gps_glitch_gt50": 0,
+     "quota_gps_sopra_0p3": 0.0,
+     "gyro_z_std_dps": 0.51
+    }
+   ],
+   "index_json_riusato": null,
+   "verdetto": {
+    "classe": "SCARTARE",
+    "flag": "troppo_corta",
+    "motivo": "46 frame (3 s), limiter e GPS fermi."
+   }
+  },
+  "session_20261030_180225": {
+   "sessione": "session_20261030_180225",
+   "durata_s_metadata": 419.1,
+   "sync_method": "software_timestamp",
+   "start": "2026-10-30T18:02:25.235254",
+   "video": {
+    "left_bytes": 26292224,
+    "right_bytes": 26193920
+   },
+   "frame_h264": {
+    "L": 6236,
+    "R": 6226
+   },
+   "frame_csv": null,
+   "sync_LR": null,
+   "pts_righe_non_affidabili": {
+    "L": 0,
+    "R": 0
+   },
+   "luma_L": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 40,
+    "passo": 155,
+    "luma_media": 97.3,
+    "luma_min": 65.4,
+    "luma_max": 112.9,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 41.78,
+    "quota_campioni_scena_uguale_diff_lt1": 0.0
+   },
+   "luma_R": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 40,
+    "passo": 154,
+    "luma_media": 101.9,
+    "luma_min": 89.8,
+    "luma_max": 124.6,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 36.47,
+    "quota_campioni_scena_uguale_diff_lt1": 0.0
+   },
+   "sensori": null,
+   "fallback_velocita": [
+    {
+     "fonte": "limiter_20261030_180224.csv",
+     "righe": 4162,
+     "copertura_s": 416.1,
+     "gps_v_max_ms": 3.75,
+     "quota_gps_sopra_0p3": 0.721,
+     "enc_limiter_v_max_ms": 25.86,
+     "quota_enc_limiter_sopra_0p3": 0.877,
+     "nota": "enc limiter con circonferenza provvisoria prima del 2026-11-07: v enc NON affidabile"
+    },
+    {
+     "fonte": "training_20261030.csv",
+     "righe": 3896,
+     "copertura_s": 418.9,
+     "gps_v_max_ms_validi_lt50": 3.32,
+     "righe_gps_glitch_gt50": 84,
+     "quota_gps_sopra_0p3": 0.031,
+     "gyro_z_std_dps": 11.31
+    }
+   ],
+   "index_json_riusato": null,
+   "verdetto": {
+    "classe": "IN_MOTO_CON_RISERVE",
+    "flag": "",
+    "motivo": "Strada, scena che cambia (diff 41.8), luma 97 (65-113). Velocita da limiter: GPS>0.3 m/s nel 72% (max 3.75 m/s). Encoder ruota del limiter NON affidabile (circonferenza provvisoria, max 25.9 m/s). Sync software_timestamp, niente frames csv/pts: scarto L-R non misurabile (frame L 6236, R 6226). Nel left c'e' una sbarra verticale sfocata (come i cavi noti). Circa 5.0 min in moto (stima da GPS 72% x 416 s). Utilizzabile per held-out percezione; NON per TTC (niente velocita metrica affidabile)."
+   }
+  },
+  "session_20261030_182802": {
+   "sessione": "session_20261030_182802",
+   "durata_s_metadata": null,
+   "sync_method": "software_timestamp",
+   "start": "2026-10-30T18:28:02.539762",
+   "video": {
+    "left_bytes": 9768960,
+    "right_bytes": 10215424
+   },
+   "frame_h264": {
+    "L": 1696,
+    "R": 1696
+   },
+   "frame_csv": null,
+   "sync_LR": null,
+   "pts_righe_non_affidabili": {
+    "L": 0,
+    "R": 0
+   },
+   "luma_L": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 41,
+    "passo": 41,
+    "luma_media": 81.8,
+    "luma_min": 81.6,
+    "luma_max": 81.9,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 0.52,
+    "quota_campioni_scena_uguale_diff_lt1": 0.95
+   },
+   "luma_R": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 41,
+    "passo": 41,
+    "luma_media": 86.0,
+    "luma_min": 85.9,
+    "luma_max": 86.1,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 0.6,
+    "quota_campioni_scena_uguale_diff_lt1": 0.925
+   },
+   "sensori": null,
+   "fallback_velocita": [],
+   "index_json_riusato": null,
+   "verdetto": {
+    "classe": "SCARTARE",
+    "flag": "static_rig",
+    "motivo": "Officina su cavalletto, 113 s, 95% campioni identici; nessun sensore coprente (hub e limiter assenti). Giudizio solo visivo."
+   }
+  },
+  "session_20261030_184541": {
+   "sessione": "session_20261030_184541",
+   "durata_s_metadata": null,
+   "sync_method": null,
+   "start": null,
+   "video": {
+    "left_bytes": 0,
+    "right_bytes": 0
+   },
+   "frame_h264": {
+    "L": null,
+    "R": null
+   },
+   "frame_csv": null,
+   "sync_LR": null,
+   "pts_righe_non_affidabili": {
+    "L": 0,
+    "R": 0
+   },
+   "luma_L": null,
+   "luma_R": null,
+   "sensori": null,
+   "index_json_riusato": null,
+   "verdetto": {
+    "classe": "SCARTARE",
+    "flag": "vuota",
+    "motivo": "h264 L/R e metadata.json a 0 byte (registrazione mai partita)."
+   }
+  },
+  "session_20261107_165926": {
+   "sessione": "session_20261107_165926",
+   "durata_s_metadata": 60.1,
+   "sync_method": "rpicam_sync_server_client",
+   "start": "2026-11-07T16:59:26.128507",
+   "video": {
+    "left_bytes": 3325952,
+    "right_bytes": 3346432
+   },
+   "frame_h264": {
+    "L": 789,
+    "R": 789
+   },
+   "frame_csv": null,
+   "sync_LR": null,
+   "pts_righe_non_affidabili": {
+    "L": 425,
+    "R": 425
+   },
+   "luma_L": {
+    "primo_campione_buio_lt10_frame": 372,
+    "quota_campioni_buio_lt10": 0.548,
+    "n_campioni": 42,
+    "passo": 18,
+    "luma_media": 61.8,
+    "luma_min": 1.4,
+    "luma_max": 148.5,
+    "quota_sotto60": 0.548,
+    "diff_medio_tra_campioni": 6.45,
+    "quota_campioni_scena_uguale_diff_lt1": 0.634
+   },
+   "luma_R": {
+    "primo_campione_buio_lt10_frame": 372,
+    "quota_campioni_buio_lt10": 0.548,
+    "n_campioni": 42,
+    "passo": 18,
+    "luma_media": 62.9,
+    "luma_min": 1.2,
+    "luma_max": 149.3,
+    "quota_sotto60": 0.548,
+    "diff_medio_tra_campioni": 6.19,
+    "quota_campioni_scena_uguale_diff_lt1": 0.61
+   },
+   "sensori": null,
+   "fallback_velocita": [
+    {
+     "fonte": "training_20261107.csv",
+     "righe": 562,
+     "copertura_s": 60.0,
+     "gps_v_max_ms_validi_lt50": 1.06,
+     "righe_gps_glitch_gt50": 0,
+     "quota_gps_sopra_0p3": 0.749,
+     "gyro_z_std_dps": 0.33
+    }
+   ],
+   "index_json_riusato": null,
+   "verdetto": {
+    "classe": "SCARTARE",
+    "flag": "low_light/ostruita",
+    "motivo": "Entrambe le camere inquadrano un muro bianco a distanza ravvicinata con il cavo freno davanti; dopo ~frame 372 di 789 il video diventa nero (L e R, quota buio 55%). GPS 75% >0.3 ma max 1.06 m/s (movimento lento)."
+   }
+  },
+  "session_20261107_170056": {
+   "sessione": "session_20261107_170056",
+   "durata_s_metadata": 143.0,
+   "sync_method": "rpicam_sync_server_client",
+   "start": "2026-11-07T17:00:56.919961",
+   "video": {
+    "left_bytes": 8589312,
+    "right_bytes": 8572928
+   },
+   "frame_h264": {
+    "L": 2007,
+    "R": 2006
+   },
+   "frame_csv": null,
+   "sync_LR": null,
+   "pts_righe_non_affidabili": {
+    "L": 1640,
+    "R": 1640
+   },
+   "luma_L": {
+    "primo_campione_buio_lt10_frame": 30,
+    "quota_campioni_buio_lt10": 1.0,
+    "n_campioni": 40,
+    "passo": 49,
+    "luma_media": 1.6,
+    "luma_min": 1.4,
+    "luma_max": 1.7,
+    "quota_sotto60": 1.0,
+    "diff_medio_tra_campioni": 0.41,
+    "quota_campioni_scena_uguale_diff_lt1": 1.0
+   },
+   "luma_R": {
+    "primo_campione_buio_lt10_frame": 30,
+    "quota_campioni_buio_lt10": 1.0,
+    "n_campioni": 40,
+    "passo": 49,
+    "luma_media": 1.4,
+    "luma_min": 1.3,
+    "luma_max": 1.4,
+    "quota_sotto60": 1.0,
+    "diff_medio_tra_campioni": 0.34,
+    "quota_campioni_scena_uguale_diff_lt1": 1.0
+   },
+   "sensori": null,
+   "fallback_velocita": [
+    {
+     "fonte": "training_20261107.csv",
+     "righe": 1337,
+     "copertura_s": 142.9,
+     "gps_v_max_ms_validi_lt50": 2.84,
+     "righe_gps_glitch_gt50": 0,
+     "quota_gps_sopra_0p3": 0.958,
+     "gyro_z_std_dps": 0.21
+    }
+   ],
+   "index_json_riusato": null,
+   "verdetto": {
+    "classe": "SCARTARE",
+    "flag": "low_light",
+    "motivo": "Video nero su tutta la sessione (luma 1.6 L / 1.4 R dal frame 30). GPS 96% >0.3, max 2.84 m/s: si muoveva ma non si vede nulla."
+   }
+  },
+  "session_20261108_163453": {
+   "sessione": "session_20261108_163453",
+   "durata_s_metadata": 162.0,
+   "sync_method": "rpicam_sync_server_client",
+   "start": "2026-11-08T16:34:53.693746",
+   "video": {
+    "left_bytes": 10301440,
+    "right_bytes": 0
+   },
+   "frame_h264": {
+    "L": 2281,
+    "R": null
+   },
+   "frame_csv": {
+    "L": 2292
+   },
+   "sync_LR": null,
+   "gap_frame": {
+    "dt_mediano_ms": 67.0,
+    "n_gap_gt_100ms": 0,
+    "max_gap_ms": 67.0
+   },
+   "durata_s_da_frame": 152.7,
+   "luma_L": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 40,
+    "passo": 56,
+    "luma_media": 108.7,
+    "luma_min": 90.6,
+    "luma_max": 124.8,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 10.79,
+    "quota_campioni_scena_uguale_diff_lt1": 0.333
+   },
+   "luma_R": null,
+   "sensori": {
+    "durata_sensori_s": 156.7,
+    "quota_v_sopra_0p3": 0.162,
+    "v_max_ms": 0.9,
+    "v_media_in_moto_ms": 0.57,
+    "tratti_fermi_ge5s": 8,
+    "secondi_fermi_ge5s": 130.4,
+    "tratti_fermi": [
+     [
+      1.0,
+      8.8
+     ],
+     [
+      10.5,
+      28.9
+     ],
+     [
+      30.6,
+      38.4
+     ],
+     [
+      41.4,
+      56.8
+     ],
+     [
+      60.4,
+      87.1
+     ],
+     [
+      90.2,
+      107.8
+     ],
+     [
+      112.3,
+      125.2
+     ],
+     [
+      132.7,
+      156.5
+     ]
+    ],
+    "gyro_z_std_dps": 2.93,
+    "sterzo_raw_min_max": [
+     4848,
+     7748
+    ],
+    "metri_percorsi_encoder_ruota": 17.0,
+    "metri_netti": -13.4,
+    "file_sensor_hub": "sensors_20261108_160150.csv",
+    "aggancio": "wall (frame_epoch da clock_map -> ora locale)",
+    "copertura_sensori_s": 156.7,
+    "encoder_ruota_presente": true,
+    "quota_frame_v_sopra_0p3": 0.163,
+    "frame_in_moto": 373,
+    "frame_coperti_da_sensori": 2292,
+    "minuti_in_moto": 0.41
+   },
+   "fallback_velocita": [],
+   "index_json_riusato": null,
+   "verdetto": {
+    "classe": "SCARTARE_PER_OSTACOLI",
+    "flag": "calibrazione/approccio_tabellone",
+    "motivo": "Solo L (R: 0 frame, frames_right vuoto, pts_right vuoto), 2292 frame; tabellone ChArUco su muro, bici a passo d'uomo (v max 0.9 m/s, 16% >0.3, 17 m percorsi, 13.4 m netti all'indietro, 8 soste >=5 s). Niente stereo. Tenere come materiale di calibrazione, non per test ostacoli."
+   }
+  },
+  "session_20261109_080401": {
+   "sessione": "session_20261109_080401",
+   "durata_s_metadata": 38.5,
+   "sync_method": "rpicam_sync_server_client",
+   "start": "2026-11-09T08:04:01.407652",
+   "video": {
+    "left_bytes": 2457600,
+    "right_bytes": 2502656
+   },
+   "frame_h264": {
+    "L": 466,
+    "R": 466
+   },
+   "frame_csv": {
+    "L": 466,
+    "R": 466
+   },
+   "sync_LR": {
+    "scarto_t_ms_medio": 0.0,
+    "scarto_t_ms_max": 0.0,
+    "scarto_sensor_ts_ms_medio": 0.03,
+    "scarto_sensor_ts_ms_max": 0.06,
+    "confronto_su_frame": 466
+   },
+   "gap_frame": {
+    "dt_mediano_ms": 67.0,
+    "n_gap_gt_100ms": 0,
+    "max_gap_ms": 67.0
+   },
+   "durata_s_da_frame": 31.0,
+   "luma_L": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 44,
+    "passo": 10,
+    "luma_media": 85.5,
+    "luma_min": 85.4,
+    "luma_max": 85.6,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 0.25,
+    "quota_campioni_scena_uguale_diff_lt1": 1.0
+   },
+   "luma_R": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 44,
+    "passo": 10,
+    "luma_media": 87.3,
+    "luma_min": 87.1,
+    "luma_max": 87.4,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 0.29,
+    "quota_campioni_scena_uguale_diff_lt1": 1.0
+   },
+   "sensori": null,
+   "fallback_velocita": [],
+   "index_json_riusato": null,
+   "verdetto": {
+    "classe": "SCARTARE_PER_OSTACOLI",
+    "flag": "ferma_scena_fissa",
+    "motivo": "31 s, officina fissa (100% campioni identici), nessun hub copre l'orario (hub parte alle 08:53). Sync L-R perfetto (0 ms). Non ha inquadrato il metro nei frame campionati."
+   }
+  },
+  "session_20261109_093216": {
+   "sessione": "session_20261109_093216",
+   "durata_s_metadata": 310.0,
+   "sync_method": "rpicam_sync_server_client",
+   "start": "2026-11-09T09:32:16.826481",
+   "video": {
+    "left_bytes": 21786624,
+    "right_bytes": 22679552
+   },
+   "frame_h264": {
+    "L": 4522,
+    "R": 4522
+   },
+   "frame_csv": {
+    "L": 4522,
+    "R": 4522
+   },
+   "sync_LR": {
+    "scarto_t_ms_medio": 0.032,
+    "scarto_t_ms_max": 1.0,
+    "scarto_sensor_ts_ms_medio": 0.029,
+    "scarto_sensor_ts_ms_max": 0.083,
+    "confronto_su_frame": 4522
+   },
+   "gap_frame": {
+    "dt_mediano_ms": 67.0,
+    "n_gap_gt_100ms": 0,
+    "max_gap_ms": 67.0
+   },
+   "durata_s_da_frame": 301.4,
+   "luma_L": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 40,
+    "passo": 112,
+    "luma_media": 102.3,
+    "luma_min": 96.6,
+    "luma_max": 107.6,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 10.65,
+    "quota_campioni_scena_uguale_diff_lt1": 0.462
+   },
+   "luma_R": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 40,
+    "passo": 112,
+    "luma_media": 102.9,
+    "luma_min": 90.7,
+    "luma_max": 106.4,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 11.47,
+    "quota_campioni_scena_uguale_diff_lt1": 0.41
+   },
+   "sensori": {
+    "durata_sensori_s": 305.4,
+    "quota_v_sopra_0p3": 0.0,
+    "v_max_ms": 0.0,
+    "v_media_in_moto_ms": 0.0,
+    "tratti_fermi_ge5s": 1,
+    "secondi_fermi_ge5s": 304.4,
+    "tratti_fermi": [
+     [
+      1.0,
+      305.4
+     ]
+    ],
+    "gyro_z_std_dps": 0.03,
+    "sterzo_raw_min_max": [
+     6604,
+     6608
+    ],
+    "metri_percorsi_encoder_ruota": 0.0,
+    "metri_netti": -0.0,
+    "file_sensor_hub": "sensors_20261109_085334.csv",
+    "aggancio": "wall (frame_epoch da clock_map -> ora locale)",
+    "copertura_sensori_s": 305.4,
+    "encoder_ruota_presente": true,
+    "quota_frame_v_sopra_0p3": 0.0,
+    "frame_in_moto": 0,
+    "frame_coperti_da_sensori": 4522,
+    "minuti_in_moto": 0.0
+   },
+   "fallback_velocita": [],
+   "index_json_riusato": {
+    "path": "_solo_movimento/asmile-001/session_20261109_093216/index.json",
+    "frame_totali": 4522,
+    "durata_s": 301.5,
+    "tagliato_pct": 0.0,
+    "frac_vel_sopra_soglia": 0.0,
+    "vel_max_ms": 0.000551694,
+    "frac_scena_in_movimento": 0.243,
+    "note": [
+     "NON TAGLIATA: marcatore NON_TAGLIARE"
+    ]
+   },
+   "verdetto": {
+    "classe": "SOLO_CALIBRAZIONE",
+    "flag": "ferma_apposta",
+    "motivo": "301 s con encoder ruota presente e v=0 per tutto il tempo (static_rig per sensori), gyro std 0.03, ma la scena cambia (persona/tabellone, diff 10.7): sosta di calibrazione col metro, NON spazzatura. Linea rossa: al 100% ferma, non va a valle per ostacoli/TTC. Index.json riusato: ricavo concorda (0% sopra soglia, vmax 0.0006)."
+   }
+  },
+  "session_20261109_093909": {
+   "sessione": "session_20261109_093909",
+   "durata_s_metadata": 36.0,
+   "sync_method": "rpicam_sync_server_client",
+   "start": "2026-11-09T09:39:09.945507",
+   "video": {
+    "left_bytes": 1757184,
+    "right_bytes": 1777664
+   },
+   "frame_h264": {
+    "L": 406,
+    "R": 406
+   },
+   "frame_csv": {
+    "L": 408,
+    "R": 408
+   },
+   "sync_LR": {
+    "scarto_t_ms_medio": 0.039,
+    "scarto_t_ms_max": 1.0,
+    "scarto_sensor_ts_ms_medio": 0.031,
+    "scarto_sensor_ts_ms_max": 0.059,
+    "confronto_su_frame": 408
+   },
+   "gap_frame": {
+    "dt_mediano_ms": 67.0,
+    "n_gap_gt_100ms": 0,
+    "max_gap_ms": 67.0
+   },
+   "durata_s_da_frame": 27.1,
+   "luma_L": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 42,
+    "passo": 9,
+    "luma_media": 97.4,
+    "luma_min": 94.8,
+    "luma_max": 101.4,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 6.18,
+    "quota_campioni_scena_uguale_diff_lt1": 0.22
+   },
+   "luma_R": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 42,
+    "passo": 9,
+    "luma_media": 100.2,
+    "luma_min": 98.2,
+    "luma_max": 104.2,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 6.95,
+    "quota_campioni_scena_uguale_diff_lt1": 0.195
+   },
+   "sensori": {
+    "durata_sensori_s": 31.1,
+    "quota_v_sopra_0p3": 0.641,
+    "v_max_ms": 0.9,
+    "v_media_in_moto_ms": 0.59,
+    "tratti_fermi_ge5s": 1,
+    "secondi_fermi_ge5s": 10.8,
+    "tratti_fermi": [
+     [
+      20.3,
+      31.1
+     ]
+    ],
+    "gyro_z_std_dps": 1.1,
+    "sterzo_raw_min_max": [
+     6504,
+     6868
+    ],
+    "metri_percorsi_encoder_ruota": 12.5,
+    "metri_netti": 12.4,
+    "file_sensor_hub": "sensors_20261109_085334.csv",
+    "aggancio": "wall (frame_epoch da clock_map -> ora locale)",
+    "copertura_sensori_s": 31.1,
+    "encoder_ruota_presente": true,
+    "quota_frame_v_sopra_0p3": 0.674,
+    "frame_in_moto": 275,
+    "frame_coperti_da_sensori": 408,
+    "minuti_in_moto": 0.31
+   },
+   "fallback_velocita": [],
+   "index_json_riusato": {
+    "path": "_solo_movimento/asmile-001/session_20261109_093909/index.json",
+    "frame_totali": 406,
+    "durata_s": 27.1,
+    "tagliato_pct": 0.0,
+    "frac_vel_sopra_soglia": 0.6576354679802956,
+    "vel_max_ms": 0.9257000940000001,
+    "frac_scena_in_movimento": 0.704,
+    "note": [
+     "frame decodificati 406 != righe csv 408: uso i primi 406"
+    ]
+   },
+   "verdetto": {
+    "classe": "SOLO_CALIBRAZIONE",
+    "flag": "calibrazione_lenta",
+    "motivo": "27 s: 10.8 m a passo lento (v max 0.9, 67% >0.3), calibrazione/spostamento col metro. 406 frame decodificati vs 408 righe csv (2 in piu'). Index.json riusato (0.658 vs mio 0.674: finestra sensori diversa)."
+   }
+  },
+  "session_20261109_094146": {
+   "sessione": "session_20261109_094146",
+   "durata_s_metadata": 680.1,
+   "sync_method": "rpicam_sync_server_client",
+   "start": "2026-11-09T09:41:46.889867",
+   "video": {
+    "left_bytes": 43565056,
+    "right_bytes": 43393024
+   },
+   "frame_h264": {
+    "L": 10066,
+    "R": 10066
+   },
+   "frame_csv": {
+    "L": 10066,
+    "R": 10066
+   },
+   "sync_LR": {
+    "scarto_t_ms_medio": 0.027,
+    "scarto_t_ms_max": 1.0,
+    "scarto_sensor_ts_ms_medio": 0.027,
+    "scarto_sensor_ts_ms_max": 0.086,
+    "confronto_su_frame": 10066
+   },
+   "gap_frame": {
+    "dt_mediano_ms": 67.0,
+    "n_gap_gt_100ms": 0,
+    "max_gap_ms": 67.0
+   },
+   "durata_s_da_frame": 671.0,
+   "luma_L": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 40,
+    "passo": 250,
+    "luma_media": 104.4,
+    "luma_min": 75.4,
+    "luma_max": 139.2,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 34.98,
+    "quota_campioni_scena_uguale_diff_lt1": 0.026
+   },
+   "luma_R": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 40,
+    "passo": 250,
+    "luma_media": 103.8,
+    "luma_min": 84.6,
+    "luma_max": 121.3,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 30.01,
+    "quota_campioni_scena_uguale_diff_lt1": 0.026
+   },
+   "sensori": {
+    "durata_sensori_s": 675.0,
+    "quota_v_sopra_0p3": 0.578,
+    "v_max_ms": 5.27,
+    "v_media_in_moto_ms": 3.2,
+    "tratti_fermi_ge5s": 4,
+    "secondi_fermi_ge5s": 268.8,
+    "tratti_fermi": [
+     [
+      3.4,
+      45.5
+     ],
+     [
+      45.8,
+      123.1
+     ],
+     [
+      214.3,
+      354.6
+     ],
+     [
+      665.9,
+      675.0
+     ]
+    ],
+    "gyro_z_std_dps": 7.32,
+    "sterzo_raw_min_max": [
+     5396,
+     8256
+    ],
+    "metri_percorsi_encoder_ruota": 1250.8,
+    "metri_netti": 1248.9,
+    "file_sensor_hub": "sensors_20261109_085334.csv",
+    "aggancio": "wall (frame_epoch da clock_map -> ora locale)",
+    "copertura_sensori_s": 675.0,
+    "encoder_ruota_presente": true,
+    "quota_frame_v_sopra_0p3": 0.579,
+    "frame_in_moto": 5832,
+    "frame_coperti_da_sensori": 10066,
+    "minuti_in_moto": 6.48
+   },
+   "fallback_velocita": [],
+   "index_json_riusato": {
+    "path": "_solo_movimento/asmile-001/session_20261109_094146/index.json",
+    "frame_totali": 10066,
+    "durata_s": 671.1,
+    "tagliato_pct": 3.6,
+    "frac_vel_sopra_soglia": 0.5770911980925889,
+    "vel_max_ms": 5.297917482,
+    "frac_scena_in_movimento": 0.696,
+    "note": []
+   },
+   "verdetto": {
+    "classe": "IN_MOTO_BUONA",
+    "flag": "",
+    "motivo": "Giro vero: 671 s, 1250 m da encoder ruota (1249 netti), v max 5.27 m/s, media in moto 3.2 m/s; 57.9% dei frame con v>0.3 = 5832 frame = 6.48 min; 4 soste >=5 s (269 s totali, 40% del tempo). Luma 104 (75-139), L-R sync 0.03 ms medi (max 1 ms), nessun gap (dt 67 ms), 10066 frame L=R. Index.json riusato: 0.577 (qui 0.579), tagliato 3.6% nel _solo_movimento. Usare solo i frame con v>0.3 per ostacoli/TTC/held-out; sosta con scena viva (pedoni/auto) da valutare a parte."
+   }
+  },
+  "session_20261109_153251": {
+   "sessione": "session_20261109_153251",
+   "durata_s_metadata": 182.0,
+   "sync_method": "rpicam_sync_server_client",
+   "start": "2026-11-09T15:32:51.038908",
+   "video": {
+    "left_bytes": 12390400,
+    "right_bytes": 12632064
+   },
+   "frame_h264": {
+    "L": 2596,
+    "R": 2600
+   },
+   "frame_csv": {
+    "L": 2601,
+    "R": 2601
+   },
+   "sync_LR": {
+    "scarto_t_ms_medio": 0.027,
+    "scarto_t_ms_max": 1.0,
+    "scarto_sensor_ts_ms_medio": 0.029,
+    "scarto_sensor_ts_ms_max": 0.065,
+    "confronto_su_frame": 2601
+   },
+   "gap_frame": {
+    "dt_mediano_ms": 67.0,
+    "n_gap_gt_100ms": 0,
+    "max_gap_ms": 67.0
+   },
+   "durata_s_da_frame": 173.3,
+   "luma_L": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 40,
+    "passo": 64,
+    "luma_media": 94.3,
+    "luma_min": 86.8,
+    "luma_max": 108.0,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 10.93,
+    "quota_campioni_scena_uguale_diff_lt1": 0.103
+   },
+   "luma_R": {
+    "primo_campione_buio_lt10_frame": null,
+    "quota_campioni_buio_lt10": 0.0,
+    "n_campioni": 40,
+    "passo": 64,
+    "luma_media": 96.6,
+    "luma_min": 82.0,
+    "luma_max": 127.6,
+    "quota_sotto60": 0.0,
+    "diff_medio_tra_campioni": 12.21,
+    "quota_campioni_scena_uguale_diff_lt1": 0.128
+   },
+   "sensori": {
+    "durata_sensori_s": 177.3,
+    "quota_v_sopra_0p3": 0.0,
+    "v_max_ms": 0.0,
+    "v_media_in_moto_ms": 0.0,
+    "tratti_fermi_ge5s": 1,
+    "secondi_fermi_ge5s": 176.3,
+    "tratti_fermi": [
+     [
+      1.0,
+      177.3
+     ]
+    ],
+    "gyro_z_std_dps": 0.03,
+    "sterzo_raw_min_max": [
+     6576,
+     6576
+    ],
+    "metri_percorsi_encoder_ruota": 0.0,
+    "metri_netti": 0.0,
+    "file_sensor_hub": "sensors_20261030_180024.csv",
+    "aggancio": "wall (frame_epoch da clock_map -> ora locale)",
+    "copertura_sensori_s": 177.3,
+    "encoder_ruota_presente": false,
+    "quota_frame_v_sopra_0p3": 0.0,
+    "frame_in_moto": 0,
+    "frame_coperti_da_sensori": 2601,
+    "minuti_in_moto": 0.0
+   },
+   "fallback_velocita": [],
+   "index_json_riusato": null,
+   "verdetto": {
+    "classe": "SOLO_CALIBRAZIONE",
+    "flag": "ferma_apposta",
+    "motivo": "173 s: bici ferma (IMU gyro std 0.03), persona che cammina col tabellone ChArUco (visto a occhio) = calibrazione. Hub con encoder ruota ASSENTE per quel periodo (enc_wheel_cum costante): la velocita zero viene dall'IMU, non dall'encoder. L 2596 / R 2600 frame h264 vs 2601 csv."
+   }
+  }
+ }
+}
