@@ -25,3 +25,8 @@ Verifica 2026-11-09 18:40 (manubrio collegato, solo movimenti lenti agganciati, 
 2026-11-10: foc_hall_interp_erpm 20 -> 500 (valore originale/asmile2). Motivo: con 20 il fw 5.02 interpola gia' a velocita' quasi nulla e con
 cambi di verso "puo' restare 60° fuori" (commento mcpwm_foc.c) -> Iq letto 45 A ma coppia vera ridotta. Tutte le prove di resistenza del 9/11
 erano con 20. Ora la prova di resistenza va rifatta. Nota: su #001 la root e' overlay, gli script in ~/wip spariscono al riavvio (copiati in /tmp/steering).
+| (backup vesc_mcconf_backup_20261110_181426.bin rimasto sul Pi in ~/wip, overlay: forse perso; diff = solo l_current) | 2026-11-10 18:14 Pi **NUOVA, scritta e verificata** (Daniele: "prova a dare 100A a fase") | **100 / -100** | 99 / -60 | 150 | 500 |
+
+ATTENZIONE: il VESC di #001 resta a 100 A in flash finché non si riabbassa (prova di resistenza/tenuta in sospeso). Per tornare a 45 A:
+`vesc_mcconf_limiti_001.py scrivi --apply --l-current-max 45 --l-current-min -45 --l-in-current-max 99 --l-in-current-min -60`
+(oppure `ripristina vesc_mcconf_backup_20261110_180450.bin`). Dopo la prima sterzata a 100 A (ok, fet 22 C, motore 14 C) il Pi è sparito dalla rete.

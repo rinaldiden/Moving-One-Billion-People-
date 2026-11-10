@@ -162,7 +162,7 @@ def main(argv=None):
     imax = a.imax if a.imax is not None else (30.0 if a.modo == "vai" else 15.0)
     vmax_ok, vel_stop = (35, 45.0) if a.prova_veloce else (20, VEL_MAX_DEG_S)
     if not 0 < a.vel <= vmax_ok: sys.exit(f"--vel in (0, {vmax_ok}] deg/s")
-    if not 0 < imax <= 45: sys.exit("--imax in (0, 45] A")  # 45 A: Daniele 2026-11-09
+    if not 0 < imax <= 100: sys.exit("--imax in (0, 100] A")  # 100 A: Daniele 2026-11-10 (prova resistenza, prima 45)
     if not 0 < a.durata <= 60: sys.exit("--durata in (0, 60] s")
     if not 0 <= a.dither <= 3: sys.exit("--dither in [0, 3] A")
     c, lo, hi, hard_lo, hard_hi = limiti()
@@ -280,6 +280,7 @@ def main(argv=None):
             if not hard_lo <= p <= hard_hi: reason = f"vicino al finecorsa vero: {p}"; break
             if (p < lo and i_cmd < 0) or (p > hi and i_cmd > 0): reason = f"limite software {p} (spinta verso l'esterno)"; break
             if abs(i_mot) > imax + 2.0: reason = f"corrente {i_mot:.1f} A"; break
+            if TEL["t_fet"] > 75 or TEL["t_mot"] > 80: reason = f"CALDO fet {TEL['t_fet']:.0f} C motore {TEL['t_mot']:.0f} C"; break
             if k % 20 == 0 and wheel()[0] != w0: reason = "bici in movimento"; break
             if a.modo == "vai":
                 if tc - t0 > 25: reason = "timeout 25 s"; break
