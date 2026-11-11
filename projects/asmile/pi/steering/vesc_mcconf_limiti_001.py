@@ -33,17 +33,20 @@ PROPOSTA = {"l_current_max": 8.0, "l_current_min": -8.0, "l_in_current_max": 5.0
 # detection del 2026-10-26. E' la prova del layout (sostituisce il confronto con VESC Tool).
 OFF_SENSOR_MODE_FOC, OFF_L, OFF_R, OFF_FLUX, OFF_HALL_INTERP = 198, 207, 215, 219, 269
 # PID di velocita' del VESC (float32_auto, offset fw 5.02 verificati con lo stesso metodo)
+OFF_CUR_KP, OFF_CUR_KI, OFF_OBS = 153, 157, 223   # foc_current_kp/ki, foc_observer_gain (fw 5.02)
 OFF_PLL = {"foc_pll_kp": 199, "foc_pll_ki": 203}   # float32_auto, fw 5.02 (stesso metodo degli offset sopra)
 OFF_SPID = {"s_pid_kp": 329, "s_pid_ki": 333, "s_pid_kd": 337, "s_pid_kd_filter": 341, "s_pid_min_erpm": 345, "s_pid_ramp_erpms_s": 350}
 DETECT_001 = {"r": 0.02982, "l": 18.28e-6, "flux": 1.318e-3}
+MOTORE_NUOVO_001 = {"r": 0.0295, "l": 19.5e-6, "flux": 4.918e-3}   # gemello montato 2026-11-11 sera, detection a motore libero
 FLUX_MISURATO = 5.43e-3       # misurato al banco 2026-11-11 (motore gemello); scritto su richiesta di Daniele
 
 
 def layout_provato(blob):
     f = lambda o: dec(bytes(blob[o:o + 4]))
-    return (blob[OFF_SENSOR_MODE_FOC] == 2 and abs(f(OFF_R) / DETECT_001["r"] - 1) < 0.02
-            and abs(f(OFF_L) / DETECT_001["l"] - 1) < 0.02
-            and any(abs(f(OFF_FLUX) / fx - 1) < 0.02 for fx in (DETECT_001["flux"], FLUX_MISURATO)))
+    vecchio = (abs(f(OFF_R) / DETECT_001["r"] - 1) < 0.02 and abs(f(OFF_L) / DETECT_001["l"] - 1) < 0.02
+               and any(abs(f(OFF_FLUX) / fx - 1) < 0.02 for fx in (DETECT_001["flux"], FLUX_MISURATO)))
+    nuovo = all(abs(f(o) / MOTORE_NUOVO_001[k] - 1) < 0.02 for k, o in (("r", OFF_R), ("l", OFF_L), ("flux", OFF_FLUX)))
+    return blob[OFF_SENSOR_MODE_FOC] == 2 and (vecchio or nuovo)
 
 
 def dec(b):
@@ -105,6 +108,8 @@ def main():
     # default None = lascia il valore attuale (prima i default PROPOSTA 8 A venivano scritti anche quando si cambiava solo il PID)
     for n in PROPOSTA: ap.add_argument("--" + n.replace("_", "-"), type=float, default=None)
     ap.add_argument("--pll", nargs=2, type=float, metavar=("KP", "KI"), help="foc_pll_kp foc_pll_ki (filtro velocita' dagli hall; originali 2000 30000)")
+    ap.add_argument("--motore", nargs=3, type=float, metavar=("R", "L", "FLUX"),
+                    help="scrive R, L, flux e ricalcola come VESC Tool: current kp=L/tc ki=R/tc (tc 1000 us), observer=0.001/flux^2")
     ap.add_argument("--flux", type=float, help="foc_motor_flux_linkage in Wb (0.5e-3..10e-3)")
     ap.add_argument("--consenti-alzare", type=float, default=0.0, help="A: permette di ALZARE l_current fino a questo valore (max 100, sotto abs max 150). Solo col vai esplicito di Daniele")
     ap.add_argument("--spid", nargs="*", default=[], help="nome=valore per i campi del PID velocita' (s_pid_kp, s_pid_ki, s_pid_kd, s_pid_kd_filter, s_pid_min_erpm, s_pid_ramp_erpms_s)")
@@ -141,6 +146,11 @@ def main():
             # si puo' risalire fino a 500 = valore originale di fabbrica/asmile2 (2026-11-10: 20 sospettato di togliere coppia)
             if not 0 <= a.hall_interp_erpm <= max(hv, 500.0): sys.exit(f"hall_interp_erpm {a.hall_interp_erpm} fuori da [0, {max(hv, 500.0)}]: rifiuto")
             new[OFF_HALL_INTERP:OFF_HALL_INTERP + 4] = enc(a.hall_interp_erpm)
+        if a.motore is not None:
+            r_, l_, fx_ = a.motore
+            if not (0.01 <= r_ <= 0.1 and 5e-6 <= l_ <= 100e-6 and 1e-3 <= fx_ <= 10e-3): sys.exit(f"motore {a.motore} fuori range: rifiuto")
+            for o_, v_ in ((OFF_R, r_), (OFF_L, l_), (OFF_FLUX, fx_), (OFF_CUR_KP, l_ / 1e-3), (OFF_CUR_KI, r_ / 1e-3), (OFF_OBS, 0.001 / fx_ ** 2 * 1e6)):
+                new[o_:o_ + 4] = enc(v_)
         if a.pll is not None:
             kp_, ki_ = a.pll
             if not (50 <= kp_ <= 5000 and 100 <= ki_ <= 100000): sys.exit(f"pll {a.pll} fuori da kp[50,5000] ki[100,100000]: rifiuto")
@@ -161,6 +171,8 @@ def main():
     for n, v in campi(new).items(): print(f"  {n:20s} {cur[n]:8.2f} -> {v:8.2f}")
     print(f"  {'foc_hall_interp_erpm':20s} {dec(bytes(blob[OFF_HALL_INTERP:OFF_HALL_INTERP+4])):8.1f} -> {dec(bytes(new[OFF_HALL_INTERP:OFF_HALL_INTERP+4])):8.1f}")
     for n_, o_ in OFF_PLL.items(): print(f"  {n_:20s} {dec(bytes(blob[o_:o_+4])):10.1f} -> {dec(bytes(new[o_:o_+4])):10.1f}")
+    for n_, o_ in (("foc_motor_r", OFF_R), ("foc_motor_l", OFF_L), ("foc_current_kp", OFF_CUR_KP), ("foc_current_ki", OFF_CUR_KI), ("foc_observer_gain", OFF_OBS)):
+        print(f"  {n_:20s} {dec(bytes(blob[o_:o_+4])):.6g} -> {dec(bytes(new[o_:o_+4])):.6g}")
     print(f"  {'foc_motor_flux':20s} {dec(bytes(blob[OFF_FLUX:OFF_FLUX+4])):.5f} -> {dec(bytes(new[OFF_FLUX:OFF_FLUX+4])):.5f}")
     for n_, o_ in OFF_SPID.items():
         if new[o_:o_ + 4] != blob[o_:o_ + 4]: print(f"  {n_:20s} {dec(bytes(blob[o_:o_ + 4])):10.5f} -> {dec(bytes(new[o_:o_ + 4])):10.5f}")
