@@ -23,7 +23,7 @@ backup `fleet/001/vesc_backup/vesc_mcconf_backup_20261111_075839_banco_motore_pr
    vs 0; m_hall_extra_samples 1 vs 3 (hall più sensibili ai disturbi ad alta corrente → lettura invalida → angolo = observer col flux sbagliato);
    foc_d_gain_scale_max_mod 0.2 vs 0.9; foc_observer_type 0 vs 3.
 
-## Ipotesi aperta: il rapporto di asmile2
+## Ipotesi CHIUSA: il rapporto di asmile2 (Daniele 2026-11-11: 1:5 su entrambe, confermato)
 Il dato 0.105 tach/step (Briter 12 bit) dice 4096·0.105/42 = **1:10** su asmile2; Daniele dice 1:5. Se asmile2 è 1:10, a pari ampere ha il
 doppio di coppia al manubrio (e 15 A asmile2 ≈ 30 A #001). Va contato a mano: giri del motore per un giro di piantone su asmile2.
 
@@ -33,3 +33,10 @@ A. Correggere su #001: flux 5.43e-3, observer gain 1e3/λ² = 3.39e7, hall_extra
 B. Prova decisiva della coppia vera: dinamometro/bilancia pesa-valigie al manubrio a raggio noto, sterzo bloccato, 10/20/30 A →
    Nm misurati vs attesi 0.057·5·I. Stessa prova sul motore di prova con una leva (Kt del VESC). Se al banco torna e sulla bici no → meccanica
    (slittamento cinghia/ingranaggio, attrito). Se torna su entrambi → serve più riduzione o più corrente (o asmile2 è davvero 1:10).
+
+## Da capire al ritorno di Daniele (motore uguale + riduzione uguale, asmile2 forte a 8-18 A, #001 debole a 30 A)
+- Firmware/hardware del VESC di asmile2 (FSESC 6.7 Pro): stesso HW 60 e fw 5.2? Se diverso, la scala della corrente letta può differire
+  (R misurata 46.8 vs 27.9 mOhm sullo stesso modello di motore = indizio che uno dei due legge la corrente con un fattore ~1.7).
+- Corrente vera con pinza amperometrica/multimetro sulla batteria a stallo (VESC dice i_batt 1.5 A a 30 A di fase).
+- Prova bilancia pesa-valigie al manubrio (sopra, punto B) su #001 e, se possibile, su asmile2 a pari ampere.
+- Meccanica #001: slittamento cinghia/ingranaggio sotto coppia.
