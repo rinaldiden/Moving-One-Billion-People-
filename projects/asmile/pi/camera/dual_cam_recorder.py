@@ -59,6 +59,8 @@ FPS = 15
 BITRATE = 500_000  # 500kbps per camera (guida normale)
 # Calibrazione: a 500 kbps i corner ChArUco si spostano ~0.3 px (RMS mono 0.55 > gate 0.5, sessione 2026-11-10)
 BITRATE_CALIB = 6_000_000
+# master_switch lancia il recorder senza argomenti: per la calibrazione basta creare questo file (in /tmp, sparisce al riavvio)
+CALIB_FLAG = "/tmp/asmile_calib_mode"
 
 # Cameras mounted upright (Inno-Maker OV9281)
 VFLIP = False
@@ -306,7 +308,7 @@ def main():
     global BITRATE
     if args.bitrate:
         BITRATE = args.bitrate
-    elif args.calib:
+    elif args.calib or os.path.exists(CALIB_FLAG):
         BITRATE = BITRATE_CALIB
 
     recorder = DualCamRecorder(duration_min=args.duration, preview=args.preview)
