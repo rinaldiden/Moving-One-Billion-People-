@@ -90,5 +90,12 @@
  "method": "ChArUco 50 mm, calib_charuco_dual.py (3a ripresa 2026-11-11, 5 sessioni, holdout 30 blocchi)",
  "source": "calib_asmile-001.CANDIDATO_v2_B30.json",
  "focal_rect_px": 1379.8882680918412,
- "focal_fit_px": 1379.8882680918412
+ "focal_fit_px": 1379.8882680918412,
+ "z_correction": {
+  "a": 0.9649,
+  "b_m": 0.1693,
+  "formula": "Z_vera = a*Z_stereo + b",
+  "fonte": "Daniele 2026-11-11: muro 5.10 m, manubrio 1.80 m (foto session_20261111_112806 fr.120); residui sulle soste col metro 1/2/5/10 m entro ~1.5%",
+  "provvisoria": true
+ }
 }
