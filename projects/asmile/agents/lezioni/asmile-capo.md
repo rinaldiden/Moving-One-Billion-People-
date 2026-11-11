@@ -35,3 +35,10 @@ Cosa ho previsto male. Le legge il capo-critico.
 - 2026-11-11 GIUSTO: trovato con i dati che lo scatto verso SX e' legato alla fase elettrica (2 picchi per giro el.), non alla meccanica ne' all'interpolazione
 - 2026-11-11 SBAGLIATO: sterzo #001 11/11: tante prove e ipotesi (flux, rpm VESC, fluido 12 deg/s, interp 100) senza portare uno sterzo fluido nei due versi; Daniele: 'pessimo'. Ho cambiato una variabile alla volta ma partendo dalle mie ipotesi invece di riprodurre subito ESATTAMENTE il setup che a Daniele andava bene (vel, VESC, script) e confrontare.
 - 2026-11-11 SBAGLIATO: avevo segnato come "run buono" quello del 10/11 con hall_interp 500; Daniele: il fluido era con hall_interp 20 (approvato 09/11 17:37, commit 3ba1edd2). Il 500 l'ho messo io per la coppia (invariata) e ha tolto la fluidita'. Riferimento = l'ultimo stato APPROVATO da Daniele, non l'ultimo run.
+- 2026-11-11 GIUSTO: sterzo 11/11: riproducendo IDENTICI script+VESC del 09/11 (stesso UUID, config byte per byte) e vedendo che andava diverso, ho dimostrato che la causa era fisica e non software
+- 2026-11-11 GIUSTO: confronto corrente comandata vs misurata ciclo per ciclo: escluse perdite di pacchetti UART
+- 2026-11-11 GIUSTO: misure R/L/flux a motore scollegato: R 29->23.5 mOhm, L 19.5->17 uH, flux 2.3 vs 5.43 del gemello = indizio di spire in corto, confermato dal motore che frena e puzza
+- 2026-11-11 SBAGLIATO: ho passato ore a cambiare software (comandi, PID, PLL, flux, interp, campo openloop) prima di misurare il motore: con una cosa fisica cambiata nessun parametro poteva tornare al 09/11. Prima misurare l'hardware (R, L, flux, giro a mano) quando lo stesso setup va diverso
+- 2026-11-11 SBAGLIATO: lo strumento vesc_mcconf scriveva i default 8 A anche cambiando solo il PID (corretto: default = lascia invariato)
+- 2026-11-11 SBAGLIATO: ho presentato oscillazioni da 9-10% come 'quasi fluido' mentre Daniele vedeva scatti: i miei numeri (velocita' su 100 ms) sottostimano gli scatti; fidarsi di quello che vede Daniele
+- 2026-11-11 SBAGLIATO: a 100 Hz con guadagni tarati a 400 Hz = instabile: mai cambiare la frequenza del loop senza ritarare
