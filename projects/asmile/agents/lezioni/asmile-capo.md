@@ -30,3 +30,5 @@ Cosa ho previsto male. Le legge il capo-critico.
 - 2026-11-11 GIUSTO: dopo la correzione di Daniele: autoapprendimento reso automatico (palla.py bilancio + guardia su passa + regola in tutti i 52 agenti e nella skill capo)
 - 2026-11-11 SBAGLIATO: rigenerando gli agenti ho cancellato per un momento la regola decisioni dai 21 critici (era aggiunta a mano, non nel generatore): ora è nel template file_critico
 - 2026-11-11 SBAGLIATO: le lezioni di giusto/sbagliato le scrivevo solo quando Daniele lo chiedeva
+- 2026-11-11 GIUSTO: stop immediato e corrente 0 appena Daniele ha detto basta; misure (A motore/batteria, temperature, tach vs encoder) registrate per ogni prova
+- 2026-11-11 SBAGLIATO: sterzo #001: Daniele aveva chiesto lo schema piu' semplice (Pi manda SOLO la velocita' al VESC, micro-rampe, VESC segue con gli A max). Al primo risultato a scatti sono tornato al controllo in corrente dal Pi (sterzo_fluido) e poi ho aggiunto la compensazione ripple: ho complicato invece di far funzionare il suo schema. Daniele: 'stai completamente sbagliando a comandare'.

@@ -22,6 +22,7 @@ import serial
 from vesc_return_to_center_duty import send_duty, send_current, pkt, UART, BAUD
 from safety_001 import uart_libera
 import sterzo_fluido_001 as sf      # rd_enc, wheel, q_imotor, TEL, limiti
+from tach_encoder_map import TachMap  # impara tach VESC <-> encoder per il fallback (Daniele 2026-11-11)
 
 COMM_SET_RPM = 8
 ERPM_PER_DEG_S = 35 * 60 / 360.0    # 5.83
@@ -65,7 +66,8 @@ def main(argv=None):
     if abs(tgt - p0) < 14 or a.dry_run: print("niente da fare / dry-run"); return
     os.makedirs("/data/logging/vesc", exist_ok=True)
     log = open(time.strftime(f"/data/logging/vesc/sterzo_rpm_%Y%m%d_%H%M%S{a.tag}.csv"), "w")
-    log.write("t,pos,v_enc,v_set,erpm_set,i_motor,i_batt,v_batt,t_fet,t_mot\n")
+    log.write("t,pos,v_enc,v_set,erpm_set,i_motor,i_batt,v_batt,t_fet,t_mot,tach,enc_da_tach,inc_tach\n")
+    tmap = TachMap(); est = (float("nan"), float("nan"))
     ser = serial.Serial(UART, BAUD, timeout=0.02)
     def stop():
         for f, v in ((send_rpm, 0), (send_current, 0), (send_duty, 0), (send_current, 0)):
@@ -95,8 +97,12 @@ def main(argv=None):
                 if im is None:
                     qf += 1
                     if qf >= 3: reason = "VESC muto"; break
-                else: qf = 0; i_mot = im
-            log.write(f"{tc - t0:.4f},{p},{v_enc:.2f},{d * v_set:.2f},{erpm:.0f},{i_mot:.2f},{sf.TEL['i_batt']:.2f},{sf.TEL['v_batt']:.1f},{sf.TEL['t_fet']:.1f},{sf.TEL['t_mot']:.1f}\n")
+                else:
+                    qf = 0; i_mot = im
+                    e = tmap.stima(sf.TEL["tach"], tc)          # confronto PRIMA di imparare il punto nuovo
+                    est = e if e else (float("nan"), float("nan"))
+                    tmap.update(sf.TEL["tach"], p, tc)
+            log.write(f"{tc - t0:.4f},{p},{v_enc:.2f},{d * v_set:.2f},{erpm:.0f},{i_mot:.2f},{sf.TEL['i_batt']:.2f},{sf.TEL['v_batt']:.1f},{sf.TEL['t_fet']:.1f},{sf.TEL['t_mot']:.1f},{sf.TEL['tach']},{est[0]:.0f},{est[1]:.0f}\n")
             if (p - p0) * d <= -10: reason = f"VERSO SBAGLIATO {p - p0:+d} count"; break
             if abs(v_enc) > vstop: reason = f"troppo veloce {v_enc:+.0f} deg/s"; break
             if (p < lo and d < 0) or (p > hi and d > 0) or not hard_lo <= p <= hard_hi: reason = f"limite {p}"; break
@@ -106,7 +112,7 @@ def main(argv=None):
             time.sleep(max(0.0, a.ms / 1000 - (time.monotonic() - tc)))
     except KeyboardInterrupt: reason = "Ctrl-C"
     finally:
-        stop(); ser.close(); log.close()
+        stop(); ser.close(); log.close(); tmap.salva()
         if reason: print("[STOP]", reason)
         p, _ = sf.rd_enc(); print(f"fine: pos={p} cicli={k} ({k / max(time.monotonic() - t0, 1e-3):.0f} Hz)")
 
