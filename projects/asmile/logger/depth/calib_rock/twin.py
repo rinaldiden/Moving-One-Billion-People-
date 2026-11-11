@@ -92,7 +92,7 @@ def _fwd_norm(L, x, y):
     """(x,y)=X/Z,Y/Z -> coordinate normalizzate distorte (prima di K)."""
     r = np.hypot(x, y)
     th = np.arctan(r)
-    g = th + L.a[0] * th ** 3 + L.a[1] * th ** 5 + L.a[2] * th ** 7
+    g = th + L.a[0] * th ** 3 + L.a[1] * th ** 5 + L.a[2] * th ** 7 + (L.a[3] * th ** 9 if len(L.a) > 3 else 0.0)
     sc = np.where(r > 1e-9, g / np.maximum(r, 1e-12), 1.0)
     xd, yd = x * sc, y * sc
     r2 = xd * xd + yd * yd
@@ -129,12 +129,14 @@ class Cam:
         return np.stack([x, y, np.ones_like(x)], -1)
 
 
-def rich_from_opencv(f, cx, cy, k1, k2, rmax=0.75):
-    """Coefficienti theta-polinomiali che riproducono la curva radiale OpenCV (k1,k2) su r in [0,rmax]."""
-    r = np.linspace(1e-3, rmax, 200)
+def rich_from_opencv(f, cx, cy, k1, k2, rmax=0.75, k3=0.0):
+    """Coefficienti theta-polinomiali che riproducono la curva radiale OpenCV (k1,k2,k3) su r in [0,rmax].
+    rmax = raggio massimo reale dell'immagine (angolo piu' lontano dal punto principale) / f: serve con la calib B30
+    (cy destra 496, k3 -0.30), dove il vecchio rmax 0.75 e k3 ignorato davano dy 89 px agli angoli."""
+    r = np.linspace(1e-3, rmax, 300)
     th = np.arctan(r)
-    target = r * (1 + k1 * r ** 2 + k2 * r ** 4)
-    A = np.stack([th ** 3, th ** 5, th ** 7], 1)
+    target = r * (1 + k1 * r ** 2 + k2 * r ** 4 + k3 * r ** 6)
+    A = np.stack([th ** 3, th ** 5, th ** 7, th ** 9], 1) if k3 != 0.0 else np.stack([th ** 3, th ** 5, th ** 7], 1)
     a = np.linalg.lstsq(A, target - th, rcond=None)[0]
     return Lens(f=f, cx=cx, cy=cy, a=tuple(a))
 
@@ -204,8 +206,10 @@ def make_instance(calib_path, seed=0, scale=1.0, lens_var=True, unit="asmile-001
     tol = prof["tol"]
     U = lambda a: rng.uniform(-a, a) * scale
     k = lambda d, i: (float(d[i]) if len(d) > i else 0.0)
-    L1 = rich_from_opencv(cal.K1[0, 0], cal.K1[0, 2], cal.K1[1, 2], k(cal.d1, 0), k(cal.d1, 1))
-    L2 = rich_from_opencv(cal.K2[0, 0], cal.K2[0, 2], cal.K2[1, 2], k(cal.d2, 0), k(cal.d2, 1))
+    def _rm(K):
+        return float(max(np.hypot(x - K[0, 2], y - K[1, 2]) for x in (0, W) for y in (0, H)) / K[0, 0]) * 1.02
+    L1 = rich_from_opencv(cal.K1[0, 0], cal.K1[0, 2], cal.K1[1, 2], k(cal.d1, 0), k(cal.d1, 1), _rm(cal.K1), k(cal.d1, 4))
+    L2 = rich_from_opencv(cal.K2[0, 0], cal.K2[0, 2], cal.K2[1, 2], k(cal.d2, 0), k(cal.d2, 1), _rm(cal.K2), k(cal.d2, 4))
     # firma minima della lente vera (piccola ma non modellata dal fit semplice): fissa anche a lens_var=False
     L1.p, L1.s = (1.5e-4, -1.0e-4), (8e-5, -5e-5)
     L2.p, L2.s = (-1.0e-4, 1.2e-4), (-6e-5, 7e-5)
@@ -218,7 +222,7 @@ def make_instance(calib_path, seed=0, scale=1.0, lens_var=True, unit="asmile-001
             L.f *= 1 + U1(tol["f_pct"] / 100)
             L.cx += U1(tol["pp_px"])
             L.cy += U1(tol["pp_px"])
-            L.a = tuple(np.array(L.a) * (1 + rng.normal(0, tol["lens_rel"] * scale, 3)))
+            L.a = tuple(np.array(L.a) * (1 + rng.normal(0, tol["lens_rel"] * scale, len(L.a))))
             L.p = tuple(np.array(L.p) + rng.normal(0, tol["tang"] * scale, 2))
             L.s = tuple(np.array(L.s) + rng.normal(0, tol["prism"] * scale, 2))
             L.aspect = U1(tol["aspect"])

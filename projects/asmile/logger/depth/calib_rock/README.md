@@ -1,5 +1,34 @@
 # calib_rock — gemello digitale (mock) di #001 e calibrazione automatica
 
+## AGGIORNAMENTO 2026-11-11 (calib provvisoria B30 come riferimento) - LEGGERE PRIMA
+
+Riferimento ora = `calib_asmile-001.json` = B30 3a ripresa (PROVVISORIA, accettata da Daniele). `z_correction` nel file e' `attiva: false`
+(decisione finale di Daniele: B30 SENZA correzione; borsa 0.88/0.90, muro 5.11/5.10, manubrio 1.75/1.80): il mock non la usa e non puo' usarla
+(la verita' del gemello e' sintetica, non metrica reale). Se un giorno si attiva, vale solo per QUESTA calibrazione ed e' provvisoria.
+`--produzione` RIFIUTA (exit 3: nessun PASSA L1.rettifica legato allo sha attuale): risultati sotto = `--prova`, **prova del codice, non G0**.
+
+1. **Fedelta' sui corner veri (`fedelta_001_20261111.json`, driver `fedelta_reale_driver.py`)**: 70 coppie ChArUco vere (4 sessioni 11/11, 6 Mbps),
+   140/140 rilevate sia nel reale sia nel gemello. Scarto corner gemello-vs-vero dopo allineamento per vista: mediana 0.22-0.39 px in tutte le 9 zone
+   (p95 0.44-0.64 px, eccetto 2 zone povere di punti: 0.96 e 3.27 px) = **al livello del rumore corner vero (RMS mono 0.23-0.26)**, quindi forma di lente e
+   geometria riprodotte. Scarto grezzo (include l'errore di posa PnP) 0.6-2.6 px. Nitidezza: reale 86 vs gemello 200 (**il gemello e' 2.3x piu' nitido**,
+   il vero e' piu' sfocato per h264) e sigma rumore 1.87 vs 2.32: la sfocatura va alzata (`CALIB_ROCK_SPORCO`, stress gia' in questa pagina), NON ancora ritarata.
+2. **Fix al gemello**: `twin.rich_from_opencv` ignorava k3 e usava rmax 0.75; con B30 (k3 destro -0.296, cy destro 496) sbagliava fino a 14 px. Ora k3 e rmax
+   reale (errore max 2.2 px). Il file ha gli stessi coefficienti: nessun nominale inventato.
+3. **run_all --prova N=40/scala, seed 20291111 (mai usati), 3 worker, 3068 s -> `esito.json`: 8 gate verdi su 19, 11 KO** (round 3 con la calib vecchia: 15/19, in
+   `esito_round3_calibvecchia.json`). Negativi 16/17. Soglie D012 non toccate.
+   - Verdi: guardie "A non dichiara mai VERDE", baseline A entro 1% (43/43), B-lenti mai peggiorativo per zona e se accetta VERDE (scala 2), nessun errore di esecuzione.
+   - A candidati con 40 istanze nuove: scala 1 solo 5/23 candidati veri dopo il controllo di bordo (17 scartati con dy>1.5 px), scala 2 4/7; **falsi gravi 1+2 (bordo 6.2-6.5%)**. Punto del critico "0 falsi su >=40 candidati A": **NON chiuso** (9 candidati veri totali). A resta "solo CANDIDATO + banco fisso reale".
+   - B solo-montaggio: accettata+gate 15/40 e 13/40 (con la calib vecchia 59/60, 57/60); peggioramenti per zona 6/40 e 3/40.
+4. **Perche' e' peggiorato: legato alla calibrazione fine, non al codice.** Il modello OpenCV destro di B30 (k3 -0.296) non e' invertibile oltre r_d 0.644, ma gli angoli alti
+   di cam2 arrivano a 0.73: gli angoli alti del nominale hanno dy 68 px **anche con geometria vera** (controllo positivo "lente nominale = VERDE": KO, unico negativo fallito).
+   E' la stessa estrapolazione ai bordi che il SIFT ha visto (dy(y) 1.5 px). Provato e scartato un nominale regolarizzato per il mock (fit a 3 parametri: 2 px di errore dentro
+   il range dati e non raggiunge 0.73: inventerebbe una lente). Si risolve con la calibrazione definitiva (schema a terra fisso, punti negli angoli), poi si rilancia.
+5. **Cosa e' verde ADESSO e non dipende dalla calibrazione fine**: logica dei casi negativi (16/17: scambio L/R, zone vuote, solo-centro, lato 6% con motivo baseline, yaw/scala sabotati rifiutati, bici ferma, per-zona), baseline stimata, rifiuto sicuro di B su lenti nuove, gemello fedele ai corner veri.
+   **Cosa resta legato alla calibrazione fine**: controllo positivo, B accettata (0 -> 15/40), candidati A (potenza >=40), falsi candidati, tabella errore per zona, sfocatura del gemello.
+
+---
+
+
 Stato (2026-11-10, round 3 dopo il VETO sui seed 20271117): **CODICE PRONTO, 4 GATE ANCORA ROSSI su 19 (15 verdi; onesti, nessuna soglia abbassata)**,
 NON in produzione. `esito.json` = run N=60/scala, SEED0 20281124 (mai usato prima), 2891 s.
 - **A (tabellone) e' SOLO CANDIDATO**: il bordo lo certifica il banco fisso reale / il tabellone fisico, MAI il mock.
