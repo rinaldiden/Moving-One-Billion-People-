@@ -8,11 +8,13 @@ Il Pi manda COMM_SET_RPM ogni --ms (default 10 ms). Il PID di velocita' del VESC
 Conversione: 1 giro elettrico = 16384/35 count = 10.29 deg di piantone -> 1 deg/s = 5.83 ERPM.
 Verso: corrente/rpm POSITIVI fanno SCENDERE l'encoder (verso SX), come misurato il 2026-11-09.
 
-Il Pi fa solo: profilo (velocita' piena, rallenta negli ultimi gradi), arrivo (rpm 0 poi corrente 0 = manubrio libero),
+Il Pi fa solo: profilo (micro-rampa in partenza --rampa s, velocita' piena, micro-rampa di decel negli ultimi
+--rallenta gradi prima del target E negli ultimi --rallenta-fc gradi prima dei limiti encoder sx/dx), arrivo (rpm 0 poi corrente 0 = manubrio libero),
 sicurezze: verso sbagliato >=10 count, oltre 30 deg/s (45 con --prova-veloce), limiti 4500/8700 e finecorsa veri -60,
 |i_motor| > imax+3, encoder vecchio, VESC muto, bici in movimento, timeout 20 s, SIGTERM/SIGHUP/Ctrl-C.
 Log: /data/logging/vesc/sterzo_rpm_<ora>.csv con corrente motore e batteria dalla UART.
 Uso: python3 sterzo_rpm_001.py --target RAW --vel 20 [--ms 10] [--dry-run]
+     python3 sterzo_rpm_001.py --verso sx|dx --vel 20      (va fino al limite software, rallentando prima)
 """
 import argparse, json, os, signal, struct, sys, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -37,6 +39,9 @@ def main(argv=None):
     ap.add_argument("--ms", type=float, default=10.0, help="ogni quanti ms mando il setpoint (2-50)")
     ap.add_argument("--imax", type=float, default=45.0)
     ap.add_argument("--rallenta", type=float, default=4.0, help="gradi prima del target in cui la velocita' scende")
+    ap.add_argument("--rallenta-fc", type=float, default=5.0, help="gradi prima dei limiti encoder sx/dx in cui la velocita' scende")
+    ap.add_argument("--rampa", type=float, default=0.3, help="secondi di micro-rampa in partenza (0 -> vel)")
+    ap.add_argument("--verso", choices=["sx", "dx"], help="invece di --target: fino al limite software da quella parte")
     ap.add_argument("--prova-veloce", action="store_true")
     ap.add_argument("--tag", default="")
     ap.add_argument("--dry-run", action="store_true")
@@ -45,7 +50,8 @@ def main(argv=None):
     if not 0 < a.vel <= vmax: sys.exit(f"--vel in (0,{vmax}]")
     if not 2 <= a.ms <= 50: sys.exit("--ms in [2,50]")
     c, lo, hi, hard_lo, hard_hi = sf.limiti()
-    tgt = c if a.target is None else a.target
+    # encoder SCENDE verso SX (misurato 2026-11-09)
+    tgt = (lo if a.verso == "sx" else hi) if a.verso else (c if a.target is None else a.target)
     if not lo <= tgt <= hi: sys.exit(f"target fuori da [{lo},{hi}]")
     ok, why = uart_libera(UART)
     if not ok: sys.exit(f"UART non libera: {why}")
@@ -77,7 +83,10 @@ def main(argv=None):
             v_enc = (hist[-1][1] - hist[0][1]) * sf.DEG / max(hist[-1][0] - hist[0][0], 0.02)
             rem = (tgt - p) * d * sf.DEG
             if rem < 0.3: print(f"ARRIVATO pos={p} err={(tgt - p) * sf.DEG:+.2f} deg in {tc - t0:.1f} s: corrente rilasciata"); break
-            v_set = a.vel if rem > a.rallenta else max(2.0, a.vel * rem / a.rallenta)
+            rem_fc = ((hi if d > 0 else lo) - p) * d * sf.DEG           # gradi al limite encoder nel verso di marcia
+            v_set = a.vel * min(1.0, (tc - t0) / a.rampa) if a.rampa > 0 else a.vel
+            v_set = min(v_set, a.vel * rem / a.rallenta, a.vel * rem_fc / a.rallenta_fc)
+            v_set = max(2.0, v_set)
             erpm = -SIGN * d * v_set * ERPM_PER_DEG_S
             send_rpm(ser, erpm)
             k += 1
