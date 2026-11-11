@@ -35,12 +35,14 @@ OFF_SENSOR_MODE_FOC, OFF_L, OFF_R, OFF_FLUX, OFF_HALL_INTERP = 198, 207, 215, 21
 # PID di velocita' del VESC (float32_auto, offset fw 5.02 verificati con lo stesso metodo)
 OFF_SPID = {"s_pid_kp": 329, "s_pid_ki": 333, "s_pid_kd": 337, "s_pid_kd_filter": 341, "s_pid_min_erpm": 345, "s_pid_ramp_erpms_s": 350}
 DETECT_001 = {"r": 0.02982, "l": 18.28e-6, "flux": 1.318e-3}
+FLUX_MISURATO = 5.43e-3       # misurato al banco 2026-11-11 (motore gemello); scritto su richiesta di Daniele
 
 
 def layout_provato(blob):
     f = lambda o: dec(bytes(blob[o:o + 4]))
     return (blob[OFF_SENSOR_MODE_FOC] == 2 and abs(f(OFF_R) / DETECT_001["r"] - 1) < 0.02
-            and abs(f(OFF_L) / DETECT_001["l"] - 1) < 0.02 and abs(f(OFF_FLUX) / DETECT_001["flux"] - 1) < 0.02)
+            and abs(f(OFF_L) / DETECT_001["l"] - 1) < 0.02
+            and any(abs(f(OFF_FLUX) / fx - 1) < 0.02 for fx in (DETECT_001["flux"], FLUX_MISURATO)))
 
 
 def dec(b):
@@ -99,7 +101,9 @@ def main():
     ap.add_argument("file", nargs="?")
     ap.add_argument("--fw", default="5.2", help="versione fw attesa")
     ap.add_argument("--apply", action="store_true")
-    for n in PROPOSTA: ap.add_argument("--" + n.replace("_", "-"), type=float, default=PROPOSTA[n])
+    # default None = lascia il valore attuale (prima i default PROPOSTA 8 A venivano scritti anche quando si cambiava solo il PID)
+    for n in PROPOSTA: ap.add_argument("--" + n.replace("_", "-"), type=float, default=None)
+    ap.add_argument("--flux", type=float, help="foc_motor_flux_linkage in Wb (0.5e-3..10e-3)")
     ap.add_argument("--consenti-alzare", type=float, default=0.0, help="A: permette di ALZARE l_current fino a questo valore (max 100, sotto abs max 150). Solo col vai esplicito di Daniele")
     ap.add_argument("--spid", nargs="*", default=[], help="nome=valore per i campi del PID velocita' (s_pid_kp, s_pid_ki, s_pid_kd, s_pid_kd_filter, s_pid_min_erpm, s_pid_ramp_erpms_s)")
     ap.add_argument("--hall-interp-erpm", type=float, help="foc_hall_interp_erpm (0-500; 500 = originale): sotto questa velocita' il VESC non interpola fra gli hall -> scatti")
@@ -126,7 +130,7 @@ def main():
     else:
         new = bytearray(blob)
         for i, n in enumerate(CAMPI):
-            if n in PROPOSTA:
+            if n in PROPOSTA and getattr(a, n) is not None:
                 v = getattr(a, n)
                 if abs(v) > abs(cur[n]) + 1e-6 and not (n in ("l_current_max", "l_current_min") and abs(v) <= min(a.consenti_alzare, 100.0)): sys.exit(f"{n}: {v} ALZEREBBE il limite ({cur[n]:.2f}): rifiutato")
                 new[OFF0 + 4 * i:OFF0 + 4 * i + 4] = enc(v)
@@ -135,6 +139,9 @@ def main():
             # si puo' risalire fino a 500 = valore originale di fabbrica/asmile2 (2026-11-10: 20 sospettato di togliere coppia)
             if not 0 <= a.hall_interp_erpm <= max(hv, 500.0): sys.exit(f"hall_interp_erpm {a.hall_interp_erpm} fuori da [0, {max(hv, 500.0)}]: rifiuto")
             new[OFF_HALL_INTERP:OFF_HALL_INTERP + 4] = enc(a.hall_interp_erpm)
+        if a.flux is not None:
+            if not 0.5e-3 <= a.flux <= 10e-3: sys.exit(f"flux {a.flux} fuori da [0.5e-3, 10e-3]: rifiuto")
+            new[OFF_FLUX:OFF_FLUX + 4] = enc(a.flux)
         for kv in a.spid:
             n_, v_ = kv.split("="); v_ = float(v_)
             if n_ not in OFF_SPID: sys.exit(f"campo sconosciuto {n_}")
@@ -146,6 +153,7 @@ def main():
     print("DIFF:")
     for n, v in campi(new).items(): print(f"  {n:20s} {cur[n]:8.2f} -> {v:8.2f}")
     print(f"  {'foc_hall_interp_erpm':20s} {dec(bytes(blob[OFF_HALL_INTERP:OFF_HALL_INTERP+4])):8.1f} -> {dec(bytes(new[OFF_HALL_INTERP:OFF_HALL_INTERP+4])):8.1f}")
+    print(f"  {'foc_motor_flux':20s} {dec(bytes(blob[OFF_FLUX:OFF_FLUX+4])):.5f} -> {dec(bytes(new[OFF_FLUX:OFF_FLUX+4])):.5f}")
     for n_, o_ in OFF_SPID.items():
         if new[o_:o_ + 4] != blob[o_:o_ + 4]: print(f"  {n_:20s} {dec(bytes(blob[o_:o_ + 4])):10.5f} -> {dec(bytes(new[o_:o_ + 4])):10.5f}")
     ch = [i for i in range(len(new)) if new[i] != blob[i]]
