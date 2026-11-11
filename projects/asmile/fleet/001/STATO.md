@@ -1,4 +1,4 @@
-# 001 — stato fotografato 2026-11-09 17:51 dopo: sterzo: micro-rampa in partenza (jerk 250 deg/s^3, spinta attrito graduale): niente colpo in partenza; VESC ±45 A
+# 001 — stato fotografato 2026-11-11 07:55 dopo: recorder modo calib 6 Mbps via /tmp/asmile_calib_mode (attivo oggi 2026-11-11, overlay: sparisce al riavvio)
 kernel: 6.12.75+rpt-rpi-2712
 git sul Pi: 1967cbf 2026-05-13 fix: separate boot config for asmile (ov9281 dual cam, no arducam HAT)
 overlay: si

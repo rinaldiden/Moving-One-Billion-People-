@@ -12,3 +12,4 @@
 - 2026-11-09 17:37 001: STERZO APPROVATO da Daniele (così è perfetto): sterzo_fluido_001 400 Hz, 15 deg/s, KD 0.6, kp 3; parametri in /data/sterzo_001_parametri.json; VESC ±30 A + hall_interp 20 in flash pi/steering/sterzo_fluido_001.py fleet/001/data agents/prove/sterzo_001
 - 2026-11-09 17:38 001: sterzo: velocità default 20 deg/s (variazione 6-8%, picco 26 deg/s, 13-20 A), resto invariato pi/steering/sterzo_fluido_001.py fleet/001/data agents/prove/sterzo_001
 - 2026-11-09 17:51 001: sterzo: micro-rampa in partenza (jerk 250 deg/s^3, spinta attrito graduale): niente colpo in partenza; VESC ±45 A pi/steering/sterzo_fluido_001.py fleet/001/data agents/prove/sterzo_001
+- 2026-11-11 07:55 001: recorder modo calib 6 Mbps via /tmp/asmile_calib_mode (attivo oggi 2026-11-11, overlay: sparisce al riavvio) 
