@@ -2,7 +2,13 @@
 Aggiornato 2026-11-10 sera. Daniele ha fermato gli agenti: domattina gira la 2ª ripresa di calibrazione di #001.
 Ripresa: tutti gli agenti riprendono da qui.
 
-## Agenti fermati (cosa stavano facendo)
+## 2026-11-11 mattina
+- 2ª ripresa #001 FATTA (6 Mbps): session_20261111_082437 / 083054 / 083632 scaricate e complete (L=R frame). Distanze soste NOMINALI da confermare.
+- asmile-calib in corso sul candidato definitivo → poi asmile-calib-critico → se PASSA: promuovere calib_asmile-001.json + registra_deploy, poi mock (calib_rock: fedelta.py sui corner veri → run_all.py --produzione).
+- Poi logger001: servono altezza camere da terra e inclinazione per dare i punti.
+- VESC #001: vedi agents/rapporti/vesc_001_banco_motore_prova_20261111.md (flux config 4x sbagliato; resta da capire la coppia).
+
+## Agenti fermati la sera del 10/11 (cosa stavano facendo)
 - **asmile-calib-critico** su strumento `logger/depth/calib_charuco_dual.py` (commit 783769c2, md5 0481cfa6…)
   - Era a metà: rifaceva la regressione sui corner veri in `agents/prove/calib_critico_783769c2/` (regr.py, regr_nodrop.py). Nessun verdetto.
   - Da giudicare: (1) `sync_3pct` allentato (colore non vincolato); (2) scarto PnP mai nel blocco GATE;
