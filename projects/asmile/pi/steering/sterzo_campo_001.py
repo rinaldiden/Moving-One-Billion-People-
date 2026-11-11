@@ -46,12 +46,52 @@ def leggi_pos(n=5):
 
 
 def theta_di(p, cf):
-    return cf["theta_of"] + cf["s"] * p * 360.0 / EREV
+    return cf["theta_of"] + cf["s"] * p * 360.0 / cf.get("erev", EREV)
+
+
+KP_E, KD_E = 3.0, 0.6        # A/deg, A/(deg/s): stessa legge dello sterzo approvato del 09/11 (sterzo_fluido_001)
+I_COUL_E = 4.0               # A, spinta d'attrito (feed-forward) a regime
+LEAD = 90.0                  # gradi el. davanti al rotore = coppia massima per ampere
+
+
+def vai_enc(a, cf, ciclo, p0, tgt, stop, t0):
+    """Commutazione dall'encoder del piantone: angolo del campo = angolo del rotore (dall'encoder) +/- 90 el.,
+    ampere = molla sul ritardo dal riferimento + smorzamento sulla velocita' + attrito. Il motore non puo' perdere il passo."""
+    from sterzo_fluido_001 import AlfaBeta
+    lo, hi = LIM_SW
+    dt = 1.0 / a.hz; d = 1 if tgt > p0 else -1
+    ab = AlfaBeta(p0, time.monotonic())
+    x, v = float(p0), 0.0                        # riferimento in count, count/s
+    vmax_c = a.vel / DEG; acc_c = a.acc / DEG; fc_c = a.rallenta_fc / DEG
+    p = p0
+    while not stop[0]:
+        rem = (tgt - x) * d
+        rem_fc = ((hi if d > 0 else lo) - x) * d
+        v_lim = min(vmax_c, math.sqrt(max(0.0, 2 * acc_c * rem)), vmax_c * max(0.1, rem_fc / fc_c))
+        v = min(v + acc_c * dt, v_lim) if v < v_lim else max(v - acc_c * dt, v_lim)
+        x += d * max(v, 0.0) * dt
+        if (tgt - x) * d <= 0.5: x = float(tgt)
+        ab.update(p, time.monotonic())
+        lag = (x - p) * DEG; v_ref = d * max(v, 0.0) * DEG
+        ff = I_COUL_E * min(1.0, abs(v_ref) / 6.0) * d
+        u = KP_E * lag + KD_E * (v_ref - ab.v) + ff        # A, positivo = spinge l'encoder in SU
+        u = max(-a.imax, min(a.imax, u))
+        th = theta_di(p, cf) + cf["s"] * LEAD * (1 if u >= 0 else -1)
+        p_new = ciclo(x, th, abs(u))
+        if p_new is None: return "encoder perso"
+        p = p_new
+        if not (lo - 20 <= p <= hi + 20): return f"fuori limiti ({p})"
+        if abs(p - x) > PERSO_COUNT: return f"troppo indietro: manubrio {p} rif {x:.0f}"
+        if TEL["t_fet"] > T_FET_MAX or TEL["t_mot"] > T_MOT_MAX: return "temperatura"
+        if x == tgt and abs(p - tgt) < 10 and abs(ab.v) < 1.0:
+            return f"ARRIVATO pos={p} in {time.monotonic() - t0:.1f} s"
+        if time.monotonic() - t0 > 30: return "tempo scaduto"
+    return "fermato a mano"
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("modo", choices=["allinea", "vai"])
+    ap.add_argument("modo", choices=["allinea", "vai", "enc"])
     ap.add_argument("--target", type=int, help="raw encoder (vai)")
     ap.add_argument("--vel", type=float, default=20.0, help="deg/s al manubrio (max 30)")
     ap.add_argument("--acc", type=float, default=40.0, help="deg/s^2 (micro-rampa)")
@@ -69,14 +109,14 @@ def main():
     cf = None
     try: cf = json.load(open(CAMPO_FILE))
     except (OSError, ValueError): pass
-    if a.modo == "vai":
+    if a.modo in ("vai", "enc"):
         if cf is None: sys.exit("manca l'allineamento (/data/sterzo_campo_001.json): prima 'allinea'")
         if a.target is None: sys.exit("serve --target")
         tgt = max(lo, min(hi, a.target))
-        print(f"modo=vai pos={p0} target={tgt} corsa={(tgt - p0) * DEG:+.1f} deg vel={a.vel} deg/s imax={a.imax} A hz={a.hz}")
+        print(f"modo={a.modo} pos={p0} target={tgt} corsa={(tgt - p0) * DEG:+.1f} deg vel={a.vel} deg/s imax={a.imax} A hz={a.hz}")
         print("verso atteso:", "encoder SCENDE (manubrio verso SX)" if tgt < p0 else "encoder SALE (manubrio verso DX)")
     else:
-        print(f"modo=allinea pos={p0} imax={min(a.imax, 12.0)} A: campo fermo, +90 el. (gioco), poi +360 el. (~10 gradi di manubrio)")
+        print(f"modo=allinea pos={p0} imax={min(a.imax, 12.0)} A: +90 el., poi 3 giri el. avanti (~30 gradi verso SX) e 3 indietro")
     if a.dry_run: print("dry-run: nessun comando"); return
     ok_u, why = uart_libera(UART)
     if not ok_u: sys.exit(f"UART VESC non libera ({why})")
@@ -111,23 +151,35 @@ def main():
                 ciclo(p0, th_a, ia * (j + 1) / (0.8 * a.hz))
             # prima prova 11/11: +90 el. dava -56 count invece di -117 = gioco della riduzione recuperato al cambio di
             # verso. Ora: +90 per prendere il gioco, poi un giro elettrico intero (+360) nello stesso verso e misuro quello.
-            for j in range(int(0.5 * a.hz)):
-                ciclo(p0, th_a + 90.0 * (j + 1) / (0.5 * a.hz), ia)
-            for j in range(int(0.4 * a.hz)): pa = ciclo(p0, th_a + 90.0, ia)
-            for j in range(int(1.5 * a.hz)):                   # +360 gradi el. in 1.5 s (~10 gradi di manubrio)
-                ciclo(p0, th_a + 90.0 + 360.0 * (j + 1) / (1.5 * a.hz), ia)
-            for j in range(int(0.4 * a.hz)): pb = ciclo(p0, th_a + 90.0, ia)
-            if pa is None or pb is None: motivo = "encoder perso durante l'allineamento"; return
-            dp = pb - pa; atteso = EREV
-            print(f"pos dopo +90 el.: {pa}   dopo +360: {pb}   spostamento {dp:+d} count (atteso +/-{atteso:.0f})")
-            if not (0.5 * atteso < abs(dp) < 1.5 * atteso):
-                motivo = f"scala non coerente ({dp:+d} count): NON salvo"; return
-            s = 1 if dp > 0 else -1
-            th_of = 90.0 - s * pb * 360.0 / EREV
-            json.dump({"theta_of": th_of % 360.0, "s": s, "erev": EREV, "dp_90": dp, "corrente": ia,
+            # 2a prova: un giro el. in un verso solo dava 436 count (attrito+gioco tutti da una parte). Ora: N giri avanti e
+            # N indietro; scala = media dei due versi, offset = punto medio (attrito e gioco si annullano).
+            N = 3
+            def gira(th_da, th_a_, sec):
+                for j in range(int(sec * a.hz)): ciclo(p0, th_da + (th_a_ - th_da) * (j + 1) / (sec * a.hz), ia)
+            def tieni(th, sec):
+                p = None
+                for j in range(int(sec * a.hz)): p = ciclo(p0, th, ia)
+                return p
+            gira(0.0, 90.0, 0.5); pa = tieni(90.0, 0.4)                   # prende il gioco in avanti
+            gira(90.0, 90.0 + 360.0 * N, 1.5 * N); pb = tieni(90.0 + 360.0 * N, 0.4)
+            gira(90.0 + 360.0 * N, 90.0, 1.5 * N); pc = tieni(90.0, 0.4)  # torna indietro
+            if None in (pa, pb, pc): motivo = "encoder perso durante l'allineamento"; return
+            dpa, dpi = pb - pa, pc - pb
+            erev = (abs(dpa) + abs(dpi)) / (2.0 * N)
+            print(f"avanti {dpa:+d} count, indietro {dpi:+d} count su {N} giri el. -> {erev:.1f} count/giro el. (nominale {EREV:.1f})")
+            if not (0.8 * EREV < erev < 1.2 * EREV) or dpa * dpi >= 0:
+                motivo = "scala non coerente: NON salvo"; return
+            s = 1 if dpa > 0 else -1
+            p_mid90 = (pa + pc) / 2.0          # a 90 el.: andata e ritorno mediati (gioco + attrito)
+            th_of = 90.0 - s * p_mid90 * 360.0 / erev
+            gioco = abs(pc - pa)
+            json.dump({"theta_of": th_of % 360.0, "s": s, "erev": erev, "gioco_count": gioco, "corrente": ia,
                        "data": time.strftime("%Y-%m-%dT%H:%M:%S")}, open(CAMPO_FILE, "w"), indent=1)
-            print(f"salvato: theta_of={th_of % 360:.1f} s={s:+d} ({'encoder scende' if s < 0 else 'encoder sale'} con angolo che cresce)")
+            print(f"salvato: theta_of={th_of % 360:.1f} s={s:+d} erev={erev:.1f} gioco+attrito={gioco} count")
             motivo = "allineato"
+            return
+        if a.modo == "enc":
+            motivo = vai_enc(a, cf, ciclo, p0, tgt, stop, t0)
             return
         # --- vai ---
         th0 = theta_di(p0, cf)
