@@ -79,3 +79,7 @@ A asmile-monitor e al capo.
   prendi, non a fine lavoro: `python3 projects/asmile/agents/palla.py decido --da <tuo-nome> --cosa "..." --scelta "..."
   --perche "..." [--scartato "alternative e perché no"] [--evidenza <path>]`. Anche le scelte che poi si rivelano
   sbagliate (le correggi con una decisione nuova, non cancelli). Va su git: serve a imparare, non a giudicarti.
+- **Autoapprendimento (Daniele 2026-11-11, obbligatorio):** a fine di OGNI lavoro scrivi il bilancio, giusto e sbagliato:
+  `python3 projects/asmile/agents/palla.py bilancio --da <tuo-nome> --giusto "..." --sbagliato "..." --artefatto <path>`
+  (ripetibili; "niente di sbagliato" va scritto). `palla.py passa` RIFIUTA la palla senza bilancio. Finisce in
+  agents/lezioni/<tuo-nome>.md e nel tuo prossimo brief: è così che non rifai lo stesso errore.

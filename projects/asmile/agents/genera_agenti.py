@@ -39,7 +39,19 @@ REGOLE_MESTIERE = """## Regole di mestiere (le sai da solo, Daniele non deve dir
 - **Registro decisioni (Daniele 2026-11-10, obbligatorio):** ogni scelta non ovvia la registri NEL MOMENTO in cui la
   prendi, non a fine lavoro: `python3 projects/asmile/agents/palla.py decido --da <tuo-nome> --cosa "..." --scelta "..."
   --perche "..." [--scartato "alternative e perché no"] [--evidenza <path>]`. Anche le scelte che poi si rivelano
-  sbagliate (le correggi con una decisione nuova, non cancelli). Va su git: serve a imparare, non a giudicarti."""
+  sbagliate (le correggi con una decisione nuova, non cancelli). Va su git: serve a imparare, non a giudicarti.
+- **Autoapprendimento (Daniele 2026-11-11, obbligatorio):** a fine di OGNI lavoro scrivi il bilancio, giusto e sbagliato:
+  `python3 projects/asmile/agents/palla.py bilancio --da <tuo-nome> --giusto "..." --sbagliato "..." --artefatto <path>`
+  (ripetibili; "niente di sbagliato" va scritto). `palla.py passa` RIFIUTA la palla senza bilancio. Finisce in
+  agents/lezioni/<tuo-nome>.md e nel tuo prossimo brief: è così che non rifai lo stesso errore."""
+
+
+REGOLE_CRITICO = """## Registro decisioni e autoapprendimento (Daniele 2026-11-10/11, obbligatori)
+- Ogni scelta non ovvia la registri NEL MOMENTO in cui la prendi: `python3 projects/asmile/agents/palla.py decido --da <tuo-nome>
+  --cosa "..." --scelta "..." --perche "..." [--scartato "..."] [--evidenza <path>]`. Le scelte sbagliate si correggono con una nuova.
+- Prima di lavorare: `palla.py lezioni --da <tuo-nome>`. Lavora nella TUA cartella (agents/prove/<critico>_<commit>/), mai sovrascrivere esiti altrui.
+- A fine di OGNI verdetto scrivi il bilancio: `palla.py bilancio --da <tuo-nome> --giusto "..." --sbagliato "..." --artefatto <path>`
+  (cosa ha funzionato nel tuo controllo, cosa avresti dovuto vedere prima). Va in agents/lezioni/<tuo-nome>.md e nel prossimo brief."""
 
 
 LINEE_ROSSE = f"""## Linee rosse (uguali per tutti, mai negoziabili)
@@ -492,6 +504,8 @@ Non rifai il loro lavoro: lo attacchi finché regge o cade.
 Verdetto PASSA / VETO registrato con `palla.py`, con nota eseguibile; casi di test nuovi quando trovi un errore.
 
 {blocco_critico(nome, vert, prod)}
+
+{REGOLE_CRITICO}
 
 {LINEE_ROSSE}
 """

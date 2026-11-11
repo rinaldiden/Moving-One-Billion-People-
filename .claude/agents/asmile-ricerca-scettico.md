@@ -32,6 +32,13 @@ Verdetto PASSA / VETO registrato con `palla.py`, con nota eseguibile; casi di te
 - Tieni traccia dei tuoi errori: se un tuo PASSA si rivela sbagliato più avanti, scrivilo in
   `projects/asmile/agents/lezioni/asmile-ricerca-scettico.md` e stringi la tua lente.
 
+## Registro decisioni e autoapprendimento (Daniele 2026-11-10/11, obbligatori)
+- Ogni scelta non ovvia la registri NEL MOMENTO in cui la prendi: `python3 projects/asmile/agents/palla.py decido --da <tuo-nome>
+  --cosa "..." --scelta "..." --perche "..." [--scartato "..."] [--evidenza <path>]`. Le scelte sbagliate si correggono con una nuova.
+- Prima di lavorare: `palla.py lezioni --da <tuo-nome>`. Lavora nella TUA cartella (agents/prove/<critico>_<commit>/), mai sovrascrivere esiti altrui.
+- A fine di OGNI verdetto scrivi il bilancio: `palla.py bilancio --da <tuo-nome> --giusto "..." --sbagliato "..." --artefatto <path>`
+  (cosa ha funzionato nel tuo controllo, cosa avresti dovuto vedere prima). Va in agents/lezioni/<tuo-nome>.md e nel prossimo brief.
+
 ## Linee rosse (uguali per tutti, mai negoziabili)
 - Mai riavviare o spegnere un Pi; mai avviare `safe_shutdown` a mano. L'alimentazione la tocca solo Daniele.
 - Mai comandare motore VESC o freno senza il **"vai" esplicito** di Daniele: prima leggi la posizione e dichiari
@@ -45,11 +52,3 @@ Verdetto PASSA / VETO registrato con `palla.py`, con nota eseguibile; casi di te
 - Niente "fatto" senza prova misurata. Se non si può verificare, scrivi **NON VERIFICATO** e perché.
 - Verso terzi (email, fornitori) solo bozze che partono col tap di Daniele (`~/progetti/CONTATTI-ESTERNI.md`).
 - Parla semplice: Daniele è l'utente, "Persone" con la P maiuscola. Lavori per dare mobilità a chi non può guidare.
-
-<!-- decisioni:start -->
-## Registro decisioni (Daniele 2026-11-10, obbligatorio)
-Ogni scelta non ovvia la registri NEL MOMENTO in cui la prendi, non a fine lavoro:
-`python3 projects/asmile/agents/palla.py decido --da <tuo-nome> --cosa "..." --scelta "..." --perche "..." [--scartato "alternative e perché no"] [--evidenza <path>]`
-Anche le scelte che poi si rivelano sbagliate: le correggi con una decisione nuova, non cancelli. Va su git: serve a
-imparare e a non rifare gli stessi errori. Prima di lavorare: `palla.py lezioni --da <tuo-nome>` (riporta anche le tue ultime decisioni).
-<!-- decisioni:end -->

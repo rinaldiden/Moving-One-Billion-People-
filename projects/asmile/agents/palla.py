@@ -11,6 +11,8 @@ il suo PASSA. Dopo 3 VETO sullo stesso artefatto il capo smette di girare in ton
   lezioni  --da AGENTE              lezioni da mettere nel brief di AGENTE (sue + di Daniele + sue ultime decisioni)
   decido   --da AGENTE --cosa ... --scelta ... --perche ... [--scartato ...] [--evidenza PATH] [--verticale V]
                                     registro delle DECISIONI (scelte prese e perché, alternative scartate)
+  bilancio --da AGENTE --giusto "..." --sbagliato "..." (ripetibili) [--artefatto PATH]
+                                    autoapprendimento: cosa è andato bene e cosa male, in agents/lezioni/<agente>.md
 
 Decisioni (2026-11-10, Daniele): ogni agente registra OGNI scelta non ovvia mentre lavora (non a fine lavoro):
 agents/decisioni/<agente>.md + riga tipo "decisione" nel registro. Si committa su git: serve a imparare e a non
@@ -19,6 +21,10 @@ rifare gli stessi errori. Il brief (`lezioni`) riporta le ultime decisioni dell'
 Apprendimento (2026-11-09): ogni VETO scrive da solo la nota del critico in agents/lezioni/<produttore>.md;
 il PASSA che segue la chiude come "risolto". Il capo apre ogni brief con `palla.py lezioni --da <agente>`,
 così l'errore di ieri non si ripete. Le decisioni di Daniele vanno in agents/lezioni/daniele.md (le legge tutti).
+
+Autoapprendimento (2026-11-11, Daniele): ogni lavoro si chiude con un BILANCIO (giusto/sbagliato) scritto in
+agents/lezioni/<agente>.md. `passa` lo pretende: rifiuta se il produttore non ha fatto un bilancio dopo la sua palla
+precedente (o non passa --giusto/--sbagliato in linea). Così le lezioni si scrivono da sole a ogni giro, non a richiesta.
 
 Un PASSA con --gate scrive la prova in agents/prove/<gate>.json (la legge stato.py per la lavagna).
 """
@@ -98,6 +104,30 @@ def decido(a):
             "cosa": a.cosa, "scelta": a.scelta, "perche": a.perche, "scartato": a.scartato or ""})
 
 
+def bilancio(chi, giusti, sbagliati, artefatto=None):
+    LEZIONI.mkdir(exist_ok=True)
+    f = LEZIONI / f"{chi}.md"
+    if not f.exists():
+        f.write_text(f"# Lezioni di {chi}\n\nScritte da palla.py (VETO dei critici + bilanci giusto/sbagliato). Leggile prima di ogni lavoro.\n\n")
+    oggi = datetime.now().strftime("%Y-%m-%d")
+    dove = f" (`{artefatto}`)" if artefatto else ""
+    with open(f, "a") as fh:
+        for g in giusti:
+            fh.write(f"- {oggi} GIUSTO{dove}: {g}\n")
+        for b in sbagliati:
+            fh.write(f"- {oggi} SBAGLIATO{dove}: {b}\n")
+    scrivi({"tipo": "bilancio", "verticale": "", "da": chi, "artefatto": artefatto or "",
+            "giusto": giusti, "sbagliato": sbagliati})
+
+
+def ha_bilancio(chi):
+    """True se `chi` ha scritto un bilancio dopo la sua ultima palla passata (o non ha mai passato palle)."""
+    evs = [e for e in leggi() if e.get("da") == chi and e.get("tipo") in ("passa", "bilancio")]
+    passi = [i for i, e in enumerate(evs) if e["tipo"] == "passa"]
+    ultimo = passi[-1] if passi else -1
+    return any(e["tipo"] == "bilancio" for e in evs[ultimo + 1:])
+
+
 def lezioni(chi):
     out = []
     for nome in (chi, "daniele"):
@@ -135,7 +165,7 @@ def stato(vert=None):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["passa", "verdetto", "stato", "lezioni", "decido"])
+    ap.add_argument("cmd", choices=["passa", "verdetto", "stato", "lezioni", "decido", "bilancio"])
     ap.add_argument("--verticale")
     ap.add_argument("--da"); ap.add_argument("--a"); ap.add_argument("--critico")
     ap.add_argument("--artefatto")
@@ -144,6 +174,8 @@ def main():
     ap.add_argument("--nota", default="")
     ap.add_argument("--cosa"); ap.add_argument("--scelta"); ap.add_argument("--perche")
     ap.add_argument("--scartato"); ap.add_argument("--evidenza")
+    ap.add_argument("--giusto", action="append", default=[], help="bilancio: cosa è andato bene (ripetibile)")
+    ap.add_argument("--sbagliato", action="append", default=[], help="bilancio: cosa è andato male (ripetibile)")
     ap.add_argument("--parziale", action="store_true",
                     help="PASSA sul rapporto ma il gate resta aperto (nessuna prova scritta)")
     a = ap.parse_args()
@@ -161,8 +193,19 @@ def main():
         decido(a)
         print(f"decisione registrata: agents/decisioni/{a.da}.md")
         return
+    if a.cmd == "bilancio":
+        assert a.da and (a.giusto or a.sbagliato), "servono --da e almeno un --giusto o --sbagliato"
+        bilancio(a.da, a.giusto, a.sbagliato, a.artefatto)
+        print(f"bilancio registrato: agents/lezioni/{a.da}.md")
+        return
     if a.cmd == "passa":
         assert a.verticale and a.da and a.a and a.artefatto, "servono --verticale --da --a --artefatto"
+        if a.giusto or a.sbagliato:
+            bilancio(a.da, a.giusto, a.sbagliato, a.artefatto)
+        elif not ha_bilancio(a.da):
+            raise SystemExit(f"RIFIUTO: {a.da} non ha scritto il bilancio di questo lavoro. Prima:\n"
+                             f"  palla.py bilancio --da {a.da} --giusto \"...\" --sbagliato \"...\" --artefatto {a.artefatto}\n"
+                             "oppure aggiungi --giusto/--sbagliato a questo passa (anche 'niente di sbagliato' va scritto).")
         scrivi({"tipo": "passa", "verticale": a.verticale, "da": a.da, "a": a.a,
                 "artefatto": a.artefatto, "gate": a.gate, "nota": a.nota})
         print(f"palla da {a.da} a {a.a}: {a.artefatto}")

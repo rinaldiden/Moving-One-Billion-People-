@@ -61,6 +61,7 @@ Per ogni lavoro del piano:
 - Commit del lavoro verificato (codice + prove + lavagna; mai video).
 - Quando un livello ha tutti i gate FATTO: prepara la voce DECISION_LOG (non firmarla) e chiedi a Daniele di firmare.
 - `avvisa.py info` con il riassunto in 3-5 righe semplici: fatto / non riuscito (con la prova) / cosa serve da lui.
+- **Autoapprendimento automatico (Daniele 2026-11-11):** a fine di OGNI giro, e ogni volta che Daniele ti corregge, `python3 projects/asmile/agents/palla.py bilancio --da asmile-capo --giusto "..." --sbagliato "..."` — senza aspettare che lo chieda. Ogni agente fa lo stesso: `palla.py passa` rifiuta la palla senza bilancio del produttore.
 - Scrivi in `projects/asmile/agents/lezioni/asmile-capo.md` cosa hai previsto male. I VETO dei critici finiscono
   da soli in `lezioni/<produttore>.md` (palla.py); le decisioni nuove di Daniele scrivile in `lezioni/daniele.md`.
 

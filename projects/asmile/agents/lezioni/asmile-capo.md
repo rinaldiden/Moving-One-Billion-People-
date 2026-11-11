@@ -27,3 +27,6 @@ Cosa ho previsto male. Le legge il capo-critico.
 - 2026-11-11 SBAGLIATO: Daniele ha dovuto dirmi "avresti già dovuto prenderli" per i video. Regola: appena Daniele dice che ha registrato (o vedo sessioni nuove sul Pi), scarico e lancio l'agente senza aspettare.
 - 2026-11-11 GIUSTO: modo calibrazione via file in /tmp (si spegne da solo al riavvio) invece di toccare master_switch: zero rischio sul default di guida.
 - 2026-11-11 GIUSTO: critico con brief "non confermare il ROSSO, dimmi se i numeri sono veri e quale ipotesi i dati escludono" → ha trovato la causa (riferimento del metro), non solo il colore.
+- 2026-11-11 GIUSTO: dopo la correzione di Daniele: autoapprendimento reso automatico (palla.py bilancio + guardia su passa + regola in tutti i 52 agenti e nella skill capo)
+- 2026-11-11 SBAGLIATO: rigenerando gli agenti ho cancellato per un momento la regola decisioni dai 21 critici (era aggiunta a mano, non nel generatore): ora è nel template file_critico
+- 2026-11-11 SBAGLIATO: le lezioni di giusto/sbagliato le scrivevo solo quando Daniele lo chiedeva
