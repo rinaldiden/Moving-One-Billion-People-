@@ -1,5 +1,5 @@
 # VESC di #001 al banco col motore di prova (6354 identico) — 2026-11-11
-VESC sul Mac via USB (/dev/cu.usbmodem3041): fw 5.2, HW 60, nessun fault. Config letta = quella di #001 (diff solo motore/limiti/PID,
+VESC sul Mac via USB (/dev/cu.usbmodem3041): fw 5.2, HW 60, nessun fault. CORREZIONE: il VESC al banco NON è quello di #001 (UUID banco 27 00 37 00 06 47 34 34 30 31 38 30, #001 5B 00 34 00 10 51 34 30 36 38 38 37): è un VESC di scorta con config simile (diff solo motore/limiti/PID,
 backup `fleet/001/vesc_backup/vesc_mcconf_backup_20261111_075839_banco_motore_prova.bin`). Nessuna scrittura in flash.
 
 ## Misure sul motore di prova (motore libero)
@@ -40,3 +40,7 @@ B. Prova decisiva della coppia vera: dinamometro/bilancia pesa-valigie al manubr
 - Corrente vera con pinza amperometrica/multimetro sulla batteria a stallo (VESC dice i_batt 1.5 A a 30 A di fase).
 - Prova bilancia pesa-valigie al manubrio (sopra, punto B) su #001 e, se possibile, su asmile2 a pari ampere.
 - Meccanica #001: slittamento cinghia/ingranaggio sotto coppia.
+
+## 2026-11-11 09:42 — motore MONTATO su #001 (VESC di #001 via UART, motore fermo)
+measure_res 10 → 29.02 mOhm; measure_ind 0.1 → 19.50 uH (ld-lq 5.99). Motore prova: 27.9 / 20.65. **Motori gemelli** (scarti 4-6%):
+il flux del montato è quindi ~5.4 mWb, non 1.318. VESC #001 a 100/-100 A in flash (backup `fleet/001/vesc_backup/vesc_mcconf_backup_20261111_094253.bin`).
