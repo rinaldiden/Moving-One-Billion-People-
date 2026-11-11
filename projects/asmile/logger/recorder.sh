@@ -25,6 +25,8 @@ set -o pipefail
 
 OUT="${OUT:-/data/recordings}"
 W="${W:-2560}"; H="${H:-800}"; FPS="${FPS:-15}"; BR="${BR:-500000}"
+# Calibrazione: a 500 kbps i corner ChArUco si spostano ~0.3 px (sessione #001 2026-11-10). Il file in /tmp sparisce al riavvio.
+[ -f /tmp/asmile_calib_mode ] && BR="${BR_CALIB:-12000000}"
 SEG="${SEG:-30000}"
 ARDUCAM_FIX="${ARDUCAM_FIX:-$HOME/streaming/arducam_fix.so}"
 FLIP="${FLIP:-0}"
