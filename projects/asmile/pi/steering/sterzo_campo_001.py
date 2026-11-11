@@ -76,7 +76,7 @@ def main():
         print(f"modo=vai pos={p0} target={tgt} corsa={(tgt - p0) * DEG:+.1f} deg vel={a.vel} deg/s imax={a.imax} A hz={a.hz}")
         print("verso atteso:", "encoder SCENDE (manubrio verso SX)" if tgt < p0 else "encoder SALE (manubrio verso DX)")
     else:
-        print(f"modo=allinea pos={p0} imax={min(a.imax, 12.0)} A: campo fermo, poi +90 gradi el. (~2.6 gradi di manubrio)")
+        print(f"modo=allinea pos={p0} imax={min(a.imax, 12.0)} A: campo fermo, +90 el. (gioco), poi +360 el. (~10 gradi di manubrio)")
     if a.dry_run: print("dry-run: nessun comando"); return
     ok_u, why = uart_libera(UART)
     if not ok_u: sys.exit(f"UART VESC non libera ({why})")
@@ -109,13 +109,17 @@ def main():
             ia = min(a.imax, 12.0); th_a = 0.0
             for j in range(int(0.8 * a.hz)):                   # rampa di corrente su angolo fisso
                 ciclo(p0, th_a, ia * (j + 1) / (0.8 * a.hz))
-            for j in range(int(0.5 * a.hz)): pa = ciclo(p0, th_a, ia)
-            for j in range(int(0.5 * a.hz)):                   # +90 gradi el. in 0.5 s
+            # prima prova 11/11: +90 el. dava -56 count invece di -117 = gioco della riduzione recuperato al cambio di
+            # verso. Ora: +90 per prendere il gioco, poi un giro elettrico intero (+360) nello stesso verso e misuro quello.
+            for j in range(int(0.5 * a.hz)):
                 ciclo(p0, th_a + 90.0 * (j + 1) / (0.5 * a.hz), ia)
-            for j in range(int(0.5 * a.hz)): pb = ciclo(p0, th_a + 90.0, ia)
+            for j in range(int(0.4 * a.hz)): pa = ciclo(p0, th_a + 90.0, ia)
+            for j in range(int(1.5 * a.hz)):                   # +360 gradi el. in 1.5 s (~10 gradi di manubrio)
+                ciclo(p0, th_a + 90.0 + 360.0 * (j + 1) / (1.5 * a.hz), ia)
+            for j in range(int(0.4 * a.hz)): pb = ciclo(p0, th_a + 90.0, ia)
             if pa is None or pb is None: motivo = "encoder perso durante l'allineamento"; return
-            dp = pb - pa; atteso = 90.0 / 360.0 * EREV
-            print(f"pos a 0 el.: {pa}   pos a +90 el.: {pb}   spostamento {dp:+d} count (atteso +/-{atteso:.0f})")
+            dp = pb - pa; atteso = EREV
+            print(f"pos dopo +90 el.: {pa}   dopo +360: {pb}   spostamento {dp:+d} count (atteso +/-{atteso:.0f})")
             if not (0.5 * atteso < abs(dp) < 1.5 * atteso):
                 motivo = f"scala non coerente ({dp:+d} count): NON salvo"; return
             s = 1 if dp > 0 else -1
