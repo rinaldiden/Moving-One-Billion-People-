@@ -1,14 +1,14 @@
 {
   "K_left": [
     [
-      1115.2818238573036,
+      1123.166266266994,
       0.0,
-      688.7029507262761
+      693.1255555794538
     ],
     [
       0.0,
-      1110.751751988883,
-      374.36064351858664
+      1117.3803738935774,
+      375.70279426191246
     ],
     [
       0.0,
@@ -17,22 +17,22 @@
     ]
   ],
   "dist_left": [
-    -0.43844820190119593,
-    0.20159238513955913,
+    -0.46375034054233,
+    0.29523365040723154,
     0.0,
     0.0,
-    0.0
+    -0.12095962110525273
   ],
   "K_right": [
     [
-      1111.755458576639,
+      1118.6803419175899,
       0.0,
-      640.8884617040736
+      645.2407452669394
     ],
     [
       0.0,
-      1107.6297323979682,
-      494.50261736331237
+      1112.6304272396806,
+      494.28035037956084
     ],
     [
       0.0,
@@ -41,48 +41,47 @@
     ]
   ],
   "dist_right": [
-    -0.434400734829471,
-    0.1914182341861889,
+    -0.4539652618797406,
+    0.2697450511169645,
     0.0,
     0.0,
-    0.0
+    -0.10063235730535777
   ],
   "R": [
     [
-      0.9999940836416119,
-      0.0003153808257126095,
-      -0.003425378330600453
+      0.9999953121178402,
+      -0.0009454347187614485,
+      -0.002912369402378966
     ],
     [
-      -0.00032464138581647043,
-      0.9999962933949609,
-      -0.0027032950837921283
+      0.0009419252140478014,
+      0.9999988289644736,
+      -0.0012061702088851352
     ],
     [
-      0.003424513066640201,
-      0.0027043911096977747,
-      0.9999904794441706
+      0.0029135063470831423,
+      0.0012034213203286153,
+      0.9999950316166032
     ]
   ],
   "T": [
-    -0.19731822815644223,
-    -0.0006846066402180816,
-    0.00037911849054822667
+    -0.19713260895359158,
+    -0.0008720627163640476,
+    -0.0013432288145395085
   ],
   "size": [
     1280,
     800
   ],
-  "baseline_mm": 197.31978000159918,
+  "baseline_mm": 197.13911400297795,
   "order": "RL",
   "flip180": false,
   "d0_px": 0.0,
-  "focal_rect_px": 1256.4004675897165,
-  "method": "A3 2026-11-10 #001: ChArUco 11x8 DICT_5X5_1000 quadrato 50 mm (stampa A2 troncata a 395x285), marker 34.5 mm; modello k1k2; stereo congiunta; T NON riscalata (|T| dal tabellone 197.3 mm); copia di calib_charuco_dual.py (md5 485e75c0...) con ffmpeg -fps_mode passthrough, viste <12 corner scartate",
-  "valid_for": "SOLO asmile-001 con QUESTO set di camere come montate il 2026-11-10. Mai fallback su altre unita.",
+  "focal_rect_px": 1282.292426941259,
+  "method": "calib_charuco_dual.py: ChArUco 11x8 DICT_5X5_1000 lato 50.0 mm, modello k1k2k3, stereo congiunta, T NON riscalata (|T| dal tabellone = 197.1 mm, controllo 200+-3%); modello e stereo scelti su blocco SCELTA (165 viste), gate su blocco mai usato (247 viste)",
+  "valid_for": "SOLO asmile-001 con QUESTO set di camere come montate al momento della sessione. Mai fallback su altre unit\u00e0.",
   "camera_hw": "Inno-Maker CAM-MIPIOV9281V2, 2 moduli separati, rpicam --sync",
-  "stato": "CANDIDATO - gate script ROSSO - NON in uso finche asmile-calib-critico non da PASSA",
+  "stato": "CANDIDATO \u2014 non in uso finch\u00e9 asmile-calib-critico non d\u00e0 PASSA",
   "gate_script": "ROSSO",
-  "timestamp": "2026-11-10T18:13:48",
-  "source": "session_20261030_180306 (data reale 2026-11-10)"
+  "timestamp": "2026-11-11T09:35:30"
 }

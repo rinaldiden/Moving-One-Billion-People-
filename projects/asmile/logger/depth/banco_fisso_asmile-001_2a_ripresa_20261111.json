@@ -1,0 +1,140 @@
+{
+ "unita": "asmile-001",
+ "data": "2026-11-11",
+ "calib": "calib_asmile-001.CANDIDATO.json",
+ "riferimento": "distanze CONFERMATE da Daniele (lenti->faccia tabellone, supporto rigido); assegnazione soste ai tempi per ORDINE di sequenza (1,2,5,10 centro; 5 m dx; 5 m sx) verificata da dimensione apparente e X misurata",
+ "sessione": "session_20261111_083632: 1m t0-16 s, 2m t22-27, 5m-c t34-45, 10m-c t54-66, 5m-dx t75-81, 5m-sx t87-95, extra t102-105 (lontano ~10 m, non richiesto)",
+ "punti": [
+  {
+   "id": "1m-a",
+   "D_m": 1.0,
+   "lat_nom_m": 0.0,
+   "Z_sgbm_m": 0.887,
+   "Z_ncc_m": null,
+   "X_misurata_m": 0.0,
+   "n_frame": 15,
+   "err_pct": -11.3,
+   "mai_nel_fit": true,
+   "tipo": "sosta centro/lato (persona+tabellone, ROI torso)"
+  },
+  {
+   "id": "1m-b",
+   "D_m": 1.0,
+   "lat_nom_m": 0.0,
+   "Z_sgbm_m": 0.872,
+   "Z_ncc_m": null,
+   "X_misurata_m": -0.01,
+   "n_frame": 10,
+   "err_pct": -12.8,
+   "mai_nel_fit": true,
+   "tipo": "sosta centro/lato (persona+tabellone, ROI torso)"
+  },
+  {
+   "id": "2m-c",
+   "D_m": 2.0,
+   "lat_nom_m": 0.0,
+   "Z_sgbm_m": 1.855,
+   "Z_ncc_m": 1.856,
+   "X_misurata_m": 0.03,
+   "n_frame": 13,
+   "err_pct": -7.2,
+   "mai_nel_fit": true,
+   "tipo": "sosta centro/lato (persona+tabellone, ROI torso)"
+  },
+  {
+   "id": "5m-c",
+   "D_m": 5.0,
+   "lat_nom_m": 0.0,
+   "Z_sgbm_m": 4.856,
+   "Z_ncc_m": 4.84,
+   "X_misurata_m": 0.08,
+   "n_frame": 28,
+   "err_pct": -2.9,
+   "mai_nel_fit": true,
+   "tipo": "sosta centro/lato (persona+tabellone, ROI torso)"
+  },
+  {
+   "id": "10m-c",
+   "D_m": 10.0,
+   "lat_nom_m": 0.0,
+   "Z_sgbm_m": 9.723,
+   "Z_ncc_m": 9.795,
+   "X_misurata_m": 0.12,
+   "n_frame": 30,
+   "err_pct": -2.8,
+   "mai_nel_fit": true,
+   "tipo": "sosta centro/lato (persona+tabellone, ROI torso)"
+  },
+  {
+   "id": "5m-dx",
+   "D_m": 5.0,
+   "lat_nom_m": 1.8,
+   "Z_sgbm_m": 4.951,
+   "Z_ncc_m": 4.922,
+   "X_misurata_m": 1.79,
+   "n_frame": 15,
+   "err_pct": -1.0,
+   "mai_nel_fit": true,
+   "tipo": "sosta centro/lato (persona+tabellone, ROI torso)"
+  },
+  {
+   "id": "5m-sx",
+   "D_m": 5.0,
+   "lat_nom_m": -1.8,
+   "Z_sgbm_m": 4.917,
+   "Z_ncc_m": 4.917,
+   "X_misurata_m": -1.69,
+   "n_frame": 20,
+   "err_pct": -1.7,
+   "mai_nel_fit": true,
+   "tipo": "sosta centro/lato (persona+tabellone, ROI torso)"
+  },
+  {
+   "id": "extra-lontano",
+   "D_m": null,
+   "lat_nom_m": 0.0,
+   "Z_sgbm_m": 9.723,
+   "Z_ncc_m": null,
+   "X_misurata_m": 0.12,
+   "n_frame": 8,
+   "err_pct": null,
+   "mai_nel_fit": true,
+   "tipo": "sosta centro/lato (persona+tabellone, ROI torso)"
+  },
+  {
+   "id": "griglia 1.2 m (sessione 082437)",
+   "D_m": 1.2,
+   "Z_charuco_m_mediana": 1.095,
+   "Z_min": 1.05,
+   "Z_max": 1.111,
+   "err_pct_mediana": -8.8,
+   "mai_nel_fit": false,
+   "tipo": "ChArUco triangolato (viste a 2 camere; alcune possono essere nel fit, non in modo verificato per vista) - SOLO consistenza",
+   "n_punti": 8
+  },
+  {
+   "id": "griglia 2 m (sessione 083054)",
+   "D_m": 2.0,
+   "Z_charuco_m_mediana": 1.907,
+   "Z_min": 1.818,
+   "Z_max": 1.922,
+   "err_pct_mediana": -4.6,
+   "mai_nel_fit": false,
+   "tipo": "ChArUco triangolato (viste a 2 camere; alcune possono essere nel fit, non in modo verificato per vista) - SOLO consistenza",
+   "n_punti": 7
+  },
+  {
+   "id": "1m-charuco",
+   "D_m": 1.0,
+   "Z_charuco_m": 0.887,
+   "err_pct": -11.3,
+   "tipo": "ChArUco t0-10 sessione 083632, coincide con SGBM 0.887"
+  }
+ ],
+ "retta_ZvsD": "D = 1.019*Z + 0.096 m (centro: 1,2,5,10 m): scala +1.9% e offset ~0.10 m",
+ "gate_depth": {
+  "centro_1_5m": "ROSSO (1 m -11.3/-12.8%, 2 m -7.2%, 5 m -2.9%)",
+  "centro_10m": "VERDE -2.8% (<=3%)",
+  "bordi_2_5m": "5 m dx -1.0%, sx -1.7% VERDE; 2 m laterale NON misurato"
+ }
+}

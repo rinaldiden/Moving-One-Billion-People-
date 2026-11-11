@@ -1,0 +1,88 @@
+{
+  "K_left": [
+    [
+      1115.2818238573036,
+      0.0,
+      688.7029507262761
+    ],
+    [
+      0.0,
+      1110.751751988883,
+      374.36064351858664
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "dist_left": [
+    -0.43844820190119593,
+    0.20159238513955913,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "K_right": [
+    [
+      1111.755458576639,
+      0.0,
+      640.8884617040736
+    ],
+    [
+      0.0,
+      1107.6297323979682,
+      494.50261736331237
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "dist_right": [
+    -0.434400734829471,
+    0.1914182341861889,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "R": [
+    [
+      0.9999940836416119,
+      0.0003153808257126095,
+      -0.003425378330600453
+    ],
+    [
+      -0.00032464138581647043,
+      0.9999962933949609,
+      -0.0027032950837921283
+    ],
+    [
+      0.003424513066640201,
+      0.0027043911096977747,
+      0.9999904794441706
+    ]
+  ],
+  "T": [
+    -0.19731822815644223,
+    -0.0006846066402180816,
+    0.00037911849054822667
+  ],
+  "size": [
+    1280,
+    800
+  ],
+  "baseline_mm": 197.31978000159918,
+  "order": "RL",
+  "flip180": false,
+  "d0_px": 0.0,
+  "focal_rect_px": 1256.4004675897165,
+  "method": "A3 2026-11-10 #001: ChArUco 11x8 DICT_5X5_1000 quadrato 50 mm (stampa A2 troncata a 395x285), marker 34.5 mm; modello k1k2; stereo congiunta; T NON riscalata (|T| dal tabellone 197.3 mm); copia di calib_charuco_dual.py (md5 485e75c0...) con ffmpeg -fps_mode passthrough, viste <12 corner scartate",
+  "valid_for": "SOLO asmile-001 con QUESTO set di camere come montate il 2026-11-10. Mai fallback su altre unita.",
+  "camera_hw": "Inno-Maker CAM-MIPIOV9281V2, 2 moduli separati, rpicam --sync",
+  "stato": "CANDIDATO - gate script ROSSO - NON in uso finche asmile-calib-critico non da PASSA",
+  "gate_script": "ROSSO",
+  "timestamp": "2026-11-10T18:13:48",
+  "source": "session_20261030_180306 (data reale 2026-11-10)"
+}
