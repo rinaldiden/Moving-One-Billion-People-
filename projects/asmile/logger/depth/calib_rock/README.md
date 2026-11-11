@@ -17,7 +17,7 @@ Riferimento ora = `calib_asmile-001.json` = B30 3a ripresa (PROVVISORIA, accetta
 3. **run_all --prova N=40/scala, seed 20291111 (mai usati), 3 worker, 3068 s -> `esito.json`: 8 gate verdi su 19, 11 KO** (round 3 con la calib vecchia: 15/19, in
    `esito_round3_calibvecchia.json`). Negativi 16/17. Soglie D012 non toccate.
    - Verdi: guardie "A non dichiara mai VERDE", baseline A entro 1% (43/43), B-lenti mai peggiorativo per zona e se accetta VERDE (scala 2), nessun errore di esecuzione.
-   - A candidati con 40 istanze nuove: scala 1 solo 5/23 candidati veri dopo il controllo di bordo (17 scartati con dy>1.5 px), scala 2 4/7; **falsi gravi 1+2 (bordo 6.2-6.5%)**. Punto del critico "0 falsi su >=40 candidati A": **NON chiuso** (9 candidati veri totali). A resta "solo CANDIDATO + banco fisso reale".
+   - A candidati con 40 istanze nuove: scala 1 solo 5 candidati dopo il controllo di bordo (17 scartati con dy>1.5 px), scala 2 4/7; **falsi gravi 1+2 (bordo 6.2-6.5%)**. Punto del critico "0 falsi su >=40 candidati A": **NON chiuso** (9 candidati veri totali). A resta "solo CANDIDATO + banco fisso reale".
    - B solo-montaggio: accettata+gate 15/40 e 13/40 (con la calib vecchia 59/60, 57/60); peggioramenti per zona 6/40 e 3/40.
 4. **Perche' e' peggiorato: legato alla calibrazione fine, non al codice.** Il modello OpenCV destro di B30 (k3 -0.296) non e' invertibile oltre r_d 0.644, ma gli angoli alti
    di cam2 arrivano a 0.73: gli angoli alti del nominale hanno dy 68 px **anche con geometria vera** (controllo positivo "lente nominale = VERDE": KO, unico negativo fallito).

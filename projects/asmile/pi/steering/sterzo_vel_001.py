@@ -27,13 +27,14 @@ ENC = "/tmp/encoder_steer"; WHEEL = "/tmp/encoder_wheel"; CPR = 16384; DEG = 360
 CAL = "/data/steering_limits_asmile-001.json"
 VEL_MAX_DEG_S = 30.0      # oltre (media su 0.3 s): stop
 WRONG_COUNTS = 10
-# prova 1 (2026-11-09 16:19): stacco a ~5 A, in moto 7-10 A, a scatti perche' il loop girava a 90 ms (lettura VESC lenta)
-I_START, I_RAMP = 3.0, 0.10   # A; A per ciclo finche' fermo (4 A/s)
-KP, KI = 0.05, 0.60           # A per deg/s; A per (deg/s * s)
-I_FF, KPOS, KD, LEAD_MAX = 5.0, 0.04, 0.20, 137
-KI_FINALE = 2.0   # A/s: obiettivo arrivato ma manubrio fermo -> spinta in piu' lenta (prova 5: fermo 16 s a 1.3 deg con 7 A)   # A; A/count; A/(deg/s); count (3 deg) — inseguimento riferimento
-CUT_AL_DISTACCO = 0.9         # attrito statico > dinamico: appena parte, corrente x0.8 per non dare lo strappo
-HZ = 40
+# Prove 2026-11-09: per partire 10-12.5 A, per restare in moto 6-7 A (attrito statico >> dinamico -> scatti ~2 Hz).
+# Controllo: inseguimento di un riferimento (molla KPOS sul distacco, max LEAD_MAX) + smorzatore KD + COMPENSAZIONE
+# D'ATTRITO (Karnopp): in moto si spinge con I_DIN (attrito dinamico, appreso in linea); da fermo la spinta sale veloce
+# verso lo stacco e, appena il manubrio si muove, torna SUBITO a I_DIN -> niente strappo. Loop 100 Hz, VESC letto 1 ciclo su 2.
+I_DIN0, I_STACCO_MAX, RAMPA_STACCO = 6.5, 14.0, 25.0    # A; A; A/s
+KPOS, KD, LEAD_MAX = 0.03, 0.30, 137                    # A/count; A/(deg/s); count (3 deg)
+V_FERMO = 1.5                                           # deg/s: sotto = fermo
+HZ = 100
 
 
 def rd():
@@ -97,7 +98,7 @@ def main(argv=None):
     d = 1 if e0 > 0 else -1          # verso encoder voluto
     os.makedirs("/data/logging/vesc", exist_ok=True)
     log = open(time.strftime("/data/logging/vesc/sterzo_vel_%Y%m%d_%H%M%S.csv"), "w")
-    log.write("t,pos,err,rate_deg_s,i_cmd,i_motor,rpm,tach,sp\n")
+    log.write("t,pos,err,rate_deg_s,i_cmd,i_motor,rpm,tach,sp,i_din\n")
     ser = serial.Serial(UART, BAUD, timeout=0.02)
     def stop():
         for f in (send_current, send_duty, send_current, send_current):
@@ -105,24 +106,26 @@ def main(argv=None):
             except Exception: pass
     def _kill(*_): raise KeyboardInterrupt
     signal.signal(signal.SIGTERM, _kill); signal.signal(signal.SIGHUP, _kill)   # SSH caduto -> corrente 0
-    hist = [(time.monotonic(), p0)]; i_cmd = I_FF; i_fin = 0.0; sp = float(p0); moving = False; t_prev = time.monotonic(); reason = None; t0 = time.monotonic(); t_slow = None
+    hist = [(time.monotonic(), p0)]; i_din = i_ff = i_cmd = I_DIN0; sp = float(p0); k = 0; t = None; moving = False; t_prev = time.monotonic(); reason = None; t0 = time.monotonic(); t_slow = None
     try:
         while True:
             tc = time.monotonic()
             send_current(ser, a.sign * d * i_cmd)
-            t = q_fast(ser)
-            if t is None:
-                t = q_fast(ser)                       # una seconda prova, poi stop
-                if t is None: reason = "VESC muto"; break
+            k += 1
+            if k % 2 or t is None:                    # VESC (corrente) 50 volte al secondo
+                t = q_fast(ser)
+                if t is None:
+                    t = q_fast(ser)                   # una seconda prova, poi stop
+                    if t is None: reason = "VESC muto"; break
             p = rd()
             if p is None: reason = "encoder vecchio"; break
             hist.append((tc, p)); hist = [h for h in hist if tc - h[0] <= 0.3]
             def vel(win):
                 h = [x for x in hist if tc - x[0] <= win]
                 return (h[-1][1] - h[0][1]) * DEG / max(h[-1][0] - h[0][0], 0.02)
-            rate, rate_safe = vel(0.15), vel(0.3)
+            rate, rate_safe = vel(0.05), vel(0.3)
             err = tgt - p
-            log.write(f"{tc - t0:.3f},{p},{err},{rate:.2f},{a.sign * d * i_cmd:.2f},{t['i_motor']:.2f},{t['rpm']},{t['tach']},{sp:.0f}\n")
+            log.write(f"{tc - t0:.3f},{p},{err},{rate:.2f},{a.sign * d * i_cmd:.2f},{t['i_motor']:.2f},{t['rpm']},{t['tach']},{sp:.0f},{i_din:.2f}\n")
             if (p - p0) * d <= -WRONG_COUNTS: reason = f"VERSO SBAGLIATO: encoder {p - p0:+d} count"; break
             if abs(rate_safe) > VEL_MAX_DEG_S: reason = f"troppo veloce {rate_safe:+.0f} deg/s"; break
             # oltre i limiti software si puo' solo tornare verso il centro (Daniele 2026-11-09: "da qui vai in centro" a -47 deg)
@@ -134,18 +137,18 @@ def main(argv=None):
             v_obj = a.vel if abs(err) * DEG > 5 else max(2.0, a.vel * abs(err) * DEG / 5)   # rallenta negli ultimi 5 deg
             v = rate * d
             dt = tc - t_prev; t_prev = tc
-            # INSEGUIMENTO DI UN RIFERIMENTO (prova 4, 16:35: col PI la corrente si accumulava da fermo fino a 10.5 A e poi
-            # il manubrio partiva a 46 deg/s). Ora un punto obiettivo avanza a v_obj; la corrente e' una molla sul distacco
-            # fra obiettivo e manubrio (max LEAD_MAX) + smorzatore sulla velocita'. Appena il manubrio scatta e supera
-            # l'obiettivo la molla si scarica e la corrente cala da sola: frena lo scatto invece di accumularlo.
             sp = sp + d * v_obj / DEG * dt
             sp = p + d * min(max((sp - p) * d, -LEAD_MAX), LEAD_MAX)        # obiettivo mai oltre LEAD_MAX dal manubrio
             if (tgt - sp) * d < 0: sp = tgt
             lead = (sp - p) * d
-            i_fin = min(6.0, i_fin + KI_FINALE * dt) if (sp == tgt and abs(v) < 1) else max(0.0, i_fin - 4 * KI_FINALE * dt)
-            i_cmd = min(max(I_FF + KPOS * lead + KD * (v_obj - v) + i_fin, 0.0), a.imax)
-            t_slow = (t_slow or tc) if lead >= 0.95 * LEAD_MAX and v < 1 else None   # STALLO: obiettivo al massimo e manubrio fermo
-            if t_slow and tc - t_slow > 2.0: reason = f"STALLO a {i_cmd:.1f} A"; break
+            if v > V_FERMO:                                    # in moto: attrito dinamico, e lo imparo
+                i_ff = i_din
+                if abs(v - v_obj) < 3: i_din = 0.98 * i_din + 0.02 * max(i_cmd - KPOS * lead, 3.0)
+            else:                                              # fermo: sale verso lo stacco
+                i_ff = min(max(i_ff, i_din) + RAMPA_STACCO * dt, I_STACCO_MAX) if lead > 5 else i_din
+            i_cmd = min(max(i_ff + KPOS * lead + KD * (v_obj - v), 0.0), a.imax)
+            t_slow = (t_slow or tc) if (i_ff >= I_STACCO_MAX and v < V_FERMO) else None   # STALLO: spinta di stacco al massimo e fermo
+            if t_slow and tc - t_slow > 1.0: reason = f"STALLO a {i_cmd:.1f} A"; break
             time.sleep(max(0.0, 1 / HZ - (time.monotonic() - tc)))
     except KeyboardInterrupt: reason = "Ctrl-C"
     finally:
