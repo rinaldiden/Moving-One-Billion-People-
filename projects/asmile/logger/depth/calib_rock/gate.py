@@ -35,6 +35,29 @@ def truth_points(inst, per_zone=5, margin=12):
     return pts
 
 
+_ITER = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 200, 1e-12)
+
+
+def _undist(p, K, D, R, P):
+    """cv2.undistortPoints CONVERGENTE (il default fa 5 iterazioni: ai bordi della lente destra di B30 sbaglia di 1-5 px, e
+    quell'errore del GIUDICE finiva nei dy). La pipeline vera rettifica con le mappe (distorsione in AVANTI, esatta)."""
+    return cv2.undistortPointsIter(p.reshape(-1, 1, 2).astype(np.float64), K, D, R, P, _ITER).reshape(-1, 2)
+
+
+def calib_domain_rd(K, D, slope=None):
+    """Raggio normalizzato r_d = |p - c| / f fino al quale la calib e' una lente: la curva r -> r_d (modello OpenCV completo)
+    ha pendenza >= slope x quella centrale. Stessa soglia di twin.MONO_SLOPE: dentro, la verita' del gemello E' la curva della
+    calib; fuori (B30 destra: oltre r_d 0.60, massimo a 0.644) la calib non e' invertibile e il giudice NON misura:
+    i punti sono esclusi e CONTATI (truth_eval -> fuori_dominio) e la guardia di run_all li rende ROSSI."""
+    slope = twin.MONO_SLOPE if slope is None else slope
+    r = np.linspace(0.0, 3.0, 6001)
+    X = np.stack([r, np.zeros_like(r), np.ones_like(r)], 1)
+    xd = cv2.projectPoints(X.reshape(-1, 1, 3), np.zeros(3), np.zeros(3), np.eye(3), np.asarray(D, float))[0].reshape(-1, 2)[:, 0]
+    sl = np.gradient(xd, r)
+    bad = np.where(sl < slope * sl[0])[0]
+    return float(xd[bad[0] - 1]) if len(bad) else float(xd[-1])
+
+
 def truth_eval(inst, cal, per_zone=5, margin=12):
     """Valuta la calib `cal` (stereo_common.Calib) contro la verita' di `inst`."""
     rect = cal.rectify(alpha=0)
@@ -43,32 +66,50 @@ def truth_eval(inst, cal, per_zone=5, margin=12):
     dy_z = {z: [] for z in range(9)}
     err = {z: {Z: [] for Z in ZS} for z in range(9)}
     n_out = 0
+    dom1 = calib_domain_rd(cal.K1, cal.d1)
+    dom2 = calib_domain_rd(cal.K2, cal.d2)
+    fuori = np.zeros(9, int)
+    tot_vis = np.zeros(9, int)
     for z, u, v in truth_points(inst, per_zone, margin):
         rays = inst.cam1.rays(u, v)
         for Z in ZS:
             X1 = rays * Z                                   # Z_cam1 = Z
             p1 = inst.cam1.project(X1)
             p2 = inst.cam2.project(X1 @ inst.R.T + inst.T)
+            if not (np.isfinite(p1).all() and np.isfinite(p2).all()):
+                raise RuntimeError('gate.truth_eval: proiezione NaN/inf nella verita' + "'" + ' del gemello')
             ok = (p2[:, 0] >= 0) & (p2[:, 0] < W) & (p2[:, 1] >= 0) & (p2[:, 1] < H)
             n_out += int((~ok).sum())
             if not ok.any():
                 continue
-            q1 = cv2.undistortPoints(p1[ok].reshape(-1, 1, 2), cal.K1, cal.d1, R=R1, P=P1).reshape(-1, 2)
-            q2 = cv2.undistortPoints(p2[ok].reshape(-1, 1, 2), cal.K2, cal.d2, R=R2, P=P2).reshape(-1, 2)
+            pa, pb = p1[ok], p2[ok]
+            rd1 = np.hypot((pa[:, 0] - cal.K1[0, 2]) / cal.K1[0, 0], (pa[:, 1] - cal.K1[1, 2]) / cal.K1[1, 1])
+            rd2 = np.hypot((pb[:, 0] - cal.K2[0, 2]) / cal.K2[0, 0], (pb[:, 1] - cal.K2[1, 2]) / cal.K2[1, 1])
+            dentro = (rd1 <= dom1) & (rd2 <= dom2)
+            tot_vis[z] += len(dentro)
+            fuori[z] += int((~dentro).sum())
+            if not dentro.any():
+                continue
+            q1 = _undist(pa[dentro], cal.K1, cal.d1, R1, P1)
+            q2 = _undist(pb[dentro], cal.K2, cal.d2, R2, P2)
             dy = q1[:, 1] - q2[:, 1]
             d = q1[:, 0] - q2[:, 0]
-            Zrect = (X1[ok] @ R1.T)[:, 2]                   # profondita' vera nel frame rettificato sinistro
+            Zrect = (X1[ok][dentro] @ R1.T)[:, 2]           # profondita' vera nel frame rettificato sinistro
             with np.errstate(divide="ignore", invalid="ignore"):
                 Zest = np.where(d > 0.05, f * B / d, np.nan)
             e = (Zest - Zrect) / Zrect * 100
             err[z][Z] += list(e)
             dy_z[z] += list(dy)
-    out = dict(dy_p50=[], dy_p95=[], depth={}, punti_fuori_cam2=n_out, zona_valida=[])
+    out = dict(dy_p50=[], dy_p95=[], depth={}, punti_fuori_cam2=n_out, zona_valida=[],
+               fuori_dominio=[int(x) for x in fuori], visibili=[int(x) for x in tot_vis],
+               dominio_rd=dict(cam1=dom1, cam2=dom2))
     n_tot = per_zone * per_zone * len(ZS)
     for z in range(9):
         a = np.abs(np.array(dy_z[z]))
         # zona senza sovrapposizione stereo (rotazione di montaggio sposta la vista): < 40% dei punti visibili in cam2
-        out["zona_valida"].append(bool(len(a) >= 0.4 * n_tot))
+        # validita' = SOLO sovrapposizione stereo (punti visibili in cam2, domini inclusi): i punti fuori dominio non fanno
+        # sparire la zona dal giudizio, restano contati in fuori_dominio e nella guardia
+        out["zona_valida"].append(bool(tot_vis[z] >= 0.4 * n_tot))
         out["dy_p50"].append(float(np.median(a)) if len(a) else None)
         out["dy_p95"].append(float(np.percentile(a, 95)) if len(a) else None)
         cells = {}

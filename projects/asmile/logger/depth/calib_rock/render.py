@@ -119,6 +119,8 @@ def render(inst, cam_i, planes, rng, exposure=1.0, blur=None, noise=None, bg=60)
     f = inst.cam(cam_i).L.f
     for pl in planes:
         lam, s, t, ok, cosinc = _plane_hits(o, d, pl)
+        if not np.isfinite(d).all():
+            raise RuntimeError('render: raggi non finiti (verita\' del gemello non monotona)')
         ok &= lam < best
         if not ok.any():
             continue
@@ -126,6 +128,8 @@ def render(inst, cam_i, planes, rng, exposure=1.0, blur=None, noise=None, bg=60)
         # LOD: impronta del pixel in px di texture (lungo il lato piu' sfavorevole: incidenza radente)
         fp = lam / f / pl.res
         fp = fp / np.clip(cosinc, 0.15, 1.0)
+        if not np.isfinite(fp[ok]).all():
+            raise RuntimeError('render: impronta NaN nei pixel visibili (lod) - il render NON deve passare in silenzio')
         lod = np.clip(np.round(np.log2(np.maximum(fp, 1.0))), 0, len(lv) - 1).astype(int)
         for L in np.unique(lod[ok]):
             m = ok & (lod == L)

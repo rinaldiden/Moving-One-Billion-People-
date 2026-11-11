@@ -92,7 +92,7 @@ def _fwd_norm(L, x, y):
     """(x,y)=X/Z,Y/Z -> coordinate normalizzate distorte (prima di K)."""
     r = np.hypot(x, y)
     th = np.arctan(r)
-    g = th + L.a[0] * th ** 3 + L.a[1] * th ** 5 + L.a[2] * th ** 7 + (L.a[3] * th ** 9 if len(L.a) > 3 else 0.0)
+    g = th + sum(c * th ** (3 + 2 * i) for i, c in enumerate(L.a))
     sc = np.where(r > 1e-9, g / np.maximum(r, 1e-12), 1.0)
     xd, yd = x * sc, y * sc
     r2 = xd * xd + yd * yd
@@ -115,30 +115,136 @@ class Cam:
         """pixel -> direzione (x/z,y/z,1) per inversione di Newton (jacobiano numerico, vettoriale)."""
         tx = (np.asarray(u, float) - self.L.cx) / self.L.f
         ty = (np.asarray(v, float) - self.L.cy) / (self.L.f * (1 + self.L.aspect))
-        x, y = tx.copy(), ty.copy()
+        # partenza RADIALE robusta: inversione della sola curva g(theta) (monotona, verificata) per interpolazione su tabella densa;
+        # poi Newton 2D (solo p,s e aspect restano da assorbire). Il Newton partito da (tx,ty) divergeva su lenti variate (NaN).
+        L = self.L
+        th_end = getattr(L, "th_end", 1.2)
+        tt = np.linspace(0.0, th_end, 6000)
+        gg = tt + sum(c * tt ** (3 + 2 * i) for i, c in enumerate(L.a))
+        rd = np.hypot(tx, ty)
+        if np.all(np.diff(gg) > 0):
+            th0 = np.interp(rd, gg, tt)
+            sc0 = np.where(rd > 1e-12, np.tan(th0) / np.maximum(rd, 1e-12), 1.0)
+            x, y = tx * sc0, ty * sc0
+        else:
+            x, y = tx.copy(), ty.copy()
         h = 1e-6
-        for _ in range(8):
+        for _ in range(40):
             fx, fy = _fwd_norm(self.L, x, y)
             ex, ey = fx - tx, fy - ty
+            if float(np.nanmax(np.maximum(np.abs(ex), np.abs(ey)))) * L.f < 1e-6:
+                break
             fxx, fyx = _fwd_norm(self.L, x + h, y)
             fxy, fyy = _fwd_norm(self.L, x, y + h)
             a, b, c, d = (fxx - fx) / h, (fxy - fx) / h, (fyx - fy) / h, (fyy - fy) / h
             det = a * d - b * c
             x = x - (d * ex - b * ey) / det
             y = y - (-c * ex + a * ey) / det
+        fx, fy = _fwd_norm(self.L, x, y)
+        res = np.maximum(np.abs(fx - tx), np.abs(fy - ty)) * self.L.f
+        if not (np.all(np.isfinite(x)) and np.all(np.isfinite(y)) and float(np.max(res)) < 0.01):
+            raise RuntimeError(f"twin.Cam.rays: inversione non convergente/NaN ({int((~np.isfinite(res)).sum())} NaN, "
+                               f"residuo max {float(np.nanmax(res)):.3g} px): verita' del gemello non monotona")
         return np.stack([x, y, np.ones_like(x)], -1)
 
 
-def rich_from_opencv(f, cx, cy, k1, k2, rmax=0.75, k3=0.0):
-    """Coefficienti theta-polinomiali che riproducono la curva radiale OpenCV (k1,k2,k3) su r in [0,rmax].
-    rmax = raggio massimo reale dell'immagine (angolo piu' lontano dal punto principale) / f: serve con la calib B30
-    (cy destra 496, k3 -0.30), dove il vecchio rmax 0.75 e k3 ignorato davano dy 89 px agli angoli."""
-    r = np.linspace(1e-3, rmax, 300)
-    th = np.arctan(r)
-    target = r * (1 + k1 * r ** 2 + k2 * r ** 4 + k3 * r ** 6)
-    A = np.stack([th ** 3, th ** 5, th ** 7, th ** 9], 1) if k3 != 0.0 else np.stack([th ** 3, th ** 5, th ** 7], 1)
-    a = np.linalg.lstsq(A, target - th, rcond=None)[0]
-    return Lens(f=f, cx=cx, cy=cy, a=tuple(a))
+MONO_SLOPE = 0.45      # pendenza (rapporto a quella centrale) alla quale la verita' lascia la curva OpenCV se questa non e' monotona
+
+
+def _cv_curve(r, k1, k2, k3):
+    return r * (1 + k1 * r ** 2 + k2 * r ** 4 + k3 * r ** 6)
+
+
+def _cv_slope(r, k1, k2, k3):
+    return 1 + 3 * k1 * r ** 2 + 5 * k2 * r ** 4 + 7 * k3 * r ** 6
+
+
+RD_MARGIN = 0.12       # la verita' e' valida oltre il bordo nominale di tanto (spostamento del centro ottico a scala 2 = 200 px = 0.18)
+
+
+def rich_from_opencv(f, cx, cy, k1, k2, rmax=0.75, k3=0.0, rd_edge=None):
+    """Coefficienti theta-polinomiali della VERITA' radiale del gemello, che riproducono la curva OpenCV (k1,k2,k3).
+
+    VERITA' MONOTONA FINO AL BORDO (nota critico 11/11): la curva OpenCV r_d(r) = r(1+k1 r^2+k2 r^4+k3 r^6) puo' avere un
+    massimo (B30 destra, k3 -0.296: massimo r_d 0.644 a r 0.91) mentre gli angoli dell'immagine arrivano a r_d 0.73. Oltre il
+    massimo OpenCV non e' invertibile e nessuna lente fisica reale e' cosi': li' la curva non descrive niente di vero.
+    Regola (deterministica, nessun parametro libero oltre MONO_SLOPE):
+      - fino a r_c la verita' E' la curva OpenCV (r_c = ultimo r con pendenza >= MONO_SLOPE x pendenza centrale (0.45); se la
+        curva e' monotona fino al bordo con pendenza sopra soglia -> r_c = oltre il bordo, NIENTE cambia: caso PRIMA e lente sinistra);
+      - oltre r_c prosegue in linea retta (r_d lineare in r) con la pendenza di r_c: monotona, C1, finita;
+      - r_c e' anche il DOMINIO del giudice (gate.calib_domain_rd): dentro verita' = curva OpenCV, fuori il giudice non misura;
+      - il fit theta-polinomiale e' fatto fino a r_d = rd_edge x 1.02 (angolo piu' lontano dell'immagine) e poi VERIFICATO:
+        monotono su tutto l'intervallo e fedele a OpenCV entro 0.5 px dove la curva e' valida; altrimenti RuntimeError.
+    Perche' non altera cio' che il mock misura: il giudice valuta solo i punti in cui la calib e' invertibile (gate.truth_eval:
+    fuori dominio = esclusi e CONTATI, e c'e' una guardia che li rende ROSSI); dentro il dominio verita' e OpenCV coincidono.
+    L'anello esterno serve solo a far renderizzare l'immagine senza NaN."""
+    if rd_edge is None:
+        rd_edge = rmax / 1.02
+    rd_edge = rd_edge + RD_MARGIN
+    s0 = _cv_slope(0.0, k1, k2, k3)
+    r = np.linspace(0.0, 3.0, 30001)
+    ok = _cv_slope(r, k1, k2, k3) >= MONO_SLOPE * s0
+    bad = np.where(~ok)[0]
+    r_c = float(r[bad[0] - 1]) if len(bad) else None
+    if r_c is not None and _cv_curve(r_c, k1, k2, k3) > rd_edge * 1.02:
+        r_c = None                      # il bordo si raggiunge prima di perdere pendenza: curva OpenCV invariata
+    if r_c is None:
+        cur = _cv_curve(r, k1, k2, k3)
+        j = np.where(cur >= rd_edge * 1.02)[0]
+        r_end = float(r[j[0]]) if len(j) else rmax       # r (non distorto) a cui la curva raggiunge il bordo
+        rr = np.linspace(1e-3, r_end, 400)
+        target = _cv_curve(rr, k1, k2, k3)
+    else:
+        rd_c, sl = _cv_curve(r_c, k1, k2, k3), _cv_slope(r_c, k1, k2, k3)
+        r_end = r_c + (rd_edge * 1.02 - rd_c) / sl
+        rr = np.linspace(1e-3, r_end, 600)
+        target = np.where(rr <= r_c, _cv_curve(rr, k1, k2, k3), rd_c + sl * (rr - r_c))
+    th = np.arctan(rr)
+    tt = np.linspace(1e-3, np.arctan(r_end), 2000)
+    lim = r_end if r_c is None else r_c
+    m = rr <= lim
+    n0 = 3 if k3 == 0.0 else 4
+    last = None
+    w = np.where(rr <= lim, 3.0, 1.0)
+    for n in range(n0, 11):          # il minimo numero di coefficienti (th^3..th^(2n+1)) che e' fedele e monotono
+        A = np.stack([th ** (3 + 2 * i) for i in range(n)], 1)
+        a = np.linalg.lstsq(A * w[:, None], (target - th) * w, rcond=None)[0]
+        g = lambda t: t + sum(c * t ** (3 + 2 * i) for i, c in enumerate(a))
+        gg = g(tt)
+        err = float(np.abs(g(th[m]) - target[m]).max() * f)
+        mono = bool(np.all(np.diff(gg) > 0) and np.all(np.isfinite(gg)) and gg[-1] >= rd_edge)
+        last = (n, err, mono, float(gg[-1]))
+        if mono and err <= 0.5:
+            break
+    n, err, mono, gend = last
+    if not mono:
+        raise RuntimeError(f"verita' del gemello NON monotona fino al bordo (rich_from_opencv, {n} coef, r_d finale {gend:.3f}, "
+                           f"bordo {rd_edge:.3f}): lente non utilizzabile")
+    if err > 0.5:
+        raise RuntimeError(f"verita' del gemello: fit theta-polinomiale {err:.2f} px dalla curva OpenCV nel dominio valido: troppo")
+    L = Lens(f=f, cx=cx, cy=cy, a=tuple(a))
+    L.fit_err_px = err
+    L.r_c = r_c
+    L.th_end = float(np.arctan(r_end))
+    return L
+
+
+def lens_truth_ok(L):
+    """La verita' radiale della lente L e' monotona fino al bordo REALE dell'immagine (con il suo centro ottico, f e aspect)?
+    Vero = g(theta) strettamente crescente su [0, th_end] e g(th_end) >= raggio normalizzato dell'angolo piu' lontano."""
+    tt = np.linspace(1e-3, L.th_end, 1500)
+    gg = tt + sum(c * tt ** (3 + 2 * i) for i, c in enumerate(L.a))
+    corner = max(np.hypot((x - L.cx) / L.f, (y - L.cy) / (L.f * (1 + L.aspect))) for x in (0, W) for y in (0, H))
+    return bool(np.all(np.isfinite(gg)) and np.all(np.diff(gg) > 0) and gg[-1] >= corner * 1.02)
+
+
+def lens_truth_ok(L):
+    """La verita' radiale della lente L e' monotona fino al bordo REALE dell'immagine (col suo centro ottico, f e aspect)?
+    Vero = g(theta) strettamente crescente su [0, th_end] e g(th_end) >= raggio normalizzato dell'angolo piu' lontano."""
+    tt = np.linspace(1e-3, L.th_end, 1500)
+    gg = tt + sum(c * tt ** (3 + 2 * i) for i, c in enumerate(L.a))
+    corner = max(np.hypot((x - L.cx) / L.f, (y - L.cy) / (L.f * (1 + L.aspect))) for x in (0, W) for y in (0, H))
+    return bool(np.all(np.isfinite(gg)) and np.all(np.diff(gg) > 0) and gg[-1] >= corner * 1.02)
 
 
 # ---------------------------------------------------------------------------------------------- istanza
@@ -208,9 +314,14 @@ def make_instance(calib_path, seed=0, scale=1.0, lens_var=True, unit="asmile-001
     k = lambda d, i: (float(d[i]) if len(d) > i else 0.0)
     def _rm(K):
         return float(max(np.hypot(x - K[0, 2], y - K[1, 2]) for x in (0, W) for y in (0, H)) / K[0, 0]) * 1.02
-    L1 = rich_from_opencv(cal.K1[0, 0], cal.K1[0, 2], cal.K1[1, 2], k(cal.d1, 0), k(cal.d1, 1), _rm(cal.K1), k(cal.d1, 4))
-    L2 = rich_from_opencv(cal.K2[0, 0], cal.K2[0, 2], cal.K2[1, 2], k(cal.d2, 0), k(cal.d2, 1), _rm(cal.K2), k(cal.d2, 4))
+    def _re(K):
+        return float(max(np.hypot((x - K[0, 2]) / K[0, 0], (y - K[1, 2]) / K[1, 1]) for x in (0, W) for y in (0, H)))
+    L1 = rich_from_opencv(cal.K1[0, 0], cal.K1[0, 2], cal.K1[1, 2], k(cal.d1, 0), k(cal.d1, 1), _rm(cal.K1), k(cal.d1, 4), rd_edge=_re(cal.K1))
+    L2 = rich_from_opencv(cal.K2[0, 0], cal.K2[0, 2], cal.K2[1, 2], k(cal.d2, 0), k(cal.d2, 1), _rm(cal.K2), k(cal.d2, 4), rd_edge=_re(cal.K2))
     # firma minima della lente vera (piccola ma non modellata dal fit semplice): fissa anche a lens_var=False
+    # fy/fx della calib (B30: 0.995): il gemello lo ignorava (errore di 2 px a 400 righe dal centro), ora lo legge
+    L1.aspect = float(cal.K1[1, 1] / cal.K1[0, 0] - 1)
+    L2.aspect = float(cal.K2[1, 1] / cal.K2[0, 0] - 1)
     L1.p, L1.s = (1.5e-4, -1.0e-4), (8e-5, -5e-5)
     L2.p, L2.s = (-1.0e-4, 1.2e-4), (-6e-5, 7e-5)
     meta = {}
@@ -218,14 +329,27 @@ def make_instance(calib_path, seed=0, scale=1.0, lens_var=True, unit="asmile-001
         # le LENTI variano (lente-sensore M12: su #001 misurato cx -93 px => pp fino a +-100 px a scala 1) e la scala 2
         # raddoppia ANCHE le lenti (f, centro ottico, distorsione, tangenziale, prisma, aspect), non solo il montaggio
         U1 = lambda a: rng.uniform(-a, a) * scale
+        # RIFIUTO delle estrazioni non fisiche: una variazione di lente che rende la verita' NON monotona fino al bordo
+        # (lente impossibile) viene RIESTRATTA (stesso rng, deterministico). Cosi' il render non vede mai NaN e non si rattoppa
+        # niente a posteriori. Il tasso di rifiuto e' riportato in meta['lens_var_rifiuti'].
+        rif = {}
         for L, n in ((L1, "L"), (L2, "R")):
-            L.f *= 1 + U1(tol["f_pct"] / 100)
-            L.cx += U1(tol["pp_px"])
-            L.cy += U1(tol["pp_px"])
-            L.a = tuple(np.array(L.a) * (1 + rng.normal(0, tol["lens_rel"] * scale, len(L.a))))
-            L.p = tuple(np.array(L.p) + rng.normal(0, tol["tang"] * scale, 2))
-            L.s = tuple(np.array(L.s) + rng.normal(0, tol["prism"] * scale, 2))
-            L.aspect = U1(tol["aspect"])
+            orig = (L.f, L.cx, L.cy, L.a, L.p, L.s, L.aspect)
+            for tent in range(60):
+                L.f, L.cx, L.cy, L.a, L.p, L.s, L.aspect = orig
+                L.f *= 1 + U1(tol["f_pct"] / 100)
+                L.cx += U1(tol["pp_px"])
+                L.cy += U1(tol["pp_px"])
+                L.a = tuple(np.array(L.a) * (1 + rng.normal(0, tol["lens_rel"] * scale, len(L.a))))
+                L.p = tuple(np.array(L.p) + rng.normal(0, tol["tang"] * scale, 2))
+                L.s = tuple(np.array(L.s) + rng.normal(0, tol["prism"] * scale, 2))
+                L.aspect += U1(tol["aspect"])
+                if lens_truth_ok(L):
+                    break
+            else:
+                raise RuntimeError(f"twin: nessuna variazione di lente {n} con verita' monotona in 60 estrazioni (calib/scala non adatte)")
+            rif[n] = tent
+        meta["lens_var_rifiuti"] = rif
     drot = np.array([U(tol["rx_deg"]), U(tol["ry_deg"]), U(tol["rz_deg"])])
     R = euler_deg_to_R(*drot) @ cal.R
     B = (cal.baseline_mm + U(tol["baseline_mm"])) / 1000.0

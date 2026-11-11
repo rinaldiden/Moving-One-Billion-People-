@@ -217,3 +217,24 @@ sovrapposizione stereo; depth centro <=2% a 2-5 m e <=3% a 7-10 m; bordi <=3% a 
 3. Rifare `run_all.py --produzione --n 30`: deve passare tutto. Poi passare la palla a `asmile-calib-critico`.
 4. `L1.mock_001` e' in `agents/stato.py` (dipende da `L1.rettifica`).
 5. Opzionale: mock dedicato Arducam (asmile-logger001): nuovo profilo + generatore SBS.
+
+## Round 5 (11/11, nota del critico su 050a162a)
+
+**Fedelta' fuori fit** (`fedelta_fuori_fit.py`, json `fedelta_fuori_fit_asmile-001_*.json`): sessione `20261030_180306` (mai nel fit B30),
+70 coppie, scarto GREZZO per zona 3x3 e camera, nessun allineamento. B30: cam1 p50 0.72-0.81 px (= pavimento 0.73-0.84 del
+CANDIDATO_20261110 fittato su quella sessione); cam2 p50 2.1-3.4 / p95 fino a 4.2 contro pavimento 1.1-1.5 / 2.2: ~1.5-2 px in piu' sulla
+camera destra. Non separabile fra "montaggio cambiato dal 30/10" e "R,T/lente destra di B30 sbagliate": NON VERIFICATO. PRIMA_20261111 e'
+molto peggio (cam2 2-17 px): la metrica discrimina. La 112806 non ha il tabellone (muro+borsa), non usabile.
+
+**Verita' monotona** (`twin.rich_from_opencv`): curva = OpenCV fino a r_c (pendenza >= 0.45 della centrale), poi retta C1;
+fit theta-poly minimo (4-10 coef) con errore <= 0.5 px nel dominio e monotonia verificata, altrimenti RuntimeError.
+`Cam.rays` lancia se l'inversione non converge o da' NaN; `render` lancia su raggi/lod non finiti. `lens_var` RIESTRAE le varianti di
+lente non monotone (rifiuto riportato in `meta.lens_var_rifiuti`: B30 destra ~50% a scala 1: il mock non copre quelle lenti).
+`gate.truth_eval` inverte con `undistortPointsIter` (il default a 5 iterazioni sbagliava 1-5 px ai bordi) ed ESCLUDE e CONTA i punti oltre il dominio
+della calib (`calib_domain_rd`); guardia ROSSA se l'area fuori dominio > 0 (B30 cam2: 4.6%). Controllo positivo: VERDE con B30 e PRIMA.
+Cause vere del controllo positivo ROSSO con B30: kappa con 0.2 fisso (baseline nominale 196.6 mm = 1.7%), fy/fx 0.995 ignorato dal gemello,
+inversione a 5 iterazioni. Nessuna lente inventata, nessuna soglia toccata.
+
+**esito.json**: ogni gate ha `classe`: `evidenza` (n_eff >= 30 per scala: il gate poteva fallire, con `ub95_fail_pct`), `senza_potenza`
+(vuoto: non conta; es. B-lenti che accettano 0-1/40, A con pochi candidati), `controllo` (deterministici), `guardia`.
+`riepilogo_potenza` separa i quattro gruppi.

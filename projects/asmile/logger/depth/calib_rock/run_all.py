@@ -42,6 +42,7 @@ MIN_RIUSCITA = 0.50
 MAX_RETRY = 4           # rifacimenti guidati dell'operatore (l'app dice quali zone sono povere)
 ZONE_TOL = 0.5          # punti % di peggioramento ammesso PER ZONA x distanza (online vs nominale)
 MIN_POWER = 40          # candidati totali minimi perche' 'zero falsi' abbia valore statistico
+MIN_POWER_GATE = 30     # casi in cui il gate POTEVA fallire, per scala: sotto, il gate e' vuoto e NON conta come evidenza
 
 
 # ---------------------------------------------------------------------------------------------- blocco "solo dopo G0"
@@ -243,7 +244,7 @@ def negative_cases(args):
     cl = r["R1"] @ (-inst_m.R.T @ inst_m.T)
     gt = np.r_[wt, cl[1] / cl[0], cl[2] / cl[0]]
     gt[1] += np.radians(0.15)      # yaw sbagliato di 0.15 gradi ~ 3.4 px di d0
-    cs = online.apply_correction(nom_m, gt, np.linalg.norm(cl) / 0.2)
+    cs = online.apply_correction(nom_m, gt, np.linalg.norm(cl) / (nom_m.baseline_mm / 1000.0))
     g = gate.check_gates(gate.truth_eval(inst_m, cs))
     res.append(dict(nome="gate-sensibilita': geometria vera con yaw sbagliato di 0.15 gradi (d0 ~3 px)", atteso="ROSSO",
                     ottenuto=g["verdetto"], motivi=g["motivi"][:3]))
@@ -263,12 +264,12 @@ def negative_cases(args):
     # (centro ~0.02 px, bordo ~3 px); la calib e' la geometria esatta con la lente nominale. Il giudice deve dare ROSSO
     # SOLO per i bordi (centro entro limite), altrimenti il caso non dimostra "bordo cattivo con centro buono".
     inst_e, nom_e = twin.make_instance(calib, seed, 1.0, lens_var=False)
-    inst_e.cam1.L.a = (inst_e.cam1.L.a[0], inst_e.cam1.L.a[1] + 0.07, inst_e.cam1.L.a[2])
+    inst_e.cam1.L.a = (inst_e.cam1.L.a[0], inst_e.cam1.L.a[1] + 0.07, inst_e.cam1.L.a[2]) + tuple(inst_e.cam1.L.a[3:])
     r_e = nom_e.rectify()
     Rw_e = r_e["R1"] @ inst_e.R.T @ r_e["R2"].T
     wt_e = cv2.Rodrigues(Rw_e)[0].ravel()
     cl_e = r_e["R1"] @ (-inst_e.R.T @ inst_e.T)
-    cal_e = online.apply_correction(nom_e, np.r_[wt_e, cl_e[1] / cl_e[0], cl_e[2] / cl_e[0]], np.linalg.norm(cl_e) / 0.2)
+    cal_e = online.apply_correction(nom_e, np.r_[wt_e, cl_e[1] / cl_e[0], cl_e[2] / cl_e[0]], np.linalg.norm(cl_e) / (nom_e.baseline_mm / 1000.0))
     ev_e = gate.truth_eval(inst_e, cal_e)
     g_e = gate.check_gates(ev_e)
     centro_ko = [m for m in g_e["motivi"] if "centro" in m and "alto-centro" not in m and "basso-centro" not in m and "dy" not in m]
@@ -279,12 +280,40 @@ def negative_cases(args):
                     atteso="ROSSO", ottenuto=ott,
                     motivi=[f"centro depth: {[round(c['p95abs'], 2) for c in [ev_e['depth']['centro'][str(Z)] for Z in (2.0, 5.0)]]}% a 2/5 m; "
                             f"bordo: {bordo_ko[:2]}"]))
+    # NaN nel render = test FALLITO: una verita' non monotona (curva con massimo prima del bordo) non e' ammessa dal gemello;
+    # il render deve LANCIARE, non produrre pixel neri/garbage che il giudice poi ignora.
+    inst_nm, _ = twin.make_instance(calib, seed, 1.0, lens_var=False)
+    L2 = inst_nm.cam2.L
+    L2.a = (L2.a[0], L2.a[1], L2.a[2] - 40.0) + tuple(L2.a[3:])      # curva fortemente non monotona
+    inst_nm._ray_cache.clear()
+    try:
+        render.render(inst_nm, 2, [render.board_plane(BOARD, np.zeros(3), np.array([0.0, 0.0, 1.5]))], np.random.default_rng(0))
+        ott_nm, mot_nm = "VERDE", "il render ha prodotto un'immagine con una verita' non monotona (NaN/garbage passati in silenzio)"
+    except RuntimeError as e:
+        ott_nm, mot_nm = "ROSSO", f"render ha lanciato: {str(e)[:100]}"
+    res.append(dict(nome="verita' del gemello NON monotona (NaN nel render): il render deve FALLIRE, non passare", atteso="ROSSO", ottenuto=ott_nm, motivi=[mot_nm]))
     # e a una calib esatta deve dare VERDE (controllo positivo, altrimenti il giudice e' sempre rosso)
-    ok = online.apply_correction(nom_m, np.r_[wt, cl[1] / cl[0], cl[2] / cl[0]], np.linalg.norm(cl) / 0.2)
+    ok = online.apply_correction(nom_m, np.r_[wt, cl[1] / cl[0], cl[2] / cl[0]], np.linalg.norm(cl) / (nom_m.baseline_mm / 1000.0))
     g = gate.check_gates(gate.truth_eval(inst_m, ok))
     res.append(dict(nome="controllo positivo: geometria vera (lente nominale) deve essere VERDE", atteso="VERDE",
                     ottenuto=g["verdetto"], motivi=g["motivi"][:3]))
     return res
+
+
+def dominio_calib(calib_path):
+    """Frazione di immagine (per camera) dove la lente della calib NON e' monotona/invertibile (gate.calib_domain_rd)."""
+    import gate
+    import twin
+    c = twin.nominal_calib(calib_path, UNIT)
+    u, v = np.meshgrid(np.arange(0, twin.W, 4) + 0.5, np.arange(0, twin.H, 4) + 0.5)
+    out, area, ok = {}, {}, True
+    for nm, K, D in (("cam1", c.K1, c.d1), ("cam2", c.K2, c.d2)):
+        dom = gate.calib_domain_rd(K, D)
+        rd = np.hypot((u - K[0, 2]) / K[0, 0], (v - K[1, 2]) / K[1, 1])
+        out[nm] = round(dom, 3)
+        area[nm] = float((rd > dom).mean() * 100)
+        ok &= area[nm] == 0.0
+    return dict(rd_dominio=out, area_fuori_pct=area, ok=bool(ok), soglia_pendenza=twin.MONO_SLOPE)
 
 
 # ---------------------------------------------------------------------------------------------- aggregazione
@@ -374,13 +403,13 @@ def main():
         ok_c = cand
         gates.append(dict(nome=f"A tabellone scala {sc:g}: dei risultati con controlli interni VERDE, quelli che passano il controllo di bordo (dy p95 < 1.5 px in OGNI zona + centro stretto) >= {MIN_CAND:.0%} "
                                f"[scartati dal controllo di bordo: {len(scartati)} {scartati}]",
-                          n=len(cand_int), verdi=len(cand), ok=len(cand_int) > 0 and len(cand) >= MIN_CAND * len(cand_int)))
+                          n=len(cand_int), verdi=len(cand), ok=len(cand_int) > 0 and len(cand) >= MIN_CAND * len(cand_int), n_eff=len(cand_int)))
         disponibilita[f"scala{sc:g}"] = dict(istanze=len(B), candidato_raggiunto=len(cand_int), pct=round(100 * len(cand_int) / max(1, len(B)), 1),
                                               nota="DATO (non gate): quante volte la procedura (con rifacimenti guidati) arriva a un candidato; i rifiuti sono sicuri")
         # (1) guardia di regressione, NON evidenza: A non puo' dire VERDE finche' non c'e' il banco fisso REALE
         nv = sum(x.get("calib_verdetto") == "VERDE" for x in B)
         gates.append(dict(nome=f"A tabellone scala {sc:g}: guardia 'A non dichiara mai VERDE' (VERDE vietato finche' non c'e' il banco fisso reale; "
-                               f"invariante di codice, non evidenza)", n=len(B), verdi=len(B) - nv, ok=nv == 0))
+                               f"invariante di codice, non evidenza)", n=len(B), verdi=len(B) - nv, ok=nv == 0, tipo='guardia'))
         # (2) gate che PUO' fallire: conta i falsi CANDIDATI (controlli interni VERDE, verita' ROSSA), con zona ed errore al bordo
         falsi = []
         for x in cand:
@@ -399,28 +428,58 @@ def main():
         det = "; ".join(f"i{f['i']}:dy KO {f['zone_dy_ko']}, bordo {f['zona_errore_bordo']}@{f['Z_m']:g}m {f['err_bordo_p95_pct']}%" for f in falsi) or "nessuno"
         gates.append(dict(nome=f"A tabellone scala {sc:g}: ZERO falsi candidati (passa il controllo di bordo dy < 1.5 px ma la depth vera a 2-5 m e' fuori limite: bordi > 3% o centro) "
                                f"[falsi: {len(falsi)}; zone: {zone_falsi}; {det}]",
-                          n=len(cand), verdi=len(cand) - len(falsi), ok=len(cand) > 0 and not falsi, falsi=falsi))
+                          n=len(cand), verdi=len(cand) - len(falsi), ok=len(cand) > 0 and not falsi, falsi=falsi, n_eff=len(cand)))
         gates.append(dict(nome=f"A tabellone scala {sc:g}: baseline stimata vs VERA entro 1%", n=len(gb),
                           verdi=sum(abs(r["baseline_err_vs_truth_pct"]) <= 1.0 for r in gb),
-                          ok=len(gb) > 0 and all(abs(r["baseline_err_vs_truth_pct"]) <= 1.0 for r in gb)))
-        gates.append(agg_gate(M, f"B online solo-montaggio scala {sc:g}: accettata + tutti i gate stretti"))
+                          ok=len(gb) > 0 and all(abs(r["baseline_err_vs_truth_pct"]) <= 1.0 for r in gb), n_eff=len(gb)))
+        gm = agg_gate(M, f"B online solo-montaggio scala {sc:g}: accettata + tutti i gate stretti")
+        gm["n_eff"] = len(M)
+        gates.append(gm)
         gates.append(dict(nome=f"B online solo-montaggio scala {sc:g}: MAI peggiorativa PER ZONA (nessuna delle 9 zone x [2,3,5,7,10] m peggiora > {ZONE_TOL:g} punti %)",
                           n=len(M), verdi=sum(bool(r.get("mai_peggiorativa")) for r in M),
-                          ok=all(r.get("mai_peggiorativa") for r in M) and len(M) > 0))
+                          ok=all(r.get("mai_peggiorativa") for r in M) and len(M) > 0,
+                          n_eff=sum(bool(r.get("accettata")) for r in M)))   # se rifiuta, restituisce il nominale: 'non peggiora' e' vuoto
         acc_l = sum(bool(r.get("accettata")) for r in L)
         gates.append(dict(nome=f"B online con LENTI variate scala {sc:g}: se accetta, la verita' e' VERDE; rifiutare e' lecito (accettate {acc_l}/{len(L)})",
                           n=len(L), verdi=sum(bool(r.get("accettata_ok")) for r in L),
-                          ok=all(r.get("accettata_ok") for r in L) and len(L) > 0))
+                          ok=all(r.get("accettata_ok") for r in L) and len(L) > 0, n_eff=acc_l))
         gates.append(dict(nome=f"B online con LENTI variate scala {sc:g}: MAI peggiorativa PER ZONA (> {ZONE_TOL:g} punti %). "
                                f"Non e' un controllo di qualita': per lenti nuove serve A",
                           n=len(L), verdi=sum(bool(r.get("mai_peggiorativa")) for r in L),
-                          ok=all(r.get("mai_peggiorativa") for r in L) and len(L) > 0))
+                          ok=all(r.get("mai_peggiorativa") for r in L) and len(L) > 0, n_eff=acc_l))
     ncand = sum(1 for r in rows if r["kind"] == "board" and r.get("calib_interno") == "VERDE" and r.get("gate", {}).get("verdetto") == "VERDE")
-    gates.append(dict(nome=f"potenza statistica: candidati veri totali (scale {scales}, dopo il controllo di bordo) >= {MIN_POWER}", n=MIN_POWER, verdi=min(ncand, MIN_POWER), ok=ncand >= MIN_POWER))
+    gates.append(dict(nome=f"potenza statistica: candidati veri totali (scale {scales}, dopo il controllo di bordo) >= {MIN_POWER}", n=MIN_POWER, verdi=min(ncand, MIN_POWER), ok=ncand >= MIN_POWER, tipo='guardia'))
     gates.append(dict(nome="casi negativi tutti come atteso", n=len(neg), verdi=sum(n["atteso"] == n["ottenuto"] for n in neg),
-                      ok=all(n["atteso"] == n["ottenuto"] for n in neg)))
-    gates.append(dict(nome="nessun errore di esecuzione", n=len(rows), verdi=len(rows) - len(errs), ok=not errs))
+                      ok=all(n["atteso"] == n["ottenuto"] for n in neg), tipo='controllo'))
+    gates.append(dict(nome="nessun errore di esecuzione", n=len(rows), verdi=len(rows) - len(errs), ok=not errs, tipo='guardia'))
+    # GUARDIA dominio della calib: la lente della calib dev'essere monotona/invertibile fino al bordo (twin.MONO_SLOPE);
+    # fuori, il giudice non misura (punti esclusi e contati) e la calib non e' utilizzabile al bordo: ROSSO, non nascosto.
+    dom = dominio_calib(a.calib)
+    ft = sum(sum(r["truth"].get("fuori_dominio", [0])) for r in rows if r.get("truth"))
+    vt = sum(sum(r["truth"].get("visibili", [0])) for r in rows if r.get("truth"))
+    gates.append(dict(nome=f"GUARDIA dominio calib: lente monotona/invertibile fino al bordo (area immagine fuori dominio cam1 {dom['area_fuori_pct']['cam1']:.1f}%, "
+                           f"cam2 {dom['area_fuori_pct']['cam2']:.1f}%; r_d dominio {dom['rd_dominio']}; punti del giudice esclusi {ft}/{vt}). "
+                           f"Se > 0 la calib e' ESTRAPOLATA al bordo: legato alla calib definitiva", n=1, verdi=int(dom['ok']), ok=dom['ok'], tipo='guardia'))
+    for g in gates:
+        if g.get("tipo"):
+            g["classe"] = g["tipo"]
+        elif g.get("n_eff", 0) >= MIN_POWER_GATE:
+            g["classe"] = "evidenza"
+        else:
+            g["classe"] = "senza_potenza"
+        if "n_eff" in g:
+            ne = g["n_eff"]
+            g["potenza"] = dict(n_eff=ne, min=MIN_POWER_GATE, con_potenza=ne >= MIN_POWER_GATE,
+                                ub95_fail_pct=(round(100 * (1 - 0.05 ** (1 / ne)), 1) if (ne > 0 and g["ok"]) else None))
     tutto = all(g["ok"] for g in gates)
+    riep = {c: dict(verdi=[g["nome"][:90] for g in gates if g["classe"] == c and g["ok"]],
+                    rossi=[g["nome"][:90] for g in gates if g["classe"] == c and not g["ok"]]) for c in ("evidenza", "senza_potenza", "controllo", "guardia")}
+    riepilogo = dict(
+        evidenza_con_potenza=dict(verdi=len(riep["evidenza"]["verdi"]), rossi=len(riep["evidenza"]["rossi"]), dettaglio=riep["evidenza"]),
+        senza_potenza=dict(nota=f"gate statistici in cui n_eff < {MIN_POWER_GATE} (per scala): NON contano come evidenza; se rossi sono un segnale negativo",
+                           verdi=len(riep["senza_potenza"]["verdi"]), rossi=len(riep["senza_potenza"]["rossi"]), dettaglio=riep["senza_potenza"]),
+        controlli_deterministici=dict(verdi=len(riep["controllo"]["verdi"]), rossi=len(riep["controllo"]["rossi"]), dettaglio=riep["controllo"]),
+        guardie=dict(verdi=len(riep["guardia"]["verdi"]), rossi=len(riep["guardia"]["rossi"]), dettaglio=riep["guardia"]))
     informativo = {}
     for sc in scales:
         for kind in ("board", "online_mount", "online_lens"):
@@ -441,12 +500,17 @@ def main():
               "di #001 i gate valgono come prova di codice, non come prova su #001."]
     esito = dict(disponibilita_procedura=disponibilita, quando=datetime.datetime.now().isoformat(timespec="seconds"), modo=modo, calib=os.path.basename(a.calib),
                  calib_g0=dict(passato=ok0, motivo=why), avvisi=avvisi, n_per_scala=a.n, scale=scales, seed0=SEED0, tabellone=BOARD,
-                 secondi=round(time.time() - t0), gate=gates, esito="TUTTO VERDE" if tutto else "ROSSO",
+                 secondi=round(time.time() - t0), gate=gates, riepilogo_potenza=riepilogo, dominio_calib=dom, esito="TUTTO VERDE" if tutto else "ROSSO",
                  negativi=neg, informativo=informativo, righe=[{k: v for k, v in r.items() if k != "truth"} for r in rows])
     json.dump(esito, open(a.out, "w"), indent=1, default=float)
     print("\n=== GATE ===")
     for g in gates:
-        print(f"[{'OK ' if g['ok'] else 'KO '}] {g['nome']}: {g['verdi']}/{g['n']}")
+        print(f"[{'OK ' if g['ok'] else 'KO '}][{g['classe']:>13s}{'' if 'n_eff' not in g else ' n_eff=%d' % g['n_eff']}] {g['nome']}: {g['verdi']}/{g['n']}")
+    print("\n=== EVIDENZA CON POTENZA (n_eff >= %d) ===" % MIN_POWER_GATE)
+    print(f"verdi {riepilogo['evidenza_con_potenza']['verdi']}, rossi {riepilogo['evidenza_con_potenza']['rossi']} | senza potenza (non contano): "
+          f"verdi {riepilogo['senza_potenza']['verdi']}, rossi {riepilogo['senza_potenza']['rossi']} | controlli: "
+          f"{riepilogo['controlli_deterministici']['verdi']} verdi {riepilogo['controlli_deterministici']['rossi']} rossi | guardie: "
+          f"{riepilogo['guardie']['verdi']} verdi {riepilogo['guardie']['rossi']} rossi")
     print("\n=== AVVISI ===")
     for v in avvisi:
         print(" - " + v)
