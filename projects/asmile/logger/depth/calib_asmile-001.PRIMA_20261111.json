@@ -1,0 +1,195 @@
+{
+  "K_left": [
+    [
+      1153.5373646306825,
+      0.0,
+      639.999999999
+    ],
+    [
+      0.0,
+      1153.5373646306825,
+      399.999999999
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "dist_left": [
+    -0.37372026173764966,
+    0.5677547486378718,
+    0.0,
+    0.0,
+    -9.999999999999999e-10
+  ],
+  "K_right": [
+    [
+      1149.1194257008701,
+      0.0,
+      546.7738812915568
+    ],
+    [
+      0.0,
+      1149.1194257008701,
+      414.999999999
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "dist_right": [
+    -0.39379066585840955,
+    0.5677547486378718,
+    0.0,
+    0.0,
+    -9.999999999999999e-10
+  ],
+  "R": [
+    [
+      0.9993247374963713,
+      -0.006061511081497575,
+      0.03623985528692868
+    ],
+    [
+      0.002764989440719911,
+      0.9959079542697359,
+      0.09033106583929075
+    ],
+    [
+      -0.03663910289842476,
+      -0.09016986584041507,
+      0.9952522149852872
+    ]
+  ],
+  "T": [
+    -0.2,
+    -9.999999999999998e-13,
+    9.999999999999998e-13
+  ],
+  "size": [
+    1280,
+    800
+  ],
+  "baseline_mm": 200.0,
+  "order": "RL",
+  "flip180": false,
+  "d0_px": 0.0,
+  "focal_rect_px": 1312.49,
+  "focal_fit_px": 1153.5,
+  "method": "calib_001_20261109/fit_verify.py: R,f,k1,k2,pp-destra da dy=0 (SIFT sfondo 7 soste + giro 094146) + 7 soste col metro (1-2-3-5-7-10-15 m) con errore RELATIVO; 4-6-8-12 m SOLO verifica; d0=0 (assorbito da dcx destra).",
+  "fit_params": {
+    "rx_ry_rz_deg": [
+      -5.179186807283527,
+      2.091145653651983,
+      0.25326237728383827
+    ],
+    "fL": 1153.5373646306825,
+    "k1_L": -0.37372026173764966,
+    "dcx_right_px": -93.2261187074432,
+    "fR": 1149.1194257008701,
+    "k1_R": -0.39379066585840955,
+    "dcy_right_px": 14.999999999999998,
+    "k2": 0.5677547486378718
+  },
+  "tape_points": [
+    {
+      "Z_m": 1,
+      "role": "fit",
+      "n_frames": 8,
+      "disp_rect_px": 265.723,
+      "Z_stereo_m": 0.988,
+      "err_pct": -1.21
+    },
+    {
+      "Z_m": 2,
+      "role": "fit",
+      "n_frames": 10,
+      "disp_rect_px": 131.312,
+      "Z_stereo_m": 1.999,
+      "err_pct": -0.05
+    },
+    {
+      "Z_m": 3,
+      "role": "fit",
+      "n_frames": 6,
+      "disp_rect_px": 86.907,
+      "Z_stereo_m": 3.02,
+      "err_pct": 0.68
+    },
+    {
+      "Z_m": 4,
+      "role": "verifica",
+      "n_frames": 6,
+      "disp_rect_px": 65.27,
+      "Z_stereo_m": 4.022,
+      "err_pct": 0.54
+    },
+    {
+      "Z_m": 5,
+      "role": "fit",
+      "n_frames": 10,
+      "disp_rect_px": 52.026,
+      "Z_stereo_m": 5.046,
+      "err_pct": 0.91
+    },
+    {
+      "Z_m": 6,
+      "role": "verifica",
+      "n_frames": 2,
+      "disp_rect_px": 43.385,
+      "Z_stereo_m": 6.05,
+      "err_pct": 0.84
+    },
+    {
+      "Z_m": 7,
+      "role": "fit",
+      "n_frames": 10,
+      "disp_rect_px": 37.165,
+      "Z_stereo_m": 7.063,
+      "err_pct": 0.9
+    },
+    {
+      "Z_m": 8,
+      "role": "verifica",
+      "n_frames": 10,
+      "disp_rect_px": 32.664,
+      "Z_stereo_m": 8.036,
+      "err_pct": 0.45
+    },
+    {
+      "Z_m": 10,
+      "role": "fit",
+      "n_frames": 10,
+      "disp_rect_px": 26.105,
+      "Z_stereo_m": 10.055,
+      "err_pct": 0.55
+    },
+    {
+      "Z_m": 12,
+      "role": "verifica",
+      "n_frames": 10,
+      "disp_rect_px": 22.128,
+      "Z_stereo_m": 11.863,
+      "err_pct": -1.14
+    },
+    {
+      "Z_m": 15,
+      "role": "fit",
+      "n_frames": 10,
+      "disp_rect_px": 17.698,
+      "Z_stereo_m": 14.832,
+      "err_pct": -1.12
+    }
+  ],
+  "source": "session_20261109_093216 (A1 soste 1-2-3-4-5-6-7-8-10-12-15 m, bersaglio = persona che regge un foglio con scacchiera 7x10 quadretti da 29 mm, NON il cartone da 80 cm del protocollo); dy verifica: 093909 (spinta) + 094146 (giro)",
+  "valid_for": "SOLO asmile #001 (asmile-tirano, hostname asmile / Tailscale asmile-001) con QUESTO set di 2 camere OV9281 come montate il 2026-11-09 (order=RL: cam0=file *_left=fisicamente DESTRA). NON vale per asmile2, asmile-logger o altre unit\u00e0; se si smonta/sposta una camera va rifatta.",
+  "camera_hw": {
+    "model": "Inno-Maker CAM-MIPIOV9281V2, 2 moduli separati",
+    "sensor": "OV9281 mono global shutter 1280x800"
+  },
+  "cam_height_m": 0.825,
+  "baseline_tape_mm": 200.0
+}
