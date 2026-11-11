@@ -94,9 +94,10 @@
  "z_correction": {
   "a": 0.9899,
   "b_m": 0.0461,
-  "attiva": true,
+  "attiva": false,
   "formula": "Z_vera = a*Z_stereo + b",
   "provvisoria": true,
-  "fonte": "Daniele 2026-11-11, scena session_20261111_112806 fr.120: borsa 0.90 (stereo 0.88), manubrio 1.80 (stereo mediana pixel manubrio 1.75), muro 5.10 (stereo 5.11)"
+  "fonte": "Daniele 2026-11-11, scena session_20261111_112806 fr.120: borsa 0.90 (stereo 0.88), manubrio 1.80 (stereo mediana pixel manubrio 1.75), muro 5.10 (stereo 5.11)",
+  "nota": "Daniele 2026-11-11: \"perfetti cosi\" = B30 SENZA correzione (borsa 0.88, muro 5.11, manubrio pixel 1.75). Correzione tenuta solo come riferimento."
  }
 }
