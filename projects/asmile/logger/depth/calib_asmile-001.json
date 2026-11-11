@@ -96,6 +96,8 @@
   "b_m": 0.1693,
   "formula": "Z_vera = a*Z_stereo + b",
   "fonte": "Daniele 2026-11-11: muro 5.10 m, manubrio 1.80 m (foto session_20261111_112806 fr.120); residui sulle soste col metro 1/2/5/10 m entro ~1.5%",
-  "provvisoria": true
+  "provvisoria": true,
+  "attiva": false,
+  "nota": "DISATTIVATA 2026-11-11: con la correzione la borsa esce 1.02 m, Daniele la misura ~0.90 m (senza correzione 0.88). Muro 5.11 e borsa 0.88 tornano SENZA correzione; il manubrio (oggetto sottile) 1.69 vs 1.80 resta da verificare col metro."
  }
 }
