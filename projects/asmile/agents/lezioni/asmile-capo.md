@@ -24,3 +24,6 @@ Cosa ho previsto male. Le legge il capo-critico.
 - Un PASSA --parziale del verifier con il criterio principale FALLITO (classi, falsi 19.5%) vuol dire "rapporto onesto", NON lavoro fatto: lo tratto come un veto per la pianificazione.
 - I critici scrivono l'artefatto a volte con il prefisso projects/asmile/: palla.py ora normalizza (prima la palla restava aperta per sempre); palla.py stato crashava dopo il primo "decido": corretto.
 - #001 ha UNA sola sessione in moto buona (094146, 6.5 min): ogni test fisso di percezione su #001 pesca dagli stessi 6 minuti → i set A/B/C/D si esauriscono. Servono giri nuovi di Daniele.
+- 2026-11-11 SBAGLIATO: Daniele ha dovuto dirmi "avresti già dovuto prenderli" per i video. Regola: appena Daniele dice che ha registrato (o vedo sessioni nuove sul Pi), scarico e lancio l'agente senza aspettare.
+- 2026-11-11 GIUSTO: modo calibrazione via file in /tmp (si spegne da solo al riavvio) invece di toccare master_switch: zero rischio sul default di guida.
+- 2026-11-11 GIUSTO: critico con brief "non confermare il ROSSO, dimmi se i numeri sono veri e quale ipotesi i dati escludono" → ha trovato la causa (riferimento del metro), non solo il colore.

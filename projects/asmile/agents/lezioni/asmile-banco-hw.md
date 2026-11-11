@@ -38,3 +38,10 @@ Rimesso hall_interp 500: coppia invariata (Daniele "niente da fare"). Gli ampere
 1.5 x flux x (giri elettrici per giro di piantone). asmile2 ~0.54 Nm/A, #001 ~0.07 Nm/A (flux 1.32 vs 5.04 mWb, 35 vs ~72 giri el.).
 Prima di cambiare parametri VESC per "più coppia", calcola Nm/A dai dati di detection e dal tach/encoder misurato.
 Report: agents/rapporti/sterzo_001_vs_asmile2_coppia_20261110.md
+- 2026-11-11 SBAGLIATO (26/10): detection FOC (foc_detect_apply_all) fatta col motore attaccato al piantone 1:5: il flux openloop è uscito 1.318 mWb invece di ~5.4 (motore gemello libero: measure_linkage_openloop 5.43). Regola: flux SOLO a motore libero; sulla bici si misurano solo R e L (motore fermo). R/L uguali entro 5% = motori gemelli → si usa il flux del gemello.
+- 2026-11-11 SBAGLIATO (10/11): il confronto "0.07 vs 0.26 Nm/A" usava il flux sbagliato della config. Prima di dedurre coppia da un parametro di config, misurarlo.
+- 2026-11-11 SBAGLIATO (capo): ho detto che il VESC sul banco USB era quello di #001 perché la config gli somigliava. Il UUID (hw_status) era diverso. Regola: identificare un VESC SEMPRE dal UUID, mai dalla config.
+- 2026-11-11 GIUSTO: tabella hall confrontata su scala fw (200 = 360°) cercando permutazione fili + specchio + offset: #001, motore prova e asmile2 coincidono entro 3-5° el. Gli hall non sono la causa.
+- 2026-11-11 GIUSTO: R efficace a rotore fermo (handbrake, |V|/|I|) uguale banco (50 mOhm) e bici (47 mOhm a 30 A): a velocità zero niente di elettricamente anomalo. Resta aperta la coppia debole a stallo: prossime prove multimetro DC batteria + bilancia al manubrio.
+- 2026-11-11 NOTA: misurare il flux dentro i fermi encoder non serve: a 30°/s di manubrio la bemf è ~0.1 V, sotto l'errore di tensione del VESC.
+- 2026-11-11 FATTO: servo freno comandato a mano su richiesta di Daniele (0° → 60° → 0°) con impulso 1.5-3 s poi hi-Z, INA219 per vedere se si muove (picco 150-450 mA = movimento). Mai oltre 60°. Solo con speed_limiter spento (master switch OFF).
