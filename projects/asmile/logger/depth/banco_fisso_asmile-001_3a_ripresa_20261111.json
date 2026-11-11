@@ -1,0 +1,375 @@
+{
+ "unita": "asmile-001",
+ "data": "2026-11-11",
+ "ripresa": "3a (6 Mbps), sessioni 082437 083054 083632 101400 102053",
+ "riferimenti": {
+  "mattina (083632)": "D nominale da segno a terra di posizione IGNOTA: offset stimato dalla sosta 2 m filo a piombo centro, mai applicato a mano nel fit",
+  "filo a piombo (102053)": "riferimento metrico: D=2.00 m da sotto il centro fra le lenti alla verticale della faccia; laterali -0.75/0/+0.75 m"
+ },
+ "mai_nel_fit": true,
+ "candidati": {
+  "B10": {
+   "file": "calib_asmile-001.CANDIDATO_v2_B10.json",
+   "punti": {
+    "1m-a": {
+     "D": 1.0,
+     "Zsgbm": 1.8,
+     "Zncc": 1.809,
+     "X": 0.08,
+     "n": 15,
+     "concordano": true,
+     "Z_usata": 1.8,
+     "err_pct_nominale": 80.0,
+     "err_pct_con_offset_mattina": 85.2,
+     "nota": "ANOMALO: SGBM e NCC concordano su 1.8 m con D=1 m (disparita' dimezzata): rettifica B10 non valida in vicino, causa NON VERIFICATA"
+    },
+    "1m-b": {
+     "D": 1.0,
+     "Zsgbm": 1.77,
+     "Zncc": 1.789,
+     "X": 0.04,
+     "n": 10,
+     "concordano": true,
+     "Z_usata": 1.77,
+     "err_pct_nominale": 77.0,
+     "err_pct_con_offset_mattina": 82.1,
+     "nota": "ANOMALO: SGBM e NCC concordano su 1.8 m con D=1 m (disparita' dimezzata): rettifica B10 non valida in vicino, causa NON VERIFICATA"
+    },
+    "2m-c": {
+     "D": 2.0,
+     "Zsgbm": 1.86,
+     "Zncc": 1.862,
+     "X": 0.05,
+     "n": 13,
+     "concordano": true,
+     "Z_usata": 1.86,
+     "err_pct_nominale": -7.0,
+     "err_pct_con_offset_mattina": -5.7
+    },
+    "5m-c": {
+     "D": 5.0,
+     "Zsgbm": 4.907,
+     "Zncc": 4.916,
+     "X": 0.13,
+     "n": 28,
+     "concordano": true,
+     "Z_usata": 4.907,
+     "err_pct_nominale": -1.9,
+     "err_pct_con_offset_mattina": -1.3
+    },
+    "10m-c": {
+     "D": 10.0,
+     "Zsgbm": 10.157,
+     "Zncc": 10.162,
+     "X": 0.24,
+     "n": 30,
+     "concordano": true,
+     "Z_usata": 10.157,
+     "err_pct_nominale": 1.6,
+     "err_pct_con_offset_mattina": 1.9
+    },
+    "5m-sx": {
+     "D": 5.0,
+     "Zsgbm": 4.906,
+     "Zncc": 4.906,
+     "X": -1.62,
+     "n": 20,
+     "concordano": true,
+     "Z_usata": 4.906,
+     "err_pct_nominale": -1.9,
+     "err_pct_con_offset_mattina": -1.3
+    },
+    "extra-lontano": {
+     "D": null,
+     "Zsgbm": 10.209,
+     "Zncc": 10.192,
+     "X": 0.25,
+     "n": 8,
+     "concordano": true,
+     "Z_usata": 10.209
+    },
+    "2m-sx-filo": {
+     "D": 2.0,
+     "Zsgbm": 1.249,
+     "Zncc": 1.874,
+     "X": -0.46,
+     "n": 14,
+     "concordano": false,
+     "Z_usata": 1.874,
+     "err_pct_nominale": -6.3,
+     "nota": "SGBM fallito (ROI su sfondo/bordo), uso NCC"
+    },
+    "2m-c-filo": {
+     "D": 2.0,
+     "Zsgbm": 1.888,
+     "Zncc": 1.928,
+     "X": -0.01,
+     "n": 12,
+     "concordano": true,
+     "Z_usata": 1.888,
+     "err_pct_nominale": -5.6
+    },
+    "2m-dx-filo": {
+     "D": 2.0,
+     "Zsgbm": 2.048,
+     "Zncc": 2.07,
+     "X": 0.45,
+     "n": 22,
+     "concordano": true,
+     "Z_usata": 2.048,
+     "err_pct_nominale": 2.4
+    },
+    "5m-dx": {
+     "nota": "nessun risultato (SGBM/NCC non producono la sosta)"
+    }
+   },
+   "offset_mattina_stimato_m": -0.028
+  },
+  "B30": {
+   "file": "calib_asmile-001.CANDIDATO_v2_B30.json",
+   "punti": {
+    "1m-a": {
+     "D": 1.0,
+     "Zsgbm": 0.887,
+     "Zncc": 1.043,
+     "X": 0.02,
+     "n": 15,
+     "concordano": false,
+     "Z_usata": 0.887,
+     "err_pct_nominale": -11.3,
+     "nota": "NCC non affidabile a 1 m (finestra di ricerca 260 px): uso SGBM"
+    },
+    "1m-b": {
+     "D": 1.0,
+     "Zsgbm": 0.874,
+     "Zncc": 1.776,
+     "X": 0.0,
+     "n": 10,
+     "concordano": false,
+     "Z_usata": 0.874,
+     "err_pct_nominale": -12.6,
+     "nota": "NCC non affidabile a 1 m (finestra di ricerca 260 px): uso SGBM"
+    },
+    "2m-c": {
+     "D": 2.0,
+     "Zsgbm": 1.859,
+     "Zncc": 1.865,
+     "X": 0.05,
+     "n": 13,
+     "concordano": true,
+     "Z_usata": 1.859,
+     "err_pct_nominale": -7.1,
+     "err_pct_con_offset_mattina": -5.7
+    },
+    "5m-c": {
+     "D": 5.0,
+     "Zsgbm": 4.932,
+     "Zncc": 4.918,
+     "X": 0.14,
+     "n": 28,
+     "concordano": true,
+     "Z_usata": 4.932,
+     "err_pct_nominale": -1.4,
+     "err_pct_con_offset_mattina": -0.8
+    },
+    "10m-c": {
+     "D": 10.0,
+     "Zsgbm": 10.069,
+     "Zncc": 10.16,
+     "X": 0.25,
+     "n": 30,
+     "concordano": true,
+     "Z_usata": 10.069,
+     "err_pct_nominale": 0.7,
+     "err_pct_con_offset_mattina": 1.0
+    },
+    "5m-dx": {
+     "D": 5.0,
+     "Zsgbm": 5.124,
+     "Zncc": 5.117,
+     "X": 1.91,
+     "n": 15,
+     "concordano": true,
+     "Z_usata": 5.124,
+     "err_pct_nominale": 2.5,
+     "err_pct_con_offset_mattina": 3.1
+    },
+    "5m-sx": {
+     "D": 5.0,
+     "Zsgbm": 4.904,
+     "Zncc": 4.904,
+     "X": -1.62,
+     "n": 20,
+     "concordano": true,
+     "Z_usata": 4.904,
+     "err_pct_nominale": -1.9,
+     "err_pct_con_offset_mattina": -1.3
+    },
+    "extra-lontano": {
+     "D": null,
+     "Zsgbm": 10.104,
+     "Zncc": 10.18,
+     "X": 0.26,
+     "n": 8,
+     "concordano": true,
+     "Z_usata": 10.104
+    },
+    "2m-sx-filo": {
+     "D": 2.0,
+     "Zsgbm": 0.971,
+     "Zncc": 1.87,
+     "X": -0.38,
+     "n": 14,
+     "concordano": false,
+     "Z_usata": 1.87,
+     "err_pct_nominale": -6.5,
+     "nota": "SGBM fallito (ROI su sfondo/bordo), uso NCC"
+    },
+    "2m-c-filo": {
+     "D": 2.0,
+     "Zsgbm": 1.888,
+     "Zncc": 1.892,
+     "X": -0.01,
+     "n": 12,
+     "concordano": true,
+     "Z_usata": 1.888,
+     "err_pct_nominale": -5.6
+    },
+    "2m-dx-filo": {
+     "D": 2.0,
+     "Zsgbm": 1.897,
+     "Zncc": 1.899,
+     "X": 0.52,
+     "n": 22,
+     "concordano": true,
+     "Z_usata": 1.897,
+     "err_pct_nominale": -5.1
+    }
+   },
+   "offset_mattina_stimato_m": -0.029
+  },
+  "B50": {
+   "file": "calib_asmile-001.CANDIDATO_v2_B50.json",
+   "punti": {
+    "1m-a": {
+     "D": 1.0,
+     "Zsgbm": 0.886,
+     "Zncc": 1.067,
+     "X": 0.01,
+     "n": 15,
+     "concordano": false,
+     "Z_usata": 0.886,
+     "err_pct_nominale": -11.4,
+     "nota": "NCC non affidabile a 1 m (finestra di ricerca 260 px): uso SGBM"
+    },
+    "1m-b": {
+     "D": 1.0,
+     "Zsgbm": 0.872,
+     "Zncc": 1.775,
+     "X": 0.0,
+     "n": 10,
+     "concordano": false,
+     "Z_usata": 0.872,
+     "err_pct_nominale": -12.8,
+     "nota": "NCC non affidabile a 1 m (finestra di ricerca 260 px): uso SGBM"
+    },
+    "2m-c": {
+     "D": 2.0,
+     "Zsgbm": 1.859,
+     "Zncc": 1.86,
+     "X": 0.05,
+     "n": 13,
+     "concordano": true,
+     "Z_usata": 1.859,
+     "err_pct_nominale": -7.1,
+     "err_pct_con_offset_mattina": -5.8
+    },
+    "5m-c": {
+     "D": 5.0,
+     "Zsgbm": 4.87,
+     "Zncc": 4.889,
+     "X": 0.12,
+     "n": 28,
+     "concordano": true,
+     "Z_usata": 4.87,
+     "err_pct_nominale": -2.6,
+     "err_pct_con_offset_mattina": -2.1
+    },
+    "10m-c": {
+     "D": 10.0,
+     "Zsgbm": 9.926,
+     "Zncc": 10.026,
+     "X": 0.22,
+     "n": 30,
+     "concordano": true,
+     "Z_usata": 9.926,
+     "err_pct_nominale": -0.7,
+     "err_pct_con_offset_mattina": -0.5
+    },
+    "5m-dx": {
+     "D": 5.0,
+     "Zsgbm": 5.042,
+     "Zncc": 5.036,
+     "X": 1.89,
+     "n": 15,
+     "concordano": true,
+     "Z_usata": 5.042,
+     "err_pct_nominale": 0.8,
+     "err_pct_con_offset_mattina": 1.4
+    },
+    "5m-sx": {
+     "D": 5.0,
+     "Zsgbm": 4.859,
+     "Zncc": 4.859,
+     "X": -1.62,
+     "n": 20,
+     "concordano": true,
+     "Z_usata": 4.859,
+     "err_pct_nominale": -2.8,
+     "err_pct_con_offset_mattina": -2.3
+    },
+    "extra-lontano": {
+     "D": null,
+     "Zsgbm": 9.993,
+     "Zncc": 10.075,
+     "X": 0.23,
+     "n": 8,
+     "concordano": true,
+     "Z_usata": 9.993
+    },
+    "2m-sx-filo": {
+     "D": 2.0,
+     "Zsgbm": 12.136,
+     "Zncc": 12.136,
+     "X": -3.27,
+     "n": 14,
+     "concordano": true,
+     "Z_usata": 12.136,
+     "err_pct_nominale": 506.8,
+     "nota": "ROI sbagliata (X -3.27 m): non valido"
+    },
+    "2m-c-filo": {
+     "D": 2.0,
+     "Zsgbm": 1.886,
+     "Zncc": 1.889,
+     "X": -0.01,
+     "n": 12,
+     "concordano": true,
+     "Z_usata": 1.886,
+     "err_pct_nominale": -5.7
+    },
+    "2m-dx-filo": {
+     "D": 2.0,
+     "Zsgbm": 1.886,
+     "Zncc": 1.893,
+     "X": 0.57,
+     "n": 22,
+     "concordano": true,
+     "Z_usata": 1.886,
+     "err_pct_nominale": -5.7
+    }
+   },
+   "offset_mattina_stimato_m": -0.027
+  }
+ }
+}
