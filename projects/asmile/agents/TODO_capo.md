@@ -6,6 +6,10 @@ Ripresa: tutti gli agenti riprendono da qui.
 - Motore 6354 montato sospetto guasto (R 29.0→23.5 mOhm, L 19.5→17 uH, flux FOC 2.3 mWb, frena a mano, puzza). Daniele monta il GEMELLO del banco sul VESC #001.
 - Poi: calibrazione FOC completa A MOTORE LIBERO (prima di accoppiarlo alla riduzione): R, L, flux openloop, hall detect, guadagni corrente, observer. Scrivere solo col vai.
 - TETTO CORRENTE: max 80 A per al massimo 5 s (Daniele). VESC l_current_max 80 + limite tempo nello script.
+- Motore nuovo CALIBRATO e scritto (18:25): R 29.5 mOhm, L 19.5 uH, flux 4.918 mWb (openloop undriven = metodo VESC Tool), kp/ki/observer ricalcolati, hall rifatti, ±80 A.
+- PRIMA di muovere: RIFARE ZERI encoder sterzo (Daniele l'ha smontato): centro, finecorsa veri, limiti in /data/steering_limits_asmile-001.json.
+- Poi: script fluido di ieri (approvato_0911/sterzo_fluido_001_ieri_be80a131.py) e confronto col 09/11.
+- Sensore suggerito sull'albero motore: AS5047P sulla porta encoder del VESC (fluidità a bassa velocità).
 - Riduzione 1:20 ORDINATA (oggi 1:5): rifare fattori (count/giro el., ERPM per deg/s) quando arriva.
 - Alternativa futura: CubeMars AK80-8 (agents/rapporti/motore_sterzo_ricerca_20261111.md).
 - Registro prove 11/11: agents/prove/sterzo_001/REGISTRO_20261111.md.
