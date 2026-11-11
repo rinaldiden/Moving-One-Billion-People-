@@ -2,6 +2,20 @@
 Aggiornato 2026-11-10 sera. Daniele ha fermato gli agenti: domattina gira la 2ª ripresa di calibrazione di #001.
 Ripresa: tutti gli agenti riprendono da qui.
 
+## 2026-11-11 sera — PROSSIMA SESSIONE STERZO #001 (Daniele: "lo script di ieri girava perfetto fluido, rifare con quello, uno step alla volta")
+- STATO VESC #001 (da verificare all'accensione): l_current ±70 A; foc_hall_interp_erpm = 100 (il ripristino a 500 NON è riuscito: Pi già spento). Backup: fleet/001/vesc_backup/ (500 = vesc_mcconf_backup_20261111_110926.bin).
+- Step 1: riportare interp a 500 (vai già dato), poi rifare IDENTICO il run buono del 10/11 18:06 (sterzo_fluido_001.py vai, vel 20, imax 30, versione script del commit 70fa844f/da647eae, VESC hall 500) e confrontare il log con agents/prove/sterzo_001/hall500/sterzo_fluido_vai_20261110_180608_hall500_res30.csv. Solo se identico: un cambiamento alla volta.
+- Fatti misurati oggi: verso DX oscillazione 10-12% (= ieri), verso SX 27-46% con 2 picchi per giro elettrico (fase-locked, non meccanica, non interp). Ruota a terra: attrito 9-13 A, stallo a 70 A fra -26 e -9 gradi una volta; ruota sollevata 3-4 A.
+- Gli script dello sterzo su #001 stanno in /tmp/steering (overlay: spariscono al riavvio) -> ricopiare dal repo.
+- tach_encoder_map.py: confronto tach/encoder 1.4-1.7 gradi (4.3 in stallo); fallback non ancora collegato allo sterzo (TODO: soglie, avviso a chi guida/server).
+- Servizio servofreno: acceso e enabled contro la regola; non comanda GPIO12. Daniele: "riprendiamo da zero il freno service" -> proporre disable.
+
+## Calibrazione / mock
+- #001: calib PROVVISORIA = B30 senza correzione (Daniele OK: borsa 0.88/0.90, muro 5.11/5.10). È la base per depth -> freno/sterzo.
+- Mock (calib_rock) in corso con asmile-calib; poi critico; poi pagina artifact per Daniele (verde/rosso, gemello vs vero, autocal prima/dopo, video guida simulata).
+- Logger001: PDF pronto agents/protocolli/protocollo_calib_logger001.pdf (darlo quando Daniele è pronto; ricalcolare altezze con altezza/pitch misurati).
+- Dopo il mock: depth sui video in movimento (session_20261109_094146) con la calib B30.
+
 ## 2026-11-11 mattina
 - 2ª ripresa #001 FATTA (6 Mbps): session_20261111_082437 / 083054 / 083632 scaricate e complete (L=R frame). Distanze soste NOMINALI da confermare.
 - asmile-calib in corso sul candidato definitivo → poi asmile-calib-critico → se PASSA: promuovere calib_asmile-001.json + registra_deploy, poi mock (calib_rock: fedelta.py sui corner veri → run_all.py --produzione).
