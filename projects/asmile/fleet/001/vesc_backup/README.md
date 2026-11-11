@@ -30,3 +30,4 @@ erano con 20. Ora la prova di resistenza va rifatta. Nota: su #001 la root e' ov
 ATTENZIONE: il VESC di #001 resta a 100 A in flash finché non si riabbassa (prova di resistenza/tenuta in sospeso). Per tornare a 45 A:
 `vesc_mcconf_limiti_001.py scrivi --apply --l-current-max 45 --l-current-min -45 --l-in-current-max 99 --l-in-current-min -60`
 (oppure `ripristina vesc_mcconf_backup_20261110_180450.bin`). Dopo la prima sterzata a 100 A (ok, fet 22 C, motore 14 C) il Pi è sparito dalla rete.
+| vesc_mcconf_backup_20261111_145701.bin | 2026-11-11 14:57 prima del ripristino (70 A, interp 100, spid prove) -> **RIPRISTINATO 20261109_163432 (approvato 09/11: 30 A, interp 20, spid originali, tabella hall originale)**, scritto e verificato (vai Daniele) | 30 / -30 | 99 / -60 | 150 | **20** |
