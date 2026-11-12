@@ -1,0 +1,27 @@
+campione v7 critico: falsi 28 veri 11
+v7 falsi con primo ostacolo <5 m (esclusi bordo): 20 [1930, 1936, 1937, 1940, 2100, 2187, 2741, 2748, 2779, 2781, 2783, 2973, 3025, 3173, 3171, 2091, 1929, 2199, 3173, 1930] | falsi col primo = ALLARME BORDO: 0 [] | veri con primo 11 / 11
+v8 falsi con primo ostacolo <5 m (esclusi bordo): 7 [2100, 2748, 2779, 2781, 2783, 2091, 2199] | falsi col primo = ALLARME BORDO: 0 [] | veri con primo 11 / 11
+v9 falsi con primo ostacolo <5 m (esclusi bordo): 16 [1940, 2100, 2187, 2741, 2748, 2779, 2781, 2783, 2973, 3025, 3173, 3171, 2091, 1929, 2199, 3173] | falsi col primo = ALLARME BORDO: 0 [] | veri con primo 11 / 11
+v10 falsi con primo ostacolo <5 m (esclusi bordo): 18 [1930, 1936, 1937, 1940, 2187, 2748, 2779, 2781, 2783, 2973, 3025, 3173, 3171, 2091, 1929, 2199, 3173, 1930] | falsi col primo = ALLARME BORDO: 1 [2100] | veri con primo 11 / 11
+v11 falsi con primo ostacolo <5 m (esclusi bordo): 6 [2748, 2779, 2781, 2783, 3171, 2091] | falsi col primo = ALLARME BORDO: 1 [2100] | veri con primo 11 / 11
+--- casi v8 critico
+[3163, 3172] | primo ostacolo = vaso/fioriera a destra 2.1-2.8 m, X~1.1 (in corridoio
+    v10 [(3163, ('ostacolo', 2.9, True, 0.92)), (3164, ('ostacolo', 2.84, True, 0.86)), (3165, ('ostacolo', 2.77, True, 0.78)), (3166, ('ostacolo', 2.71, True, 0.72)), (3167, ('ostacolo', 2.59, True, 0.75)), (3168, ('ostacolo', 2.39, False, 1.0)), (3169, ('ostacolo', 2.32, True, 1.0)), (3170, ('ostacolo', 2.25, True, 1.0)), (3171, ('ostacolo', 2.19, True, 1.0)), (3172, ('ostacolo', 2.14, True, 1.0))]
+    v11 [(3163, ('ostacolo', 3.17, False, 1.0)), (3164, ('ostacolo', 3.11, True, 1.0)), (3165, ('ostacolo', 3.05, True, 1.0)), (3166, ('ostacolo', 3.0, True, 1.0)), (3167, ('ostacolo', 2.95, True, 1.0)), (3168, ('ostacolo', 2.39, False, 1.0)), (3169, ('ostacolo', 2.32, True, 1.0)), (3170, ('ostacolo', 2.25, True, 1.0)), (3171, ('ostacolo', 2.19, True, 1.0)), (3172, ('ostacolo', 2.14, True, 1.0))]
+[3174, 3178] | barile a destra, base a terra visibile, SAM 'altro' Z 1.3 m: v7 1.3 m,
+    v10 [(3174, ('altro', 1.35, False, 1.0)), (3175, ('altro', 1.32, True, 1.0)), (3176, ('altro', 1.3, True, 0.89)), (3177, ('altro', 1.28, True, 0.69)), (3178, ('altro', 1.26, True, 0.51))]
+    v11 [(3174, ('altro', 1.35, False, 1.0)), (3175, ('altro', 1.32, True, 1.0)), (3176, ('altro', 1.3, True, 0.89)), (3177, ('altro', 1.28, True, 0.69)), (3178, ('altro', 1.26, True, 0.51))]
+[2679, 2692, 2449] | paletti con base visibile (SAM paletto-palo) NON devono essere esclusi
+    v10 [(2679, ('paletto-palo', 4.44, True, 1.0)), (2692, ('ostacolo', 4.11, True, 1.0)), (2449, ('paletto-palo', 6.24, False, 1.0))]
+    v11 [(2679, ('paletto-palo', 4.44, True, 1.0)), (2692, ('paletto-palo', 5.13, False, 1.0)), (2449, ('paletto-palo', 6.24, False, 1.0))]
+[2772, 2779, 2781, 2783] | bidone nero alto a destra (non muro): primo ostacolo 3.8-4.7 m e' un o
+    v10 [(2772, ('ostacolo', 2.63, True, 0.91)), (2779, ('ostacolo', 4.18, False, 1.0)), (2781, ('ostacolo', 3.7, True, 0.78)), (2783, ('altro', 3.81, False, 1.0))]
+    v11 [(2772, ('altro', 4.45, False, 1.0)), (2779, ('altro', 4.74, False, 1.0)), (2781, ('altro', 4.32, False, 1.0)), (2783, ('altro', 3.81, False, 1.0))]
+[1923, 2086, 2092, 2184, 2197, 2206, 2210, 2215, 2716, 2752, 2755, 2764, 2766, 2774] | muri/porte/pilastri: nessun ostacolo (14 tracce di blob su 16 verifica
+    v10 [(1923, ('altro', 9.19, True, 1.0)), (2086, ('ostacolo', 2.59, False, 1.0)), (2092, ('ostacolo', 1.21, True, 1.0)), (2184, ('ostacolo', 3.9, False, 1.0)), (2197, ('ostacolo', 2.57, True, 0.74)), (2206, ('ostacolo', 3.26, False, 1.0)), (2210, ('veicolo', 14.96, False, 1.0)), (2215, ('paletto-palo', 7.48, True, 1.0)), (2716, ('ostacolo', 3.78, False, 1.0)), (2752, ('ostacolo', 3.84, False, 1.0)), (2755, ('ostacolo', 3.22, True, 1.0)), (2764, ('ostacolo', 3.89, True, 0.72)), (2766, ('ostacolo', 3.46, False, 1.0)), (2774, ('ostacolo', 2.13, False, 1.0))]
+    v11 [(1923, ('altro', 9.19, True, 1.0)), (2086, ('bordo', 3.75, False, 1.0)), (2092, ('ostacolo', 1.21, True, 1.0)), (2184, ('ostacolo', 3.99, False, 1.0)), (2197, ('veicolo', 11.72, False, 1.0)), (2206, ('veicolo', 14.1, True, 1.0)), (2210, ('veicolo', 14.96, False, 1.0)), (2215, ('paletto-palo', 7.48, True, 1.0)), (2716, ('ostacolo', 17.37, False, 1.0)), (2752, ('ostacolo', 3.89, False, 1.0)), (2755, ('ostacolo', 3.34, False, 1.0)), (2764, ('altro', 9.97, False, 1.0)), (2766, ('ostacolo', 3.46, False, 1.0)), (2774, ('ostacolo', 2.13, False, 1.0))]
+v10 primo ostacolo con box <50% dentro: 0
+v11 primo ostacolo con box <50% dentro: 0
+paletto 854 righe 0 escl 0 bordo 0 cand 0 primo 0
+paletto 1384 righe 0 escl 0 bordo 0 cand 0 primo 0
+paletto 1427 righe 74 escl 0 bordo 0 cand 63 primo 5

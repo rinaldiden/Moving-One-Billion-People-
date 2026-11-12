@@ -1,0 +1,889 @@
+{
+ "sess": "20261109_094146",
+ "n": 1350,
+ "fotogrammi_verita_sotto5": 311,
+ "fotogrammi_sistema_manca": 42,
+ "corsa_max_fr": 21,
+ "corsa_max_s": 1.4,
+ "corse_top": [
+  [
+   321,
+   21
+  ],
+  [
+   48,
+   4
+  ],
+  [
+   839,
+   3
+  ],
+  [
+   894,
+   3
+  ],
+  [
+   53,
+   2
+  ]
+ ],
+ "veicoli_vicini_traiett_fuori_corridoio_fotogrammi": 0,
+ "veicoli_id": [],
+ "veicoli_fotogrammi_per_id": {},
+ "kalman_gap_gt07_sotto8": 69,
+ "kalman_gap_dopo_uso": 0,
+ "righe_sotto8": 2087,
+ "primo_per_famiglia": {
+  "altro": 144,
+  "ostacolo": 153,
+  "paletto-palo": 482,
+  "veicolo": 350,
+  "bordo": 27,
+  "persona": 147,
+  "bici-moto": 3
+ },
+ "fotogrammi_con_primo": 1306,
+ "fotogrammi_primo_sotto5": 398,
+ "mancanti": [
+  {
+   "i": 48,
+   "frame": 1923,
+   "id": 4,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.93,
+   "box": [
+    179,
+    0,
+    839,
+    509
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.42,
+   "dreal": 1.43,
+   "hits": 49
+  },
+  {
+   "i": 49,
+   "frame": 1924,
+   "id": 4,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.74,
+   "box": [
+    118,
+    0,
+    830,
+    509
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.42,
+   "dreal": 1.43,
+   "hits": 50
+  },
+  {
+   "i": 50,
+   "frame": 1925,
+   "id": 4,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.54,
+   "box": [
+    172,
+    0,
+    493,
+    501
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.42,
+   "dreal": 1.43,
+   "hits": 51
+  },
+  {
+   "i": 51,
+   "frame": 1926,
+   "id": 4,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.34,
+   "box": [
+    130,
+    0,
+    629,
+    509
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.42,
+   "dreal": 1.43,
+   "hits": 52
+  },
+  {
+   "i": 53,
+   "frame": 1928,
+   "id": 4,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.84,
+   "box": [
+    144,
+    0,
+    394,
+    476
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.44,
+   "dreal": 1.43,
+   "hits": 53
+  },
+  {
+   "i": 54,
+   "frame": 1929,
+   "id": 4,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.66,
+   "box": [
+    237,
+    25,
+    314,
+    130
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.45,
+   "dreal": 1.43,
+   "hits": 54
+  },
+  {
+   "i": 185,
+   "frame": 2060,
+   "id": 236,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.99,
+   "box": [
+    58,
+    9,
+    220,
+    578
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.45,
+   "dreal": 0.91,
+   "hits": 9
+  },
+  {
+   "i": 311,
+   "frame": 2186,
+   "id": 443,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.83,
+   "box": [
+    907,
+    0,
+    1250,
+    513
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.45,
+   "dreal": 1.43,
+   "hits": 6
+  },
+  {
+   "i": 312,
+   "frame": 2187,
+   "id": 443,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.72,
+   "box": [
+    904,
+    0,
+    1239,
+    526
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.47,
+   "dreal": 1.43,
+   "hits": 7
+  },
+  {
+   "i": 315,
+   "frame": 2190,
+   "id": 443,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.41,
+   "box": [
+    593,
+    0,
+    1280,
+    550
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.48,
+   "dreal": 1.43,
+   "hits": 9
+  },
+  {
+   "i": 318,
+   "frame": 2193,
+   "id": 443,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.06,
+   "box": [
+    950,
+    0,
+    1271,
+    581
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.43,
+   "dreal": 1.43,
+   "hits": 12
+  },
+  {
+   "i": 321,
+   "frame": 2196,
+   "id": 443,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 2.7,
+   "box": [
+    1148,
+    93,
+    1280,
+    589
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.41,
+   "dreal": 1.43,
+   "hits": 15
+  },
+  {
+   "i": 322,
+   "frame": 2197,
+   "id": 467,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.87,
+   "box": [
+    715,
+    0,
+    892,
+    564
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.41,
+   "dreal": 1.24,
+   "hits": 5
+  },
+  {
+   "i": 323,
+   "frame": 2198,
+   "id": 467,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.74,
+   "box": [
+    753,
+    0,
+    928,
+    596
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.39,
+   "dreal": 1.24,
+   "hits": 6
+  },
+  {
+   "i": 324,
+   "frame": 2199,
+   "id": 467,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.61,
+   "box": [
+    788,
+    0,
+    979,
+    608
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.37,
+   "dreal": 1.24,
+   "hits": 7
+  },
+  {
+   "i": 325,
+   "frame": 2200,
+   "id": 467,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.47,
+   "box": [
+    853,
+    0,
+    1024,
+    624
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.37,
+   "dreal": 1.24,
+   "hits": 8
+  },
+  {
+   "i": 326,
+   "frame": 2201,
+   "id": 467,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.33,
+   "box": [
+    885,
+    0,
+    1084,
+    618
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.35,
+   "dreal": 1.24,
+   "hits": 9
+  },
+  {
+   "i": 327,
+   "frame": 2202,
+   "id": 467,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.19,
+   "box": [
+    944,
+    0,
+    1163,
+    627
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.35,
+   "dreal": 1.24,
+   "hits": 10
+  },
+  {
+   "i": 328,
+   "frame": 2203,
+   "id": 467,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.04,
+   "box": [
+    1013,
+    0,
+    1199,
+    639
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.36,
+   "dreal": 1.24,
+   "hits": 11
+  },
+  {
+   "i": 329,
+   "frame": 2204,
+   "id": 467,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 2.87,
+   "box": [
+    1084,
+    0,
+    1277,
+    641
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.37,
+   "dreal": 1.24,
+   "hits": 12
+  },
+  {
+   "i": 330,
+   "frame": 2205,
+   "id": 484,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.44,
+   "box": [
+    458,
+    0,
+    1280,
+    667
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.36,
+   "dreal": 1.39,
+   "hits": 5
+  },
+  {
+   "i": 331,
+   "frame": 2206,
+   "id": 484,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.26,
+   "box": [
+    967,
+    0,
+    1198,
+    611
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.37,
+   "dreal": 1.39,
+   "hits": 6
+  },
+  {
+   "i": 332,
+   "frame": 2207,
+   "id": 484,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.07,
+   "box": [
+    1026,
+    0,
+    1278,
+    628
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.38,
+   "dreal": 1.39,
+   "hits": 7
+  },
+  {
+   "i": 333,
+   "frame": 2208,
+   "id": 484,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 2.9,
+   "box": [
+    1148,
+    0,
+    1279,
+    649
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.38,
+   "dreal": 1.39,
+   "hits": 8
+  },
+  {
+   "i": 334,
+   "frame": 2209,
+   "id": 484,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 2.79,
+   "box": [
+    1211,
+    0,
+    1280,
+    666
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.38,
+   "dreal": 1.39,
+   "hits": 9
+  },
+  {
+   "i": 335,
+   "frame": 2210,
+   "id": 432,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.79,
+   "box": [
+    952,
+    0,
+    1280,
+    582
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.4,
+   "dreal": 1.45,
+   "hits": 37
+  },
+  {
+   "i": 336,
+   "frame": 2211,
+   "id": 432,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.61,
+   "box": [
+    974,
+    0,
+    1280,
+    625
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.37,
+   "dreal": 1.45,
+   "hits": 38
+  },
+  {
+   "i": 337,
+   "frame": 2212,
+   "id": 432,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.41,
+   "box": [
+    978,
+    0,
+    1280,
+    612
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.39,
+   "dreal": 1.45,
+   "hits": 39
+  },
+  {
+   "i": 338,
+   "frame": 2213,
+   "id": 432,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.25,
+   "box": [
+    1121,
+    268,
+    1280,
+    482
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.39,
+   "dreal": 1.45,
+   "hits": 40
+  },
+  {
+   "i": 339,
+   "frame": 2214,
+   "id": 462,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.31,
+   "box": [
+    798,
+    0,
+    1190,
+    570
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.37,
+   "dreal": 1.3,
+   "hits": 19
+  },
+  {
+   "i": 340,
+   "frame": 2215,
+   "id": 462,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.1,
+   "box": [
+    1077,
+    0,
+    1208,
+    570
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.37,
+   "dreal": 1.3,
+   "hits": 20
+  },
+  {
+   "i": 341,
+   "frame": 2216,
+   "id": 462,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.87,
+   "box": [
+    1172,
+    410,
+    1229,
+    595
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.37,
+   "dreal": 1.3,
+   "hits": 21
+  },
+  {
+   "i": 837,
+   "frame": 2712,
+   "id": 1674,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.56,
+   "box": [
+    171,
+    0,
+    258,
+    517
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.72,
+   "dreal": 1.47,
+   "hits": 14
+  },
+  {
+   "i": 839,
+   "frame": 2714,
+   "id": 1674,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.15,
+   "box": [
+    123,
+    0,
+    181,
+    522
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.72,
+   "dreal": 1.47,
+   "hits": 15
+  },
+  {
+   "i": 840,
+   "frame": 2715,
+   "id": 1674,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.96,
+   "box": [
+    97,
+    0,
+    211,
+    592
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.64,
+   "dreal": 1.47,
+   "hits": 16
+  },
+  {
+   "i": 841,
+   "frame": 2716,
+   "id": 1674,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.78,
+   "box": [
+    76,
+    0,
+    160,
+    591
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.61,
+   "dreal": 1.47,
+   "hits": 17
+  },
+  {
+   "i": 887,
+   "frame": 2762,
+   "id": 1859,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.72,
+   "box": [
+    457,
+    0,
+    1092,
+    557
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.43,
+   "dreal": 1.36,
+   "hits": 15
+  },
+  {
+   "i": 889,
+   "frame": 2764,
+   "id": 1859,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.35,
+   "box": [
+    627,
+    0,
+    1195,
+    530
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.4,
+   "dreal": 1.36,
+   "hits": 17
+  },
+  {
+   "i": 894,
+   "frame": 2769,
+   "id": 1859,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.24,
+   "box": [
+    956,
+    0,
+    1280,
+    616
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.46,
+   "dreal": 1.36,
+   "hits": 22
+  },
+  {
+   "i": 895,
+   "frame": 2770,
+   "id": 1859,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.06,
+   "box": [
+    1080,
+    447,
+    1278,
+    657
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.43,
+   "dreal": 1.36,
+   "hits": 23
+  },
+  {
+   "i": 896,
+   "frame": 2771,
+   "id": 1859,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 2.84,
+   "box": [
+    1149,
+    453,
+    1258,
+    645
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.4,
+   "dreal": 1.36,
+   "hits": 24
+  },
+  {
+   "i": 898,
+   "frame": 2773,
+   "id": 1933,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.47,
+   "box": [
+    1098,
+    385,
+    1178,
+    608
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.36,
+   "dreal": 1.07,
+   "hits": 8
+  }
+ ]
+}

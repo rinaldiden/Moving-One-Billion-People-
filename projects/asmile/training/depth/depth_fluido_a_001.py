@@ -124,7 +124,9 @@ def main():
                     if len(z) < 100: continue
                     zp, fr, npop = picco_vicino(z)
                     tocca = x <= 4 or y + hh >= 796 or x + w >= 1276
-                    if w < 0.12 * f_px / zp or hh < (0.15 if tocca else 0.30) * f_px / zp: continue
+                    # giro 12: oggetti LARGHI e BASSI (sbarra 0.15 m larga >=0.60 m) esenti dal minimo di altezza 0.30 f/Z (proposta del critico: w>=0.60 f/Z, hh>=0.08 f/Z)
+                    larga_bassa = os.environ.get("VFA_BARRA", "1") == "1" and w >= 0.60 * f_px / zp and hh >= 0.08 * f_px / zp
+                    if w < 0.12 * f_px / zp or (hh < (0.15 if tocca else 0.30) * f_px / zp and not larga_bassa): continue
                     dens = float(cand0[lab == q].sum()) / float(w * hh)
                     if any(abs(zp / o_["Z_picco"] - 1) < 0.12 and o_["src"] == "sam" and max(x - o_["box"][2], o_["box"][0] - (x + w), 0) <= 40
                            and min(y + hh, o_["box"][3]) - max(y, o_["box"][1]) > 0.5 * hh and w <= GHOST_WMAX * max(1, o_["box"][2] - o_["box"][0]) for o_ in objs):
