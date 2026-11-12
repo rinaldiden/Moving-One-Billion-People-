@@ -23,7 +23,7 @@ FILL_MIN_AREA = 3000
 ZNEAR = 3.0; ZN_OK = 0.5   # v3: blob con Z<3 m: almeno SUP_MIN dei pixel candidati con ZNCC 15x15 > 0.5 alla disparita' misurata (verifica L-R a piena risoluzione)
 SUP_MIN = 0.20; SCARTATI = []
 DENS_NEAR = 0.35   # blob con Z<1.9 m (passata vicina) richiedono densita pixel candidati >=0.35 del box (falsi asfalto 0.22-0.29, bici vera 0.49: soglia dichiarata su 4 blob, POCHI)
-OUT = os.path.join(D.HERE, "out_20261112_v4")
+OUT = os.path.join(D.HERE, "out_20261112_v5")
 # v4 (VETO 1/3 occhio, ostacoli sottili fusi nel muro): (1) maschere d'istanza SAM 3 come oggetti, distanza = statistica della depth DENTRO la maschera;
 # (2) fallback senza maschera: componenti connesse per CONTINUITA' di profondita' (due pixel vicini sono collegati solo se |ln Za - ln Zb| < SLICE_LN):
 # un paletto a 4.5 m davanti a un muro a 9 m e' un'altra componente, la distanza si calcola per componente e non per box.
@@ -31,6 +31,14 @@ SAM_DIR = os.path.join(D.HERE, "..", "..", "asmile-loggers", "_seg_sam3")
 SAM_CLASSES = {"bollard", "pole", "person", "child", "car", "van", "truck", "trash can", "stroller", "dog", "cat", "bicycle", "motorcycle", "traffic cone", "bench"}
 SAM_CONF = 0.45          # tier low o sure; sotto = 'unknown' (dichiarato ex-ante)
 SLICE_LN = 0.12          # salto di Z fra pixel adiacenti oltre il quale si separa (12%), dichiarato ex-ante
+# v5 (VETO parziale occhio 4/79: maschere SAM minuscole -> Z da pochi pixel). Regole dichiarate PRIMA di rigirare, soglie dai numeri fisici:
+#  (R1) maschera SAM con meno di N_VALID_MIN=500 pixel con disparita': un oggetto a 5 m alto 0.85 m e largo 0.2 m copre ~5000 px (un paletto largo 5 cm ~1400), 500 px
+#       valgono un oggetto sotto ~15 m o un riflesso: la Z di picco non e' affidabile -> 'declassato' (resta nel CSV, fuori da corridoio/primo ostacolo).
+#  (R2) maschera di classe pali/bollard/coni che tocca il bordo basso/destro (x2>=1276 o y2>=796) con area < AREA_ANGOLO=3500 px: angolo cordolo/pavimento -> declassato.
+#       R2 e' tarata su 2 casi del critico (5507: 3219 px, 7840: 1379 px); veri vicini tagliati dal bordo nei dati hanno area >= 4400 (093909 f180/f240) -> non toccati.
+#  (R3) fantasma (fattening stereo): scartato solo se il blob non e' molto piu' largo della maschera SAM (w_blob <= 2 * w_box_SAM): un blob di 392 px accanto a una
+#       maschera di 25 px (fioriera f8260) non e' un bordo sbordato.
+N_VALID_MIN = 500; AREA_ANGOLO = 3500; GHOST_WMAX = 2.0
 SLICE_ON = True; ZSPLIT = 2.5   # sotto: closing 7x7 come v3 (passata vicina rumorosa)
 
 
@@ -223,7 +231,8 @@ def main():
             zp, fr, npop = picco_vicino(z, frac_min=0.25 if len(z) >= 0.5 * me.sum() else 0.10); ys, xs = np.nonzero(m)
             if len(z) >= 0.5 * me.sum(): covered |= cv2.dilate(m, np.ones((5, 5), np.uint8)) > 0   # maschera con meta' pixel senza disparita' (oggetto vicino, Z<1.5 m): non coprire, lo cerca la passata vicina/blob
             sam_boxes.append(d_["box"])
-            objs.append(dict(dens=None, zn_obj=None, zn_gnd=None, h_med=None, sup=None, src="sam", classe=d_["class_raw"], conf=float(d_["conf"]), Z_med=float(np.median(z)), Z_picco=zp,
+            _ar = int(me.sum())
+            objs.append(dict(dens=None, zn_obj=None, zn_gnd=None, h_med=None, sup=None, src="sam", area=_ar, classe=d_["class_raw"], conf=float(d_["conf"]), Z_med=float(np.median(z)), Z_picco=zp,
                              frac_picco=fr, n_pop=npop, n_valid=int(len(z)), frac_valid=float(len(z) / me.sum()), X=float((float(xs.mean()) - cx) * zp / f_px),
                              box=[int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max())], poly=np.array(d_["poly"], np.int32)))
         if yolo is not None:
@@ -288,7 +297,8 @@ def main():
                 # v4: 'fattening' stereo: la disparita' dell'oggetto vicino sborda a sinistra del suo bordo (occlusione) e forma un blob fantasma accanto alla
                 # maschera SAM dello stesso oggetto: scartato se la Z e' entro 12% di un oggetto SAM, adiacente (gap<=40 px) e con sovrapposizione verticale >50%
                 if any(abs(zp / o_["Z_picco"] - 1) < 0.12 and o_["src"] == "sam" and max(x - o_["box"][2], o_["box"][0] - (x + w), 0) <= 40
-                       and min(y + hh, o_["box"][3]) - max(y, o_["box"][1]) > 0.5 * hh for o_ in objs):
+                       and min(y + hh, o_["box"][3]) - max(y, o_["box"][1]) > 0.5 * hh
+                       and w <= GHOST_WMAX * max(1, o_["box"][2] - o_["box"][0]) for o_ in objs):
                     SCARTATI.append(dict(frame=i, motivo="fantasma_accanto_maschera_SAM", Z_picco=round(zp, 3), box=[int(x), int(y), int(x + w), int(y + hh)])); continue
                 if zp < ZNEAR:
                     if zmaps is None:
@@ -317,15 +327,21 @@ def main():
                 dgb = ga * (o["box"][3] - gvh) + gb * (0.5 * (o["box"][0] + o["box"][2]) - cx)
                 zg_base = f_px * Bm / dgb if dgb > 1 else 1e9
                 o["sospetto"] = bool(o["Z_picco"] < 0.5 * zg_base); o["zg_base"] = float(min(zg_base, 1e4))
-        for o in blobs: o["sospetto"] = False; o["zg_base"] = None
+        for o in blobs: o["sospetto"] = False; o["zg_base"] = None; o["declassato"] = ""
+        for o in objs:
+            o["declassato"] = ""
+            if o["src"] != "sam": continue
+            if o["n_valid"] < N_VALID_MIN: o["declassato"] = "R1_pochi_pixel"
+            elif o["classe"] in ("pole", "bollard", "traffic cone") and (o["box"][2] >= 1276 or o["box"][3] >= 796) and o["area"] < AREA_ANGOLO: o["declassato"] = "R2_angolo"
         for o in allo:
-            inb = abs(o["X"]) <= 1.5 + 0.03 * o["Z_picco"]; o["corridoio"] = bool(inb) and not o.get("sospetto", False)
+            o.setdefault("area", None); o.setdefault("declassato", "")
+            inb = abs(o["X"]) <= 1.5 + 0.03 * o["Z_picco"]; o["corridoio"] = bool(inb) and not o.get("sospetto", False) and not o.get("declassato")
             col = (255, 0, 255) if o["poly"] is None else ((0, 255, 255) if inb else (200, 200, 200))
-            if o.get("sospetto"): col = (90, 90, 90)
+            if o.get("sospetto") or o.get("declassato"): col = (90, 90, 90)
             b = o["box"]
             if o["poly"] is not None: cv2.polylines(ov, [o["poly"]], True, col, 2)
             else: cv2.rectangle(ov, (b[0], b[1]), (b[2], b[3]), col, 2)
-            label(ov, b[0], b[1] + 2, f"{o['classe']} {o['Z_picco']:.1f} m" + (" ?aria" if o.get("sospetto") else ""), col, 0.7, 2)
+            label(ov, b[0], b[1] + 2, f"{o['classe']} {o['Z_picco']:.1f} m" + (" ?aria" if o.get("sospetto") else "") + (" ?piccola" if o.get("declassato") else ""), col, 0.7, 2)
             label(ov, b[0], b[1] + 24, f"med {o['Z_med']:.1f}", col, 0.5, 1)
             rows_o.append(dict(sess=sess, frame=i, t_ms=int(t[i]), s_enc_m=round(float(s_all[i]), 2), v_ms=round(float(v_all[i]), 2),
                                **{k: (round(v, 3) if isinstance(v, float) else v) for k, v in o.items() if k not in ("poly", "box")},
@@ -336,12 +352,15 @@ def main():
         rows_f.append(dict(sess=sess, frame=i, t_ms=int(t[i]), s_enc_m=round(float(s_all[i]), 2), v_ms=round(float(v_all[i]), 2),
                            n_obj=len(objs), n_blob=len(blobs), primo_corridoio_m=None if first is None else round(first, 2), valid_frac_basso=round(vf, 3),
                            ms_full=round(1000 * t_full), ms_near=round(1000 * t_near), ms_segnale=round(1000 * t_sig), px_riempiti_near=n_fill,
-                           oltre_zmin_celle=nc, oltre_zmin_connesse=big))
+                           oltre_zmin_celle=nc, oltre_zmin_connesse=big,
+                           gp_a=None if gp is None else round(float(gp[0]), 6), gp_vh=None if gp is None else round(float(gp[1]), 3), gp_b=None if gp is None else round(float(gp[2]), 6)))
         bar = f"#001 {sess[8:]} f{i} t={(t[i]-t[0])/1000:.0f}s v={v_all[i]:.1f} m/s | corridoio: " + (f"primo {first:.1f} m" if first else "libero") + f" | validi {vf*100:.0f}%"
         if big >= 3:
             label(ov, 8, 60, f"OLTRE ZMIN: tessitura forte senza disparita' ({nc} celle, {big} connesse)", (0, 0, 255), 0.7, 2)
         cv2.rectangle(ov, (0, 772), (1280, 800), (0, 0, 0), -1); cv2.putText(ov, bar, (6, 793), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 1, cv2.LINE_AA)
         cv2.imwrite(os.path.join(od, "ov", f"f{i:06d}.jpg"), ov, [cv2.IMWRITE_JPEG_QUALITY, 85])
+        os.makedirs(os.path.join(od, "zthumb"), exist_ok=True)
+        cv2.imwrite(os.path.join(od, "zthumb", f"f{i:06d}.png"), cv2.resize(colorize(np.where(valid, Z, np.nan)), (256, 160), interpolation=cv2.INTER_AREA))
         small = cv2.resize(ov, (960, 600))
         if vw is None: vw = cv2.VideoWriter(os.path.join(od, f"depth_{sess[8:]}.mp4"), cv2.VideoWriter_fourcc(*"mp4v"), 3, (960, 600))
         vw.write(small)
