@@ -16,7 +16,7 @@ from ego_001 import Ego, x_path
 from depth_video_001 import (disparity, disparity_near, zncc_map, segnale_oltre_zmin, depth_components, sam_objects, _iou, _cont,
                              FILL_MIN_AREA, ZNEAR, ZN_OK, SUP_MIN, DENS_NEAR, N_VALID_MIN, AREA_ANGOLO, GHOST_WMAX, ZSPLIT, SAM_DIR)
 cv2.setNumThreads(2)
-OUT = os.path.join(D.HERE, "out_20261112_v6")
+OUT = os.environ.get("VFA_OUT", os.path.join(D.HERE, "out_20261112_v6"))
 
 
 def sam_get(path, cache, i, timeout=4 * 3600):
@@ -47,7 +47,18 @@ def main():
         if i >= fb: break
         if i < fa: continue
         sam = sam_get(samfn, cache, i)
-        L, R = rc(Lr, Rr); disp = disparity(L, R); disp_full = disp.copy()
+        L, R = rc(Lr, Rr); disp = disparity(L, R)
+        if os.environ.get("VFA_SYNTH"):   # TEST SINTETICO (giro 9): VFA_SYNTH="Z,h_da_terra,spessore,larghezza,X" -> toppa di disparita' (ramo/transenna) inserita nella mappa PRIMA di tutto il resto
+            zs_, hs_, th_, ws_, xs0 = [float(v) for v in os.environ["VFA_SYNTH"].split(",")]
+            gp0 = ground_plane(disp, cx)
+            if gp0 is not None:
+                ga0, gvh0, gb0 = gp0; d0 = f_px * Bm / zs_; hp0 = D.CAM_H * np.cos(D.PITCH)
+                u0, u1 = int(cx + (xs0 - ws_ / 2) * f_px / zs_), int(cx + (xs0 + ws_ / 2) * f_px / zs_)
+                rowof = lambda h_: int(gvh0 + d0 * (1 - h_ / hp0) / ga0)      # riga dove il piano ha la disparita' d0 (1 - h/Hp)
+                v0, v1 = rowof(hs_ + th_), rowof(hs_)
+                disp[max(v0, 0):v1, max(u0, 0):min(u1, 1280)] = d0
+                print("synth", dict(Z=zs_, h=hs_, righe=(v0, v1), colonne=(u0, u1)), flush=True)
+        disp_full = disp.copy()
         dn = disparity_near(L, R); fill = (dn > 0) & (disp <= 4)
         fill = cv2.morphologyEx(fill.astype(np.uint8), cv2.MORPH_OPEN, np.ones((9, 9), np.uint8))
         nf, lf, sf, _ = cv2.connectedComponentsWithStats(fill)

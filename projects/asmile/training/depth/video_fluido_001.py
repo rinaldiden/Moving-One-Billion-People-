@@ -13,13 +13,14 @@ import depth_seg_001 as D
 from ego_001 import Ego, x_path, path_xz, x_arc
 
 W, H, BAR = 1280, 800, 48
-MODE = os.environ.get("VFMODE", "v8")          # "v6"/"v7" = regole dei giri 6/7 (per il prima/dopo), "v8" = v7 + correzioni bug del giro 8
-V7 = MODE in ("v7", "v8")
-V8 = MODE == "v8"
+MODE = os.environ.get("VFMODE", "v9")          # "v6"/"v7" = regole dei giri 6/7 (per il prima/dopo), "v8" = v7 + correzioni bug del giro 8
+V7 = MODE in ("v7", "v8", "v9")
+V8 = MODE in ("v8", "v9")
+V9 = MODE == "v9"       # giro 9: quota da terra misurata sui pixel bassi/alti della MASCHERA (zmap), non sul box; esclude solo cio' che sta tutto sopra H_ALTO o sotto il piano
 PURE = os.environ.get("VF_PURE", "1") == "1"      # v7: terza ipotesi = arco a curvatura costante (il percorso reale in curva stretta si avvolge piu' del previsto)
 EXTRA = float(os.environ.get("VF_EXTRA", "0.1"))   # allargamento aggiuntivo del corridoio per m di distanza (m/m), 0 = nessuno
-OUT_A = os.path.join(D.HERE, "out_20261112_v6")  # stadio A (misure per fotogramma) INVARIATO: riletto da v6
-OUT = os.environ.get("VF_OUT", os.path.join(D.HERE, "out_20261112_v8"))
+OUT_A = os.environ.get("VF_OUT_A", os.path.join(D.HERE, "out_20261112_v6"))  # stadio A (misure per fotogramma) INVARIATO: riletto da v6
+OUT = os.environ.get("VF_OUT", os.path.join(D.HERE, "out_20261112_v9"))
 os.makedirs(OUT, exist_ok=True)
 Z_RAW_GAP, Z_RAW_MAXZ = 0.7, 8.0   # v7 punto 3: se Z_filtrata - Z_grezza > 0.7 m sotto 8 m si usa la grezza (vince la piu' vicina)
 HITS_BLOB_NEAR, ZNEAR_BLOB = 3, 5.0  # v7 punto 1: sotto 5 m un blob senza classe conferma a 3 fotogrammi come gli altri
@@ -70,6 +71,30 @@ def inside_frac(b):
 MIN_INSIDE = 0.5      # v8: un box con meno del 50% dentro l'immagine non puo' essere primo ostacolo
 H_BASE_MIN, Z_BASE_MAX = 0.25, 5.0   # v8: base a meno di 0.25 m dal piano strada (come hmin delle versioni 2/3); regola solo sotto 5 m
 BASE_EXEMPT = ("persona", "veicolo")
+# v9: quota da terra. H_ALTO = altezza massima di cio' che la bici+passeggero seduto puo' colpire: manubrio ~1.0 m, testa del passeggero seduto ~1.4 m (dichiarata, non misurata su Asmile).
+# Si esclude solo un oggetto con la base (pixel bassi della maschera) sopra H_ALTO, o con tutta la maschera entro H_SOTTO dal piano (ombre/macchie).
+H_ALTO, H_SOTTO = 1.4, 0.10
+V9_EXEMPT = ("persona", "veicolo", "bici-moto", "paletto-palo")   # mai esclusi dalla quota
+HP = D.CAM_H * np.cos(D.PITCH)
+
+
+def mask_heights(poly, zm_f, gp):
+    """(h_basso, h_alto) in m sul piano strada: mediana delle quote dei pixel validi nel 20% di righe piu' basso / piu' alto della MASCHERA (zmap 320x200, 4x), ognuno con la propria Z:
+    h = HP (1 - dg/d), d = F B / Z_pixel, dg = disparita' del piano alla riga. None se mancano dati o piano."""
+    if zm_f is None or gp is None or poly is None or len(poly) < 3: return None
+    ga, gvh, gb = gp
+    m = np.zeros(zm_f.shape, np.uint8); cv2.fillPoly(m, [(np.asarray(poly, np.float32) / 4.0).astype(np.int32)], 1)
+    rows = np.nonzero(m.any(1))[0]
+    if len(rows) == 0: return None
+    y0, y1 = rows[0], rows[-1]; band = max(2, int(0.2 * (y1 - y0 + 1)))
+    out = []
+    for lo, hi in ((y1 - band + 1, y1), (y0, y0 + band - 1)):
+        sel = np.zeros_like(m, bool); sel[lo:hi + 1] = True; sel &= m > 0; sel &= (zm_f != 255) & (zm_f < 250) & (zm_f >= 3)
+        vs, us = np.nonzero(sel)
+        if len(vs) < 6: return None
+        Zp = zm_f[vs, us].astype(np.float32) / 10.0; d = F_PX * B_M / Zp; dg = ga * ((vs + 0.5) * 4.0 - gvh)
+        out.append(float(np.median(HP * (1 - dg / d))))
+    return tuple(out)
 
 
 def base_height(r, gp):
@@ -108,7 +133,7 @@ class Track:
         sa = 0.3 if s.stat else 1.0
         s.sa = sa; s.x = np.array([Z, 0.0]); sg = s.sig(Z); s.P = np.diag([sg ** 2, (0.3 if s.stat else 1.0) ** 2])
         s.out = 0; s.tan = o["X"] / max(o["Z_picco"], 0.1); s.decl = [bool(o["declassato"])]; s.sosp = [bool(o["sospetto"])]
-        s.in_arc = False; s.in_str = False; s.lastfirst = False; s.lab_xy = None; s.o = o; s.Zraw = [o["Z_picco"]]; s.t_obs = [t]; s.Zf = [Z]; s.s_obs = []
+        s.in_arc = False; s.in_str = False; s.lastfirst = False; s.lab_xy = None; s.o = o; s.Zraw = [o["Z_picco"]]; s.t_obs = [t]; s.Zf = [Z]; s.s_obs = []; s.hb = []; s.ht = []
 
     @staticmethod
     def sig(Z): return float(np.hypot(0.03 * Z, Z * Z * 0.4 / (F_PX * B_M)))
@@ -195,7 +220,7 @@ def run_tracking(frames, ego, famv2):
     return per
 
 
-def corridor_logic(per, frames, ego):
+def corridor_logic(per, frames, ego, zm=None):
     """per ogni fotogramma: arco (k), appartenenza arco/dritta con isteresi, primo ostacolo (isteresi 0.5 m)"""
     res = []; prev_first = {"arc": None, "str": None}
     for fi, (fr, rows) in enumerate(zip(frames, per)):
@@ -214,8 +239,21 @@ def corridor_logic(per, frames, ego):
                     r["in_arc"] = bool(abs(X - float(x_arc(k, Z))) <= wband(Z) + EXTRA * Z)
             r["cand"] = (not r["decl"]) and (not r["sosp"]) and r["hits"] >= need_hits(r)
             r["fuori_img"] = bool(V8 and r["inside"] < MIN_INSIDE)
-            hb = base_height(r, gpf) if (V8 and r["Z"] < Z_BASE_MAX and r["fam"] not in BASE_EXEMPT) else None
-            r["h_base"] = hb; r["senza_base"] = bool(hb is not None and hb >= H_BASE_MIN)
+            if V9:
+                tr = r["track"]
+                if not r["coast"]:
+                    zf_ = zm[f"f{fr['frame']}"] if (zm is not None and f"f{fr['frame']}" in zm.files) else None
+                    mh = mask_heights(r["poly"], zf_, gpf)
+                    if mh is not None: tr.hb.append(mh[0]); tr.ht.append(mh[1])
+                hb = float(np.median(tr.hb[-5:])) if tr.hb else None; ht = float(np.median(tr.ht[-5:])) if tr.ht else None
+                r["h_base"] = hb; r["h_top"] = ht; r["escl"] = ""
+                if hb is not None and r["fam"] not in V9_EXEMPT:
+                    if hb > H_ALTO: r["escl"] = "sopra"
+                    elif ht < H_SOTTO: r["escl"] = "sotto_piano"
+                r["senza_base"] = bool(r["escl"])
+            else:
+                hb = base_height(r, gpf) if (V8 and r["Z"] < Z_BASE_MAX and r["fam"] not in BASE_EXEMPT) else None
+                r["h_base"] = hb; r["senza_base"] = bool(hb is not None and hb >= H_BASE_MIN)
             if r["fuori_img"] or r["senza_base"]: r["cand"] = False
         first = {}
         for key, flag in (("arc", "in_arc"), ("str", "in_str")):
@@ -344,7 +382,7 @@ def main():
     sess = "session_" + a.session.replace("session_", ""); sid = sess[8:]
     frames = pickle.load(open(os.path.join(OUT_A, sess + "_A", "frames.pkl"), "rb")); zf_ = os.path.join(OUT_A, sess + "_A", "zmap.npz"); zm = np.load(zf_) if os.path.exists(zf_) else None
     ego = Ego(sess); famv2 = load_famv2(sess)
-    per = run_tracking(frames, ego, famv2); cs = corridor_logic(per, frames, ego)
+    per = run_tracking(frames, ego, famv2); cs = corridor_logic(per, frames, ego, zm)
     f0, f1 = frames[0]["frame"], frames[-1]["frame"]; t0 = D.read_t(sess, "right")[0]
     name = f"video_fluido_{sid[-6:]}.mp4" if sid.endswith("093909") else f"video_fluido_{sid[-6:]}_{int(round((frames[0]['t_ms'] - t0) / 1000))}-{int(round((frames[-1]['t_ms'] - t0) / 1000))}.mp4"
     mp4 = a.out or os.path.join(OUT, name)
