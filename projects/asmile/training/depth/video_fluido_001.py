@@ -10,10 +10,17 @@ import os, sys, json, pickle, subprocess, argparse, csv
 import numpy as np, cv2
 from scipy.optimize import linear_sum_assignment
 import depth_seg_001 as D
-from ego_001 import Ego, x_path, path_xz
+from ego_001 import Ego, x_path, path_xz, x_arc
 
 W, H, BAR = 1280, 800, 48
-OUT = os.path.join(D.HERE, "out_20261112_v6")
+MODE = os.environ.get("VFMODE", "v7")          # "v6" = regole del giro 6 (per il prima/dopo), "v7" = regole del giro 7
+PURE = os.environ.get("VF_PURE", "1") == "1"      # v7: terza ipotesi = arco a curvatura costante (il percorso reale in curva stretta si avvolge piu' del previsto)
+EXTRA = float(os.environ.get("VF_EXTRA", "0.1"))   # allargamento aggiuntivo del corridoio per m di distanza (m/m), 0 = nessuno
+OUT_A = os.path.join(D.HERE, "out_20261112_v6")  # stadio A (misure per fotogramma) INVARIATO: riletto da v6
+OUT = os.environ.get("VF_OUT", os.path.join(D.HERE, "out_20261112_v7"))
+os.makedirs(OUT, exist_ok=True)
+Z_RAW_GAP, Z_RAW_MAXZ = 0.7, 8.0   # v7 punto 3: se Z_filtrata - Z_grezza > 0.7 m sotto 8 m si usa la grezza (vince la piu' vicina)
+HITS_BLOB_NEAR, ZNEAR_BLOB = 3, 5.0  # v7 punto 1: sotto 5 m un blob senza classe conferma a 3 fotogrammi come gli altri
 SAM_DIR = os.path.join(D.HERE, "..", "..", "asmile-loggers", "_seg_sam3")
 FAMCOL = {"veicolo": (255, 144, 30), "persona": (64, 64, 255), "bici-moto": (255, 60, 180), "paletto-palo": (0, 215, 255),
           "barriera-cancello": (200, 200, 0), "altro": (170, 170, 170), "ostacolo": (0, 140, 255)}
@@ -36,6 +43,20 @@ def zcol(Z):
 
 
 def wband(Z): return 1.5 + 0.03 * Z
+
+
+def corr_edges(xc, Z):
+    """bordi laterali del corridoio disegnato: v6 = banda attorno al percorso curvo; v7 = inviluppo delle due ipotesi (percorso curvo e dritto)"""
+    if MODE != "v7": return xc - wband(Z), xc + wband(Z)
+    w = wband(Z) + EXTRA * Z
+    return min(xc, 0.0) - w, max(xc, 0.0) + w   # (l'arco puro, terza ipotesi, vale per la classificazione degli oggetti; il disegno mostra l'inviluppo dritto/decrescente)
+
+
+def need_hits(r):
+    """fotogrammi richiesti perche' un oggetto conti come candidato/si disegni: blob 8 (v6); in v7 sotto 5 m anche i blob 3"""
+    if r["src"] != "blob": return CONFIRM
+    if MODE == "v7" and r["Z"] < ZNEAR_BLOB: return HITS_BLOB_NEAR
+    return HITS_BLOB
 
 
 def iou(a, b):
@@ -62,7 +83,7 @@ class Track:
         sa = 0.3 if s.stat else 1.0
         s.sa = sa; s.x = np.array([Z, 0.0]); sg = s.sig(Z); s.P = np.diag([sg ** 2, (0.3 if s.stat else 1.0) ** 2])
         s.out = 0; s.tan = o["X"] / max(o["Z_picco"], 0.1); s.decl = [bool(o["declassato"])]; s.sosp = [bool(o["sospetto"])]
-        s.in_arc = False; s.lastfirst = False; s.lab_xy = None; s.o = o; s.Zraw = [o["Z_picco"]]; s.t_obs = [t]; s.Zf = [Z]; s.s_obs = []
+        s.in_arc = False; s.in_str = False; s.lastfirst = False; s.lab_xy = None; s.o = o; s.Zraw = [o["Z_picco"]]; s.t_obs = [t]; s.Zf = [Z]; s.s_obs = []
 
     @staticmethod
     def sig(Z): return float(np.hypot(0.03 * Z, Z * Z * 0.4 / (F_PX * B_M)))
@@ -136,7 +157,9 @@ def run_tracking(frames, ego, famv2):
             if tr.hits >= CONFIRM and tr.miss <= COAST:
                 tr.fam = max(set(tr.fams[-15:]), key=tr.fams[-15:].count)
                 pb = [int(v) for v in tr.pred_box(0.0)] if tr.miss else list(tr.o["box"])
-                rows.append(dict(id=tr.id, fam=tr.fam, src=tr.src, classe=tr.classe, Z=float(tr.x[0]), w=float(tr.x[1]), Zraw=float(tr.o["Z_picco"]), tan=float(tr.tan), box=pb, poly=None if tr.miss else tr.o["poly"],
+                zf = float(tr.x[0]); zr = float(tr.o["Z_picco"]); zu = zf
+                if MODE == "v7" and not tr.miss and zf - zr > Z_RAW_GAP and zf < Z_RAW_MAXZ: zu = zr    # punto 3: il filtro non allontana: vince la grezza (piu' vicina)
+                rows.append(dict(id=tr.id, fam=tr.fam, src=tr.src, classe=tr.classe, Z=zu, Zf=zf, rawfix=zu != zf, w=float(tr.x[1]), Zraw=float(tr.o["Z_picco"]), tan=float(tr.tan), box=pb, poly=None if tr.miss else tr.o["poly"],
                                  decl=bool(np.mean(tr.decl[-8:]) > 0.5), sosp=bool(np.mean(tr.sosp[-8:]) > 0.5), ext=tr.o.get("ext", False), hits=tr.hits, coast=tr.miss > 0, track=tr))
         per.append(rows)
     return per
@@ -150,10 +173,16 @@ def corridor_logic(per, frames, ego):
         for r in rows:
             Z = r["Z"]; X = r["tan"] * Z; r["X"] = X
             dx_arc = X - float(np.interp(Z, pz, px)); tr = r["track"]
-            lim = wband(Z) * (1.15 if tr.in_arc else 1.0)
+            lim = (wband(Z) + (EXTRA * Z if MODE == "v7" else 0.0)) * (1.15 if tr.in_arc else 1.0)
             tr.in_arc = abs(dx_arc) <= lim; r["in_arc"] = tr.in_arc
             r["in_str"] = abs(X) <= wband(Z)
-            r["cand"] = (not r["decl"]) and (not r["sosp"]) and r["hits"] >= (HITS_BLOB if r["src"] == "blob" else CONFIRM)
+            if MODE == "v7":   # punto 2: corridoio = unione delle ipotesi (percorso curvo O dritto), ognuna con la sua banda
+                lim2 = (wband(Z) + EXTRA * Z) * (1.15 if tr.in_str else 1.0)
+                tr.in_str = abs(X) <= lim2
+                r["in_arc_pure"] = r["in_arc"]; r["in_arc"] = bool(r["in_arc"] or tr.in_str); r["in_str"] = bool(r["in_str"] or tr.in_str)
+                if PURE and not r["in_arc"]:
+                    r["in_arc"] = bool(abs(X - float(x_arc(k, Z))) <= wband(Z) + EXTRA * Z)
+            r["cand"] = (not r["decl"]) and (not r["sosp"]) and r["hits"] >= need_hits(r)
         first = {}
         for key, flag in (("arc", "in_arc"), ("str", "in_str")):
             c = [r for r in rows if r[flag] and r["cand"]]
@@ -198,7 +227,8 @@ def draw(img, fr, rows, cs, gp, zthumb, ego, sess, t0, i):
         Zs = np.geomspace(1.8, 30.0, 40); pz, px = path_xz(k); Lp, Rp, Cp = [], [], []
         for Z in Zs:
             xc = float(np.interp(Z, pz, px)); d = F_PX * B_M / Z
-            for X, o in ((xc - wband(Z), Lp), (xc + wband(Z), Rp), (xc, Cp)):
+            lo, hi = corr_edges(xc, Z)
+            for X, o in ((lo, Lp), (hi, Rp), (xc, Cp)):
                 u = cx + X * F_PX / Z; o.append((u, gvh + (d - gb * (u - cx)) / ga))
         poly = np.array(Lp + Rp[::-1], np.int32)
         lay = out.copy(); cv2.fillPoly(lay, [poly], CORR); out = cv2.addWeighted(lay, 0.13, out, 0.87, 0)
@@ -206,12 +236,12 @@ def draw(img, fr, rows, cs, gp, zthumb, ego, sess, t0, i):
         for Zt in (3, 5, 10, 20):
             xc = float(np.interp(Zt, pz, px)); d = F_PX * B_M / Zt
             pts = []
-            for X in (xc - wband(Zt), xc + wband(Zt)):
+            for X in corr_edges(xc, Zt):
                 u = cx + X * F_PX / Zt; pts.append((int(u), int(gvh + (d - gb * (u - cx)) / ga)))
             if 0 < pts[0][1] < H - 10:
                 cv2.line(out, pts[0], pts[1], CORR, 1, cv2.LINE_AA); shadow(out, min(pts[0][0], pts[1][0]) + 8, pts[0][1] - 5, f"{Zt} m", 0.5, CORR, 1)
     first = cs["first"]["arc"]; fid = None if first is None else first["id"]
-    draw_rows = [r for r in rows if not r["coast"] and r["Z"] <= 40 and not r["decl"] and not (r["src"] == "blob" and r["hits"] < HITS_BLOB) and not r["sosp"]
+    draw_rows = [r for r in rows if not r["coast"] and r["Z"] <= 40 and not r["decl"] and not (r["src"] == "blob" and r["hits"] < need_hits(r)) and not r["sosp"]
                  and (r["src"] != "blob" or (r["in_arc"] and r["Z"] <= 8)) and (r["fam"] in ("persona", "veicolo", "bici-moto", "paletto-palo", "barriera-cancello", "ostacolo") or r["in_arc"] or r["Z"] < 8)]
     solid = [r for r in draw_rows if r["src"] != "blob"]
     cont_ = lambda a, b: max(0, min(a[2], b[2]) - max(a[0], b[0])) * max(0, min(a[3], b[3]) - max(a[1], b[1])) / max(1e-9, (a[2] - a[0]) * (a[3] - a[1]))
@@ -278,7 +308,7 @@ def draw(img, fr, rows, cs, gp, zthumb, ego, sess, t0, i):
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("session"); ap.add_argument("--jpg", default=""); ap.add_argument("--out", default=None); ap.add_argument("--stats-only", action="store_true"); a = ap.parse_args()
     sess = "session_" + a.session.replace("session_", ""); sid = sess[8:]
-    frames = pickle.load(open(os.path.join(OUT, sess + "_A", "frames.pkl"), "rb")); zf_ = os.path.join(OUT, sess + "_A", "zmap.npz"); zm = np.load(zf_) if os.path.exists(zf_) else None
+    frames = pickle.load(open(os.path.join(OUT_A, sess + "_A", "frames.pkl"), "rb")); zf_ = os.path.join(OUT_A, sess + "_A", "zmap.npz"); zm = np.load(zf_) if os.path.exists(zf_) else None
     ego = Ego(sess); famv2 = load_famv2(sess)
     per = run_tracking(frames, ego, famv2); cs = corridor_logic(per, frames, ego)
     f0, f1 = frames[0]["frame"], frames[-1]["frame"]; t0 = D.read_t(sess, "right")[0]
