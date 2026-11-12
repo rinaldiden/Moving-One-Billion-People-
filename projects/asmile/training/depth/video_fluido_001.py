@@ -14,15 +14,16 @@ import bordi_001 as BD
 from ego_001 import Ego, x_path, path_xz, x_arc
 
 W, H, BAR = 1280, 800, 100
-MODE = os.environ.get("VFMODE", "v10")          # "v6"/"v7" = regole dei giri 6/7 (per il prima/dopo), "v8" = v7 + correzioni bug del giro 8
-V7 = MODE in ("v7", "v8", "v9", "v10")
-V8 = MODE in ("v8", "v9", "v10")
-V10 = MODE == "v10"     # giro 10: H_ALTO 2.0 m (Daniele: da terra a 2 m e' ostacolo anche sospeso) + BORDI (muri/cordoli/marciapiede paralleli: allarme di distanza laterale, non primo ostacolo)
-V9 = MODE in ("v9", "v10")       # giro 9: quota da terra misurata sui pixel bassi/alti della MASCHERA (zmap), non sul box; esclude solo cio' che sta tutto sopra H_ALTO o sotto il piano
+MODE = os.environ.get("VFMODE", "v11")          # "v6"/"v7" = regole dei giri 6/7 (per il prima/dopo), "v8" = v7 + correzioni bug del giro 8
+V7 = MODE in ("v7", "v8", "v9", "v10", "v11")
+V8 = MODE in ("v8", "v9", "v10", "v11")
+V10 = MODE in ("v10", "v11")     # giro 10: H_ALTO 2.0 m (Daniele: da terra a 2 m e' ostacolo anche sospeso) + BORDI (muri/cordoli/marciapiede paralleli: allarme di distanza laterale, non primo ostacolo)
+V9 = MODE in ("v9", "v10", "v11")       # giro 9: quota da terra misurata sui pixel bassi/alti della MASCHERA (zmap), non sul box; esclude solo cio' che sta tutto sopra H_ALTO o sotto il piano
+V11 = MODE == "v11"     # giro 11: blob/altro LATERALI o paralleli declassati a bordo prima del primo ostacolo; STERZA solo con bordo entro margine+rallenta_entro+base misurata; FRENA/RALLENTA solo se tocca terra nel corridoio o la sagoma 0-2 m interseca la bici; FRENA <2 m con Z coerente (encoder) salvo persone
 PURE = os.environ.get("VF_PURE", "1") == "1"      # v7: terza ipotesi = arco a curvatura costante (il percorso reale in curva stretta si avvolge piu' del previsto)
 EXTRA = float(os.environ.get("VF_EXTRA", "0.1"))   # allargamento aggiuntivo del corridoio per m di distanza (m/m), 0 = nessuno
 OUT_A = os.environ.get("VF_OUT_A", os.path.join(D.HERE, "out_20261112_v6"))  # stadio A (misure per fotogramma) INVARIATO: riletto da v6
-OUT = os.environ.get("VF_OUT", os.path.join(D.HERE, "out_20261112_v10" if V10 else "out_20261112_v9"))
+OUT = os.environ.get("VF_OUT", os.path.join(D.HERE, "out_20261112_v11" if V11 else ("out_20261112_v10" if V10 else "out_20261112_v9")))
 os.makedirs(OUT, exist_ok=True)
 Z_RAW_GAP, Z_RAW_MAXZ = 0.7, 8.0   # v7 punto 3: se Z_filtrata - Z_grezza > 0.7 m sotto 8 m si usa la grezza (vince la piu' vicina)
 HITS_BLOB_NEAR, ZNEAR_BLOB = 3, 5.0  # v7 punto 1: sotto 5 m un blob senza classe conferma a 3 fotogrammi come gli altri
@@ -135,7 +136,7 @@ class Track:
         sa = 0.3 if s.stat else 1.0
         s.sa = sa; s.x = np.array([Z, 0.0]); sg = s.sig(Z); s.P = np.diag([sg ** 2, (0.3 if s.stat else 1.0) ** 2])
         s.out = 0; s.tan = o["X"] / max(o["Z_picco"], 0.1); s.decl = [bool(o["declassato"])]; s.sosp = [bool(o["sospetto"])]
-        s.in_arc = False; s.in_str = False; s.lastfirst = False; s.lab_xy = None; s.o = o; s.Zraw = [o["Z_picco"]]; s.t_obs = [t]; s.Zf = [Z]; s.s_obs = []; s.hb = []; s.ht = []; s.bd = []
+        s.in_arc = False; s.in_str = False; s.lastfirst = False; s.lab_xy = None; s.o = o; s.Zraw = [o["Z_picco"]]; s.t_obs = [t]; s.Zf = [Z]; s.s_obs = []; s.hb = []; s.ht = []; s.bd = []; s.fp = []; s.bpar = []
 
     @staticmethod
     def sig(Z): return float(np.hypot(0.03 * Z, Z * Z * 0.4 / (F_PX * B_M)))
@@ -222,6 +223,31 @@ def run_tracking(frames, ego, famv2):
     return per
 
 
+Z_COERENZA = 2.0     # v11: sotto 2 m FRENA richiede Z coerente (salvo persone)
+
+
+def z_coerente(tr, tol=0.35):
+    """v11: gli ultimi 3 fotogrammi MISURATI (non predetti) dell'oggetto, riportati a oggi con lo spostamento encoder (Zraw_i - (s_ora - s_i)), devono stare entro 0.35 m (errore stereo a 1-2 m ~ 0.05 m + encoder):
+    un oggetto fermo che si avvicina con la velocita' della bici e' coerente; un salto di Z (facciata lontana con profondita' sbagliata) no. Meno di 3 misure = non coerente."""
+    n = min(len(tr.Zraw), len(tr.s_obs))
+    if n < 3: return False
+    Z3 = tr.Zraw[-3:]; s3 = tr.s_obs[-3:]; adj = [z - (s3[-1] - si) for z, si in zip(Z3, s3)]
+    return bool(max(adj) - min(adj) <= tol)
+
+
+def lat_gaps(r, pz, px, use_fp=True):
+    """v11: spazio libero laterale (m, <0 = interseca) fra l'oggetto e la sagoma della bici, per l'arco e per il percorso dritto. Impronta dei punti se c'e', altrimenti estremi laterali di maschera/box alla Z misurata."""
+    fp = None
+    tr = r.get("track")
+    if tr is not None and use_fp and not r.get("coast"): fp = next((x for x in reversed(tr.fp[-3:]) if x is not None), None)
+    if fp is not None: return fp["gap"], fp["gap_s"]
+    if r.get("poly") is not None and len(r["poly"]) >= 3: xs = np.asarray(r["poly"], np.float32)[:, 0]; x0, x1 = float(xs.min()), float(xs.max())
+    else: x0, x1 = float(r["box"][0]), float(r["box"][2])
+    x0, x1 = max(x0, 0.0), min(x1, float(W)); Z = r["Z"]
+    Xl, Xr = (x0 - BD.CX) * Z / F_PX, (x1 - BD.CX) * Z / F_PX; xa = float(np.interp(Z, pz, px))
+    return max(Xl - xa - BD.HW, xa - Xr - BD.HW), max(Xl - BD.HW, -BD.HW - Xr)
+
+
 def corridor_logic(per, frames, ego, zm=None, stuff=None):
     """per ogni fotogramma: arco (k), appartenenza arco/dritta con isteresi, primo ostacolo (isteresi 0.5 m)"""
     res = []; prev_first = {"arc": None, "str": None}; bhist = {"L": [], "R": []}; bclr = {"L": [], "R": []}
@@ -229,6 +255,10 @@ def corridor_logic(per, frames, ego, zm=None, stuff=None):
     for fi, (fr, rows) in enumerate(zip(frames, per)):
         k = float(ego.at(fr["t_ms"], "k")); pz, px = path_xz(k); gpf = smooth_gp(frames, fi) if V8 else None
         zf_ = zm[f"f{fr['frame']}"] if (zm is not None and f"f{fr['frame']}" in zm.files) else None
+        wcl, wpar = None, {}
+        if V11 and skeys is not None and zf_ is not None and gpf is not None:      # v11: componenti muro (stuff) con PCA, per i blob-fette di muro
+            nk0 = int(skeys[np.argmin(np.abs(skeys - fr["frame"]))])
+            if abs(nk0 - fr["frame"]) <= 2: wcl, wpar = BD.wall_components(zf_, gpf, stuff[f"f{nk0}"], [q["poly"] for q in rows if q["src"] != "blob" and not q["coast"]], k, HP)
         for r in rows:
             Z = r["Z"]; X = r["tan"] * Z; r["X"] = X
             dx_arc = X - float(np.interp(Z, pz, px)); tr = r["track"]
@@ -259,7 +289,25 @@ def corridor_logic(per, frames, ego, zm=None, stuff=None):
                 r["h_base"] = hb; r["senza_base"] = bool(hb is not None and hb >= H_BASE_MIN)
             if V10:
                 tr = r["track"]; r["bordo"] = False
-                if r["src"] == "blob":
+                if V11 and r["src"] == "blob":
+                    # v11: il blob (o 'altro') e' un BORDO se parallelo al percorso (PCA come i bordi) OPPURE interamente laterale (fuori sagoma + margine: non puo' urtare; se la sua impronta torna a intersecare la sagoma ridiventa ostacolo): voto 3 su 5
+                    if not r["coast"]:
+                        fp = BD.blob_footprint(r["poly"], zf_, gpf, HP, k); r["fp"] = fp
+                        if fp is None: tr.bd.append(None)
+                        else:
+                            par = fp["ext"] >= BD.EXT_MIN and fp["el"] >= BD.ELONG_MIN and fp["ang"] <= BD.ANG_MAX
+                            lat = min(fp["gap"], fp["gap_s"]) >= BD.margin(max(0.0, float(ego.at(fr["t_ms"], "v_s"))))
+                            wp = False
+                            if wcl is not None:   # blob-fetta di muro: >= 50% dei suoi pixel (con Z valida) cadono in componenti muro PARALLELE al percorso
+                                mm = BD._fill([r["poly"]]) & (zf_ != 255) & (zf_ < 250) & (zf_ >= 3); ids = wcl[mm]
+                                if len(ids) >= 12: wp = bool(np.mean([wpar.get(int(i), {}).get("par", False) for i in ids]) >= 0.5)
+                            r["wpar"] = wp; par = par or wp
+                            tr.bd.append(bool(par or lat)); tr.bpar.append(bool(par)); r["bgeo"] = [bool(par), bool(lat)] + [round(float(fp[x]), 2) for x in ("gap", "zspan", "ext", "el", "ang")]
+                        tr.fp.append(fp)
+                    hist = [x for x in tr.bd[-5:] if x is not None]; lastfp = next((x for x in reversed(tr.fp) if x is not None), None)
+                    if r["coast"] and lastfp is not None: gA_, gS_ = lat_gaps(r, pz, px, use_fp=False); lastfp = dict(gap=gA_, gap_s=gS_)      # traccia non vista: la posizione ATTUALE (box predetto, Z predetta), non l'impronta vecchia   # v11: bordo se >= 2 voti su 5 (1 solo se e' l'unico campione) E l'ultima impronta non interseca la sagoma (gap >= 0 sia sull'arco sia sul dritto; PROVATA l'esenzione per i muri paralleli che intersecano: perdeva pilastri a 0.4 m dalla traiettoria senza allarme, RIFIUTATA: sicurezza prima): il flicker dell'allungamento non riporta un muro a ostacolo
+                    r["bordo"] = bool(hist and (sum(hist) >= (2 if len(hist) >= 2 else 1)) and (lastfp is None or max(lastfp["gap"], lastfp["gap_s"]) >= 0.0))
+                elif r["src"] == "blob" and not V11:
                     if not r["coast"]:
                         g = BD.blob_geometry(r["poly"], zf_, gpf, HP, k); tr.bd.append(None if g is None else bool(g[0])); r["bgeo"] = None if g is None else [bool(g[0])] + [round(float(x), 2) for x in g[1:]]
                     hist = [x for x in tr.bd[-5:] if x is not None]; r["bordo"] = bool(hist and np.mean(hist) > 0.5)
@@ -274,7 +322,11 @@ def corridor_logic(per, frames, ego, zm=None, stuff=None):
             bsum = dict(bf=bf, alarm=None, lab=lab is not None)
             for si, side in enumerate(("L", "R")):
                 vi = None if bf is None else bf[side]["viol"]; bhist[side].append(bool(vi is not None and v_ >= BD.V_MIN_ALLARME)); bclr[side].append(None if bf is None else bf[side]["clear"])
-                if len(bhist[side]) >= 3 and all(bhist[side][-3:]):
+                cl_ok = [x for x in bclr[side][-5:] if x is not None]
+                # v11 punto 4 (2973): provata la mediana degli ultimi 5 fotogrammi (BD_MED=1): allarmi 69->122 fotogrammi, molti episodi da 1 fotogramma = piu' falsi; RIFIUTATA, resta 3 consecutivi (causa: la misura laterale salta fra fotogrammi, vedi rapporto)
+                if os.environ.get('BD_MED') == '1' and V11: trig = bool(bhist[side][-1] and len(cl_ok) >= 3 and float(np.median(cl_ok)) < bf['margin'])
+                else: trig = len(bhist[side]) >= 3 and all(bhist[side][-3:])
+                if trig:
                     Zv, cv_, kd = vi; nm = "sx" if side == "L" else "dx"
                     rows.append(dict(inside=1.0, id=-1 - si, fam="bordo", src="bordo", classe=kd, Z=Zv, Zf=Zv, rawfix=False, w=0.0, Zraw=Zv, tan=0.0, box=[0, 0, 0, 0], poly=None, decl=False, sosp=False, ext=False, hits=99, coast=False, track=None,
                                      X=0.0, in_arc=True, in_str=True, in_arc_pure=True, cand=True, fuori_img=False, h_base=0.0, h_top=0.0, escl="", senza_base=False, bordo=False, side=nm, clear=float(cv_), kind=kd))
@@ -297,9 +349,21 @@ def corridor_logic(per, frames, ego, zm=None, stuff=None):
                 if f_["fam"] == "bordo" and f_["kind"] == "bordo":
                     oth = None if bsum["bf"] is None else bsum["bf"]["R" if f_["side"] == "sx" else "L"]["clear"]
                     libero = oth is None or oth >= sg["bordo_margine_m"]
-                    if (f_["clear"] < 0 or not libero) and Zf_ <= sg["frena_entro_m"]: act = ("FRENA", f"bordo {f_['side']}, " + ("nel percorso" if f_["clear"] < 0 else "nessuno spazio dall'altro lato"))
+                    if V11 and Zf_ > sg["rallenta_entro_m"]: act = None      # v11: nessuna azione se il bordo e' oltre rallenta_entro lungo il percorso
+                    elif (f_["clear"] < 0 or not libero) and Zf_ <= sg["frena_entro_m"]: act = ("FRENA", f"bordo {f_['side']}, " + ("nel percorso" if f_["clear"] < 0 else "nessuno spazio dall'altro lato"))
                     elif libero: act = ("STERZA", f"via dal bordo {f_['side']} {max(0, f_['clear']):.1f} m")
                     else: act = ("RALLENTA", f"bordo {f_['side']}, nessuno spazio dall'altro lato")
+                elif V11:
+                    gA, gS = lat_gaps(f_, pz, px)
+                    ground = f_["fam"] in BASE_EXEMPT or (f_["h_base"] is not None and f_["h_base"] <= H_BASE_MIN)
+                    sagoma_int = min(gA, gS) <= BD.LAT_GAP_TOL                      # la sagoma 0-2 m dell'oggetto interseca la sagoma della bici (arco O dritto)
+                    corr_ground = ground and min(gA, gS) <= sg["bordo_margine_m"]      # tocca terra dentro il corridoio (sagoma + margine)
+                    f_["gap"] = (round(gA, 2), round(gS, 2), bool(ground))
+                    if not (sagoma_int or corr_ground): act = None
+                    elif Zf_ <= sg["frena_entro_m"]:
+                        if Zf_ < Z_COERENZA and f_["fam"] != "persona" and not z_coerente(f_["track"]): act = ("RALLENTA", "ostacolo davanti (Z < 2 m non coerente su 3 fotogrammi/encoder: no FRENA)")
+                        else: act = ("FRENA", "ostacolo davanti")
+                    elif Zf_ <= sg["rallenta_entro_m"]: act = ("RALLENTA", "ostacolo davanti")
                 elif abs(f_["X"] - float(np.interp(Zf_, pz, px))) > BD.HW + sg["bordo_margine_m"]: act = None    # fuori dalla sagoma + margine: non e' sul percorso (corridoio largo del tracking), nessuna azione
                 elif Zf_ <= sg["frena_entro_m"]: act = ("FRENA", "ostacolo davanti")
                 elif Zf_ <= sg["rallenta_entro_m"]: act = ("RALLENTA", "ostacolo davanti")
@@ -357,7 +421,7 @@ def draw(img, fr, rows, cs, gp, zthumb, ego, sess, t0, i):
         ga, gvh, gb = gp; mg = bf["margin"]
         for side in ("L", "R"):
             byz = {}
-            for z, xb, c, par, _h in bf[side]["bins"]:
+            for z, xb, c, par, _h, *_r in bf[side]["bins"]:
                 if par and (z not in byz or c < byz[z][1]): byz[z] = (xb, c)
             pts = []
             for z in sorted(byz):
