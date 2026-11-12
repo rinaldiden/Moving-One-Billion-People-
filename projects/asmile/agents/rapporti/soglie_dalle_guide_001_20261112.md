@@ -1,4 +1,18 @@
-# Soglie dalle guide di #001 - 2026-11-12 (event-miner)
+# Soglie dalle guide di #001 - 2026-11-12 (event-miner, giro 2 dopo scettico)
+
+> ## Per Daniele (5 righe, da validare)
+> Frenata di routine di Daniele misurata su 13 stop completi PULITI (servo <1 gr e limiter non attivo), tutti a v0 <= 9.5 km/h. Sopra 10 km/h non c e nessuno stop senza limiter: quelle righe sono segnaposto.
+>
+> | km/h | frena entro (m) | rallenta entro (m) | n stop puliti | qualita |
+> |---|---|---|---|---|
+> | 5 | 3.98 | 5.97 | 7 | **solida** |
+> | 8 | 6.33 | 9.50 | 2 | **debole** |
+> | 10 | 7.92 | 11.88 | 1 | **segnaposto** |
+> | 12 | 9.48 | 14.22 | 0 | **segnaposto** |
+> | 15 | 11.86 | 17.79 | 0 | **segnaposto** |
+>
+> Solida = n>=5 stop puliti nella banda; debole = 1-4; segnaposto = nessun dato pulito a quella velocita (valore = max di segnaposto, proposta precedente e fit). Latenza 0.5 s e cuscinetto 0.5 m sono segnaposto in tutte le righe.
+> **Per completarla serve un giro con il limiter SPENTO**: frenate normali e qualche frenata decisa a 10, 15 e 20 km/h (fino a fermarsi), sempre in sicurezza, su tratto libero e solo col tuo vai. Servono almeno 5 stop per fascia; i dati di curva e bordi restano a parte (sterzo = solo indicativo, bordi in arrivo da v10).
 
 Script: training/eventi/soglie_dalle_guide.py (estrazione) + soglie_report.py (tabelle, proposta). Eventi: training/eventi/out_guide_20261112_c0.3477/ e _c0.3374/ (frenate.csv, sterzate.csv, velocita_1hz.csv, segmenti.json). Percezione solo letta da training/depth/out_20261112_v9 (tracks_20261109_094146.pkl).
 Ruota: numeri con 0.3477 m/giro enc (proposta, L0.encoder_ruota_20261112) e tra parentesi con 0.3374 (in uso). Differenza: velocita e decel -3% con 0.3374.
@@ -11,44 +25,50 @@ Ruota: numeri con 0.3477 m/giro enc (proposta, L0.encoder_ruota_20261112) e tra 
 - Controlli: v e acc da Savitzky-Golay ord. 2 su cumulativo (v 0.5 s, acc 1.5 s come L0). IMU non usata per la decel: a riposo ay=+0.074 g (offset 0.7 m/s2) e non compensata per il pitch (IMU da -1.6 a -1.8 contro -0.9..-1.2 encoder).
 
 ## 1. FRENATE (31 eventi decel >=0.3 m/s2 per >=1 s, dv>=0.5 m/s)
-Classi: stop_umano=15 (v finale <2 km/h: il limiter rilascia sotto 8 km/h e non puo fermare), umano=7 (servo <5 gradi: rallentamenti dolci), limiter=9 (servo >=5 gradi e non stop: freno automatico, escluso).
+Classi (pipeline, soglie_dalle_guide.py): stop_umano=8 (v finale <2 km/h E servo <1 gr E frazione lim_zone attiva <0.2), stop_limiter=7 (stop con servo/limiter attivo: contaminati, ESCLUSI dal fit), umano=7 (rallentamenti dolci, servo <5 gr), limiter=9 (freno automatico, escluso).
+NOTA SET DEL FIT: la pipeline (con la condizione di coerenza encoder/GPS sui tratti) trova solo 8 stop puliti; il fit usa i 13 stop puliti trovati dall estrazione indipendente dello scettico (agents/prove/eventi_scettico_20261112/ev.csv: stessi criteri, ma include anche stop in tratti brevi/senza GPS e uno nel tratto 5617 s con rapporto encoder/GPS 1.51, quindi meno verificabile). Con o senza quell ultimo, vedi sensibilita sotto.
 
-### 1a. Stop completi di Daniele per fascia di velocita iniziale (0.3477; [0.3374])
-| fascia km/h | n (0.3477/0.3374) | v0 p50 | decel media p25/p50/p75 m/s2 | decel picco p25/p50/p75 | durata s p50 | spazio di frenata p25/p50/p75 m | note |
+### 1a. Stop PULITI di Daniele per fascia di velocita iniziale (0.3477; [0.3374])
+| fascia km/h | n (0.3477/0.3374) | v0 p50 | decel media p25/p50/p75 m/s2 | (decel picco: n/d nel set puliti) | durata s p50 | spazio di frenata p25/p50/p75 m | note |
 |---|---|---|---|---|---|---|---|
-| 5 | 5/5 | 5.1 | 0.28/0.42/0.61 [0.41] | 0.77/0.97/1.13 | 3.0 | 2.26/2.68/3.06 [2.6] |  |
-| 8 | 2/2 | 7.8 | 0.50/0.54/0.57 [0.52] | 0.79/0.94/1.08 | 3.2 | 4.45/4.50/4.55 [4.4] | pochi dati: resta segnaposto |
-| 10 | 4/4 | 10.2 | 0.71/0.75/0.91 [0.73] | 1.20/1.37/1.70 | 3.2 | 4.21/5.51/6.68 [5.3] | pochi dati: resta segnaposto |
-| 12 | 4/4 | 11.9 | 0.97/1.09/1.23 [1.06] | 2.01/2.42/2.63 | 3.1 | 4.60/5.26/6.14 [5.1] | pochi dati: resta segnaposto |
-| 15 | 0/0 | - | -/-/- [-] | -/-/- | - | -/-/- [-] | nessun evento: resta segnaposto |
-| pooled | 15/15 | - | 0.54/0.68/0.95 [0.66] | 0.96/1.23/1.85 | 3.1 | 3.3/4.4/5.3 [4.2] | - |
+| 3 | 3/3 | 3.5 | 0.46/0.48/0.50 [0.46] | - | 2.0 | 0.79/1.00/1.07 [1.0] | debole (n<5) |
+| 5 | 7/7 | 5.3 | 0.39/0.52/0.60 [0.50] | - | 3.4 | 2.15/2.70/3.08 [2.6] | solida |
+| 8 | 2/2 | 8.0 | 0.51/0.54/0.57 [0.52] | - | 4.3 | 4.69/4.71/4.72 [4.6] | debole (n<5) |
+| 10 | 1/1 | 9.5 | 0.72/0.72/0.72 [0.70] | - | 3.7 | 4.56/4.56/4.56 [4.4] | segnaposto: stop singolo al limite del campo |
+| 12 | 0/0 | - | -/-/- [-] | - | - | -/-/- [-] | segnaposto: nessuno stop pulito |
+| 15 | 0/0 | - | -/-/- [-] | - | - | -/-/- [-] | segnaposto: nessuno stop pulito |
+| pooled | 13/13 | - | 0.45/0.52/0.60 [0.50] | - | 3.4 | 1.5/2.7/3.9 [2.6] | - |
 
-Lettura: sono frenate di ROUTINE (picco massimo smussato 2.8 m/s2 a ~12 km/h), non di emergenza. La decel cresce con la velocita (0.4 a 5 km/h, ~1.1 a 12), quindi un solo valore costante e sbagliato. Il massimo del freno idraulico NON e misurato. La decel di 1.5 del segnaposto e sopra la mediana di Daniele (0.68) e il segnaposto frena_entro e PIU CORTO dello spazio che Daniele usa da solo per fermarsi (a 5 km/h: segnaposto 1.84 m totale contro 2.7 m p50 di sola frenata; a 10 km/h 4.46 contro 5.5).
-Fit pooled spazio di frenata: sp = 1.58*v +0.55 m (v in m/s, n=15; residui p75 +0.67 m) [0.3374: 1.59*v +0.50, +0.65].
+Lettura: sono frenate di ROUTINE (decel media mediana 0.52 m/s2), non di emergenza. La decel cresce con la velocita, quindi un solo valore costante e sbagliato. Il massimo del freno idraulico NON e misurato. Il segnaposto frena_entro e PIU CORTO dello spazio che Daniele usa da solo per fermarsi gia a 5 km/h (segnaposto 1.84 m totale contro 2.7 m p50 di sola frenata). Nessuno stop pulito sopra 9.5 km/h: oltre quella velocita il fit e estrapolazione.
+Fit pooled spazio di frenata: sp = 2.34*v -0.95 m (v in m/s, n=13; residui p75 +0.49 m) [0.3374: 2.34*v -0.93, +0.47].
+Sensibilita del fit pulito (frena_entro in m a 5 / 8 / 10 km/h = fit + latenza + cuscinetto; n):
+- 13 stop (scelto): n=13, sp=2.34*v-0.95, p75 +0.49; frena_entro 3.97 / 6.34 / 7.91
+- 12 senza lo stop nel tratto 5617 s (GPS 1.51): n=12, sp=2.34*v-0.95, p75 +0.54; frena_entro 4.03 / 6.39 / 7.97
+- 8 stop verificati col GPS dalla pipeline: n=8, sp=1.67*v+0.48, p75 +0.56; frena_entro 4.55 / 6.36 / 7.56
 
 ### 1b. Frenate con percezione (finestra v9, 094146, depth:coarse)
 | t (s) | classe | v0 km/h | decel media | Z primo ostacolo nell arco (m) | Z dritto | TTC s | note |
 |---|---|---|---|---|---|---|---|
-| 6650 | stop_umano | 12.2 | 1.19 | 5.9 | 5.9 | 1.7 |  |
-| 6658 | stop_umano | 11.6 | 1.33 | 1.7 | 1.7 | 0.5 | possibile falso primo |
-| 6672 | stop_umano | 12.8 | 0.91 | 17.1 | 19.6 | 4.8 |  |
+| 6650 | stop_limiter | 12.2 | 1.19 | 5.9 | 5.9 | 1.7 |  |
+| 6658 | stop_limiter | 11.6 | 1.33 | 1.7 | 1.7 | 0.5 | possibile falso primo |
+| 6672 | stop_limiter | 12.8 | 0.91 | 17.1 | 19.6 | 4.8 |  |
 | 6699 | limiter | 12.4 | 0.37 | 4.2 | 4.2 | 1.2 |  |
 | 6718 | umano | 12.5 | 0.42 | 7.1 | 7.1 | 2.0 |  |
 | 6725 | umano | 10.5 | 0.64 | 9.1 | 9.1 | 3.1 |  |
 | 6729 | stop_umano | 5.1 | 0.61 | 2.0 | 2.0 | 1.4 | possibile falso primo |
 
-Stop con percezione: n=4, Z a inizio frenata 1.9/3.9/8.7 m (range molto largo), TTC 1.2/1.6/2.5 s: **pochi dati (n<5): la distanza di inizio frenata resta segnaposto**. Non e dimostrato che Daniele frenasse PER quell ostacolo (nessun caso dubbio aperto): l etichetta intento resta "intent:unknown" salvo conferma.
+Stop con percezione (solo stop_umano della pipeline): n=1, Z a inizio frenata 2.0/2.0/2.0 m (range molto largo), TTC 1.4/1.4/1.4 s: **pochi dati (n<5): la distanza di inizio frenata resta segnaposto**. Non e dimostrato che Daniele frenasse PER quell ostacolo (nessun caso dubbio aperto): l etichetta intento resta "intent:unknown" salvo conferma.
 
-## 2. STERZATE (curve con |gz|>22 dps per >=0.5 s a v>1 m/s: n=11, di cui n=7 a v>8 km/h)
+## 2. STERZATE (curve con |gz|>22 dps per >=0.5 s a v>1 m/s E ampiezza manubrio >=5 gr: n=10, di cui n=7 a v>8 km/h) - INDICATIVE, NON SOGLIE
 | indicatore | p25 / p50 / p75 | note |
 |---|---|---|
-| velocita angolare manubrio picco (deg/s) | 23/25/33 | |
-| ampiezza manubrio nella curva (deg dal punto di partenza) | 13/23/26 | |
-| curvatura gz/v (1/m) | 0.15/0.20/0.25 | raggio ~5.0 m al p50 |
-| gz picco (deg/s) | 30/33/35 | |
-| anticipo: manubrio parte prima di gz>22 (s) | 0.29/0.78/0.89 | |
+| velocita angolare manubrio picco (deg/s) | 23/26/34 | |
+| ampiezza manubrio nella curva (deg dal punto di partenza) | 18/24/26 | |
+| curvatura gz/v (1/m) | 0.15/0.18/0.26 | raggio ~5.6 m al p50 |
+| gz picco (deg/s) | 32/33/35 | |
+| anticipo: manubrio parte prima di gz>22 (s) | 0.41/0.81/0.91 | |
 
-Curvatura contro velocita (n piccolo): v=4 km/h k=0.38 rate=49 deg/s; v=6 km/h k=0.33 rate=35 deg/s; v=7 km/h k=0.24 rate=17 deg/s; v=7 km/h k=0.27 rate=27 deg/s; v=8 km/h k=0.23 rate=110 deg/s; v=9 km/h k=0.20 rate=25 deg/s; v=10 km/h k=0.16 rate=23 deg/s; v=11 km/h k=0.15 rate=21 deg/s; v=12 km/h k=0.14 rate=31 deg/s; v=12 km/h k=0.15 rate=24 deg/s; v=14 km/h k=0.14 rate=23 deg/s.
+Curvatura contro velocita (n piccolo): v=4 km/h k=0.38 rate=49 deg/s; v=6 km/h k=0.33 rate=35 deg/s; v=7 km/h k=0.27 rate=27 deg/s; v=8 km/h k=0.23 rate=110 deg/s; v=9 km/h k=0.20 rate=25 deg/s; v=10 km/h k=0.16 rate=23 deg/s; v=11 km/h k=0.15 rate=21 deg/s; v=12 km/h k=0.14 rate=31 deg/s; v=12 km/h k=0.15 rate=24 deg/s; v=14 km/h k=0.14 rate=23 deg/s.
 Lettura: curvatura scende con la velocita (0.38 a 4 km/h, 0.14 a 12): a 12-13 km/h Daniele non supera ~0.15 1/m (raggio ~7 m) e ~24-31 deg/s. La velocita angolare del manubrio piu alta (110 deg/s) e a 8 km/h in un evento a bassa velocita.
 Velocita del manubrio su tutto il moto (campioni 1 Hz, |steer_rate|, deg/s) p50/p90 e |angolo| p50/p90 per fascia:
 | fascia km/h | n | rate p50/p90 | angolo p50/p90 |
@@ -77,24 +97,23 @@ Lettura: le velocita "con limiter" (mediana ~13.5 km/h in rettilineo) sono il ca
 Nel v9 (tracks pkl) non ci sono distanze dai bordi (solo X laterale degli oggetti e flag in_arc/in_str): **in arrivo da v10**. bordo_margine resta segnaposto.
 
 ## 5. Tabella: segnaposto vs proposta dalle guide
-Fuori 5-12 km/h il valore e max(segnaposto, estrapolazione del fit) per non rompere la monotonia. Colonne come config. frena_entro = spazio frenata Daniele p75 (fit) + v*0.5 s + 0.5 m (latenza e cuscinetto segnaposto: non vengono dalle guide). rallenta = max(1.5*frena, v*3 s) (formula, non guide).
+Regole: nessuna riga piu corta del segnaposto, tabella crescente. Righe con dati puliti (v0 <= 9.5 km/h, righe <10): max(segnaposto, fit pulito p75 + v*0.5 s + 0.5 m). Righe >=10 km/h: max(segnaposto, proposta v2 del giro 1, fit pulito) e marcate segnaposto. Latenza e cuscinetto segnaposto non vengono dalle guide. rallenta = max(1.5*frena, v*3 s, segnaposto).
 | km/h | frena_entro segnaposto | frena_entro PROPOSTA | rallenta segnaposto | rallenta PROPOSTA | bordo_margine | origine |
 |---|---|---|---|---|---|---|
-| 3 | 1.15 | 3.45 | 2.50 | 5.17 | 0.34 (segnaposto, v10) | pochi dati: fuori 5-12 km/h, max(segnaposto, estrapolazione fit) per restare monotona |
-| 5 | 1.84 | 4.62 | 4.17 | 6.92 | 0.37 (segnaposto, v10) | dalle guide (n banda=5, fit pooled n=15) |
-| 8 | 3.26 | 6.34 | 6.67 | 9.52 | 0.41 (segnaposto, v10) | dalle guide (n banda=2, fit pooled n=15) DEBOLE |
-| 10 | 4.46 | 7.51 | 8.33 | 11.27 | 0.44 (segnaposto, v10) | dalle guide (n banda=4, fit pooled n=15) DEBOLE |
-| 12 | 5.87 | 8.66 | 10.00 | 12.98 | 0.47 (segnaposto, v10) | dalle guide (n banda=4, fit pooled n=15) DEBOLE |
-| 15 | 8.37 | 10.40 | 12.56 | 15.61 | 0.51 (segnaposto, v10) | pochi dati: fuori 5-12 km/h, max(segnaposto, estrapolazione fit) per restare monotona |
-| 20 | 13.57 | 13.57 | 20.35 | 20.36 | 0.58 (segnaposto, v10) | pochi dati: fuori 5-12 km/h, max(segnaposto, estrapolazione fit) per restare monotona |
-| 25 | 20.05 | 20.05 | 30.07 | 30.08 | 0.65 (segnaposto, v10) | pochi dati: fuori 5-12 km/h, max(segnaposto, estrapolazione fit) per restare monotona |
+| 3 | 1.15 | 2.39 | 2.50 | 3.58 | 0.34 (segnaposto, v10) | dalle guide: debole (n stop puliti in banda=3, fit pulito n=13, v0 max 9.5 km/h) |
+| 5 | 1.84 | 3.98 | 4.17 | 5.97 | 0.37 (segnaposto, v10) | dalle guide: solida (n stop puliti in banda=7, fit pulito n=13, v0 max 9.5 km/h) |
+| 8 | 3.26 | 6.33 | 6.67 | 9.50 | 0.41 (segnaposto, v10) | dalle guide: debole (n stop puliti in banda=2, fit pulito n=13, v0 max 9.5 km/h) |
+| 10 | 4.46 | 7.92 | 8.33 | 11.88 | 0.44 (segnaposto, v10) | segnaposto: servono stop >10 km/h senza limiter (max di segnaposto, proposta v2, fit pulito) |
+| 12 | 5.87 | 9.48 | 10.00 | 14.22 | 0.47 (segnaposto, v10) | segnaposto: servono stop >10 km/h senza limiter (max di segnaposto, proposta v2, fit pulito) |
+| 15 | 8.37 | 11.86 | 12.56 | 17.79 | 0.51 (segnaposto, v10) | segnaposto: servono stop >10 km/h senza limiter (max di segnaposto, proposta v2, fit pulito) |
+| 20 | 13.57 | 15.80 | 20.35 | 23.71 | 0.58 (segnaposto, v10) | segnaposto: servono stop >10 km/h senza limiter (max di segnaposto, proposta v2, fit pulito) |
+| 25 | 20.05 | 20.05 | 30.07 | 30.08 | 0.65 (segnaposto, v10) | segnaposto: servono stop >10 km/h senza limiter (max di segnaposto, proposta v2, fit pulito) |
 
-Decel / sterzo proposti (non in tabella per velocita): decel_frenata_ms2 segnaposto 1.5 (resta nel JSON); decel dalle guide p25 0.54 m/s2 (campo decel_guide_p25_ms2, solo riferimento); velocita manubrio picco in curva p50 25 deg/s (p25-p75 23-33), curvatura max osservata a 12 km/h ~0.15 1/m: **pochi dati (n=11), non adottati come soglia**.
+Decel / sterzo proposti (non in tabella per velocita): decel_frenata_ms2 segnaposto 1.5 (resta nel JSON); decel dalle guide p25 0.45 m/s2 (campo decel_guide_p25_ms2, solo riferimento); velocita manubrio picco in curva p50 26 deg/s (p25-p75 23-34), curvatura max osservata a 12 km/h ~0.15 1/m: **pochi dati (n=10), non adottati come soglia**.
 
 ## 6. Casi dove i dati non bastano
-- fascia 15 km/h e oltre: nessuno stop (solo frenate parziali del limiter): segnaposto. 3 km/h, 20, 25: segnaposto.
-- fasce 8, 10, 12: n=2/4/4 (<5): proposta da fit pooled, DEBOLE.
-- Frenate di emergenza e decel massima: non presenti (picco smussato 2.8 m/s2); il segnaposto non puo essere confermato ne smentito per l emergenza.
+- Dai 10 km/h in su nessuno stop pulito (solo stop con servo/limiter attivo, esclusi): righe 10, 12, 15, 20, 25 = segnaposto. Fascia 8 km/h: n<5 (debole), 3 km/h: n<5 (debole).
+- Frenate di emergenza e decel massima: non presenti; il segnaposto non puo essere confermato ne smentito per l emergenza.
 - Distanza ostacolo a inizio frenata / TTC / anticipo sterzata: n<5 con percezione, falsi primo noti.
-- Guide "pure" di Daniele senza limiter: ~197 m soli. Servono altre uscite con il limiter spento (o velocita sopra 10 km/h) per le fasce 12-15 e per gli stop da 15.
+- Guide "pure" di Daniele senza limiter: ~197 m soli. Servono altre uscite con il limiter spento (o velocita sopra 10 km/h) per gli stop a 10, 15 e 20 km/h (almeno 5 per fascia).
 - Logica: nessun evento ha intento verificato; Z accoppiata solo per coincidenza temporale (intent:unknown).

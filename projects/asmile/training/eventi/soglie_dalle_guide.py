@@ -14,6 +14,7 @@ S = 'asmile-loggers/asmile-001/_sensors/sensors/sensors_%s.csv'
 SESS = ['20261108_160150', '20261109_085334']
 CENTER, DEG_STEP = 6606, 0.02197
 HZ = 50.0
+MIN_AMP_DEG = 5.0
 V9 = 'training/depth/out_20261112_v9/tracks_20261109_094146.pkl'
 BANDS = [(0, 6.5, 5), (6.5, 9, 8), (9, 11, 10), (11, 13.5, 12), (13.5, 99, 15)]
 
@@ -105,12 +106,18 @@ def brake_events(d, seg, pt, cs):
                      a_imu_mean=float(d.a_imu.values[i:j + 1].mean()),
                      sp_m=float(d.v.values[i:j + 1].clip(min=0).sum() / HZ),
                      brake_out_max=float(np.nanmax(bo)) if np.isfinite(bo).any() else np.nan,
-                     limiter=lim, lim_attivo=limsrc > 0.5)
+                     limiter=lim, lim_attivo=limsrc > 0.5, lim_frac=float(limsrc))
             e['fascia'] = band(e['v0_kmh'])
             # classe: sotto ACTIVATE_KMH (8) il limiter rilascia e non puo' fermare la bici -> stop = umano;
             # senza servo (<5 deg) = umano; altrimenti freno del LIMITER (servo) -> non e' una guida
             bmx = e['brake_out_max']
-            e['classe'] = 'stop_umano' if e['v1_kmh'] < 2.0 else ('umano' if not (bmx >= 5) else 'limiter')
+            # giro 2 (scettico): "frenata di Daniele" = stop con servo <1 grado E frazione di lim_zone attiva <0.2.
+            # stop con servo/limiter attivo = 'stop_limiter' (contaminato, escluso dal fit)
+            bm = 0.0 if not np.isfinite(bmx) else bmx
+            if e['v1_kmh'] < 2.0:
+                e['classe'] = 'stop_umano' if (bm < 1.0 and e['lim_frac'] < 0.2) else 'stop_limiter'
+            else:
+                e['classe'] = 'umano' if not (bm >= 5) else 'limiter'
             if ev and ev[-1]['t_ms0'] == e['t_ms0'] and ev[-1]['sess'] == e['sess']:
                 continue
             if pt is not None and d.sess[i] == '20261109_085334':
@@ -146,6 +153,8 @@ def steer_events(d, seg, pt, cs):
                 pr = perc_at(None, pt, cs, int(d.t_ms.values[k]))
                 if pr and pr['Z_arc'] is not None:
                     e['Z_arc_inizio'] = float(pr['Z_arc'])
+            if e['amp_deg'] < MIN_AMP_DEG:      # giro 2: sotto 5 gradi di manubrio non e' una sterzata (deriva/rumore)
+                continue
             ev.append(e)
     return ev
 

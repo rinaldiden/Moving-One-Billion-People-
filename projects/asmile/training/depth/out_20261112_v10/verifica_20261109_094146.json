@@ -1,0 +1,181 @@
+{
+ "sess": "20261109_094146",
+ "n": 1350,
+ "fotogrammi_verita_sotto5": 311,
+ "fotogrammi_sistema_manca": 7,
+ "corsa_max_fr": 4,
+ "corsa_max_s": 0.27,
+ "corse_top": [
+  [
+   48,
+   4
+  ],
+  [
+   340,
+   2
+  ],
+  [
+   335,
+   1
+  ]
+ ],
+ "veicoli_vicini_traiett_fuori_corridoio_fotogrammi": 0,
+ "veicoli_id": [],
+ "veicoli_fotogrammi_per_id": {},
+ "kalman_gap_gt07_sotto8": 73,
+ "kalman_gap_dopo_uso": 0,
+ "righe_sotto8": 2086,
+ "primo_per_famiglia": {
+  "altro": 202,
+  "ostacolo": 246,
+  "paletto-palo": 425,
+  "veicolo": 314,
+  "bordo": 23,
+  "persona": 119,
+  "bici-moto": 3
+ },
+ "fotogrammi_con_primo": 1332,
+ "fotogrammi_primo_sotto5": 490,
+ "mancanti": [
+  {
+   "i": 48,
+   "frame": 1923,
+   "id": 4,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.93,
+   "box": [
+    179,
+    0,
+    839,
+    509
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.42,
+   "dreal": 1.43,
+   "hits": 49
+  },
+  {
+   "i": 49,
+   "frame": 1924,
+   "id": 4,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.74,
+   "box": [
+    118,
+    0,
+    830,
+    509
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.42,
+   "dreal": 1.43,
+   "hits": 50
+  },
+  {
+   "i": 50,
+   "frame": 1925,
+   "id": 4,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.54,
+   "box": [
+    172,
+    0,
+    493,
+    501
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.42,
+   "dreal": 1.43,
+   "hits": 51
+  },
+  {
+   "i": 51,
+   "frame": 1926,
+   "id": 4,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.34,
+   "box": [
+    130,
+    0,
+    629,
+    509
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.42,
+   "dreal": 1.43,
+   "hits": 52
+  },
+  {
+   "i": 335,
+   "frame": 2210,
+   "id": 386,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.79,
+   "box": [
+    952,
+    0,
+    1280,
+    582
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.4,
+   "dreal": 1.45,
+   "hits": 37
+  },
+  {
+   "i": 340,
+   "frame": 2215,
+   "id": 415,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 4.1,
+   "box": [
+    1077,
+    0,
+    1208,
+    570
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.37,
+   "dreal": 1.3,
+   "hits": 20
+  },
+  {
+   "i": 341,
+   "frame": 2216,
+   "id": 415,
+   "fam": "ostacolo",
+   "src": "blob",
+   "Z": 3.87,
+   "box": [
+    1172,
+    410,
+    1229,
+    595
+   ],
+   "inside": 1.0,
+   "fuori": false,
+   "senza_base": false,
+   "h_base": 0.37,
+   "dreal": 1.3,
+   "hits": 21
+  }
+ ]
+}
