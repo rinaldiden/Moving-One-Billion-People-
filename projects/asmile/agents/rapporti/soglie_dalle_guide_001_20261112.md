@@ -11,7 +11,7 @@
 > | 12 | 9.54 | 14.30 | 0 | **segnaposto** |
 > | 15 | 11.92 | 17.88 | 0 | **segnaposto** |
 >
-> Metodo: ogni riga = MASSIMO fra (a) fit sui stop puliti (p75 residui), (b) lo stesso fit coi soli stop verificati col GPS, (c) p75 osservato nella banda (se n>=2), tutti + latenza 0.5 s + cuscinetto 0.5 m (segnaposto, non dalle guide); mai sotto il segnaposto, tabella crescente. Qualita dal numero di stop puliti nella banda: solida n>=10, media 5-9, debole 2-4, segnaposto 0-1 (e ogni riga >=10 km/h, dove non ci sono dati puliti).
+> Metodo: ogni riga = MASSIMO fra (a) fit sui stop puliti (p75 residui), (b) lo stesso fit coi soli stop verificati col GPS, (c) p75 osservato nella banda (se n>=2), tutti + latenza 0.5 s + cuscinetto 0.5 m (segnaposto, non dalle guide); mai sotto il segnaposto, tabella crescente. Qualita dal numero di stop puliti nella banda: solida n>=10, media 5-9, debole 2-4, segnaposto 0-1 (e ogni riga >=10 km/h, dove non ci sono dati puliti). Nota: la riga 3 km/h (3.34 m) viene dal fit coi soli stop verificati col GPS; il fit pulito darebbe 2.45 m: scelta prudente (asmile-event-scettico 2026-11-12).
 > **Per completarla serve un giro con il limiter SPENTO**: frenate normali e qualche frenata decisa a 10, 15 e 20 km/h (fino a fermarsi), sempre in sicurezza, su tratto libero e solo col tuo vai. Servono almeno 5 stop per fascia; i dati di curva e bordi restano a parte (sterzo = solo indicativo, bordi in arrivo da v10).
 
 Script: training/eventi/soglie_dalle_guide.py (estrazione) + soglie_report.py (tabelle, proposta). Eventi: training/eventi/out_guide_20261112_c0.3477/ e _c0.3374/ (frenate.csv, sterzate.csv, velocita_1hz.csv, segmenti.json). Percezione solo letta da training/depth/out_20261112_v9 (tracks_20261109_094146.pkl).
@@ -32,7 +32,7 @@ NOTA SET DEL FIT: la pipeline (con la condizione di coerenza encoder/GPS sui tra
 | fascia km/h | n (0.3477/0.3374) | v0 p50 | decel media p25/p50/p75 m/s2 | (decel picco: n/d nel set puliti) | durata s p50 | spazio di frenata p25/p50/p75 m | note |
 |---|---|---|---|---|---|---|---|
 | 3 | 3/3 | 3.5 | 0.46/0.48/0.50 [0.46] | - | 2.0 | 0.79/1.00/1.07 [1.0] | debole (n<5) |
-| 5 | 6/6 | 5.2 | 0.36/0.48/0.57 [0.47] | - | 3.2 | 1.95/2.62/3.04 [2.5] | solida |
+| 5 | 6/6 | 5.2 | 0.36/0.48/0.57 [0.47] | - | 3.2 | 1.95/2.62/3.04 [2.5] | media (n=6; solida solo con n>=10) |
 | 8 | 2/2 | 8.0 | 0.51/0.54/0.57 [0.52] | - | 4.3 | 4.69/4.71/4.72 [4.6] | debole (n<5) |
 | 10 | 1/1 | 9.5 | 0.72/0.72/0.72 [0.70] | - | 3.7 | 4.56/4.56/4.56 [4.4] | segnaposto: stop singolo al limite del campo |
 | 12 | 0/0 | - | -/-/- [-] | - | - | -/-/- [-] | segnaposto: nessuno stop pulito |
