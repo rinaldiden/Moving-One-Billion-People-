@@ -48,7 +48,13 @@ def picco_vicino(z, frac_min=0.25, bin_log=0.04):
         if fr >= frac_min:
             c = 0.5 * (e[p] + e[p + 1])
             keep = z[np.abs(lz - c) < 0.05]
-            return float(np.median(keep if len(keep) else z)), float(fr), len(pops)
+            zp = float(np.median(keep if len(keep) else z)); zm = float(np.median(z))
+            # CORREZIONE v2 (2026-11-12, critico f6051: picco = specchio del furgone a 6.97 m su auto vera a 15 m): se ci sono piu'
+            # popolazioni e il picco e' < 0.6 x mediana, il picco e' un occlusore sottile davanti -> uso la mediana.
+            # Fissata PRIMA di rigirare; verificata su straccio (0.41/0.54=0.76 >= 0.6, resta picco) e f6051.
+            if len(pops) > 1 and zp < 0.6 * zm:
+                return zm, float(fr), len(pops)
+            return zp, float(fr), len(pops)
     return float(np.median(z)), 1.0, len(pops)
 
 
