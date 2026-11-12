@@ -7,7 +7,9 @@ Depth: SGBM blockSize 7, padding sx 224 px, 224 disparita' (Z>=1.22 m): il lato 
 niente maschere salvate, e calcolato con B=0.2); per ogni oggetto Z_med e Z_picco (regola picco_vicino fissata prima dei video, in
 depth_ncc_patch_001.py). Ostacoli senza classe: pixel nel corridoio |X|<=1.5+0.03Z con altezza sopra il piano strada >=0.25 m
 (piano da obstacles_v2.ground_plane, importato senza modifiche). Controllo encoder: tracce KLT 1 s, pendenza -dZ/ds.
-Uso: depth_video_001.py SESSIONE [--max N]
+v4 (12/11, VETO 1/3 occhio): oggetti sottili da maschere SAM 3 (asmile-loggers/_seg_sam3/<sess>_001), slicing per continuita' di profondita' nei blob
+di fallback, coerenza di contatto a terra (flag sospetto). --nosam --noslice riproducono v3.
+Uso: depth_video_001.py SESSIONE [--max N] [--frames a,b,c] [--tag X]
 """
 import os, sys, csv, json, time, argparse
 import numpy as np, cv2
@@ -21,7 +23,59 @@ FILL_MIN_AREA = 3000
 ZNEAR = 3.0; ZN_OK = 0.5   # v3: blob con Z<3 m: almeno SUP_MIN dei pixel candidati con ZNCC 15x15 > 0.5 alla disparita' misurata (verifica L-R a piena risoluzione)
 SUP_MIN = 0.20; SCARTATI = []
 DENS_NEAR = 0.35   # blob con Z<1.9 m (passata vicina) richiedono densita pixel candidati >=0.35 del box (falsi asfalto 0.22-0.29, bici vera 0.49: soglia dichiarata su 4 blob, POCHI)
-OUT = os.path.join(D.HERE, "out_20261112_v3")
+OUT = os.path.join(D.HERE, "out_20261112_v4")
+# v4 (VETO 1/3 occhio, ostacoli sottili fusi nel muro): (1) maschere d'istanza SAM 3 come oggetti, distanza = statistica della depth DENTRO la maschera;
+# (2) fallback senza maschera: componenti connesse per CONTINUITA' di profondita' (due pixel vicini sono collegati solo se |ln Za - ln Zb| < SLICE_LN):
+# un paletto a 4.5 m davanti a un muro a 9 m e' un'altra componente, la distanza si calcola per componente e non per box.
+SAM_DIR = os.path.join(D.HERE, "..", "..", "asmile-loggers", "_seg_sam3")
+SAM_CLASSES = {"bollard", "pole", "person", "child", "car", "van", "truck", "trash can", "stroller", "dog", "cat", "bicycle", "motorcycle", "traffic cone", "bench"}
+SAM_CONF = 0.45          # tier low o sure; sotto = 'unknown' (dichiarato ex-ante)
+SLICE_LN = 0.12          # salto di Z fra pixel adiacenti oltre il quale si separa (12%), dichiarato ex-ante
+SLICE_ON = True; ZSPLIT = 2.5   # sotto: closing 7x7 come v3 (passata vicina rumorosa)
+
+
+def load_sam(sess):
+    fn = os.path.join(SAM_DIR, sess + "_001", "index.jsonl")
+    return {r["frame"]: r for r in map(json.loads, open(fn))} if os.path.exists(fn) else {}
+
+
+def _iou(a, b):
+    ix = max(0, min(a[2], b[2]) - max(a[0], b[0])); iy = max(0, min(a[3], b[3]) - max(a[1], b[1])); i = ix * iy
+    return i / max(1e-9, (a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - i)
+
+
+def _cont(a, b):
+    """frazione del box a contenuta nel box b"""
+    ix = max(0, min(a[2], b[2]) - max(a[0], b[0])); iy = max(0, min(a[3], b[3]) - max(a[1], b[1]))
+    return ix * iy / max(1e-9, (a[2] - a[0]) * (a[3] - a[1]))
+
+
+def sam_objects(rec):
+    """Detection SAM 3 utili all'ostacolo: classi in SAM_CLASSES, conf>=SAM_CONF; pole/bollard sovrapposti (stesso box, IoU>0.6) = un solo oggetto (conf piu' alta)."""
+    ds = sorted([d for d in rec["detections"] if d["class_raw"] in SAM_CLASSES and d["conf"] >= SAM_CONF and len(d["poly"]) >= 3], key=lambda d: -d["conf"])
+    out = []
+    for d in ds:
+        if any(_iou(d["box"], o["box"]) > 0.6 for o in out): continue
+        out.append(d)
+    return out
+
+
+def depth_components(Z, cand):
+    """Componenti connesse dei pixel candidati collegando solo vicini (distanza 1 o 2 px, orizz. e vert.) con |ln Za - ln Zb| < SLICE_LN."""
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import connected_components
+    H, W = cand.shape; idx = np.arange(H * W).reshape(H, W)
+    zm = cv2.medianBlur(np.where(cand, Z, 0).astype(np.float32).clip(0, 60), 5)   # mediana 5x5: il rumore della passata vicina (nearest da mezza risoluzione) non spezza l'oggetto
+    lz = np.log(np.where(cand & (zm > 0), zm, 1.0))
+    rs, cs = [], []
+    for dy, dx in ((0, 1), (0, 2), (0, 3), (1, 0), (2, 0), (3, 0)):
+        a = cand[:H - dy, :W - dx] & cand[dy:, dx:] & (np.abs(lz[:H - dy, :W - dx] - lz[dy:, dx:]) < SLICE_LN)
+        rs.append(idx[:H - dy, :W - dx][a]); cs.append(idx[dy:, dx:][a])
+    r = np.concatenate(rs); c = np.concatenate(cs)
+    g = coo_matrix((np.ones(len(r), np.uint8), (r, c)), shape=(H * W, H * W))
+    n, lab = connected_components(g, directed=False)
+    lab = lab.reshape(H, W) + 1; lab[~cand] = 0
+    return lab
 _sg = cv2.StereoSGBM_create(minDisparity=0, numDisparities=NDISP, blockSize=7, P1=8 * 49, P2=32 * 49, disp12MaxDiff=1,
                             uniquenessRatio=8, speckleWindowSize=150, speckleRange=2, preFilterCap=31,
                             mode=cv2.STEREO_SGBM_MODE_SGBM_3WAY)
@@ -108,7 +162,7 @@ def enc_session(sess):
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("session"); ap.add_argument("--max", type=int, default=10 ** 9)
-    ap.add_argument("--noyolo", action="store_true")
+    ap.add_argument("--noyolo", action="store_true"); ap.add_argument("--nosam", action="store_true", help="v3: niente maschere SAM"); ap.add_argument("--noslice", action="store_true", help="v3: blob per closing come prima")
     ap.add_argument("--frames", default=None, help="lista di fotogrammi (bypassa campionamento 1/s e v>0.3)")
     ap.add_argument("--nonear", action="store_true"); ap.add_argument("--nozn", action="store_true", help="disattiva la regola v3 (per confronto prima/dopo)"); ap.add_argument("--tag", default=""); a = ap.parse_args()
     sess = a.session if a.session.startswith("session_") else "session_" + a.session
@@ -122,7 +176,10 @@ def main():
             sel.append(i); last = t[i]
     sel = sel[:a.max]
     global SUP_MIN
+    global SLICE_ON
     if a.nozn: SUP_MIN = -1.0
+    if a.noslice: SLICE_ON = False
+    sam = {} if a.nosam else load_sam(sess)
     if a.frames: sel = sorted(int(v) for v in a.frames.split(","))
     selset = set(sel)
     print(sess, "frame", len(t), "campionati (1/s, v>0.3):", len(sel), flush=True)
@@ -154,6 +211,21 @@ def main():
         ov = cv2.cvtColor(L, cv2.COLOR_GRAY2BGR); ov = cv2.addWeighted(ov, 0.6, colorize(np.where(valid, Z, np.nan)), 0.4, 0)
         ov[~valid] = (0.85 * cv2.cvtColor(L, cv2.COLOR_GRAY2BGR)[~valid]).astype(np.uint8)
         objs, covered = [], np.zeros(disp.shape, bool)
+        sam_boxes = []
+        for d_ in (sam_objects(sam[i]) if i in sam else []):
+            m = np.zeros(disp.shape, np.uint8); cv2.fillPoly(m, [np.array(d_["poly"], np.int32)], 1)
+            if m.sum() < 20: continue
+            me = cv2.erode(m, np.ones((3, 3), np.uint8)) > 0 if m.sum() > 400 else m > 0
+            if me.sum() < 20: me = m > 0
+            z = Z[me & valid]; z = z[z < 80]
+            if len(z) < 15 or len(z) < 0.08 * me.sum(): continue
+            # maschera con meta' pixel senza disparita': la parte piu' vicina e' la meno campionata (SGBM cieco sotto Zmin) -> popolazione vicina accettata dal 10% (non 25%)
+            zp, fr, npop = picco_vicino(z, frac_min=0.25 if len(z) >= 0.5 * me.sum() else 0.10); ys, xs = np.nonzero(m)
+            if len(z) >= 0.5 * me.sum(): covered |= cv2.dilate(m, np.ones((5, 5), np.uint8)) > 0   # maschera con meta' pixel senza disparita' (oggetto vicino, Z<1.5 m): non coprire, lo cerca la passata vicina/blob
+            sam_boxes.append(d_["box"])
+            objs.append(dict(dens=None, zn_obj=None, zn_gnd=None, h_med=None, sup=None, src="sam", classe=d_["class_raw"], conf=float(d_["conf"]), Z_med=float(np.median(z)), Z_picco=zp,
+                             frac_picco=fr, n_pop=npop, n_valid=int(len(z)), frac_valid=float(len(z) / me.sum()), X=float((float(xs.mean()) - cx) * zp / f_px),
+                             box=[int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max())], poly=np.array(d_["poly"], np.int32)))
         if yolo is not None:
             r = yolo.predict(cv2.cvtColor(L, cv2.COLOR_GRAY2BGR), imgsz=640, conf=0.30, device="cpu", verbose=False)[0]
             if r.masks is not None:
@@ -164,10 +236,11 @@ def main():
                     if me.sum() < 40: me = m > 0
                     z = Z[me & valid]; z = z[z < 80]
                     if len(z) < 30 or len(z) < 0.10 * me.sum(): continue
+                    if any(_iou([int(xs_.min()), int(ys_.min()), int(xs_.max()), int(ys_.max())], b_) > 0.3 for (ys_, xs_) in [np.nonzero(m)] for b_ in sam_boxes): continue   # v4: gia' coperto da una maschera SAM
                     zp, fr, npop = picco_vicino(z); ys, xs = np.nonzero(m)
                     covered |= m > 0   # v2: coperto solo se l'oggetto YOLO e' stato davvero misurato (prima anche se scartato -> buco)
                     X = (float(xs.mean()) - cx) * zp / f_px
-                    objs.append(dict(dens=None, zn_obj=None, zn_gnd=None, h_med=None, sup=None, classe=r.names[int(r.boxes.cls[k])], conf=float(r.boxes.conf[k]), Z_med=float(np.median(z)), Z_picco=zp,
+                    objs.append(dict(dens=None, zn_obj=None, zn_gnd=None, h_med=None, sup=None, src="yolo", classe=r.names[int(r.boxes.cls[k])], conf=float(r.boxes.conf[k]), Z_med=float(np.median(z)), Z_picco=zp,
                                      frac_picco=fr, n_pop=npop, n_valid=int(len(z)), frac_valid=float(len(z) / me.sum()), X=float(X),
                                      box=[int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max())], poly=poly.astype(np.int32)))
         # ostacoli senza classe nel corridoio
@@ -181,9 +254,29 @@ def main():
                 Xm = (uu - cx) * Z / f_px
             cand = valid & (h >= 0.25) & (h <= 2.5) & (Z >= 0.65) & (Z <= 25) & (np.abs(Xm) <= 1.5 + 0.03 * Z) & (~covered)
             cand0 = cand.copy()
-            cand = cv2.morphologyEx(cand.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
-            n, lab, st, _ = cv2.connectedComponentsWithStats(cand)
-            for q in range(1, n):
+            if SLICE_ON:
+                # Z<ZSPLIT=2.5 m (passata vicina, disparita' rumorosa a gradini): un oggetto cosi' vicino non ha un muro 'dietro' da separare -> closing 7x7 come v3;
+                # Z>=1.9 m: componenti per continuita' di profondita'
+                nearm = cand0 & (Z < ZSPLIT)
+                lab = depth_components(Z, cand0 & ~nearm); n0 = int(lab.max()) + 1
+                nn, ln_ = cv2.connectedComponents(cv2.morphologyEx(nearm.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8)))
+                ln_ = np.where(nearm & (ln_ > 0), ln_ + n0 - 1, 0); lab = np.where(ln_ > 0, ln_, lab); n = n0 + nn - 1 + 1
+                bb = cv2.connectedComponents  # (non usato)
+                cnt = np.bincount(lab.ravel(), minlength=n)
+                stats = {}
+                big = np.nonzero(cnt[1:] >= 150)[0] + 1
+                ys_, xs_ = np.nonzero(lab > 0); lv = lab[ys_, xs_]
+                order = np.argsort(lv); lv_s = lv[order]; ys_s = ys_[order]; xs_s = xs_[order]
+                bounds = np.searchsorted(lv_s, np.arange(n + 1))
+                st = np.zeros((n, 5), int)
+                for q in big:
+                    yy, xx = ys_s[bounds[q]:bounds[q + 1]], xs_s[bounds[q]:bounds[q + 1]]
+                    st[q] = (xx.min(), yy.min(), xx.max() - xx.min() + 1, yy.max() - yy.min() + 1, len(yy))
+                qs = list(big)
+            else:
+                cand = cv2.morphologyEx(cand.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
+                n, lab, st, _ = cv2.connectedComponentsWithStats(cand); qs = range(1, n)
+            for q in qs:
                 x, y, w, hh, ar = st[q]
                 if ar < 150: continue
                 z = Z[lab == q]; z = z[np.isfinite(z)]
@@ -192,6 +285,11 @@ def main():
                 tocca = x <= 4 or y + hh >= 796 or x + w >= 1276     # v2: oggetto tagliato dal bordo immagine (vicino): minimo 0.15 m invece di 0.30
                 if w < 0.12 * f_px / zp or hh < (0.15 if tocca else 0.30) * f_px / zp: continue
                 dens = float(cand0[lab == q].sum()) / float(w * hh)
+                # v4: 'fattening' stereo: la disparita' dell'oggetto vicino sborda a sinistra del suo bordo (occlusione) e forma un blob fantasma accanto alla
+                # maschera SAM dello stesso oggetto: scartato se la Z e' entro 12% di un oggetto SAM, adiacente (gap<=40 px) e con sovrapposizione verticale >50%
+                if any(abs(zp / o_["Z_picco"] - 1) < 0.12 and o_["src"] == "sam" and max(x - o_["box"][2], o_["box"][0] - (x + w), 0) <= 40
+                       and min(y + hh, o_["box"][3]) - max(y, o_["box"][1]) > 0.5 * hh for o_ in objs):
+                    SCARTATI.append(dict(frame=i, motivo="fantasma_accanto_maschera_SAM", Z_picco=round(zp, 3), box=[int(x), int(y), int(x + w), int(y + hh)])); continue
                 if zp < ZNEAR:
                     if zmaps is None:
                         zmaps = (zncc_map(L, R, np.where(valid, disp, 0)), zncc_map(L, R, np.maximum(dg, 0)))
@@ -202,19 +300,32 @@ def main():
                        # v3: disparita' vicina non verificata fotometricamente (asfalto vuoto) -> scartata, registrata
                     scart.append(dict(frame=i, Z_picco=round(zp, 3), dens=round(dens, 3), zn_obj=round(zo, 3), zn_gnd=round(zg_, 3), sup=round(sup, 3), box=[int(x), int(y), int(x + w), int(y + hh)])); continue
                 if zp < 1.9 and dens < DENS_NEAR: continue   # v2: la passata vicina e' piu' rumorosa (asfalto): blob vicini solo se densi
-                blobs.append(dict(dens=round(dens, 3), zn_obj=zo, zn_gnd=zg_, h_med=hm, sup=sup, classe="ostacolo", conf=0.0, Z_med=float(np.median(z)), Z_picco=zp, frac_picco=fr, n_pop=npop,
+                blobs.append(dict(src="blob", dens=round(dens, 3), zn_obj=zo, zn_gnd=zg_, h_med=hm, sup=sup, classe="ostacolo", conf=0.0, Z_med=float(np.median(z)), Z_picco=zp, frac_picco=fr, n_pop=npop,
                                   n_valid=int(len(z)), frac_valid=1.0, X=float((x + w / 2 - cx) * zp / f_px), box=[int(x), int(y), int(x + w), int(y + hh)], poly=None))
         tt0 = time.time(); nc, big, _ = segnale_oltre_zmin(L, valid); t_sig = time.time() - tt0
+        # v4: un blob PIU' VICINO (Z<0.85 Zsam) sovrapposto (IoU box>0.3) a un oggetto SAM con maschera a meta' vuota vince (la mediana in maschera vede solo la parte lontana)
+        objs = [o for o in objs if not (o["src"] == "sam" and o["frac_valid"] < 0.5 and any(b_["Z_picco"] < 0.85 * o["Z_picco"] and _cont(b_["box"], o["box"]) > 0.5 for b_ in blobs))]
         allo = objs + blobs; SCARTATI.extend(scart)
         for sc_ in scart:
             b_ = sc_['box']; cv2.rectangle(ov, (b_[0], b_[1]), (b_[2], b_[3]), (0, 0, 255), 1); label(ov, b_[0], b_[1] + 2, f"SCARTATO {sc_['Z_picco']:.1f} m (sup {sc_['sup']:.2f})", (0, 0, 255), 0.5, 1)
+        # v4: coerenza di contatto a terra per pali/colonnine/cestini/coni: la base della maschera deve stare dove il piano strada la mette alla Z misurata.
+        # Se Z_picco < 0.5 * Z_piano(base) (oggetto 'a mezz'aria' molto piu' vicino del terreno sotto la sua base: base sopra l'orizzonte o disparita' spuria sullo
+        # sfondo) -> 'sospetto', fuori dal conteggio corridoio/primo ostacolo (resta nel CSV e in overlay grigio). Maschere tagliate dal fondo immagine non testate.
+        for o in objs:
+            o["sospetto"] = False; o["zg_base"] = None
+            if o["src"] == "sam" and o["classe"] in ("pole", "bollard", "trash can", "traffic cone") and gp is not None and o["box"][3] < 796:
+                dgb = ga * (o["box"][3] - gvh) + gb * (0.5 * (o["box"][0] + o["box"][2]) - cx)
+                zg_base = f_px * Bm / dgb if dgb > 1 else 1e9
+                o["sospetto"] = bool(o["Z_picco"] < 0.5 * zg_base); o["zg_base"] = float(min(zg_base, 1e4))
+        for o in blobs: o["sospetto"] = False; o["zg_base"] = None
         for o in allo:
-            inb = abs(o["X"]) <= 1.5 + 0.03 * o["Z_picco"]; o["corridoio"] = bool(inb)
+            inb = abs(o["X"]) <= 1.5 + 0.03 * o["Z_picco"]; o["corridoio"] = bool(inb) and not o.get("sospetto", False)
             col = (255, 0, 255) if o["poly"] is None else ((0, 255, 255) if inb else (200, 200, 200))
+            if o.get("sospetto"): col = (90, 90, 90)
             b = o["box"]
             if o["poly"] is not None: cv2.polylines(ov, [o["poly"]], True, col, 2)
             else: cv2.rectangle(ov, (b[0], b[1]), (b[2], b[3]), col, 2)
-            label(ov, b[0], b[1] + 2, f"{o['classe']} {o['Z_picco']:.1f} m", col, 0.7, 2)
+            label(ov, b[0], b[1] + 2, f"{o['classe']} {o['Z_picco']:.1f} m" + (" ?aria" if o.get("sospetto") else ""), col, 0.7, 2)
             label(ov, b[0], b[1] + 24, f"med {o['Z_med']:.1f}", col, 0.5, 1)
             rows_o.append(dict(sess=sess, frame=i, t_ms=int(t[i]), s_enc_m=round(float(s_all[i]), 2), v_ms=round(float(v_all[i]), 2),
                                **{k: (round(v, 3) if isinstance(v, float) else v) for k, v in o.items() if k not in ("poly", "box")},
