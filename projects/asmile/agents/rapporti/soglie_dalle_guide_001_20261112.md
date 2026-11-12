@@ -77,7 +77,7 @@ Lettura: le velocita "con limiter" (mediana ~13.5 km/h in rettilineo) sono il ca
 Nel v9 (tracks pkl) non ci sono distanze dai bordi (solo X laterale degli oggetti e flag in_arc/in_str): **in arrivo da v10**. bordo_margine resta segnaposto.
 
 ## 5. Tabella: segnaposto vs proposta dalle guide
-Fuori 5-12 km/h il valore e max(segnaposto, estrapolazione del fit) per non rompere la monotonia (3 km/h resta segnaposto). Colonne come config. frena_entro = spazio frenata Daniele p75 (fit) + v*0.5 s + 0.5 m (latenza e cuscinetto segnaposto: non vengono dalle guide). rallenta = max(1.5*frena, v*3 s) (formula, non guide).
+Fuori 5-12 km/h il valore e max(segnaposto, estrapolazione del fit) per non rompere la monotonia. Colonne come config. frena_entro = spazio frenata Daniele p75 (fit) + v*0.5 s + 0.5 m (latenza e cuscinetto segnaposto: non vengono dalle guide). rallenta = max(1.5*frena, v*3 s) (formula, non guide).
 | km/h | frena_entro segnaposto | frena_entro PROPOSTA | rallenta segnaposto | rallenta PROPOSTA | bordo_margine | origine |
 |---|---|---|---|---|---|---|
 | 3 | 1.15 | 3.45 | 2.50 | 5.17 | 0.34 (segnaposto, v10) | pochi dati: fuori 5-12 km/h, max(segnaposto, estrapolazione fit) per restare monotona |

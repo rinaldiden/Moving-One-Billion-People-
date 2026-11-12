@@ -177,7 +177,7 @@ w('## 4. MARGINI LATERALI')
 w('Nel v9 (tracks pkl) non ci sono distanze dai bordi (solo X laterale degli oggetti e flag in_arc/in_str): **in arrivo da v10**. bordo_margine resta segnaposto.')
 w()
 w('## 5. Tabella: segnaposto vs proposta dalle guide')
-w('Fuori 5-12 km/h il valore e max(segnaposto, estrapolazione del fit) per non rompere la monotonia (3 km/h resta segnaposto). Colonne come config. frena_entro = spazio frenata Daniele p75 (fit) + v*0.5 s + 0.5 m (latenza e cuscinetto segnaposto: non vengono dalle guide). rallenta = max(1.5*frena, v*3 s) (formula, non guide).')
+w('Fuori 5-12 km/h il valore e max(segnaposto, estrapolazione del fit) per non rompere la monotonia. Colonne come config. frena_entro = spazio frenata Daniele p75 (fit) + v*0.5 s + 0.5 m (latenza e cuscinetto segnaposto: non vengono dalle guide). rallenta = max(1.5*frena, v*3 s) (formula, non guide).')
 w('| km/h | frena_entro segnaposto | frena_entro PROPOSTA | rallenta segnaposto | rallenta PROPOSTA | bordo_margine | origine |')
 w('|---|---|---|---|---|---|---|')
 for r, n_ in zip(base['tabella_per_velocita'], tab_new):
