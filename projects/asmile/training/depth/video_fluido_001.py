@@ -13,11 +13,13 @@ import depth_seg_001 as D
 from ego_001 import Ego, x_path, path_xz, x_arc
 
 W, H, BAR = 1280, 800, 48
-MODE = os.environ.get("VFMODE", "v7")          # "v6" = regole del giro 6 (per il prima/dopo), "v7" = regole del giro 7
+MODE = os.environ.get("VFMODE", "v8")          # "v6"/"v7" = regole dei giri 6/7 (per il prima/dopo), "v8" = v7 + correzioni bug del giro 8
+V7 = MODE in ("v7", "v8")
+V8 = MODE == "v8"
 PURE = os.environ.get("VF_PURE", "1") == "1"      # v7: terza ipotesi = arco a curvatura costante (il percorso reale in curva stretta si avvolge piu' del previsto)
 EXTRA = float(os.environ.get("VF_EXTRA", "0.1"))   # allargamento aggiuntivo del corridoio per m di distanza (m/m), 0 = nessuno
 OUT_A = os.path.join(D.HERE, "out_20261112_v6")  # stadio A (misure per fotogramma) INVARIATO: riletto da v6
-OUT = os.environ.get("VF_OUT", os.path.join(D.HERE, "out_20261112_v7"))
+OUT = os.environ.get("VF_OUT", os.path.join(D.HERE, "out_20261112_v8"))
 os.makedirs(OUT, exist_ok=True)
 Z_RAW_GAP, Z_RAW_MAXZ = 0.7, 8.0   # v7 punto 3: se Z_filtrata - Z_grezza > 0.7 m sotto 8 m si usa la grezza (vince la piu' vicina)
 HITS_BLOB_NEAR, ZNEAR_BLOB = 3, 5.0  # v7 punto 1: sotto 5 m un blob senza classe conferma a 3 fotogrammi come gli altri
@@ -47,7 +49,7 @@ def wband(Z): return 1.5 + 0.03 * Z
 
 def corr_edges(xc, Z):
     """bordi laterali del corridoio disegnato: v6 = banda attorno al percorso curvo; v7 = inviluppo delle due ipotesi (percorso curvo e dritto)"""
-    if MODE != "v7": return xc - wband(Z), xc + wband(Z)
+    if not V7: return xc - wband(Z), xc + wband(Z)
     w = wband(Z) + EXTRA * Z
     return min(xc, 0.0) - w, max(xc, 0.0) + w   # (l'arco puro, terza ipotesi, vale per la classificazione degli oggetti; il disegno mostra l'inviluppo dritto/decrescente)
 
@@ -55,8 +57,31 @@ def corr_edges(xc, Z):
 def need_hits(r):
     """fotogrammi richiesti perche' un oggetto conti come candidato/si disegni: blob 8 (v6); in v7 sotto 5 m anche i blob 3"""
     if r["src"] != "blob": return CONFIRM
-    if MODE == "v7" and r["Z"] < ZNEAR_BLOB: return HITS_BLOB_NEAR
+    if V7 and r["Z"] < ZNEAR_BLOB: return HITS_BLOB_NEAR
     return HITS_BLOB
+
+
+def inside_frac(b):
+    """frazione dell'area del box dentro l'immagine rettificata W x H"""
+    a = max(1e-9, (b[2] - b[0]) * (b[3] - b[1]))
+    return max(0, min(b[2], W) - max(b[0], 0)) * max(0, min(b[3], H) - max(b[1], 0)) / a
+
+
+MIN_INSIDE = 0.5      # v8: un box con meno del 50% dentro l'immagine non puo' essere primo ostacolo
+H_BASE_MIN, Z_BASE_MAX = 0.25, 5.0   # v8: base a meno di 0.25 m dal piano strada (come hmin delle versioni 2/3); regola solo sotto 5 m
+BASE_EXEMPT = ("persona", "veicolo")
+
+
+def base_height(r, gp):
+    """altezza (m) sul piano strada del punto piu' basso del box alla distanza misurata Z: h = CAM_H (d - d_g)/d, d = F B / Z, d_g = disparita' della strada nella riga y1 del box
+    (stessa formula di depth_seg_001.obstacles). None se la base non e' visibile (box tagliato dal bordo basso) o se non c'e' piano."""
+    if gp is None: return None
+    b = r["box"]
+    if b[3] >= H - 6: return None
+    ga, gvh, gb = gp
+    d = F_PX * B_M / max(r["Z"], 0.3); dg = ga * (b[3] - gvh)
+    if dg <= 0: return D.CAM_H
+    return float(D.CAM_H * (d - dg) / d)
 
 
 def iou(a, b):
@@ -87,6 +112,11 @@ class Track:
 
     @staticmethod
     def sig(Z): return float(np.hypot(0.03 * Z, Z * Z * 0.4 / (F_PX * B_M)))
+
+    def box_now(s):
+        """box nella posizione corrente del centro (tr.cen e' gia' stato avanzato di vel+rot a ogni fotogramma perso): v8 usa questo, NON un ulteriore passo di vel"""
+        w = s.box[2] - s.box[0]; h = s.box[3] - s.box[1]
+        return [s.cen[0] - w / 2, s.cen[1] - h / 2, s.cen[0] + w / 2, s.cen[1] + h / 2]
 
     def pred_box(s, rot=0.0):
         c = s.cen + s.vel + np.array([rot, 0.0]); w = s.box[2] - s.box[0]; h = s.box[3] - s.box[1]
@@ -156,10 +186,10 @@ def run_tracking(frames, ego, famv2):
         for tr in tracks:
             if tr.hits >= CONFIRM and tr.miss <= COAST:
                 tr.fam = max(set(tr.fams[-15:]), key=tr.fams[-15:].count)
-                pb = [int(v) for v in tr.pred_box(0.0)] if tr.miss else list(tr.o["box"])
+                pb = ([int(v) for v in (tr.box_now() if V8 else tr.pred_box(0.0))]) if tr.miss else list(tr.o["box"])
                 zf = float(tr.x[0]); zr = float(tr.o["Z_picco"]); zu = zf
-                if MODE == "v7" and not tr.miss and zf - zr > Z_RAW_GAP and zf < Z_RAW_MAXZ: zu = zr    # punto 3: il filtro non allontana: vince la grezza (piu' vicina)
-                rows.append(dict(id=tr.id, fam=tr.fam, src=tr.src, classe=tr.classe, Z=zu, Zf=zf, rawfix=zu != zf, w=float(tr.x[1]), Zraw=float(tr.o["Z_picco"]), tan=float(tr.tan), box=pb, poly=None if tr.miss else tr.o["poly"],
+                if V7 and not tr.miss and zf - zr > Z_RAW_GAP and zf < Z_RAW_MAXZ: zu = zr    # punto 3: il filtro non allontana: vince la grezza (piu' vicina)
+                rows.append(dict(inside=inside_frac(pb), id=tr.id, fam=tr.fam, src=tr.src, classe=tr.classe, Z=zu, Zf=zf, rawfix=zu != zf, w=float(tr.x[1]), Zraw=float(tr.o["Z_picco"]), tan=float(tr.tan), box=pb, poly=None if tr.miss else tr.o["poly"],
                                  decl=bool(np.mean(tr.decl[-8:]) > 0.5), sosp=bool(np.mean(tr.sosp[-8:]) > 0.5), ext=tr.o.get("ext", False), hits=tr.hits, coast=tr.miss > 0, track=tr))
         per.append(rows)
     return per
@@ -168,21 +198,25 @@ def run_tracking(frames, ego, famv2):
 def corridor_logic(per, frames, ego):
     """per ogni fotogramma: arco (k), appartenenza arco/dritta con isteresi, primo ostacolo (isteresi 0.5 m)"""
     res = []; prev_first = {"arc": None, "str": None}
-    for fr, rows in zip(frames, per):
-        k = float(ego.at(fr["t_ms"], "k")); pz, px = path_xz(k)
+    for fi, (fr, rows) in enumerate(zip(frames, per)):
+        k = float(ego.at(fr["t_ms"], "k")); pz, px = path_xz(k); gpf = smooth_gp(frames, fi) if V8 else None
         for r in rows:
             Z = r["Z"]; X = r["tan"] * Z; r["X"] = X
             dx_arc = X - float(np.interp(Z, pz, px)); tr = r["track"]
-            lim = (wband(Z) + (EXTRA * Z if MODE == "v7" else 0.0)) * (1.15 if tr.in_arc else 1.0)
+            lim = (wband(Z) + (EXTRA * Z if V7 else 0.0)) * (1.15 if tr.in_arc else 1.0)
             tr.in_arc = abs(dx_arc) <= lim; r["in_arc"] = tr.in_arc
             r["in_str"] = abs(X) <= wband(Z)
-            if MODE == "v7":   # punto 2: corridoio = unione delle ipotesi (percorso curvo O dritto), ognuna con la sua banda
+            if V7:   # punto 2: corridoio = unione delle ipotesi (percorso curvo O dritto), ognuna con la sua banda
                 lim2 = (wband(Z) + EXTRA * Z) * (1.15 if tr.in_str else 1.0)
                 tr.in_str = abs(X) <= lim2
                 r["in_arc_pure"] = r["in_arc"]; r["in_arc"] = bool(r["in_arc"] or tr.in_str); r["in_str"] = bool(r["in_str"] or tr.in_str)
                 if PURE and not r["in_arc"]:
                     r["in_arc"] = bool(abs(X - float(x_arc(k, Z))) <= wband(Z) + EXTRA * Z)
             r["cand"] = (not r["decl"]) and (not r["sosp"]) and r["hits"] >= need_hits(r)
+            r["fuori_img"] = bool(V8 and r["inside"] < MIN_INSIDE)
+            hb = base_height(r, gpf) if (V8 and r["Z"] < Z_BASE_MAX and r["fam"] not in BASE_EXEMPT) else None
+            r["h_base"] = hb; r["senza_base"] = bool(hb is not None and hb >= H_BASE_MIN)
+            if r["fuori_img"] or r["senza_base"]: r["cand"] = False
         first = {}
         for key, flag in (("arc", "in_arc"), ("str", "in_str")):
             c = [r for r in rows if r[flag] and r["cand"]]
@@ -241,7 +275,7 @@ def draw(img, fr, rows, cs, gp, zthumb, ego, sess, t0, i):
             if 0 < pts[0][1] < H - 10:
                 cv2.line(out, pts[0], pts[1], CORR, 1, cv2.LINE_AA); shadow(out, min(pts[0][0], pts[1][0]) + 8, pts[0][1] - 5, f"{Zt} m", 0.5, CORR, 1)
     first = cs["first"]["arc"]; fid = None if first is None else first["id"]
-    draw_rows = [r for r in rows if not r["coast"] and r["Z"] <= 40 and not r["decl"] and not (r["src"] == "blob" and r["hits"] < need_hits(r)) and not r["sosp"]
+    draw_rows = [r for r in rows if not r["coast"] and r["Z"] <= 40 and not r["decl"] and not (r["src"] == "blob" and r["hits"] < need_hits(r)) and not r["sosp"] and not r.get("fuori_img") and not r.get("senza_base")
                  and (r["src"] != "blob" or (r["in_arc"] and r["Z"] <= 8)) and (r["fam"] in ("persona", "veicolo", "bici-moto", "paletto-palo", "barriera-cancello", "ostacolo") or r["in_arc"] or r["Z"] < 8)]
     solid = [r for r in draw_rows if r["src"] != "blob"]
     cont_ = lambda a, b: max(0, min(a[2], b[2]) - max(a[0], b[0])) * max(0, min(a[3], b[3]) - max(a[1], b[1])) / max(1e-9, (a[2] - a[0]) * (a[3] - a[1]))
@@ -257,7 +291,7 @@ def draw(img, fr, rows, cs, gp, zthumb, ego, sess, t0, i):
         if r["poly"] is not None and len(r["poly"]) >= 3: cv2.polylines(out, [np.asarray(r["poly"], np.int32)], True, fc, th, cv2.LINE_AA)
         else: b = r["box"]; cv2.rectangle(out, (b[0], b[1]), (b[2], b[3]), fc, th)
     for r in [q for q in rows if not q["coast"]]:   # scartati/declassati: contorno grigio sottile se vicini
-        if (r["decl"] or r["sosp"]) and r["Z"] < 8 and r["poly"] is not None and len(r["poly"]) >= 3: cv2.polylines(out, [np.asarray(r["poly"], np.int32)], True, (110, 110, 110), 1, cv2.LINE_AA)
+        if (r["decl"] or r["sosp"] or r.get("senza_base")) and r["Z"] < 8 and r["poly"] is not None and len(r["poly"]) >= 3: cv2.polylines(out, [np.asarray(r["poly"], np.int32)], True, (110, 110, 110), 1, cv2.LINE_AA)
     if first is not None and not first["coast"]:
         b = first["box"]; cv2.rectangle(out, (b[0] - 4, b[1] - 4), (b[2] + 4, b[3] + 4), (255, 255, 255), 3)
     placed = []
