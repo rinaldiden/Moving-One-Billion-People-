@@ -1,7 +1,7 @@
 {
  "_cosa": "Tabella UNICA delle distanze/soglie che attivano freno e sterzo. Il codice (depth video, ombra, planner, allievo sul Pi) le LEGGE da qui, mai numeri scritti nel codice. Daniele 2026-11-12.",
  "unita": "asmile-001",
- "stato": "PROPOSTA — valori da fissare da Daniele; decel_frenata da misurare col BAM freno (#001 non ancora tarato)",
+ "stato": "SEGNAPOSTO da formule — da SOSTITUIRE con valori estratti dalle guide di #001 (insegnante della flotta) e validati da Daniele",
  "versione": 1,
  "data": "2026-11-12",
  "parametri": {
@@ -91,5 +91,10 @@
    "rallenta_entro_m": 30.07,
    "bordo_margine_m": 0.65
   }
- ]
+ ],
+ "fonte_valori": {
+  "oggi": "formule con parametri stimati",
+  "obiettivo": "estratti dalle guide di asmile-001 (event-miner) + validazione umana (Daniele)",
+  "validato_da": null
+ }
 }
