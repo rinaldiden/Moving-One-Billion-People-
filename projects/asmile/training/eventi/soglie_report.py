@@ -14,7 +14,8 @@ def f(t, d=2):
 SCET = 'agents/prove/eventi_scettico_20261112/ev.csv'      # estrazione indipendente (circ 0.3477), 20 stop
 def stop_puliti(c):
     e = pd.read_csv(SCET)
-    e = e[(e.v1 < 2) & (e.bomax < 1) & (e.lim < 0.2)].copy()          # CORREZIONE 1: servo <1 gr E lim_zone attiva <0.2
+    e = e[(e.v1 > -1.0) & (e.v1 < 2) & (e.bomax < 1) & (e.lim < 0.2)].copy()   # v1 < -1 km/h = encoder all indietro: scartato (piccoli negativi >-1 = overshoot dello smoothing a bici ferma, validi)
+    #         # CORREZIONE 1: servo <1 gr E lim_zone attiva <0.2
     k = float(c) / 0.3477
     e['v0_kmh'] = e.v0 * k; e['sp_m'] = e.sp * k; e['a_mean'] = e.am * k; e['dur_s'] = e.dur
     e['fascia'] = [band(x) for x in e.v0_kmh]
@@ -64,6 +65,11 @@ off2 = float(np.percentile(st2.sp_m.values - A2 @ np.array([b2, g2]), 75))
 def sp75(v, b=beta, g=gamma, of=off): return max(0.0, b * v + g + of)
 def sp75_2(v): return max(0.0, b2 * v + g2 + off2)
 rows = []; table = []
+def _fitx(x):
+    vv_ = x.v0_kmh.values / 3.6; A_ = np.c_[vv_, np.ones_like(vv_)]; bb, gg = np.linalg.lstsq(A_, x.sp_m.values, rcond=None)[0]
+    return bb, gg, float(np.percentile(x.sp_m.values - A_ @ np.array([bb, gg]), 75))
+st8 = st[[any(abs(t_ - tv) < 0.3 for tv in o['b'][o['b'].classe == 'stop_umano'].t0) for t_ in st.t0]]
+bv, gv, ov_ = _fitx(st8)
 tab_new = []
 # PROPOSTA v2 (giro 1, fit su 15 stop contaminati dal servo): serve solo come pavimento per le righe senza dati puliti
 V2 = {3: (3.45, 5.17), 5: (4.62, 6.92), 8: (6.34, 9.52), 10: (7.51, 11.27), 12: (8.66, 12.98), 15: (10.40, 15.61), 20: (13.57, 20.36), 25: (20.05, 30.08)}
@@ -73,20 +79,24 @@ for r in base['tabella_per_velocita']:
     kmh, v = r['kmh'], r['v_ms']
     band_row = next((x for x in o['rows'] if x['fascia'] == kmh), None)
     n = band_row['n'] if band_row else 0
-    fe = sp75(v) + v * P['t_latenza_s'] + P['cuscinetto_m']          # fit pulito + latenza + cuscinetto (segnaposto)
+    lc = v * P['t_latenza_s'] + P['cuscinetto_m']
+    f_fit = sp75(v) + lc                                             # (a) fit pulito p75 + latenza + cuscinetto
+    f_ver = max(0.0, bv * v + gv + ov_) + lc                         # (b) variante coi soli stop verificati col GPS
+    xb = st[st.fascia == kmh]
+    f_p75 = (float(np.percentile(xb.sp_m, 75)) + lc) if len(xb) >= 2 else 0.0   # (c) p75 osservato in banda (n>=2)
+    fe = max(f_fit, f_ver, f_p75)                                    # riga = MASSIMO fra (a), (b), (c)
     ok_range = kmh < 10                              # dentro il campo dei dati puliti
     if ok_range:
         fr = max(fe, r['frena_entro_m'])                             # mai piu corta del segnaposto
         rl = max(1.5 * fr, v * P['ttc_avviso_s'], r['rallenta_entro_m'])
-        if n >= NMIN: stato, cls = 'solida', 'solida'
-        elif n >= 1: stato, cls = 'debole', 'debole'
-        else: stato, cls = 'debole', 'debole'
-        stato = 'dalle guide: %s (n stop puliti in banda=%d, fit pulito n=%d, v0 max %.1f km/h)' % (cls, n, len(st), VMAX_PULITO)
+        stato = ''
     else:
         fr = max(r['frena_entro_m'], V2[kmh][0], fe)
         rl = max(r['rallenta_entro_m'], V2[kmh][1], 1.5 * fr, v * P['ttc_avviso_s'])
-        cls = 'segnaposto'
         stato = 'segnaposto: servono stop >10 km/h senza limiter (max di segnaposto, proposta v2, fit pulito)'
+    cls = 'solida' if n >= 10 else 'media' if n >= 5 else 'debole' if n >= 2 else 'segnaposto'
+    if not ok_range: cls = 'segnaposto'
+    if ok_range: stato = 'dalle guide: %s (n stop puliti in banda=%d; max di fit %.2f, verificati-GPS %.2f, p75-banda %.2f)' % (cls, n, f_fit, f_ver, f_p75)
     fr = max(fr, prev_f); rl = max(rl, prev_r, fr)                   # tabella crescente
     prev_f, prev_r = fr, rl
     tab_new.append(dict(kmh=kmh, v_ms=v, frena_entro_m=round(fr, 2), rallenta_entro_m=round(rl, 2),
@@ -127,7 +137,7 @@ def w(x=''): L.append(x)
 w('# Soglie dalle guide di #001 - 2026-11-12 (event-miner, giro 2 dopo scettico)')
 w()
 w('> ## Per Daniele (5 righe, da validare)')
-w('> Frenata di routine di Daniele misurata su %d stop completi PULITI (servo <1 gr e limiter non attivo), tutti a v0 <= %.1f km/h. Sopra 10 km/h non c e nessuno stop senza limiter: quelle righe sono segnaposto.' % (len(st), VMAX_PULITO))
+w('> Frenata di routine di Daniele misurata su %d stop completi PULITI (servo <1 gr e limiter non attivo), tutti a v0 <= %.1f km/h (scartato lo stop a 5617 s: encoder all indietro, v finale negativa). Sopra 10 km/h non c e nessuno stop senza limiter: quelle righe sono segnaposto.' % (len(st), VMAX_PULITO))
 w('>')
 w('> | km/h | frena entro (m) | rallenta entro (m) | n stop puliti | qualita |')
 w('> |---|---|---|---|---|')
@@ -135,7 +145,7 @@ for t in tab_new:
     if t['kmh'] in (5, 8, 10, 12, 15):
         w('> | %d | %.2f | %.2f | %d | **%s** |' % (t['kmh'], t['frena_entro_m'], t['rallenta_entro_m'], t['n_banda'], t['solidita']))
 w('>')
-w('> Solida = n>=5 stop puliti nella banda; debole = 1-4; segnaposto = nessun dato pulito a quella velocita (valore = max di segnaposto, proposta precedente e fit). Latenza 0.5 s e cuscinetto 0.5 m sono segnaposto in tutte le righe.')
+w('> Metodo: ogni riga = MASSIMO fra (a) fit sui stop puliti (p75 residui), (b) lo stesso fit coi soli stop verificati col GPS, (c) p75 osservato nella banda (se n>=2), tutti + latenza 0.5 s + cuscinetto 0.5 m (segnaposto, non dalle guide); mai sotto il segnaposto, tabella crescente. Qualita dal numero di stop puliti nella banda: solida n>=10, media 5-9, debole 2-4, segnaposto 0-1 (e ogni riga >=10 km/h, dove non ci sono dati puliti).')
 w('> **Per completarla serve un giro con il limiter SPENTO**: frenate normali e qualche frenata decisa a 10, 15 e 20 km/h (fino a fermarsi), sempre in sicurezza, su tratto libero e solo col tuo vai. Servono almeno 5 stop per fascia; i dati di curva e bordi restano a parte (sterzo = solo indicativo, bordi in arrivo da v10).')
 w()
 w('Script: training/eventi/soglie_dalle_guide.py (estrazione) + soglie_report.py (tabelle, proposta). Eventi: training/eventi/out_guide_20261112_c0.3477/ e _c0.3374/ (frenate.csv, sterzate.csv, velocita_1hz.csv, segmenti.json). Percezione solo letta da training/depth/out_20261112_v9 (tracks_20261109_094146.pkl).')
@@ -152,7 +162,7 @@ w()
 w('## 1. FRENATE (%d eventi decel >=0.3 m/s2 per >=1 s, dv>=0.5 m/s)' % len(b))
 cl = b.classe.value_counts().to_dict()
 w('Classi (pipeline, soglie_dalle_guide.py): stop_umano=%d (v finale <2 km/h E servo <1 gr E frazione lim_zone attiva <0.2), stop_limiter=%d (stop con servo/limiter attivo: contaminati, ESCLUSI dal fit), umano=%d (rallentamenti dolci, servo <5 gr), limiter=%d (freno automatico, escluso).' % (cl.get('stop_umano', 0), cl.get('stop_limiter', 0), cl.get('umano', 0), cl.get('limiter', 0)))
-w('NOTA SET DEL FIT: la pipeline (con la condizione di coerenza encoder/GPS sui tratti) trova solo %d stop puliti; il fit usa i %d stop puliti trovati dall estrazione indipendente dello scettico (agents/prove/eventi_scettico_20261112/ev.csv: stessi criteri, ma include anche stop in tratti brevi/senza GPS e uno nel tratto 5617 s con rapporto encoder/GPS 1.51, quindi meno verificabile). Con o senza quell ultimo, vedi sensibilita sotto.' % (cl.get('stop_umano', 0), len(st)))
+w('NOTA SET DEL FIT: la pipeline (con la condizione di coerenza encoder/GPS sui tratti) trova solo %d stop puliti; il fit usa i %d stop puliti trovati dall estrazione indipendente dello scettico (agents/prove/eventi_scettico_20261112/ev.csv: stessi criteri, ma include anche stop in tratti brevi/senza GPS ma il filtro v1<0 elimina lo stop del tratto 5617 s (encoder all indietro, enc/GPS 1.51)). (giro 3: quello stop e ora SCARTATO col filtro v finale < -1 km/h, contatore encoder che scende; piccoli negativi da overshoot dello smoothing a bici ferma restano).' % (cl.get('stop_umano', 0), len(st)))
 w()
 w('### 1a. Stop PULITI di Daniele per fascia di velocita iniziale (0.3477; [0.3374])')
 w('| fascia km/h | n (0.3477/0.3374) | v0 p50 | decel media p25/p50/p75 m/s2 | (decel picco: n/d nel set puliti) | durata s p50 | spazio di frenata p25/p50/p75 m | note |')
@@ -172,10 +182,9 @@ def _fit(x):
     oo = float(np.percentile(x.sp_m.values - A_ @ np.array([bb, gg]), 75)); return bb, gg, oo
 def _fe(x, kmh):
     bb, gg, oo = _fit(x); v_ = kmh / 3.6; return bb * v_ + gg + oo + v_ * P['t_latenza_s'] + P['cuscinetto_m']
-x12 = st[~((st.t0 > 5625) & (st.t0 < 5626))]
-st8 = st[[any(abs(t_ - tv) < 0.3 for tv in b[b.classe == 'stop_umano'].t0) for t_ in st.t0]]
+x12 = st[st.v0_kmh > 4.5]
 w('Sensibilita del fit pulito (frena_entro in m a 5 / 8 / 10 km/h = fit + latenza + cuscinetto; n):')
-for lab, x in (('13 stop (scelto)', st), ('12 senza lo stop nel tratto 5617 s (GPS 1.51)', x12), ('%d stop verificati col GPS dalla pipeline' % len(st8), st8)):
+for lab, x in (('tutti i puliti (scelto)', st), ('senza stop <4.5 km/h', x12), ('%d stop verificati col GPS dalla pipeline' % len(st8), st8)):
     bb, gg, oo = _fit(x)
     w('- %s: n=%d, sp=%.2f*v%+.2f, p75 +%.2f; frena_entro %.2f / %.2f / %.2f' % (lab, len(x), bb, gg, oo, _fe(x, 5), _fe(x, 8), _fe(x, 10)))
 w()

@@ -21,8 +21,8 @@
    "bordo": "margine laterale libero minimo da muro/cordolo/marciapiede = bordo_base_m + bordo_per_ms * v",
    "altezza_max_ostacolo_m": "Daniele: da terra a 2 m davanti = ostacolo anche sospeso; sopra 2 m ignorato",
    "larghezza_asmile_m": "pi/autonomous/object_depth.py ASMILE_WIDTH_M",
-   "decel_guide_p25_ms2": "p25 delle decel medie di 13 stop completi di Daniele (puliti: servo<1 gr e lim_zone<0.2, pooled, p50 0.52, p75 0.60). Cresce con la velocita (0.4 a 5 km/h, 1.1 a 12): solo riferimento; decel_frenata_ms2 (1.5, segnaposto) resta per le formule fuori tabella; la tabella usa la distanza di frenata osservata.",
-   "frena_entro_guide": "distanza di frenata = fit lineare sp=2.34*v-0.95 (+ offset p75 residui 0.49 m) su 13 stop; + v*t_latenza + cuscinetto (segnaposto). Ruota 0.3477 m/giro enc."
+   "decel_guide_p25_ms2": "p25 delle decel medie di 12 stop completi di Daniele (puliti: servo<1 gr e lim_zone<0.2, pooled, p50 0.50, p75 0.59). Cresce con la velocita (0.4 a 5 km/h, 1.1 a 12): solo riferimento; decel_frenata_ms2 (1.5, segnaposto) resta per le formule fuori tabella; la tabella usa la distanza di frenata osservata.",
+   "frena_entro_guide": "distanza di frenata = fit lineare sp=2.34*v-0.95 (+ offset p75 residui 0.54 m) su 12 stop; + v*t_latenza + cuscinetto (segnaposto). Ruota 0.3477 m/giro enc."
   },
   "decel_guide_p25_ms2": 0.45
  },
@@ -41,10 +41,10 @@
   {
    "kmh": 3,
    "v_ms": 0.83,
-   "frena_entro_m": 2.39,
-   "rallenta_entro_m": 3.58,
+   "frena_entro_m": 3.34,
+   "rallenta_entro_m": 5.01,
    "bordo_margine_m": 0.34,
-   "origine": "dalle guide: debole (n stop puliti in banda=3, fit pulito n=13, v0 max 9.5 km/h)",
+   "origine": "dalle guide: debole (n stop puliti in banda=3; max di fit 2.44, verificati-GPS 3.34, p75-banda 1.98)",
    "solidita": "debole",
    "n_banda": 3,
    "frenata_guida_p25_p50_p75_m": [
@@ -57,26 +57,26 @@
   {
    "kmh": 5,
    "v_ms": 1.39,
-   "frena_entro_m": 3.98,
-   "rallenta_entro_m": 5.97,
+   "frena_entro_m": 4.56,
+   "rallenta_entro_m": 6.83,
    "bordo_margine_m": 0.37,
-   "origine": "dalle guide: solida (n stop puliti in banda=7, fit pulito n=13, v0 max 9.5 km/h)",
-   "solidita": "solida",
-   "n_banda": 7,
+   "origine": "dalle guide: media (n stop puliti in banda=6; max di fit 4.03, verificati-GPS 4.56, p75-banda 4.23)",
+   "solidita": "media",
+   "n_banda": 6,
    "frenata_guida_p25_p50_p75_m": [
-    2.15,
-    2.7,
-    3.08
+    1.95,
+    2.62,
+    3.04
    ],
    "origine_bordo": "segnaposto: in arrivo da v10"
   },
   {
    "kmh": 8,
    "v_ms": 2.22,
-   "frena_entro_m": 6.33,
-   "rallenta_entro_m": 9.5,
+   "frena_entro_m": 6.39,
+   "rallenta_entro_m": 9.58,
    "bordo_margine_m": 0.41,
-   "origine": "dalle guide: debole (n stop puliti in banda=2, fit pulito n=13, v0 max 9.5 km/h)",
+   "origine": "dalle guide: debole (n stop puliti in banda=2; max di fit 6.39, verificati-GPS 6.36, p75-banda 6.33)",
    "solidita": "debole",
    "n_banda": 2,
    "frenata_guida_p25_p50_p75_m": [
@@ -89,8 +89,8 @@
   {
    "kmh": 10,
    "v_ms": 2.78,
-   "frena_entro_m": 7.92,
-   "rallenta_entro_m": 11.88,
+   "frena_entro_m": 7.98,
+   "rallenta_entro_m": 11.96,
    "bordo_margine_m": 0.44,
    "origine": "segnaposto: servono stop >10 km/h senza limiter (max di segnaposto, proposta v2, fit pulito)",
    "solidita": "segnaposto",
@@ -105,8 +105,8 @@
   {
    "kmh": 12,
    "v_ms": 3.33,
-   "frena_entro_m": 9.48,
-   "rallenta_entro_m": 14.22,
+   "frena_entro_m": 9.54,
+   "rallenta_entro_m": 14.3,
    "bordo_margine_m": 0.47,
    "origine": "segnaposto: servono stop >10 km/h senza limiter (max di segnaposto, proposta v2, fit pulito)",
    "solidita": "segnaposto",
@@ -117,8 +117,8 @@
   {
    "kmh": 15,
    "v_ms": 4.17,
-   "frena_entro_m": 11.86,
-   "rallenta_entro_m": 17.79,
+   "frena_entro_m": 11.92,
+   "rallenta_entro_m": 17.88,
    "bordo_margine_m": 0.51,
    "origine": "segnaposto: servono stop >10 km/h senza limiter (max di segnaposto, proposta v2, fit pulito)",
    "solidita": "segnaposto",
@@ -129,8 +129,8 @@
   {
    "kmh": 20,
    "v_ms": 5.56,
-   "frena_entro_m": 15.8,
-   "rallenta_entro_m": 23.71,
+   "frena_entro_m": 15.86,
+   "rallenta_entro_m": 23.79,
    "bordo_margine_m": 0.58,
    "origine": "segnaposto: servono stop >10 km/h senza limiter (max di segnaposto, proposta v2, fit pulito)",
    "solidita": "segnaposto",

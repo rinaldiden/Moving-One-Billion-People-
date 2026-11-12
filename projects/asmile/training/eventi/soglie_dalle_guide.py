@@ -97,6 +97,8 @@ def brake_events(d, seg, pt, cs):
             v0 = float(d.v15.values[i]); v1 = float(d.v15.values[j])
             if dur < 1.0 or v0 - v1 < 0.5 or v0 < 0.7:
                 continue
+            if v1 * 3.6 < -1.0:      # giro 3: encoder all indietro (v finale < -1 km/h) = dato non valido, scartato (negativi piccoli = overshoot smoothing)
+                continue
             bo = d.brake_out_deg.values[max(0, i - 25):j + 1]
             lim = bool(np.nanmax(bo) > 5 or np.nanmean(bo) > 2) if np.isfinite(bo).any() else False
             limsrc = d.lim_zone.iloc[i:j + 1].isin(['OVER', 'RELEASE', 'HYST']).mean() if 'lim_zone' in d else 0
