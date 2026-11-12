@@ -18,8 +18,10 @@ from depth_ncc_patch_001 import picco_vicino
 cv2.setNumThreads(2)
 PAD = NDISP = 224
 FILL_MIN_AREA = 3000
+ZNEAR = 3.0; ZN_OK = 0.5   # v3: blob con Z<3 m: almeno SUP_MIN dei pixel candidati con ZNCC 15x15 > 0.5 alla disparita' misurata (verifica L-R a piena risoluzione)
+SUP_MIN = 0.20; SCARTATI = []
 DENS_NEAR = 0.35   # blob con Z<1.9 m (passata vicina) richiedono densita pixel candidati >=0.35 del box (falsi asfalto 0.22-0.29, bici vera 0.49: soglia dichiarata su 4 blob, POCHI)
-OUT = os.path.join(D.HERE, "out_20261112_v2")
+OUT = os.path.join(D.HERE, "out_20261112_v3")
 _sg = cv2.StereoSGBM_create(minDisparity=0, numDisparities=NDISP, blockSize=7, P1=8 * 49, P2=32 * 49, disp12MaxDiff=1,
                             uniquenessRatio=8, speckleWindowSize=150, speckleRange=2, preFilterCap=31,
                             mode=cv2.STEREO_SGBM_MODE_SGBM_3WAY)
@@ -61,6 +63,15 @@ def segnale_oltre_zmin(L, valid):
     return int(cells.sum()), big, cells
 
 
+def zncc_map(L, R, dmap, k=15):
+    """ZNCC locale (finestra k x k) fra L(u,v) e R(u-d,v) con disparita' per pixel dmap (R warpata)."""
+    vv, uu = np.mgrid[0:800, 0:1280].astype(np.float32)
+    Rw = cv2.remap(R.astype(np.float32), uu - dmap.astype(np.float32), vv, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+    Lf = L.astype(np.float32); bf = lambda x: cv2.boxFilter(x, -1, (k, k))
+    mL, mR = bf(Lf), bf(Rw)
+    return (bf(Lf * Rw) - mL * mR) / np.sqrt(np.maximum((bf(Lf * Lf) - mL ** 2) * (bf(Rw * Rw) - mR ** 2), 1e-3))
+
+
 def colorize(Z, dmax=30.0):
     v = np.clip(np.nan_to_num(Z, nan=dmax) / dmax, 0, 1)
     c = cv2.applyColorMap((255 * (1 - v)).astype(np.uint8), cv2.COLORMAP_TURBO)
@@ -99,7 +110,7 @@ def main():
     ap = argparse.ArgumentParser(); ap.add_argument("session"); ap.add_argument("--max", type=int, default=10 ** 9)
     ap.add_argument("--noyolo", action="store_true")
     ap.add_argument("--frames", default=None, help="lista di fotogrammi (bypassa campionamento 1/s e v>0.3)")
-    ap.add_argument("--nonear", action="store_true"); ap.add_argument("--tag", default=""); a = ap.parse_args()
+    ap.add_argument("--nonear", action="store_true"); ap.add_argument("--nozn", action="store_true", help="disattiva la regola v3 (per confronto prima/dopo)"); ap.add_argument("--tag", default=""); a = ap.parse_args()
     sess = a.session if a.session.startswith("session_") else "session_" + a.session
     od = os.path.join(OUT, sess + a.tag); os.makedirs(os.path.join(od, "ov"), exist_ok=True)
     rc = D.Rect(); f_px, Bm = rc.f, rc.r["baseline_m"]; cx = rc.cx
@@ -110,6 +121,8 @@ def main():
         if v_all[i] > 0.3 and t[i] - last >= 1000:
             sel.append(i); last = t[i]
     sel = sel[:a.max]
+    global SUP_MIN
+    if a.nozn: SUP_MIN = -1.0
     if a.frames: sel = sorted(int(v) for v in a.frames.split(","))
     selset = set(sel)
     print(sess, "frame", len(t), "campionati (1/s, v>0.3):", len(sel), flush=True)
@@ -154,11 +167,11 @@ def main():
                     zp, fr, npop = picco_vicino(z); ys, xs = np.nonzero(m)
                     covered |= m > 0   # v2: coperto solo se l'oggetto YOLO e' stato davvero misurato (prima anche se scartato -> buco)
                     X = (float(xs.mean()) - cx) * zp / f_px
-                    objs.append(dict(dens=None, classe=r.names[int(r.boxes.cls[k])], conf=float(r.boxes.conf[k]), Z_med=float(np.median(z)), Z_picco=zp,
+                    objs.append(dict(dens=None, zn_obj=None, zn_gnd=None, h_med=None, sup=None, classe=r.names[int(r.boxes.cls[k])], conf=float(r.boxes.conf[k]), Z_med=float(np.median(z)), Z_picco=zp,
                                      frac_picco=fr, n_pop=npop, n_valid=int(len(z)), frac_valid=float(len(z) / me.sum()), X=float(X),
                                      box=[int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max())], poly=poly.astype(np.int32)))
         # ostacoli senza classe nel corridoio
-        gp = ground_plane(disp_full, cx); blobs = []
+        gp = ground_plane(disp_full, cx); blobs = []; zmaps = None; scart = []
         if gp is not None:
             ga, gvh, gb = gp
             vv, uu = np.mgrid[0:800, 0:1280].astype(np.float32)
@@ -179,11 +192,22 @@ def main():
                 tocca = x <= 4 or y + hh >= 796 or x + w >= 1276     # v2: oggetto tagliato dal bordo immagine (vicino): minimo 0.15 m invece di 0.30
                 if w < 0.12 * f_px / zp or hh < (0.15 if tocca else 0.30) * f_px / zp: continue
                 dens = float(cand0[lab == q].sum()) / float(w * hh)
+                if zp < ZNEAR:
+                    if zmaps is None:
+                        zmaps = (zncc_map(L, R, np.where(valid, disp, 0)), zncc_map(L, R, np.maximum(dg, 0)))
+                    pm = (lab == q) & cand0
+                    zo, zg_ = float(np.median(zmaps[0][pm])), float(np.median(zmaps[1][pm])); hm = float(np.median(h[pm])); sup = float((zmaps[0][pm] > ZN_OK).mean())
+                else: zo = zg_ = hm = sup = None
+                if zp < ZNEAR and (sup < SUP_MIN or (zg_ >= zo and not a.nozn)):   # (2a) match non verificato, (2b) l'ipotesi 'strada' spiega le immagini almeno quanto l'ipotesi 'oggetto'
+                       # v3: disparita' vicina non verificata fotometricamente (asfalto vuoto) -> scartata, registrata
+                    scart.append(dict(frame=i, Z_picco=round(zp, 3), dens=round(dens, 3), zn_obj=round(zo, 3), zn_gnd=round(zg_, 3), sup=round(sup, 3), box=[int(x), int(y), int(x + w), int(y + hh)])); continue
                 if zp < 1.9 and dens < DENS_NEAR: continue   # v2: la passata vicina e' piu' rumorosa (asfalto): blob vicini solo se densi
-                blobs.append(dict(dens=round(dens, 3), classe="ostacolo", conf=0.0, Z_med=float(np.median(z)), Z_picco=zp, frac_picco=fr, n_pop=npop,
+                blobs.append(dict(dens=round(dens, 3), zn_obj=zo, zn_gnd=zg_, h_med=hm, sup=sup, classe="ostacolo", conf=0.0, Z_med=float(np.median(z)), Z_picco=zp, frac_picco=fr, n_pop=npop,
                                   n_valid=int(len(z)), frac_valid=1.0, X=float((x + w / 2 - cx) * zp / f_px), box=[int(x), int(y), int(x + w), int(y + hh)], poly=None))
         tt0 = time.time(); nc, big, _ = segnale_oltre_zmin(L, valid); t_sig = time.time() - tt0
-        allo = objs + blobs
+        allo = objs + blobs; SCARTATI.extend(scart)
+        for sc_ in scart:
+            b_ = sc_['box']; cv2.rectangle(ov, (b_[0], b_[1]), (b_[2], b_[3]), (0, 0, 255), 1); label(ov, b_[0], b_[1] + 2, f"SCARTATO {sc_['Z_picco']:.1f} m (sup {sc_['sup']:.2f})", (0, 0, 255), 0.5, 1)
         for o in allo:
             inb = abs(o["X"]) <= 1.5 + 0.03 * o["Z_picco"]; o["corridoio"] = bool(inb)
             col = (255, 0, 255) if o["poly"] is None else ((0, 255, 255) if inb else (200, 200, 200))
@@ -262,6 +286,7 @@ def main():
                 valid_frac_basso_mediana=float(np.median([r["valid_frac_basso"] for r in rows_f])),
                 frame_con_ostacolo_corridoio=int(sum(r["primo_corridoio_m"] is not None for r in rows_f)),
                 dist_enc_m=float(s_all[sel[-1]] - s_all[sel[0]]))
+    json.dump(SCARTATI, open(os.path.join(od, "scartati.json"), "w"))
     json.dump(summ, open(os.path.join(od, "summary.json"), "w"), indent=1)
     print(json.dumps(summ, indent=1))
 
