@@ -1,0 +1,29 @@
+{
+ "bias_gz_dps": 1.75,
+ "n_campioni": 35500,
+ "frac_v_gt_2": 0.4700845070422535,
+ "corr_giroscopio_vs_sterzo_v>2": {
+  "gx": 0.019,
+  "gy": -0.15,
+  "gz": -0.952
+ },
+ "lag_corr_yaw_vs_sterzo": {
+  "-0.3": 0.885,
+  "-0.1": 0.969,
+  "0.0": 0.977,
+  "0.1": 0.957,
+  "0.3": 0.858
+ },
+ "k_imu_vs_k_sterzo_v>2": {
+  "corr": 0.9956,
+  "rms_diff_1_per_m": 0.0057,
+  "rms_k_imu": 0.0516,
+  "c_fit_1_per_m_per_deg": 0.00968
+ },
+ "effetto_ruota_+3%": {
+  "v_scala": 1.0305,
+  "k_scala": 0.9704,
+  "ttc_scala": 0.9704,
+  "nota": "v e distanza percorsa +3.05% se si adotasse wheel_circum 0.3477: k = yaw/v scende del 3%, TTC = Z/(v-w) scende del 3%; Z stereo non cambia"
+ }
+}

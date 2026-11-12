@@ -1,0 +1,144 @@
+[
+ {
+  "sess": "session_20261109_093909",
+  "n_frames": 406,
+  "durata_s": 27.0,
+  "n_tracce_confermate": 112,
+  "vita_mediana_frame": 7.0,
+  "vita_p90": 77.9,
+  "tracce_ge_2s": 16,
+  "residuo_statici_vs_encoder_m_per_frame": {
+   "n": 2538,
+   "std_raw": 0.683,
+   "std_filtrato": 0.319,
+   "p95_abs_raw": 1.354,
+   "p95_abs_filtrato": 0.166
+  },
+  "salto_frame_su_frame_Z<25": {
+   "n": 2540,
+   "raw_mediana": 0.065,
+   "raw_p95": 1.357,
+   "raw_frac_gt_0p5m": 0.1421,
+   "filt_mediana": 0.036,
+   "filt_p95": 0.182,
+   "filt_frac_gt_0p5m": 0.0087
+  },
+  "pendenza_-dZ/ds_statici": {
+   "n": 8,
+   "raw_mediana": 0.987,
+   "filtrato_mediana": 0.992,
+   "nota": "attesa 1.0 (oggetto fermo, Z scende come la strada percorsa)"
+  },
+  "curvatura": {
+   "frame_k_abs_gt_0p03": 18,
+   "frame_k_abs_gt_0p01": 109,
+   "k_min": -0.019,
+   "k_max": 0.05
+  },
+  "primo_ostacolo": {
+   "frame_con_arco": 404,
+   "frame_con_dritta": 404,
+   "frame_diversi": 21,
+   "frame_diversi_in_curva": 9,
+   "frame_arco_libero_dritta_occupata": 0,
+   "frame_dritta_libera_arco_occupata": 0,
+   "cambi_id_arco": 7,
+   "cambi_id_dritta": 6
+  },
+  "escono_dal_ruolo_primo_per_arco": {
+   "frame": {
+    "senza_classe(blob)": 11
+   },
+   "tracce_distinte": {
+    "senza_classe(blob)": 1
+   }
+  },
+  "entrano_come_primo_per_arco": {
+   "frame": {},
+   "tracce_distinte": {}
+  },
+  "Z_primo_arco_vs_dritta_mediana_diff_m": 0.0,
+  "salti_Z_banner_primo_p95_m_per_frame": 0.079
+ },
+ {
+  "sess": "session_20261109_094146",
+  "n_frames": 1350,
+  "durata_s": 89.9,
+  "n_tracce_confermate": 997,
+  "vita_mediana_frame": 4.0,
+  "vita_p90": 21.0,
+  "tracce_ge_2s": 60,
+  "residuo_statici_vs_encoder_m_per_frame": {
+   "n": 3227,
+   "std_raw": 1.231,
+   "std_filtrato": 0.609,
+   "p95_abs_raw": 2.643,
+   "p95_abs_filtrato": 0.424
+  },
+  "salto_frame_su_frame_Z<25": {
+   "n": 5486,
+   "raw_mediana": 0.325,
+   "raw_p95": 2.992,
+   "raw_frac_gt_0p5m": 0.3828,
+   "filt_mediana": 0.194,
+   "filt_p95": 0.618,
+   "filt_frac_gt_0p5m": 0.0735
+  },
+  "pendenza_-dZ/ds_statici": {
+   "n": 23,
+   "raw_mediana": 1.124,
+   "filtrato_mediana": 1.138,
+   "nota": "attesa 1.0 (oggetto fermo, Z scende come la strada percorsa)"
+  },
+  "curvatura": {
+   "frame_k_abs_gt_0p03": 500,
+   "frame_k_abs_gt_0p01": 871,
+   "k_min": -0.251,
+   "k_max": 0.381
+  },
+  "primo_ostacolo": {
+   "frame_con_arco": 1217,
+   "frame_con_dritta": 1271,
+   "frame_diversi": 478,
+   "frame_diversi_in_curva": 283,
+   "frame_arco_libero_dritta_occupata": 85,
+   "frame_dritta_libera_arco_occupata": 31,
+   "cambi_id_arco": 199,
+   "cambi_id_dritta": 195
+  },
+  "escono_dal_ruolo_primo_per_arco": {
+   "frame": {
+    "altro": 27,
+    "paletto-palo": 65,
+    "veicolo": 99,
+    "senza_classe(blob)": 56,
+    "persona": 39
+   },
+   "tracce_distinte": {
+    "altro": 9,
+    "paletto-palo": 19,
+    "veicolo": 6,
+    "senza_classe(blob)": 13,
+    "persona": 5
+   }
+  },
+  "entrano_come_primo_per_arco": {
+   "frame": {
+    "paletto-palo": 24,
+    "senza_classe(blob)": 77,
+    "veicolo": 113,
+    "persona": 12,
+    "altro": 48
+   },
+   "tracce_distinte": {
+    "paletto-palo": 6,
+    "senza_classe(blob)": 17,
+    "veicolo": 9,
+    "persona": 5,
+    "altro": 8
+   }
+  },
+  "Z_primo_arco_vs_dritta_mediana_diff_m": 0.0,
+  "salti_Z_banner_primo_p95_m_per_frame": 3.431
+ }
+]

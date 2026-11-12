@@ -1,0 +1,34 @@
+[
+ {
+  "sess": "session_20261109_093909",
+  "frame_confrontati": 18,
+  "oggetti_v5": 158,
+  "ritrovati_iou07": 158,
+  "Z_ratio_mediana": 1.0,
+  "Z_ratio_p5_p95": [
+   1.0,
+   1.0
+  ],
+  "frac_Z_entro_1pct": 1.0,
+  "frac_Z_entro_5pct": 1.0,
+  "oggetti_v6": 169,
+  "oggetti_v6_senza_v5": 11,
+  "non_ritrovati_esempi": []
+ },
+ {
+  "sess": "session_20261109_094146",
+  "frame_confrontati": 81,
+  "oggetti_v5": 717,
+  "ritrovati_iou07": 717,
+  "Z_ratio_mediana": 1.0,
+  "Z_ratio_p5_p95": [
+   1.0,
+   1.0
+  ],
+  "frac_Z_entro_1pct": 1.0,
+  "frac_Z_entro_5pct": 1.0,
+  "oggetti_v6": 795,
+  "oggetti_v6_senza_v5": 78,
+  "non_ritrovati_esempi": []
+ }
+]

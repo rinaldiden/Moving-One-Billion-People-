@@ -14,8 +14,9 @@ import os, sys, json
 from collections import Counter, defaultdict
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 SESS = sys.argv[1] if len(sys.argv) > 1 else "session_20261109_094146"
-SRC = os.path.join(ROOT, "asmile-loggers", "_seg_sam3", SESS + "_001")
-DST = os.path.join(ROOT, "asmile-loggers", "_seg_sam3", SESS + "_001_v2")
+SUF = sys.argv[2] if len(sys.argv) > 2 else ""   # es. "_fluido" (v6): legge <sess>_001_fluido, scrive <sess>_001_fluido_v2
+SRC = os.path.join(ROOT, "asmile-loggers", "_seg_sam3", SESS + "_001" + SUF)
+DST = os.path.join(ROOT, "asmile-loggers", "_seg_sam3", SESS + "_001" + SUF + "_v2")
 IOU_MERGE, GAP, IOU_T = 0.80, 20, 0.25
 FAM = {"car": "veicolo", "van": "veicolo", "truck": "veicolo", "bus": "veicolo", "tractor": "veicolo",
        "person": "persona", "child": "persona", "stroller": "persona", "wheelchair": "persona",
