@@ -218,7 +218,7 @@ def main(argv=None):
 
     os.makedirs("/data/logging/vesc", exist_ok=True)
     log = open(time.strftime(f"/data/logging/vesc/sterzo_fluido_{a.modo}_%Y%m%d_%H%M%S{a.tag}.csv"), "w")
-    log.write("t,pos,lag_deg,v_est,v_ref,sp_deg,i_cmd,i_motor,i_coul,i_int,i_batt,v_batt,t_fet,t_mot,id,iq,duty,erpm,tach\n")
+    log.write("t_ms,t,pos,lag_deg,v_est,v_ref,sp_deg,i_cmd,i_motor,i_coul,i_int,i_batt,v_batt,t_fet,t_mot,id,iq,duty,erpm,tach\n")
     ser = serial.Serial(UART, BAUD, timeout=0.01)
 
     def stop():
@@ -293,7 +293,7 @@ def main(argv=None):
                     if q_fail >= 3: reason = "VESC muto"; break
                 else:
                     q_fail = 0; i_mot = im
-            log.write(f"{tc - t0:.4f},{p},{lag:.3f},{v:.2f},{v_ref:.2f},{sp:.3f},{i_cmd:.2f},{i_mot:.2f},{i_coul:.2f},{i_int:.2f},{TEL['i_batt']:.2f},{TEL['v_batt']:.1f},{TEL['t_fet']:.1f},{TEL['t_mot']:.1f},{TEL['id']:.2f},{TEL['iq']:.2f},{TEL['duty']:.3f},{TEL['erpm']:.0f},{TEL['tach']}\n")
+            log.write(f"{int(tc * 1000)},{tc - t0:.4f},{p},{lag:.3f},{v:.2f},{v_ref:.2f},{sp:.3f},{i_cmd:.2f},{i_mot:.2f},{i_coul:.2f},{i_int:.2f},{TEL['i_batt']:.2f},{TEL['v_batt']:.1f},{TEL['t_fet']:.1f},{TEL['t_mot']:.1f},{TEL['id']:.2f},{TEL['iq']:.2f},{TEL['duty']:.3f},{TEL['erpm']:.0f},{TEL['tach']}\n")
 
             # ---------------- sicurezze ----------------
             if a.modo == "vai" and (p - p0) * d <= -WRONG_COUNTS: reason = f"VERSO SBAGLIATO: encoder {p - p0:+d} count"; break

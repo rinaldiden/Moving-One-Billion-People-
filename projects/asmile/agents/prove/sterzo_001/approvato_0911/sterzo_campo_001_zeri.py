@@ -134,7 +134,7 @@ def main():
     signal.signal(signal.SIGTERM, lambda *_: stop.__setitem__(0, True))
     os.makedirs("/data/logging/vesc", exist_ok=True)
     log = open(time.strftime(f"/data/logging/vesc/sterzo_campo_{a.modo}_%Y%m%d_%H%M%S{a.tag}.csv"), "w")
-    log.write("t,pos,p_ref,theta,i_set,i_motor,tach,t_fet,t_mot\n")
+    log.write("t_ms,t,pos,p_ref,theta,i_set,i_motor,tach,t_fet,t_mot\n")
     dt = 1.0 / a.hz
     t0 = time.monotonic(); nxt = t0; k = 0; motivo = "fine"; im = 0.0
 
@@ -147,7 +147,7 @@ def main():
             if v is not None: im = v
         else:
             ser.reset_input_buffer()
-        log.write(f"{time.monotonic() - t0:.4f},{p},{p_ref:.1f},{theta % 360:.2f},{amp:.2f},{im:.2f},{TEL['tach']},{TEL['t_fet']},{TEL['t_mot']}\n")
+        _tm = time.monotonic(); log.write(f"{int(_tm * 1000)},{_tm - t0:.4f},{p},{p_ref:.1f},{theta % 360:.2f},{amp:.2f},{im:.2f},{TEL['tach']},{TEL['t_fet']},{TEL['t_mot']}\n")
         # 2026-11-13 (asmile-sicurezza): guardie in OGNI ciclo, anche in 'allinea' (che prima andava alla cieca)
         if stop[0]: raise Arresto("Ctrl-C / SIGTERM")
         if p is not None and not (LIM_SW[0] - 20 <= p <= LIM_SW[1] + 20): raise Arresto(f"pos {p} fuori dai limiti software {LIM_SW}")
