@@ -55,7 +55,9 @@ MASK_TEL = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5) | (1 
 T_MOT_STOP, T_FET_STOP = 60.0, 70.0   # C: si ferma prima del derating VESC (85/100)
 TEL = {"t_fet": 0.0, "t_mot": 0.0, "i_batt": 0.0, "v_batt": 0.0, "id": 0.0, "iq": 0.0, "duty": 0.0, "erpm": 0.0, "tach": 0}
 HZ = 400                        # comandi al secondo (2.5 ms) — Daniele 2026-11-09: "così è perfetto" a 400 Hz, 15 deg/s
-VEL_MAX_DEG_S = 30.0
+VEL_MAX_DEG_S = 45.0          # stop DURO di sicurezza (era 30: scattava al rilascio dopo uno strappo, ora c'e' l'anti-strappo)
+STRAPPO_DEG_S = 8.0           # deg/s oltre il riferimento = manubrio che si e' sbloccato -> spinta accumulata a zero
+TETTO_S = 0.2                 # s al tetto di corrente -> stop (Daniele 13/11: stacca se arriva ai 60 A, niente stallo che scalda)
 WRONG_COUNTS = 10
 
 # --- guadagni (in unita' di MANUBRIO: deg, deg/s; corrente in A che spinge l'encoder in SU) ---
@@ -238,7 +240,7 @@ def main(argv=None):
     except (OSError, ValueError): rip = {"+1": [0.0] * NB, "-1": [0.0] * NB}
     kd_ = "+1" if d > 0 else "-1"
     rt = rip.get(kd_, [0.0] * NB) if a.modo == "vai" else [0.0] * NB
-    t_arr = None
+    t_arr = None; t_tetto = None
     try:
         while True:
             tc = time.monotonic()
@@ -271,11 +273,15 @@ def main(argv=None):
                     i_int = max(min(i_int + 25.0 * dt * (1 if lag > 0 else -1), imax), -imax)
                 else:
                     i_int = max(min(i_int + KI * lag * dt, max(I_INT_MAX, abs(i_int) - 50.0 * dt)), -max(I_INT_MAX, abs(i_int) - 50.0 * dt))
+                # ANTI-STRAPPO (Daniele 13/11): trattenuto la spinta sale; appena si sblocca e corre oltre il riferimento
+                # la spinta accumulata va subito a zero, cosi' non scatta (prima: stop "troppo veloce" a 30 deg/s)
+                if v * d > abs(v_ref) + STRAPPO_DEG_S: i_int = 0.0
                 dith = (a.dither if k % 2 else -a.dither) if (not moving and abs(v_ref) > 0.1) else 0.0
                 b = int((p % EREV) / EREV * NB) % NB
                 if moving and abs(v_ref) > 0.1 and v * d > 0:         # imparo il ripple della fase elettrica
                     rt[b] = rt[b] if not a.rip else max(min(rt[b] + K_RIP * (v_ref - v) * d, RIP_MAX), -RIP_MAX)
                 i_cmd = ff + kp * lag + a.kd * (v_ref - v) + i_int + dith + (d * rt[b] if (abs(v_ref) > 0.1 and a.rip) else 0.0)
+                if v * d > abs(v_ref) + STRAPPO_DEG_S: i_cmd = min(i_cmd, ff) if d > 0 else max(i_cmd, ff)   # spinta nel verso del moto al massimo = attrito
                 cap = imax
             else:
                 lag = tgt_deg - x
@@ -312,6 +318,9 @@ def main(argv=None):
                 if t_arr and ((abs(tgt - p) < 46 and abs(v) < V_FERMO) or tc - t_arr > 0.8):
                     print(f"ARRIVATO pos={p} err={(tgt - p) * DEG:+.2f} deg in {tc - t0:.1f} s: corrente rilasciata"); break
                 if (tgt - p) * d < -20: print(f"superato di {(p - tgt) * d * DEG:.2f} deg: mollo"); break
+                if abs(i_cmd) >= 0.98 * cap: t_tetto = t_tetto or tc
+                else: t_tetto = None
+                if t_tetto and tc - t_tetto > TETTO_S: reason = f"AL TETTO di corrente {i_cmd:.1f} A per {TETTO_S} s: mollo (Daniele 13/11)"; break
                 stuck = abs(v) < V_FERMO and abs(i_cmd) >= 0.95 * cap          # stallo solo AL TETTO di corrente
                 t_stallo = (t_stallo or tc) if stuck else None
                 if t_stallo and tc - t_stallo > 1.5: reason = f"STALLO a {i_cmd:.1f} A"; break
