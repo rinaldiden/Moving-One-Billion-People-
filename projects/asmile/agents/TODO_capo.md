@@ -76,3 +76,5 @@ Istruzioni date in chat il 2026-11-10: griglia 3x3 a 1,2 m e 0,8 m, inclinazioni
 - Sterzo #001: script con finecorsa dalla calib nuova pronto (b43c1981, sicurezza ALLOW condizionato), in attesa che #001 sia acceso per gli zeri.
 - Registrazione: proposta 4-6 Mbps per camera (non toccato il Pi).
 - 3 casi dubbi SAM 3 pronti in training/perception_pipeline/casi_dubbi/ (non spediti).
+- Registro guide (agents/registro_guide/): #001 2 sessioni (15 frenate usabili per soglie), logger001 2 giri importati qualità bassa (segno IMU non verificato, 0 usabili; PASSA parziale scettico). Sblocco logger: ruota BLE accesa in guida (modifica sul Pi del logger, solo col vai).
+- PROSSIMO con Daniele: tuning servosterzo (zeri encoder, script b43c1981) e servofreno su #001 acceso.
