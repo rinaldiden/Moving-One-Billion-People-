@@ -1,11 +1,11 @@
 {
-  "_comment": "Sterzo asmile-001 dopo RIMONTAGGIO encoder (2026-11-13). Centro segnato da Daniele 14:12 (manubrio dritto) = 3244. Finecorsa sx/dx: da misurare (Daniele gira a mano e dice). La calib del 09/11 (centro 6606) NON vale piu: backup .pre_rimontaggio_20261113. REGOLA: se l encoder sterzo viene tolto/smontato, PRIMA di azionare lo sterzo rifare gli zeri (centro + finecorsa), altrimenti il motore va oltre i finecorsa.",
+  "_comment": "Sterzo asmile-001 dopo RIMONTAGGIO encoder (2026-11-13). Centro segnato da Daniele 14:14 (manubrio dritto, rifatto) = 4112 (prima lettura 3244). Finecorsa sx/dx: da misurare (Daniele gira a mano e dice). La calib del 09/11 (centro 6606) NON vale piu: backup .pre_rimontaggio_20261113. REGOLA: se l encoder sterzo viene tolto/smontato, PRIMA di azionare lo sterzo rifare gli zeri (centro + finecorsa), altrimenti il motore va oltre i finecorsa.",
   "unit": "asmile-001",
-  "date": "2026-11-13T14:12:00",
+  "date": "2026-11-13T14:14:03",
   "encoder_file": "/tmp/encoder_steer",
   "encoder_bits": 14,
   "encoder_steps_per_rev": 16384,
   "deg_per_step": 0.02197,
-  "encoder_center_raw": 3244,
+  "encoder_center_raw": 4112,
   "stato": "PARZIALE: solo centro; finecorsa da misurare"
 }
