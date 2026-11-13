@@ -1,11 +1,20 @@
 {
-  "_comment": "Sterzo asmile-001 dopo RIMONTAGGIO encoder (2026-11-13). Centro segnato da Daniele 14:14 (manubrio dritto, rifatto) = 4112 (prima lettura 3244). Finecorsa sx/dx: da misurare (Daniele gira a mano e dice). La calib del 09/11 (centro 6606) NON vale piu: backup .pre_rimontaggio_20261113. REGOLA: se l encoder sterzo viene tolto/smontato, PRIMA di azionare lo sterzo rifare gli zeri (centro + finecorsa), altrimenti il motore va oltre i finecorsa.",
+  "_comment": "Sterzo asmile-001 dopo RIMONTAGGIO encoder (2026-11-13). Centro segnato da Daniele 14:14 (manubrio dritto, rifatto) = 4112 (prima lettura 3244). Finecorsa spinti a mano da Daniele: sx 2028, dx 6168. La calib del 09/11 (centro 6606) NON vale piu: backup .pre_rimontaggio_20261113. REGOLA: se l encoder sterzo viene tolto/smontato, PRIMA di azionare lo sterzo rifare gli zeri (centro + finecorsa), altrimenti il motore va oltre i finecorsa.",
   "unit": "asmile-001",
-  "date": "2026-11-13T14:14:03",
+  "date": "2026-11-13T14:16:41",
   "encoder_file": "/tmp/encoder_steer",
   "encoder_bits": 14,
   "encoder_steps_per_rev": 16384,
   "deg_per_step": 0.02197,
   "encoder_center_raw": 4112,
-  "stato": "PARZIALE: solo centro; finecorsa da misurare"
+  "stato": "COMPLETO: centro + finecorsa spinti a mano (Daniele 2026-11-13)",
+  "encoder_dx_max_raw": 6168,
+  "delta_dx_steps": 2056,
+  "delta_dx_deg": 45.18,
+  "encoder_sx_max_raw": 2028,
+  "delta_sx_steps": -2084,
+  "delta_sx_deg": -45.79,
+  "encoder_pos_increases_to": "DX (destra)",
+  "center_repeatability_steps": 20,
+  "center_repeatability_deg": 0.44
 }
