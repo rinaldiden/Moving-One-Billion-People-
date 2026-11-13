@@ -42,7 +42,7 @@ ENC = "/tmp/encoder_steer"; WHEEL = "/tmp/encoder_wheel"; CPR = 16384; DEG = 360
 CAL = "/data/steering_limits_asmile-001.json"
 MARGINE_SW = 190                # count (~4.2 deg) dai finecorsa: come il 09/11 (4304->4500, 8884->8700)
 CAMPO_0911 = 4580               # count fra i finecorsa il 09/11 (4304..8884)
-WHEEL_TOL_CORSA = 2500          # count (~5 cm) DURANTE la corsa: a ruote a terra sterzare fa ruotare un poco la ruota (13/11: stop a >1 mm)
+WHEEL_TOL_CORSA = 7500          # count (~15 cm; 13/11 a -31° stop a >5 cm senza bici mossa) DURANTE la corsa: a ruote a terra sterzare fa ruotare un poco la ruota (13/11: stop a >1 mm)
 WHEEL_TOL = 50                  # count encoder ruota (~1 mm): il 13/11 l'encoder fermo oscilla di 1 count
 CAL_DOPO = "2026-11-12"         # calib valida solo se fatta dopo il rimontaggio encoder sterzo
 MARGINE_FC = 60                 # count (1.3 deg): mai piu' vicino di cosi' al finecorsa vero
