@@ -78,3 +78,8 @@ Istruzioni date in chat il 2026-11-10: griglia 3x3 a 1,2 m e 0,8 m, inclinazioni
 - 3 casi dubbi SAM 3 pronti in training/perception_pipeline/casi_dubbi/ (non spediti).
 - Registro guide (agents/registro_guide/): #001 2 sessioni (15 frenate usabili per soglie), logger001 2 giri importati qualità bassa (segno IMU non verificato, 0 usabili; PASSA parziale scettico). Sblocco logger: ruota BLE accesa in guida (modifica sul Pi del logger, solo col vai).
 - PROSSIMO con Daniele: tuning servosterzo (zeri encoder, script b43c1981) e servofreno su #001 acceso.
+
+## 2026-11-13 — LUCE BASSA / CONTROSOLE sulle camere di #001 (problema aperto)
+- Giri 13/11 15:03 e 15:14: col sole basso davanti l'immagine si sbianca e il contrasto crolla (flare, raggi, macchia chiara in basso a sx: sporco o riflesso sulla lente). Fotogrammi con >20% saturato: 5/193 e 5/193 (giro 1), 21/206 sx e 7/206 dx (giro 2). Esposizione già ~0.1 ms: il problema è la luce diretta nell'obiettivo. Sole alle spalle: ok.
+- Rimedi in ordine: 1) paraluce stampato 3D sulle due camere; 2) pulizia lenti; 3) esposizione misurata sulla strada (metering/ROI basso) nel registratore — modifica sul Pi solo col vai di Daniele.
+- Stesso tema per il logger (Camarray) da verificare.
