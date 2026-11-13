@@ -42,3 +42,7 @@ Cosa ho previsto male. Le legge il capo-critico.
 - 2026-11-11 SBAGLIATO: lo strumento vesc_mcconf scriveva i default 8 A anche cambiando solo il PID (corretto: default = lascia invariato)
 - 2026-11-11 SBAGLIATO: ho presentato oscillazioni da 9-10% come 'quasi fluido' mentre Daniele vedeva scatti: i miei numeri (velocita' su 100 ms) sottostimano gli scatti; fidarsi di quello che vede Daniele
 - 2026-11-11 SBAGLIATO: a 100 Hz con guadagni tarati a 400 Hz = instabile: mai cambiare la frequenza del loop senza ritarare
+- 2026-11-12 GIUSTO: depth+seg sullo stesso giro con contro-agente su set nuovi a ogni giro (taratura sul giudice evitata); trovato finecorsa fissi nello script sterzo prima di muovere il motore
+- 2026-11-12 SBAGLIATO: primo piano senza visto dell'ordine dei gate (VETO capo-critico: encoder prima della calib in moto); nel brief depth giro 1 avevo dato per buono il metodo della sera senza sapere che non era salvato come script
+- 2026-11-12 GIUSTO: ogni giro depth giudicato su set nuovi; regole di Daniele trasformate subito in tabella unica e lezioni
+- 2026-11-12 SBAGLIATO: nel brief v12 ho chiesto 'sterza se c'è spazio' senza imporre che lo spazio fosse MISURATO: l'agente ha preso 'non misurato = libero' (errore pericoloso)

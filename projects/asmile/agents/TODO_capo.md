@@ -67,3 +67,12 @@ Istruzioni date in chat il 2026-11-10: griglia 3x3 a 1,2 m e 0,8 m, inclinazioni
 - Ostacoli senza nome: opzioni A/B/C/D (consigliata D: filtro muri su giri nuovi).
 - 3 casi cancelli: portone con grata, paletti con catena e ringhiera, porta scura.
 - calib_rock: A mai VERDE senza banco fisso; rifacimenti a scala 2.
+
+## 2026-11-13 notte — fermato da Daniele (scelta B)
+- Depth+seg sui video #001: FERMO. Riferimento = v10 (out_20261112_v10). v11/v12 non adottati: v12 VETO 3/3 (STERZA verso lato non misurato). Alla ripartenza: lato libero solo se MISURATO (brief sbagliato in agents/brief/brief_asmile-depth_v12_20261112.md), sbarra in avvicinamento, barile 3173.
+- Correggere la frase ambigua in config/soglie_attuazione_001.json "azioni" ("o sterza se c'è spazio libero") → "solo se il lato è misurato libero".
+- Soglie dalle guide: PROPOSTA in config/soglie_attuazione_001.PROPOSTA_guide.json (PASSA parziale), da validare Daniele; serve giro con limiter spento, ≥5 stop a 10/15/20 km/h, col vai.
+- Encoder ruota: proposta 0.3477 (PASSA parziale), deploy solo col vai + D011; servono 2ª spinta 10 giri, giro >20 km/h, frenate decise.
+- Sterzo #001: script con finecorsa dalla calib nuova pronto (b43c1981, sicurezza ALLOW condizionato), in attesa che #001 sia acceso per gli zeri.
+- Registrazione: proposta 4-6 Mbps per camera (non toccato il Pi).
+- 3 casi dubbi SAM 3 pronti in training/perception_pipeline/casi_dubbi/ (non spediti).
