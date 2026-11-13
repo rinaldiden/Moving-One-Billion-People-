@@ -3,3 +3,4 @@ asmile-001,20261108_160150,8,198.2,encoder_ruota,alta,2026-11-13T04:03:11,ruota 
 asmile-001,20261109_085334,33,1342.1,encoder_ruota,alta,2026-11-13T04:03:11,ruota 0.3477 proposta; 1343/1540 m col limiter attivo: vedi classe
 asmile-logger001,20261109_ride1050,20,0.0,imu_video,bassa,2026-11-13T13:29:51,"IMU a_imu high-pass 15 s, mapping_0911 non verificato BLE (BLE 09-11 solo a logger fermo); gate moto/fermo col flusso strada; v/dv/fascia vuoti; candidata_imu fuori soglie"
 asmile-logger001,20261109_ride1109,18,0.0,imu_video,bassa,2026-11-13T13:29:51,"IMU a_imu high-pass 15 s, mapping_0911 non verificato BLE (BLE 09-11 solo a logger fermo); gate moto/fermo col flusso strada; v/dv/fascia vuoti; candidata_imu fuori soglie"
+asmile-001,20261113_145727,51,1969.2,encoder_ruota,alta,2026-11-13T15:45:51,13/11 giri 150337+151400; circ 0.3374; centro sterzo 4112; GPS coerente 0.99-1.03; 4 stop puliti; colonne impuntata/beccheggio

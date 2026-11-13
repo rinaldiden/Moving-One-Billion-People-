@@ -1,0 +1,33 @@
+{
+ "_cosa": "PROPOSTA (event-miner 2026-11-13) per la sezione anti_impuntata di soglie_attuazione_001.json. NON sostituisce il file in uso. Da validare da Daniele e provare a banco/ombra prima di comandare il freno. Basata su 2 impuntate vere (15:03:51, 15:08:52) + 1 anomalia (15:18:32) nel log 20261113_145727: n troppo piccolo per una soglia definitiva.",
+ "imu_asse_beccheggio": "gx (#001). bias a bici ferma = -2.64 dps (da ricalcolare a ogni avvio da fermo)",
+ "segno": "gx > 0 = MUSO GIU' (posteriore su). Confermato: video (dy~gx corr -0.77, lag 0, su 2 giri) + regola mano destra con X=sinistra (Y=indietro, Z=su).",
+ "segnali_causali": {
+  "dec_imu_ms2": "EMA ~0.14 s (n=7) di (ay - ay_a_riposo)*9.81, + = frenata (avanti = -ay). ay a riposo = +0.043 g qui: calcolarlo da fermo.",
+  "d03_deg": "variazione del beccheggio in 0.3 s = integrale di (gx - bias) sugli ultimi 15 campioni (gradi, + = muso giu'). Niente passa-alto a tau lungo: deriva e da' falsi allarmi.",
+  "perche_non_la_regola_attuale": "beccheggio passa-alto tau 4 s > 2 gradi scatta anche per deriva/pedalata: 7 frenate su 34 e 31 episodi in 11.9 min in moto (2.6/min). rate_ema > 15 dps non scatta nella 2a impuntata (picco in avanti solo 14.3 dps; i 26 dps erano il rimbalzo all'indietro)."
+ },
+ "rilascio_immediato": {
+  "regola": "RILASCIA SUBITO il freno se dec_imu_ms2 >= 2.0 E d03_deg >= 1.5",
+  "dec_imu_min_ms2": 2.0,
+  "d03_min_deg": 1.5,
+  "anticipo_sul_picco_beccheggio_s": "0.24 (a 5.0 km/h) e 0.22 (a 1.3 km/h)",
+  "scatta_in_frenate_su_34": "2 su 34 (le 2 impuntate), 0 falsi nelle frenate",
+  "episodi_in_moto": "6 in 11.9 min (0.5/min): 15:03:29 bici maneggiata a 1.9 km/h, 15:04:04 e 15:20:35 a 11-12 km/h (buche), 15:18:32 a 3.6 km/h (anomalia con beccheggio +6.3), + 2 impuntate",
+  "limite_grosso": "anticipo 0.2 s < latenza attuatore ~0.3 s: il solo segnale di beccheggio e' TROPPO TARDI, il muso scende negli ultimi 0.25 s quando la bici e' gia' a 1-5 km/h"
+ },
+ "tetto_precoce_decel": {
+  "regola": "se dec_imu_ms2 >= 3.0 NON aumentare la forza (tetto) e scendi al 70%",
+  "dec_imu_ms2": 3.0,
+  "anticipo_sul_picco_beccheggio_s": "0.40 e 0.42 (v 7.2 e 3.5 km/h)",
+  "scatta_in_frenate_su_34": "5 su 34 (le 2 impuntate + 3 frenate forti senza muso giu')",
+  "episodi_in_moto": "14 in 11.9 min (1.2/min), a >3.5 m/s2: 7 (0.6/min). Costo = frenate un po' meno forti, non perdita di controllo.",
+  "nota": "nessuna frenata fatta con il servo ha mai superato 3.0 m/s2 IMU senza essere un picco/buca: il tetto riguarda soprattutto la leva di Daniele, che il servo non comanda."
+ },
+ "ripresa": {
+  "ripresa_forza_frazione": 0.7,
+  "in_piano": "|d03| < 0.5 gradi e |rate| < 5 dps per 0.3 s",
+  "nota": "NON misurabile dai dati: in entrambe le impuntate la bici si e' fermata prima della ripresa; dopo il picco il beccheggio torna a 0 in 0.25-0.5 s ma poi rimbalza a -1/-2 gradi (muso su). Valori lasciati come nella proposta di Daniele."
+ },
+ "da_dire_a_Daniele": "Nelle 2 impuntate il servo era al massimo 3.7 e 1.1 gradi negli ultimi 1.5 s (<=1.1 gradi nell'ultimo secondo; angoli di lavoro fino a 60): la decelerazione di 4.1-4.5 m/s2 non viene dal servo, quindi dalla leva di Daniele (o dal freno che non e' loggato). Una regola nel limiter che rilascia il SERVO non avrebbe cambiato nulla in quei due casi."
+}

@@ -1,9 +1,9 @@
 {
  "_cosa": "Tabella UNICA delle distanze/soglie che attivano freno e sterzo. Il codice (depth video, ombra, planner, allievo sul Pi) le LEGGE da qui, mai numeri scritti nel codice. Daniele 2026-11-12.",
  "unita": "asmile-001",
- "stato": "PROPOSTA dalle guide di #001 (event-miner 2026-11-12, giro 2), NON validata: la valida Daniele. Dati puliti solo fino a ~9.5 km/h; righe >=10 km/h = segnaposto. Frenate di routine (non emergenza). Latenza, cuscinetto, bordi, rallenta = segnaposto.",
- "versione": 3,
- "data": "2026-11-12",
+ "stato": "PROPOSTA dalle guide di #001 (event-miner 2026-11-13, v4: +4 stop puliti del 13/11), NON validata: la valida Daniele. Dati puliti solo fino a ~9.5 km/h; righe >=10 km/h = segnaposto. Frenate di routine (non emergenza). Latenza, cuscinetto, bordi, rallenta = segnaposto.",
+ "versione": 4,
+ "data": "2026-11-13",
  "parametri": {
   "t_latenza_s": 0.5,
   "decel_frenata_ms2": 1.5,
@@ -21,10 +21,10 @@
    "bordo": "margine laterale libero minimo da muro/cordolo/marciapiede = bordo_base_m + bordo_per_ms * v",
    "altezza_max_ostacolo_m": "Daniele: da terra a 2 m davanti = ostacolo anche sospeso; sopra 2 m ignorato",
    "larghezza_asmile_m": "pi/autonomous/object_depth.py ASMILE_WIDTH_M",
-   "decel_guide_p25_ms2": "p25 delle decel medie di 12 stop completi di Daniele (puliti: servo<1 gr e lim_zone<0.2, pooled, p50 0.50, p75 0.59). Cresce con la velocita (0.4 a 5 km/h, 1.1 a 12): solo riferimento; decel_frenata_ms2 (1.5, segnaposto) resta per le formule fuori tabella; la tabella usa la distanza di frenata osservata.",
-   "frena_entro_guide": "distanza di frenata = fit lineare sp=2.34*v-0.95 (+ offset p75 residui 0.54 m) su 12 stop; + v*t_latenza + cuscinetto (segnaposto). Ruota 0.3477 m/giro enc."
+   "decel_guide_p25_ms2": "p25 delle decel medie di 16 stop completi di Daniele (puliti, pooled, p50 0.47, p75 0.57). Cresce con la velocita: solo riferimento.",
+   "frena_entro_guide": "distanza di frenata = fit lineare sp=2.53*v-1.12 (+ offset p75 residui 0.62 m) su 16 stop; + v*t_latenza + cuscinetto (segnaposto). Ruota 0.3374 m/giro enc (stop 12/11 riscalati da 0.3477)."
   },
-  "decel_guide_p25_ms2": 0.45
+  "decel_guide_p25_ms2": 0.44
  },
  "formule": {
   "frena_entro_m": "max(segnaposto, (beta*v+gamma+off_p75) + v*t_latenza + cuscinetto) fino a v0 max dei dati puliti; oltre: max(segnaposto, proposta v2, fit pulito); tabella crescente",
@@ -41,72 +41,72 @@
   {
    "kmh": 3,
    "v_ms": 0.83,
-   "frena_entro_m": 3.34,
-   "rallenta_entro_m": 5.01,
+   "frena_entro_m": 2.99,
+   "rallenta_entro_m": 4.48,
    "bordo_margine_m": 0.34,
-   "origine": "dalle guide: debole (n stop puliti in banda=3; max di fit 2.44, verificati-GPS 3.34, p75-banda 1.98)",
+   "origine": "dalle guide: debole (n stop puliti in banda=3; max di fit 2.52, verificati-GPS 2.99, p75-banda 1.95)",
    "solidita": "debole",
    "n_banda": 3,
    "frenata_guida_p25_p50_p75_m": [
-    0.79,
-    1.0,
-    1.07
+    0.76,
+    0.97,
+    1.04
    ],
    "origine_bordo": "segnaposto: in arrivo da v10"
   },
   {
    "kmh": 5,
    "v_ms": 1.39,
-   "frena_entro_m": 4.56,
-   "rallenta_entro_m": 6.83,
+   "frena_entro_m": 4.45,
+   "rallenta_entro_m": 6.67,
    "bordo_margine_m": 0.37,
-   "origine": "dalle guide: media (n stop puliti in banda=6; max di fit 4.03, verificati-GPS 4.56, p75-banda 4.23)",
+   "origine": "dalle guide: media (n stop puliti in banda=8; max di fit 4.21, verificati-GPS 4.45, p75-banda 4.43)",
    "solidita": "media",
-   "n_banda": 6,
+   "n_banda": 8,
    "frenata_guida_p25_p50_p75_m": [
-    1.95,
-    2.62,
-    3.04
+    2.28,
+    2.74,
+    3.24
    ],
    "origine_bordo": "segnaposto: in arrivo da v10"
   },
   {
    "kmh": 8,
    "v_ms": 2.22,
-   "frena_entro_m": 6.39,
-   "rallenta_entro_m": 9.58,
+   "frena_entro_m": 6.73,
+   "rallenta_entro_m": 10.09,
    "bordo_margine_m": 0.41,
-   "origine": "dalle guide: debole (n stop puliti in banda=2; max di fit 6.39, verificati-GPS 6.36, p75-banda 6.33)",
+   "origine": "dalle guide: debole (n stop puliti in banda=3; max di fit 6.73, verificati-GPS 6.62, p75-banda 6.18)",
    "solidita": "debole",
-   "n_banda": 2,
+   "n_banda": 3,
    "frenata_guida_p25_p50_p75_m": [
-    4.69,
-    4.71,
-    4.72
+    4.06,
+    4.54,
+    4.57
    ],
    "origine_bordo": "segnaposto: in arrivo da v10"
   },
   {
    "kmh": 10,
    "v_ms": 2.78,
-   "frena_entro_m": 7.98,
-   "rallenta_entro_m": 11.96,
+   "frena_entro_m": 8.42,
+   "rallenta_entro_m": 12.63,
    "bordo_margine_m": 0.44,
    "origine": "segnaposto: servono stop >10 km/h senza limiter (max di segnaposto, proposta v2, fit pulito)",
    "solidita": "segnaposto",
-   "n_banda": 1,
+   "n_banda": 2,
    "frenata_guida_p25_p50_p75_m": [
-    4.56,
-    4.56,
-    4.56
+    4.91,
+    5.4,
+    5.88
    ],
    "origine_bordo": "segnaposto: in arrivo da v10"
   },
   {
    "kmh": 12,
    "v_ms": 3.33,
-   "frena_entro_m": 9.54,
-   "rallenta_entro_m": 14.3,
+   "frena_entro_m": 10.09,
+   "rallenta_entro_m": 15.13,
    "bordo_margine_m": 0.47,
    "origine": "segnaposto: servono stop >10 km/h senza limiter (max di segnaposto, proposta v2, fit pulito)",
    "solidita": "segnaposto",
@@ -117,8 +117,8 @@
   {
    "kmh": 15,
    "v_ms": 4.17,
-   "frena_entro_m": 11.92,
-   "rallenta_entro_m": 17.88,
+   "frena_entro_m": 12.63,
+   "rallenta_entro_m": 18.95,
    "bordo_margine_m": 0.51,
    "origine": "segnaposto: servono stop >10 km/h senza limiter (max di segnaposto, proposta v2, fit pulito)",
    "solidita": "segnaposto",
@@ -129,8 +129,8 @@
   {
    "kmh": 20,
    "v_ms": 5.56,
-   "frena_entro_m": 15.86,
-   "rallenta_entro_m": 23.79,
+   "frena_entro_m": 16.84,
+   "rallenta_entro_m": 25.27,
    "bordo_margine_m": 0.58,
    "origine": "segnaposto: servono stop >10 km/h senza limiter (max di segnaposto, proposta v2, fit pulito)",
    "solidita": "segnaposto",
@@ -141,8 +141,8 @@
   {
    "kmh": 25,
    "v_ms": 6.94,
-   "frena_entro_m": 20.05,
-   "rallenta_entro_m": 30.08,
+   "frena_entro_m": 21.03,
+   "rallenta_entro_m": 31.54,
    "bordo_margine_m": 0.65,
    "origine": "segnaposto: servono stop >10 km/h senza limiter (max di segnaposto, proposta v2, fit pulito)",
    "solidita": "segnaposto",
@@ -152,34 +152,35 @@
   }
  ],
  "fonte_valori": {
-  "oggi": "proposta guide",
+  "oggi": "proposta guide v4",
   "segnaposto_in_uso": "config/soglie_attuazione_001.json",
   "validato_da": null,
-  "circ_ruota_usata_m_per_giro_enc": 0.3477,
-  "nota": "con 0.3374 i numeri scendono del 3%: vedi rapporto"
+  "circ_ruota_usata_m_per_giro_enc": 0.3374,
+  "nota": "v3 usava 0.3477 (3% piu lungo, piu prudente); v4 tutto a 0.3374 (calibrata col metro)"
  },
  "sterzo_dalle_guide": {
-  "n_curve": 10,
+  "n_curve": 27,
   "velocita_angolare_manubrio_picco_degs_p25_p50_p75": [
-   23.3,
-   26.1,
-   33.9
+   23.6,
+   31.7,
+   39.3
   ],
   "ampiezza_deg_p25_p50_p75": [
-   17.7,
-   23.6,
-   26.0
+   16.7,
+   24.3,
+   33.1
   ],
   "curvatura_1_su_m_p25_p50_p75": [
-   0.15,
-   0.18,
-   0.26
+   0.16,
+   0.22,
+   0.25
   ],
   "anticipo_s_p25_p50_p75": [
-   0.4,
-   0.81,
-   0.9
+   0.38,
+   0.78,
+   0.97
   ],
-  "stato": "pochi dati (n=10 curve con ampiezza manubrio >=5 gr): indicative, NON soglie"
+  "n_di_cui_13_11": 17,
+  "stato": "pochi dati (n=27 curve con ampiezza manubrio >=5 gr, 17 del 13/11 con centro 4112): indicative, NON soglie"
  }
 }
