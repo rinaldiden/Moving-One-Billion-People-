@@ -84,6 +84,19 @@ def aggiungi(a):
     print(f"importate {len(nuove)} sessioni di {a.unita}: " + ", ".join(f"{r['sess']} ({r['eventi']})" for r in nuove))
 
 
+def usabile_per_soglie(r):
+    """Riga usabile per ricavare soglie (Daniele/scettico 2026-11-13): classe stop_umano/umano E qualita != bassa E
+    segno_imu != non_verificato (vuoto = unita' con velocita da encoder, nessun segno IMU da verificare).
+    Le righe candidata_imu / qualita bassa NON entrano mai in soglie."""
+    return (r.get("classe") in ("stop_umano", "umano") and r.get("qualita") != "bassa"
+            and r.get("segno_imu", "") != "non_verificato")
+
+
+def righe_usabili(tipo="frenate"):
+    """Solo le righe del registro usabili per soglie: e' l'unico punto da cui un fit di soglie deve leggere il registro."""
+    return [r for r in leggi(os.path.join(REG, f"{tipo}.csv"))[1] if usabile_per_soglie(r)]
+
+
 def riepilogo(_):
     for tipo in TIPI:
         _, righe = leggi(os.path.join(REG, f"{tipo}.csv"))
@@ -91,6 +104,9 @@ def riepilogo(_):
         print(f"{tipo}: {len(righe)} eventi")
         for (u, cl), n in sorted(c.items()):
             print(f"   {u:18s} {cl:14s} {n}")
+        if tipo == "frenate":
+            cu = Counter(r["unita"] for r in righe if usabile_per_soglie(r))
+            print("   usabili per soglie: %d  (%s)" % (sum(cu.values()), ", ".join(f"{u} {n}" for u, n in sorted(cu.items())) or "nessuna"))
     _, s = leggi(os.path.join(REG, "sessioni.csv"))
     print(f"sessioni: {len(s)}")
     for r in s:

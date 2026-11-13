@@ -99,3 +99,20 @@ def speed_series(prefix, w0, w1, step=3, gap=10):
             v, n = ground_speed(fr[k][1], fr[k + gap][1], fr[k + gap][0] - fr[k][0])
             out.append((tw, v, n))
     return out
+
+
+def road_flow_series(prefix, w0, w1):
+    """Flusso ottico (Farneback, 320x120 sulla zona strada righe 300-780 della sx, mediana px/frame righe basse) per ogni
+    frame fra due istanti wall. Gate bici FERMA = flusso < 0.25 (stesso metodo dello scettico, 2026-11-13). Indipendente dalla stereo."""
+    out = []
+    for m, f in clip_list(prefix):
+        if m < w0 or m - 32 > w1: continue
+        fr = clip_frames(f, m)
+        prev = None
+        for tw, g in fr:
+            s = cv2.resize(g[:, :1280][300:780], (320, 120))
+            if prev is not None and w0 <= tw <= w1:
+                fl = cv2.calcOpticalFlowFarneback(prev, s, None, 0.5, 2, 15, 2, 5, 1.1, 0)
+                out.append((tw, float(np.median(np.hypot(fl[..., 0], fl[..., 1])[40:, :]))))
+            prev = s
+    return out

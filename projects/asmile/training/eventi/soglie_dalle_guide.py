@@ -14,6 +14,8 @@ S = 'asmile-loggers/asmile-001/_sensors/sensors/sensors_%s.csv'
 SESS = ['20261108_160150', '20261109_085334']
 CENTER, DEG_STEP = 6606, 0.02197
 HZ = 50.0
+# GUARDIA (2026-11-13): questo script legge SOLO i log grezzi di #001 (encoder ruota). Se in futuro leggera' il registro
+# agents/registro_guide, deve usare registro_guide.righe_usabili(): mai righe candidata_imu / qualita bassa / segno_imu non_verificato.
 MIN_AMP_DEG = 5.0
 V9 = 'training/depth/out_20261112_v9/tracks_20261109_094146.pkl'
 BANDS = [(0, 6.5, 5), (6.5, 9, 8), (9, 11, 10), (11, 13.5, 12), (13.5, 99, 15)]

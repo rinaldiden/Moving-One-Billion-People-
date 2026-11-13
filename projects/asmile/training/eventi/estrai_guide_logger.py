@@ -61,7 +61,15 @@ def build(d, vis, a, b):
     return r
 
 
-def brake_events(r, sess):
+def load_flow(out, sess):
+    f = pd.read_csv(os.path.join(out, "flusso_strada_ride%s.csv" % sess[-4:]))
+    return f.wall.values, f.flow.values
+
+
+scartati = []
+
+
+def brake_events(r, sess, flow):
     """Frenate IMU-first (la velocita visiva ha scala instabile: mediana 4.2 vs 2.3 km/h cambiando solo la base 0.27->0.67 s,
     e NON correla con l'IMU: non e' usata per v0/v1/a). Detector come #001 ma su a_imu: a_imu<-0.3 m/s2 (media 1.5 s), >=1 s,
     esteso finche' < -0.1, in moto (flusso>0.3 m/s). classe: stop_umano se il video mostra bici ferma (v<0.3 m/s per >=1 s)
@@ -76,11 +84,19 @@ def brake_events(r, sess):
             while j < j0 - 1 and ai[j + 1] < -0.1: j += 1
             dur = (j - i) / HZ
             if dur < 1.0: continue
-            after = r.v_raw.values[j:min(len(r), j + 150)]
-            ferma = bool(len(after) > 50 and (pd.Series(after < 0.3).rolling(50).sum().max() >= 50))
+            # giro 2 (VETO scettico): gate col FLUSSO OTTICO sulla strada (Farneback, px/frame), non con la v stereo/visiva.
+            # (a) in moto durante l'evento (da 1 s prima all'ultimo istante): flusso medio > 0.5, altrimenti e' IMU a bici gia' ferma -> scartato;
+            # (b) ferma dopo: flusso < 0.25 per >= 10 frame consecutivi entro 2 s dalla fine (criterio dello scettico).
+            fw, ff = flow
+            ep0, ep1 = float(r.ep.values[i]), float(r.ep.values[j])
+            pre = (fw >= ep0 - 1.0) & (fw < ep1)
+            if pre.sum() < 10 or np.mean(ff[pre]) <= 0.5:
+                scartati.append(r.wall[i][11:19]); continue
+            post = (fw >= ep1) & (fw < ep1 + 2.0)
+            ferma = bool(post.sum() >= 10 and pd.Series(ff[post] < 0.25).rolling(10).sum().max() >= 10)
             e = dict(sess=sess, t0=float(r.t.values[i]), t_ms0=int(r.t_ms.values[i]), wall=r.wall[i][11:19], dur_s=dur,
                      a_peak=float(-ai[i:j + 1].min()), a_imu_mean=float(ai[i:j + 1].mean()),
-                     classe="stop_umano" if ferma else "candidata_imu")
+                     classe="stop_umano" if ferma else "candidata_imu", segno_imu="non_verificato")
             if ev and ev[-1]["t_ms0"] == e["t_ms0"]: continue
             ev.append(e)
     return ev
@@ -94,7 +110,8 @@ def steer_events(r, sess, thr=22.0):
         s = r.iloc[i:j + 1]
         e = dict(sess=sess, t0=float(r.t.values[i]), t_ms0=int(r.t_ms.values[i]), dur_s=(j - i) / HZ,
                  gz_peak=float(np.abs(s.gz).max()),
-                 verso="sx" if s.gz.values[np.argmax(np.abs(s.gz.values))] > 0 else "dx")
+                 verso="sx" if s.gz.values[np.argmax(np.abs(s.gz.values))] > 0 else "dx",
+                 segno_imu="gz_verificato_flusso")
         ev.append(e)
     return ev
 
@@ -106,14 +123,14 @@ if __name__ == "__main__":
     for sess, (a, b, k) in RIDES.items():
         r = build(d, vis[k], a, b)
         r.to_pickle(os.path.join(out, f"_serie_{sess}.pkl"))
-        F += brake_events(r, sess); S += steer_events(r, sess)
+        F += brake_events(r, sess, load_flow(out, sess)); S += steer_events(r, sess)
         mov = r.v > 0.5
         SEG.append(dict(sess=sess, usato=True, dist_m=0.0, dist_visiva_m_NONAFFIDABILE=float(r.v.sum() / HZ), t_mov_s=float(mov.sum() / HZ), v_media_kmh_NONAFFIDABILE=float(r.v[mov].mean() * 3.6),
                         v_max_kmh=float(r.v.max() * 3.6), wall0=a, wall1=b))
-    cols_f = ["sess", "t0", "t_ms0", "wall", "v0_kmh", "v1_kmh", "dur_s", "dv", "a_mean", "a_peak", "a_imu_mean", "sp_m", "brake_out_max", "limiter", "lim_attivo", "lim_frac", "fascia", "classe", "Z_arc", "ttc", "Z_str"]
-    cols_s = ["sess", "t0", "t_ms0", "dur_s", "v_kmh", "gz_peak", "k_med", "amp_deg", "rate_peak", "anticipo_s", "fascia", "Z_arc_inizio", "verso"]
+    cols_f = ["sess", "t0", "t_ms0", "wall", "v0_kmh", "v1_kmh", "dur_s", "dv", "a_mean", "a_peak", "a_imu_mean", "sp_m", "brake_out_max", "limiter", "lim_attivo", "lim_frac", "fascia", "classe", "Z_arc", "ttc", "Z_str", "segno_imu"]
+    cols_s = ["sess", "t0", "t_ms0", "dur_s", "v_kmh", "gz_peak", "k_med", "amp_deg", "rate_peak", "anticipo_s", "fascia", "Z_arc_inizio", "verso", "segno_imu"]
     for nome, cols, ev in (("frenate", cols_f, F), ("sterzate", cols_s, S)):
         with open(os.path.join(out, nome + ".csv"), "w", newline="") as f:
             w = csv.DictWriter(f, fieldnames=cols, restval=""); w.writeheader(); w.writerows(ev)
     json.dump(SEG, open(os.path.join(out, "segmenti.json"), "w"), indent=1)
-    print(len(F), "frenate", len(S), "sterzate"); print(json.dumps(SEG, indent=1))
+    print(len(F), "frenate", len(S), "sterzate", "scartate a bici ferma:", scartati); print(json.dumps(SEG, indent=1))

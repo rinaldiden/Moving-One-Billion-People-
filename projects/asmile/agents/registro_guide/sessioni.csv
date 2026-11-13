@@ -1,5 +1,5 @@
 unita,sess,eventi,metri,fonte_v,qualita,importato,nota
 asmile-001,20261108_160150,8,198.2,encoder_ruota,alta,2026-11-13T04:03:11,ruota 0.3477 proposta; 1343/1540 m col limiter attivo: vedi classe
 asmile-001,20261109_085334,33,1342.1,encoder_ruota,alta,2026-11-13T04:03:11,ruota 0.3477 proposta; 1343/1540 m col limiter attivo: vedi classe
-asmile-logger001,20261109_ride1050,26,0.0,imu_video,bassa,2026-11-13T04:25:35,"solo IMU (a_imu high-pass 15 s) + video come gate moto/fermo; v/dv/fascia NON misurabili (v visiva instabile); classe candidata_imu = frenata non confermata dal video, fuori dai fit; niente BLE in guida"
-asmile-logger001,20261109_ride1109,22,0.0,imu_video,bassa,2026-11-13T04:25:35,"solo IMU (a_imu high-pass 15 s) + video come gate moto/fermo; v/dv/fascia NON misurabili (v visiva instabile); classe candidata_imu = frenata non confermata dal video, fuori dai fit; niente BLE in guida"
+asmile-logger001,20261109_ride1050,20,0.0,imu_video,bassa,2026-11-13T04:34:18,"solo IMU a_imu high-pass 15 s; gate moto/fermo col flusso ottico strada (Farneback); v/dv/fascia vuoti; candidata_imu = non confermata, fuori soglie; segno_imu non_verificato (prova = ruota BLE accesa in guida)"
+asmile-logger001,20261109_ride1109,18,0.0,imu_video,bassa,2026-11-13T04:34:18,"solo IMU a_imu high-pass 15 s; gate moto/fermo col flusso ottico strada (Farneback); v/dv/fascia vuoti; candidata_imu = non confermata, fuori soglie; segno_imu non_verificato (prova = ruota BLE accesa in guida)"
