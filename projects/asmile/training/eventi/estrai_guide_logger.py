@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """estrai_guide_logger.py — frenate e sterzate del PILOTA dai giri di asmile-logger001 (IMU HW-123 + velocita visiva).
 Stesso formato di out_guide_*/frenate.csv e sterzate.csv (#001); colonne non misurabili = vuote.
+segno_imu: mapping_0911 = mapping assi del 09-11 (agents/rapporti/logger001_imu_assi_PROPOSTA_20261109.json, chip ruotato 180 gradi su Z, frenata = imu_ax POSITIVO,
+3 eventi puliti) APPLICATO ma NON verificato con la ruota BLE (nei 2 tratti BLE del 09-11 il logger era fermo: IMU piatta, flusso 0).
 Convenzioni logger (agents/lezioni/daniele.md 2026-11-09, verificate sui dati): avanti = -ax (frenata -> ax POSITIVO),
 scala g 0.83 (|g| 1.20), bias gz +0.90 dps, gz>0 = sinistra (verificato col flusso ottico lontano, corr -0.78 a lag 0.25 s).
 a_imu_mean e' in convenzione #001: accelerazione AVANTI (negativa = frenata).
@@ -96,7 +98,7 @@ def brake_events(r, sess, flow):
             ferma = bool(post.sum() >= 10 and pd.Series(ff[post] < 0.25).rolling(10).sum().max() >= 10)
             e = dict(sess=sess, t0=float(r.t.values[i]), t_ms0=int(r.t_ms.values[i]), wall=r.wall[i][11:19], dur_s=dur,
                      a_peak=float(-ai[i:j + 1].min()), a_imu_mean=float(ai[i:j + 1].mean()),
-                     classe="stop_umano" if ferma else "candidata_imu", segno_imu="non_verificato")
+                     classe="stop_umano" if ferma else "candidata_imu", segno_imu="mapping_0911")
             if ev and ev[-1]["t_ms0"] == e["t_ms0"]: continue
             ev.append(e)
     return ev

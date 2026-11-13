@@ -86,10 +86,10 @@ def aggiungi(a):
 
 def usabile_per_soglie(r):
     """Riga usabile per ricavare soglie (Daniele/scettico 2026-11-13): classe stop_umano/umano E qualita != bassa E
-    segno_imu != non_verificato (vuoto = unita' con velocita da encoder, nessun segno IMU da verificare).
+    segno_imu vuoto o verificato_ble (mapping_0911/non_verificato esclusi; vuoto = unita' con velocita da encoder, nessun segno IMU da verificare).
     Le righe candidata_imu / qualita bassa NON entrano mai in soglie."""
     return (r.get("classe") in ("stop_umano", "umano") and r.get("qualita") != "bassa"
-            and r.get("segno_imu", "") != "non_verificato")
+            and r.get("segno_imu", "") in ("", "verificato_ble"))
 
 
 def righe_usabili(tipo="frenate"):

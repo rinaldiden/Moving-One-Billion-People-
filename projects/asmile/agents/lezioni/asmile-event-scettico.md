@@ -8,3 +8,7 @@ Scritte da palla.py (VETO dei critici + bilanci giusto/sbagliato). Leggile prima
 - 2026-11-12 SBAGLIATO (`agents/rapporti/soglie_dalle_guide_001_20261112.md`): Nel giro 1 non avevo escluso gli stop con v1 negativo (inversione encoder): lo stop 5625 era nel mio ev.csv; filtro da aggiungere v1>=-0.1
 - 2026-11-12 GIUSTO (`agents/rapporti/soglie_dalle_guide_001_20261112.md`): Rifatto il fit da ev.csv indipendente: coincide al centesimo; controllato monotonia e segnaposto
 - 2026-11-12 SBAGLIATO (`agents/rapporti/soglie_dalle_guide_001_20261112.md`): Non ho verificato il fit degli 8 stop GPS (4.56 a 5 km/h) con dati miei, solo plausibilita
+- 2026-11-13 GIUSTO (`agents/rapporti/registro_guide_logger_20261113.md`): rifatto gate moto/fermo con codice mio (flusso Farneback) invece di fidarmi di v_raw; test segno su transizioni
+- 2026-11-13 SBAGLIATO (`agents/rapporti/registro_guide_logger_20261113.md`): avrei dovuto controllare subito il mapping wall hub-vs-mtime (offset ~1-2 s lascia ambiguita sui singoli eventi) e usare frame di conferma
+- 2026-11-13 GIUSTO (`agents/rapporti/registro_guide_logger_20261113.md`): Tasso base del gate su finestre casuali in moto: misura che smaschera un gate non discriminante
+- 2026-11-13 SBAGLIATO (`agents/rapporti/registro_guide_logger_20261113.md`): Nel VETO 1 avrei dovuto chiedere subito il tasso base del flusso in moto e non solo gli arresti singoli
