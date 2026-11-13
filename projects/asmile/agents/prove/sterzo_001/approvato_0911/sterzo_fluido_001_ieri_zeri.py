@@ -42,6 +42,7 @@ ENC = "/tmp/encoder_steer"; WHEEL = "/tmp/encoder_wheel"; CPR = 16384; DEG = 360
 CAL = "/data/steering_limits_asmile-001.json"
 MARGINE_SW = 190                # count (~4.2 deg) dai finecorsa: come il 09/11 (4304->4500, 8884->8700)
 CAMPO_0911 = 4580               # count fra i finecorsa il 09/11 (4304..8884)
+WHEEL_TOL = 50                  # count encoder ruota (~1 mm): il 13/11 l'encoder fermo oscilla di 1 count
 CAL_DOPO = "2026-11-12"         # calib valida solo se fatta dopo il rimontaggio encoder sterzo
 MARGINE_FC = 60                 # count (1.3 deg): mai piu' vicino di cosi' al finecorsa vero
 COMM_GET_VALUES_SELECTIVE = 50  # fw 5.02 datatypes.h
@@ -191,7 +192,7 @@ def main(argv=None):
     w0, fresh = wheel()
     if not fresh: sys.exit("encoder ruota assente/vecchio: rifiuto")
     time.sleep(0.5)
-    if wheel()[0] != w0: sys.exit("bici in movimento: rifiuto")
+    if abs(int(float(wheel()[0] or 0)) - int(float(w0))) > WHEEL_TOL: sys.exit("bici in movimento: rifiuto")
     p0, mt0 = rd_enc()
     if p0 is None: sys.exit("encoder sterzo vecchio")
     if not hard_lo <= p0 <= hard_hi: sys.exit(f"pos {p0} troppo vicina al finecorsa vero [{hard_lo},{hard_hi}]: muovere a mano")
@@ -302,7 +303,7 @@ def main(argv=None):
             # temperature (aggiunto 2026-11-11, solo arresto: il controllo resta quello di ieri). NTC 10k motore dal connettore hall
             if TEL["t_mot"] > T_MOT_STOP or TEL["t_fet"] > T_FET_STOP: reason = f"CALDO: motore {TEL['t_mot']:.1f} C, VESC {TEL['t_fet']:.1f} C"; break
             if TEL["t_fet"] > 0 and TEL["t_mot"] < -20: reason = f"sonda motore scollegata? ({TEL['t_mot']:.1f} C)"; break
-            if k % 20 == 0 and wheel()[0] != w0: reason = "bici in movimento"; break
+            if k % 20 == 0 and abs(int(float(wheel()[0] or 0)) - int(float(w0))) > WHEEL_TOL: reason = "bici in movimento"; break
             if a.modo == "vai":
                 if tc - t0 > 25: reason = "timeout 25 s"; break
                 # ARRIVO: riferimento al centro -> entro 1 deg e fermo, oppure 0.8 s dopo: corrente a ZERO (Daniele)
