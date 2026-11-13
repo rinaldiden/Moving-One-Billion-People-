@@ -1,0 +1,59 @@
+{
+ "unita": "asmile-001",
+ "stato": "TARATO su meta' A del giro 09/11 (394 campioni in moto), misurato su meta' B held-out: agents/rapporti/corridoio_bici_20261113.md. Calib sterzo 09/11 (centro 6606); da riverificare col giro nuovo (centro 4112).",
+ "parametri": {
+  "rapporto_ruota_colonna": 0.55,
+  "L_decadimento_m": 2.5,
+  "tau_sterzo_s": 0.05,
+  "tau_yaw_s": 0.1,
+  "tau_v_s": 0.1,
+  "v_imu_lo_ms": 1.0,
+  "v_imu_hi_ms": 1.5,
+  "peso_imu_max": 0.5,
+  "v_min_k_ms": 1.0,
+  "gz_segno": -1,
+  "bias_gz_iniziale_dps": 1.75,
+  "v_fermo_ms": 0.02,
+  "t_fermo_bias_s": 2.0,
+  "tau_bias_s": 5.0,
+  "gz_max_bias_dps": 10.0,
+  "v_min_orizzonte_ms": 1.39,
+  "ds_m": 0.25,
+  "vis_peso_max": 0.7,
+  "m_per_count_ruota": 2.1219e-05
+ },
+ "geometria": {
+  "_fonte": "follow_me/asmile_config.yaml sezione asmile (misurato) + docs/ackermann_calc.py; il test verifica la coincidenza",
+  "larghezza_max_cm": 110,
+  "sporgenza_muso_cm": 30,
+  "cam_offset_laterale_cm": 10,
+  "altezza_cam_da_terra_cm": 82.5,
+  "passo_mm": 1150,
+  "carreggiata_mm": 950,
+  "pignone_diametro_mm": 160,
+  "cremagliera_avanti_asse_mm": 55,
+  "x_camera_rif_rispetto_asse_m": 0.0,
+  "_x_camera": "NON VERIFICATO: cam_offset_laterale 10 cm letto come 'per lato' (rig centrato sull'asse). Se il riferimento depth fosse UNA camera, mettere +-0.10"
+ },
+ "sterzo_teoria": {
+  "rapporto_ruota_colonna_teorico_piccoli_angoli": 0.47,
+  "_nota": "ackermann_calc.py (d_rack 80): delta ideale 4.3 gradi a 10 gradi pignone, 11.8 a 30 -> ~0.43-0.47 (se colonna=pignone). Fit dati: 0.646 (c=0.00968 1/m/deg)"
+ },
+ "incertezza_laterale": {
+  "z_m": [
+   0,
+   3,
+   5,
+   10,
+   20
+  ],
+  "sigma_m": [
+   0.05,
+   0.101,
+   0.277,
+   0.889,
+   2.233
+  ],
+  "_fonte": "p68 errore laterale su meta' A (causale tarato)"
+ }
+}

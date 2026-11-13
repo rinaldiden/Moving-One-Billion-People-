@@ -35,6 +35,50 @@ SHADOW_HZ = 5  # predictions per second (don't need 15fps)
 
 running = True
 
+# ─── Corridoio #001 (2026-11-13): shadow mode del corridoio largo come la bici ───────────────────────────────
+# Legge le righe del sensor_hub (sensors_*.csv: enc_steer_raw, enc_wheel_cum, imu_gz_dps) APPENA scritte e ne logga il corridoio con lo STESSO t_ms
+# in corridoio_<sessione>.csv accanto al CSV del sensor_hub (file gemello riga per riga, join su t_ms: lo schema del sensor_hub non si tocca da qui).
+# Nessun comando agli attuatori. Solo codice: il deploy lo fa asmile-deploy dopo asmile-sicurezza.
+from corridoio import Corridoio, VelRuota, CAMPI_LOG  # noqa: E402
+
+SENSOR_HUB_DIR = "/data/logging/sensors"
+
+
+class CorridoioShadow:
+    def __init__(self, unita="asmile-001", out_path=None, calib=None, m_per_count=None):
+        self.c = Corridoio(unita, calib=calib)
+        import json as _json
+        mpc = m_per_count or _json.load(open(os.path.join(SCRIPT_DIR, "..", "..", "config", f"corridoio_{unita.replace('asmile-', '')}.json")))["parametri"]["m_per_count_ruota"]
+        self.vel = VelRuota(mpc); self.f = None
+        if out_path:
+            self.f = open(out_path, "w", newline=""); self.w = csv.writer(self.f); self.w.writerow(["t_ms"] + CAMPI_LOG)
+
+    def riga(self, r, vis=None):
+        """r = dict di una riga del sensor_hub (campi stringa). Ritorna lo stato o None se mancano i sensori."""
+        if not (r.get("enc_wheel_cum") and r.get("imu_gz_dps") and r.get("enc_steer_raw")):
+            return None
+        t = float(r["t_ms"]) / 1000.0
+        v = self.vel.update(t, float(r["enc_wheel_cum"]))
+        st = self.c.update(t, int(float(r["enc_steer_raw"])), v, float(r["imu_gz_dps"]), vis=vis)
+        if self.f:
+            self.w.writerow([r["t_ms"]] + self.c.riga_log())
+        return st
+
+    def chiudi(self):
+        if self.f:
+            self.f.close()
+
+
+def segui_sensor_hub(path, stop=lambda: not running, poll_s=0.01):
+    """tail -f del CSV del sensor_hub: genera dict di righe man mano che arrivano."""
+    with open(path) as fh:
+        intest = fh.readline().strip().split(",")
+        while not stop():
+            ln = fh.readline()
+            if not ln or not ln.endswith("\n"):
+                time.sleep(poll_s); continue
+            yield dict(zip(intest, ln.rstrip("\n").split(",")))
+
 
 def signal_handler(sig, frame):
     global running
@@ -240,10 +284,27 @@ class ShadowMode:
         print(f"Log: {self.log_path}")
 
 
+def main_corridoio(args):
+    import glob
+    path = args.sensors or sorted(glob.glob(os.path.join(SENSOR_HUB_DIR, "sensors_*.csv")))[-1]
+    out = os.path.join(os.path.dirname(path), os.path.basename(path).replace("sensors_", "corridoio_"))
+    cs = CorridoioShadow("asmile-001", out_path=out)
+    print(f"corridoio shadow: {path} -> {out} (nessun attuatore)")
+    for r in segui_sensor_hub(path):
+        cs.riga(r)
+    cs.chiudi()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Asmile Shadow Mode")
-    parser.add_argument("--model", required=True, help="Model path (.pth or .npz)")
+    parser.add_argument("--model", help="Model path (.pth or .npz)")
+    parser.add_argument("--corridoio", action="store_true", help="shadow del corridoio #001 dal CSV del sensor_hub (t_ms comune)")
+    parser.add_argument("--sensors", help="CSV del sensor_hub (default: l'ultimo in /data/logging/sensors)")
     args = parser.parse_args()
+    if args.corridoio:
+        return main_corridoio(args)
+    if not args.model:
+        parser.error("serve --model oppure --corridoio")
 
     shadow = ShadowMode(args.model)
     shadow.run()

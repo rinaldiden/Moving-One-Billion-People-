@@ -11,7 +11,27 @@ import numpy as np, cv2
 from scipy.optimize import linear_sum_assignment
 import depth_seg_001 as D
 import bordi_001 as BD
-from ego_001 import Ego, x_path, path_xz, x_arc
+from ego_001 import Ego, x_path, x_arc, CENTER, DEG_STEP
+sys.path.insert(0, os.path.join(D.HERE, "..", "..", "pi", "autonomous"))
+from corridoio import Corridoio     # corridoio UNICO bordo/Mac (2026-11-13): largo come la bici, curvatura causale da sterzo+giroscopio+velocita'
+CAL_0911 = {"unit": "asmile-001", "encoder_center_raw": CENTER, "deg_per_step": DEG_STEP, "encoder_pos_increases_to": "DX (destra)", "encoder_bits": 14, "delta_dx_deg": 45.0, "delta_sx_deg": -45.0}   # calib sterzo dei video del 09/11 (centro 6606)
+CORRIDOIO = Corridoio("asmile-001", calib=CAL_0911)
+
+
+def corr_path(k):
+    """percorso del corridoio (z, x) per la curvatura k, fino a 45 m (per il disegno e la classificazione), dal modulo corridoio"""
+    CORRIDOIO.k = float(k); CORRIDOIO.psi0 = 0.0; CORRIDOIO.x0 = 0.0; CORRIDOIO._cache = None
+    return CORRIDOIO.percorso(45.0)
+
+
+def k_causale(ego):
+    """curvatura CAUSALE del corridoio sull'intera sessione (stessi ingressi che avra' lo shadow mode: sterzo grezzo, velocita', gz); salva in ego.k_c e ego.corr_log (sorgenti, orizzonte, sigma)"""
+    c = Corridoio("asmile-001", calib=CAL_0911); K = np.empty(len(ego.t)); LOG = []
+    gz = ego.bias - ego.yaw_dx; raw = np.rint(CENTER + ego.steer / DEG_STEP)
+    for i in range(len(ego.t)):
+        c.update(ego.t[i] / 1000.0, raw[i], max(ego.v[i], 0.0), gz[i]); K[i] = c.k
+    ego.k_c = K
+    return K
 
 W, H, BAR = 1280, 800, 100
 MODE = os.environ.get("VFMODE", "v12")          # "v6"/"v7" = regole dei giri 6/7 (per il prima/dopo), "v8" = v7 + correzioni bug del giro 8
@@ -22,7 +42,7 @@ V9 = MODE in ("v9", "v10", "v11", "v12")       # giro 9: quota da terra misurata
 V12 = MODE == "v12"     # giro 12: (a) laterali grandi/edificio 'altro'/blob |X|>0.8 solo bordo, mai FRENA; (b) blob STRETTI (<=1.0 m) dentro la sagoma non sono bordo; (c) oggetto vero sul percorso: STERZA se c'e' spazio libero dall'altro lato, altrimenti FRENA
 V11 = MODE in ("v11", "v12")     # giro 11: blob/altro LATERALI o paralleli declassati a bordo prima del primo ostacolo; STERZA solo con bordo entro margine+rallenta_entro+base misurata; FRENA/RALLENTA solo se tocca terra nel corridoio o la sagoma 0-2 m interseca la bici; FRENA <2 m con Z coerente (encoder) salvo persone
 PURE = os.environ.get("VF_PURE", "1") == "1"      # v7: terza ipotesi = arco a curvatura costante (il percorso reale in curva stretta si avvolge piu' del previsto)
-EXTRA = float(os.environ.get("VF_EXTRA", "0.1"))   # allargamento aggiuntivo del corridoio per m di distanza (m/m), 0 = nessuno
+EXTRA = float(os.environ.get("VF_EXTRA", "0.0"))   # allargamento aggiuntivo del corridoio per m di distanza (m/m), 0 = nessuno
 OUT_A = os.environ.get("VF_OUT_A", os.path.join(D.HERE, "out_20261112_v6"))  # stadio A (misure per fotogramma) INVARIATO: riletto da v6
 OUT = os.environ.get("VF_OUT", os.path.join(D.HERE, "out_20261112_v12" if V12 else ("out_20261112_v11" if V11 else ("out_20261112_v10" if V10 else "out_20261112_v9"))))
 os.makedirs(OUT, exist_ok=True)
@@ -49,14 +69,12 @@ def zcol(Z):
     return tuple(int(c) for c in TURBO[int(255 * (1 - min(max(Z, 0.0), ZMAX_SCALE) / ZMAX_SCALE))])
 
 
-def wband(Z): return 1.5 + 0.03 * Z
+def wband(Z): return CORRIDOIO.hw      # corridoio largo come la bici (1.10 m dalla tabella); l'incertezza della previsione e' a parte (CORRIDOIO.incertezza)
 
 
 def corr_edges(xc, Z):
     """bordi laterali del corridoio disegnato: v6 = banda attorno al percorso curvo; v7 = inviluppo delle due ipotesi (percorso curvo e dritto)"""
-    if not V7: return xc - wband(Z), xc + wband(Z)
-    w = wband(Z) + EXTRA * Z
-    return min(xc, 0.0) - w, max(xc, 0.0) + w   # (l'arco puro, terza ipotesi, vale per la classificazione degli oggetti; il disegno mostra l'inviluppo dritto/decrescente)
+    return xc - wband(Z), xc + wband(Z)   # corridoio = sagoma della bici sul percorso causale (niente inviluppo con la dritta, niente bande larghe);  # (l'arco puro, terza ipotesi, vale per la classificazione degli oggetti; il disegno mostra l'inviluppo dritto/decrescente)
 
 
 def need_hits(r):
@@ -256,7 +274,7 @@ def corridor_logic(per, frames, ego, zm=None, stuff=None):
     res = []; prev_first = {"arc": None, "str": None}; bhist = {"L": [], "R": []}; bclr = {"L": [], "R": []}
     skeys = np.array(sorted(int(x[1:]) for x in stuff.files)) if stuff is not None else None
     for fi, (fr, rows) in enumerate(zip(frames, per)):
-        k = float(ego.at(fr["t_ms"], "k")); pz, px = path_xz(k); gpf = smooth_gp(frames, fi) if V8 else None
+        k = float(ego.at(fr["t_ms"], "k_c")); pz, px = corr_path(k); gpf = smooth_gp(frames, fi) if V8 else None
         zf_ = zm[f"f{fr['frame']}"] if (zm is not None and f"f{fr['frame']}" in zm.files) else None
         wcl, wpar = None, {}; lab0 = None
         if V12 and skeys is not None:
@@ -430,7 +448,7 @@ def draw(img, fr, rows, cs, gp, zthumb, ego, sess, t0, i):
     k = cs["k"]
     if gp:
         ga, gvh, gb = gp
-        Zs = np.geomspace(1.8, 30.0, 40); pz, px = path_xz(k); Lp, Rp, Cp = [], [], []
+        Zs = np.geomspace(1.8, 30.0, 40); pz, px = corr_path(k); Lp, Rp, Cp = [], [], []
         for Z in Zs:
             xc = float(np.interp(Z, pz, px)); d = F_PX * B_M / Z
             lo, hi = corr_edges(xc, Z)
@@ -546,7 +564,7 @@ def main():
     sess = "session_" + a.session.replace("session_", ""); sid = sess[8:]
     frames = pickle.load(open(os.path.join(OUT_A, sess + "_A", "frames.pkl"), "rb")); zf_ = os.path.join(OUT_A, sess + "_A", "zmap.npz"); zm = np.load(zf_) if os.path.exists(zf_) else None
     sf_ = os.path.join(D.HERE, "out_20261112_v10", f"stuff_{sid}.npz"); stuff = np.load(sf_) if (V10 and os.path.exists(sf_) and not os.environ.get("VF_NOSTUFF")) else None
-    ego = Ego(sess); famv2 = load_famv2(sess)
+    ego = Ego(sess); k_causale(ego); famv2 = load_famv2(sess)
     per = run_tracking(frames, ego, famv2); cs = corridor_logic(per, frames, ego, zm, stuff)
     f0, f1 = frames[0]["frame"], frames[-1]["frame"]; t0 = D.read_t(sess, "right")[0]
     name = f"video_fluido_{sid[-6:]}.mp4" if sid.endswith("093909") else f"video_fluido_{sid[-6:]}_{int(round((frames[0]['t_ms'] - t0) / 1000))}-{int(round((frames[-1]['t_ms'] - t0) / 1000))}.mp4"
