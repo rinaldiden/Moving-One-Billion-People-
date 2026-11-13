@@ -1,0 +1,24 @@
+[
+ {
+  "sess": "20261109_ride1050",
+  "usato": true,
+  "dist_m": 0.0,
+  "dist_visiva_m_NONAFFIDABILE": 225.34014218253017,
+  "t_mov_s": 193.76,
+  "v_media_kmh_NONAFFIDABILE": 3.6291187392459596,
+  "v_max_kmh": 8.614051182534412,
+  "wall0": "2026-11-09T10:50:10",
+  "wall1": "2026-11-09T10:55:15"
+ },
+ {
+  "sess": "20261109_ride1109",
+  "usato": true,
+  "dist_m": 0.0,
+  "dist_visiva_m_NONAFFIDABILE": 231.97653379397474,
+  "t_mov_s": 215.12,
+  "v_media_kmh_NONAFFIDABILE": 3.3239114205134626,
+  "v_max_kmh": 9.319753727516643,
+  "wall0": "2026-11-09T11:09:05",
+  "wall1": "2026-11-09T11:14:40"
+ }
+]
