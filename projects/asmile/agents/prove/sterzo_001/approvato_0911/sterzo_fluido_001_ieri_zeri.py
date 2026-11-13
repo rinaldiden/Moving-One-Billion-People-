@@ -42,6 +42,7 @@ ENC = "/tmp/encoder_steer"; WHEEL = "/tmp/encoder_wheel"; CPR = 16384; DEG = 360
 CAL = "/data/steering_limits_asmile-001.json"
 MARGINE_SW = 190                # count (~4.2 deg) dai finecorsa: come il 09/11 (4304->4500, 8884->8700)
 CAMPO_0911 = 4580               # count fra i finecorsa il 09/11 (4304..8884)
+CONTROLLO_RUOTA = False         # Daniele 13/11: a banco/ruote a terra lo stop "bici in movimento" dava solo falsi allarmi -> spento; sicurezze: temperatura + tetto di corrente 0.5 s (+ limiti di posizione)
 WHEEL_TOL_CORSA = 7500          # count (~15 cm; 13/11 a -31° stop a >5 cm senza bici mossa) DURANTE la corsa: a ruote a terra sterzare fa ruotare un poco la ruota (13/11: stop a >1 mm)
 WHEEL_TOL = 50                  # count encoder ruota (~1 mm): il 13/11 l'encoder fermo oscilla di 1 count
 CAL_DOPO = "2026-11-12"         # calib valida solo se fatta dopo il rimontaggio encoder sterzo
@@ -57,7 +58,7 @@ TEL = {"t_fet": 0.0, "t_mot": 0.0, "i_batt": 0.0, "v_batt": 0.0, "id": 0.0, "iq"
 HZ = 400                        # comandi al secondo (2.5 ms) — Daniele 2026-11-09: "così è perfetto" a 400 Hz, 15 deg/s
 VEL_MAX_DEG_S = 45.0          # stop DURO di sicurezza (era 30: scattava al rilascio dopo uno strappo, ora c'e' l'anti-strappo)
 STRAPPO_DEG_S = 8.0           # deg/s oltre il riferimento = manubrio che si e' sbloccato -> spinta accumulata a zero
-TETTO_S = 0.2                 # s al tetto di corrente -> stop (Daniele 13/11: stacca se arriva ai 60 A, niente stallo che scalda)
+TETTO_S = 0.5                 # s al tetto di corrente -> stop (Daniele 13/11: stacca se arriva ai 60 A, niente stallo che scalda)
 WRONG_COUNTS = 10
 
 # --- guadagni (in unita' di MANUBRIO: deg, deg/s; corrente in A che spinge l'encoder in SU) ---
@@ -195,7 +196,7 @@ def main(argv=None):
     w0, fresh = wheel()
     if not fresh: sys.exit("encoder ruota assente/vecchio: rifiuto")
     time.sleep(0.5)
-    if abs(int(float(wheel()[0] or 0)) - int(float(w0))) > WHEEL_TOL: sys.exit("bici in movimento: rifiuto")
+    if CONTROLLO_RUOTA and abs(int(float(wheel()[0] or 0)) - int(float(w0))) > WHEEL_TOL: sys.exit("bici in movimento: rifiuto")
     p0, mt0 = rd_enc()
     if p0 is None: sys.exit("encoder sterzo vecchio")
     if not hard_lo <= p0 <= hard_hi: sys.exit(f"pos {p0} troppo vicina al finecorsa vero [{hard_lo},{hard_hi}]: muovere a mano")
@@ -310,7 +311,7 @@ def main(argv=None):
             # temperature (aggiunto 2026-11-11, solo arresto: il controllo resta quello di ieri). NTC 10k motore dal connettore hall
             if TEL["t_mot"] > T_MOT_STOP or TEL["t_fet"] > T_FET_STOP: reason = f"CALDO: motore {TEL['t_mot']:.1f} C, VESC {TEL['t_fet']:.1f} C"; break
             if TEL["t_fet"] > 0 and TEL["t_mot"] < -20: reason = f"sonda motore scollegata? ({TEL['t_mot']:.1f} C)"; break
-            if k % 20 == 0 and abs(int(float(wheel()[0] or 0)) - int(float(w0))) > WHEEL_TOL_CORSA: reason = "bici in movimento"; break
+            if CONTROLLO_RUOTA and k % 20 == 0 and abs(int(float(wheel()[0] or 0)) - int(float(w0))) > WHEEL_TOL_CORSA: reason = "bici in movimento"; break
             if a.modo == "vai":
                 if tc - t0 > 25: reason = "timeout 25 s"; break
                 # ARRIVO: riferimento al centro -> entro 1 deg e fermo, oppure 0.8 s dopo: corrente a ZERO (Daniele)
