@@ -38,3 +38,9 @@ Fascia di incertezza (p68 su A): Z 3/5/10/20 m = 0.10/0.28/0.89/2.23 m; copertur
 ## Aperti / NON VERIFICATO
 1. Calib sterzo del 09/11 (centro 6606) usata per il replay; con quella nuova (centro 4112) i parametri vanno riverificati sul primo giro.
 2. Rapporto colonna/ruota e offset laterale camera (sopra). 3. Visione: hook testato solo sintetico. 4. Pi 5: costo non misurato. 5. Il replay e' su una sola sessione (stessa bici, stesso giorno).
+
+## Correzione dopo PASSA parziale di asmile-occhio
+- `video_fluido_001.py` (`k_causale`): la velocita' era centrata +-0.25 s (non causale); ora usa `VelRuota` del modulo (differenza all'indietro 0.2 s). Test 17/17 verdi, stats-only 094146 rigirato.
+
+## Prossimi passi (non fatti ora)
+1. L > 2.5 m sulle curve con held-out (l'ottimo era al bordo della griglia). 2. Calib sterzo 4112 su un giro nuovo e riverifica parametri. 3. `x_camera_rif_rispetto_asse_m` (riferimento depth una camera? +-0.10). 4. Costo sul Pi 5 (misura a cura di asmile-deploy). 5. Giro a cerchio noto per il rapporto colonna/ruota (teoria 0.47 vs fit 0.646).

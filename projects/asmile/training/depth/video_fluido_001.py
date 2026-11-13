@@ -13,7 +13,7 @@ import depth_seg_001 as D
 import bordi_001 as BD
 from ego_001 import Ego, x_path, x_arc, CENTER, DEG_STEP
 sys.path.insert(0, os.path.join(D.HERE, "..", "..", "pi", "autonomous"))
-from corridoio import Corridoio     # corridoio UNICO bordo/Mac (2026-11-13): largo come la bici, curvatura causale da sterzo+giroscopio+velocita'
+from corridoio import Corridoio, VelRuota     # corridoio UNICO bordo/Mac (2026-11-13): largo come la bici, curvatura causale da sterzo+giroscopio+velocita'
 CAL_0911 = {"unit": "asmile-001", "encoder_center_raw": CENTER, "deg_per_step": DEG_STEP, "encoder_pos_increases_to": "DX (destra)", "encoder_bits": 14, "delta_dx_deg": 45.0, "delta_sx_deg": -45.0}   # calib sterzo dei video del 09/11 (centro 6606)
 CORRIDOIO = Corridoio("asmile-001", calib=CAL_0911)
 
@@ -28,8 +28,9 @@ def k_causale(ego):
     """curvatura CAUSALE del corridoio sull'intera sessione (stessi ingressi che avra' lo shadow mode: sterzo grezzo, velocita', gz); salva in ego.k_c e ego.corr_log (sorgenti, orizzonte, sigma)"""
     c = Corridoio("asmile-001", calib=CAL_0911); K = np.empty(len(ego.t)); LOG = []
     gz = ego.bias - ego.yaw_dx; raw = np.rint(CENTER + ego.steer / DEG_STEP)
+    vr = VelRuota(1.0)      # velocita' CAUSALE del modulo (differenza all'indietro 0.2 s sull'odometria in m), non quella centrata +-0.25 s di ego.v
     for i in range(len(ego.t)):
-        c.update(ego.t[i] / 1000.0, raw[i], max(ego.v[i], 0.0), gz[i]); K[i] = c.k
+        c.update(ego.t[i] / 1000.0, raw[i], vr.update(ego.t[i] / 1000.0, float(ego.s[i])), gz[i]); K[i] = c.k
     ego.k_c = K
     return K
 
