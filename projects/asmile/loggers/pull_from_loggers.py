@@ -104,6 +104,13 @@ def pull_logger(lg):
     for remote in complete_clips(lg):
         name = os.path.basename(remote)
         local = os.path.join(dest, name)
+        # Overlay senza RTC: a ogni boot il recorder riparte dallo STESSO nome (ora finta, es. clip_20261029_163306).
+        # Se esiste già un file con quel nome e contenuto diverso è di un altro boot: mai sovrascrivere,
+        # lo salvo con l'impronta del contenuto prima dell'indice (clip_..._163306_<sha8>_00031.h264).
+        if os.path.exists(local) and sha256_local(local) != sha256_remote(lg, remote):
+            stem, idx = name.rsplit("_", 1)
+            local = os.path.join(dest, f"{stem}_{sha256_remote(lg, remote)[:8]}_{idx}")
+            print(f"  {name}: nome già usato da un altro boot -> {os.path.basename(local)}")
         rc = subprocess.run(
             ["rsync", "-a", "-e", "ssh " + " ".join(SSH_OPTS),
              f"{lg['user']}@{lg['host']}:{remote}", local]).returncode
@@ -178,6 +185,14 @@ def sync_sensors(lg, dest):
         subprocess.run(["rsync", "-a", "-e", "ssh " + " ".join(SSH_OPTS),
                         f"{lg['user']}@{lg['host']}:{lg['src']}/{lg['frames_glob']}", os.path.join(sens, "frames") + "/"],
                        stderr=subprocess.DEVNULL)
+        # stesso nome riusato a ogni boot (ora finta): copia anche per boot, così un boot non cancella l'altro
+        boot = ssh(lg, "cat /proc/sys/kernel/random/boot_id").stdout.strip()[:8]
+        if boot:
+            per = os.path.join(sens, "frames", "per_boot", boot)
+            os.makedirs(per, exist_ok=True)
+            subprocess.run(["rsync", "-a", "-e", "ssh " + " ".join(SSH_OPTS),
+                            f"{lg['user']}@{lg['host']}:{lg['src']}/{lg['frames_glob']}", per + "/"],
+                           stderr=subprocess.DEVNULL)
 
 
 def main():
@@ -203,8 +218,12 @@ def main():
         print(f"TOTALE {tot} nuovi segmenti in {DEST_BASE}")
         # Hook elaborazione: se esiste on_new_videos.sh, lancialo sui nuovi video
         hook = os.path.join(HERE, "on_new_videos.sh")
+        # staccato: l'elaborazione dura ore e NON deve bloccare i download successivi (launchd ogni 5 min
+        # non rilancia finché questo processo vive). Un solo hook alla volta (lock).
+        lock = os.path.join(DEST_BASE, ".on_new_videos.lock")
         if os.path.isfile(hook) and os.access(hook, os.X_OK):
-            subprocess.run([hook, DEST_BASE])
+            subprocess.Popen(["/usr/bin/lockf", "-t", "0", lock, hook, DEST_BASE], start_new_session=True,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     else:
         print("nessun nuovo video da scaricare")
 

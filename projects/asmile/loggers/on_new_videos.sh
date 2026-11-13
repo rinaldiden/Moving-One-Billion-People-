@@ -13,6 +13,9 @@ PY="$HOME/.asmile_depth_venv/bin/python"; [ -x "$PY" ] || PY=python3
 LOG="$BASE/ingest.log"
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
 echo "[$(ts)] on_new_videos START ($BASE)" >> "$LOG"
+# Pausa voluta (Daniele 2026-11-13: prima la calibrazione delle camere del logger, poi si elabora):
+# con il file $BASE/.pausa_elaborazione si scarica soltanto.
+if [ -f "$BASE/.pausa_elaborazione" ]; then echo "[$(ts)] elaborazione IN PAUSA ($BASE/.pausa_elaborazione): solo download" >> "$LOG"; exit 0; fi
 
 # 0) PRIMA della percezione: taglia i tratti con frame fermi (bici ferma E scena immobile, >=5 s).
 #    I grezzi restano intatti; la percezione usa i video "solo movimento" in _solo_movimento/<unita>/<sess>/.
