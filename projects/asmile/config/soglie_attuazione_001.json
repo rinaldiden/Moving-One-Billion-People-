@@ -96,5 +96,16 @@
   "oggi": "formule con parametri stimati",
   "obiettivo": "estratti dalle guide di asmile-001 (event-miner) + validazione umana (Daniele)",
   "validato_da": null
+ },
+ "anti_impuntata": {
+  "_regola": "REGOLA FERREA (Daniele 2026-11-13): l'impuntata non deve accadere MAI. Appena l'IMU vede il posteriore che si alza in frenata -> rilascio IMMEDIATO del freno; quando l'IMU torna in piano -> si riprende a frenare con meno forza.",
+  "stato": "PROPOSTA dai dati del 13/11 (2 impuntate), da validare Daniele e testare a banco/ombra prima di comandare il freno",
+  "imu_asse_beccheggio": "gx (#001), bias a bici ferma -2.67 dps",
+  "rilascia_se_vel_beccheggio_dps": 15.0,
+  "rilascia_se_beccheggio_rel_deg": 2.0,
+  "in_piano_se_beccheggio_rel_deg": 0.5,
+  "in_piano_per_s": 0.2,
+  "ripresa_forza_frazione": 0.7,
+  "_note": "soglie sopra il rumore in moto (p99 12 dps) e sotto le impuntate viste (22-26 dps, 4-4.5 gradi). Segno del beccheggio in avanti da confermare col video."
  }
 }

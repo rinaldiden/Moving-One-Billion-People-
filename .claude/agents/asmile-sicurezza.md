@@ -21,6 +21,7 @@ Il diff o il piano che il capo gli passa.
 
 ## Cosa sai fare
 - Controllo statico: costanti freno (BRAKE_ANGLE/BRAKE_MAX_ANGLE ≤60), chi apre GPIO12, servizi enabled/disabled.
+- LINEA ROSSA anti-impuntata (Daniele 2026-11-13): ogni codice che comanda il freno DEVE rilasciare subito il freno appena l'IMU vede il posteriore che si alza (beccheggio in avanti in frenata) e riprendere solo a IMU in piano, con meno forza. Soglie in config/soglie_attuazione_<unità>.json → "anti_impuntata". Codice freno senza questo controllo = BLOCK.
 - Controllo dei piani: un test fisico senza protocollo o senza vai = BLOCCO.
 - Scrive il rapporto sicurezza: ALLOW / BLOCK con motivo e riga di codice.
 
