@@ -1,0 +1,363 @@
+{
+ "1hz_150337": {
+  "n": 353,
+  "valid_med": 0.227,
+  "con_primo": 334,
+  "normale_luma<120": {
+   "n": 314,
+   "valid_med": 0.2215,
+   "valid_p10": 0.149
+  },
+  "media_120-150": {
+   "n": 21,
+   "valid_med": 0.338,
+   "valid_p10": 0.217
+  },
+  "controsole_luma>=150": {
+   "n": 18,
+   "valid_med": 0.2635,
+   "valid_p10": 0.2051
+  },
+  "sat_alto>=30%": {
+   "n": 10,
+   "valid_med": 0.224,
+   "valid_p10": 0.1985
+  },
+  "primo_m": {
+   "<2": 25,
+   "2-5": 125,
+   "5-10": 95,
+   ">=10": 89
+  },
+  "summary": {
+   "sess": "session_20261113_150337",
+   "n_frames": 5804,
+   "n_campionati": 353,
+   "durata_moto_s": 353,
+   "n_oggetti": 4029,
+   "s_per_campione": 0.65,
+   "klt": {
+    "n_tracce": 22,
+    "pendenza_mediana": 0.8856223287909968,
+    "iqr": [
+     0.7910373245895286,
+     0.9616131998473392
+    ],
+    "nota": "pendenza = -dZ/ds_encoder su feature statiche (attesa 1.0 se Z ed encoder sono entrambi giusti; non filtra le feature in moto)"
+   },
+   "valid_frac_basso_mediana": 0.227,
+   "frame_con_ostacolo_corridoio": 334,
+   "dist_enc_m": 977.0148048391501
+  },
+  "oggetti": {
+   "ostacolo": 1255,
+   "pole": 765,
+   "person": 581,
+   "car": 569,
+   "bollard": 368,
+   "trash can": 150,
+   "truck": 85,
+   "bench": 63,
+   "motorcycle": 40,
+   "stroller": 36,
+   "bicycle": 29,
+   "dog": 25
+  }
+ },
+ "1hz_151400": {
+  "n": 362,
+  "valid_med": 0.3185,
+  "con_primo": 349,
+  "normale_luma<120": {
+   "n": 295,
+   "valid_med": 0.311,
+   "valid_p10": 0.1948
+  },
+  "media_120-150": {
+   "n": 18,
+   "valid_med": 0.366,
+   "valid_p10": 0.3068
+  },
+  "controsole_luma>=150": {
+   "n": 49,
+   "valid_med": 0.325,
+   "valid_p10": 0.2802
+  },
+  "sat_alto>=30%": {
+   "n": 49,
+   "valid_med": 0.325,
+   "valid_p10": 0.27680000000000005
+  },
+  "primo_m": {
+   "<2": 11,
+   "2-5": 138,
+   "5-10": 73,
+   ">=10": 127
+  },
+  "summary": {
+   "sess": "session_20261113_151400",
+   "n_frames": 6182,
+   "n_campionati": 362,
+   "durata_moto_s": 362,
+   "n_oggetti": 3938,
+   "s_per_campione": 0.68,
+   "klt": {
+    "n_tracce": 39,
+    "pendenza_mediana": 0.9720570658508987,
+    "iqr": [
+     0.9092159759658135,
+     1.0271878674734238
+    ],
+    "nota": "pendenza = -dZ/ds_encoder su feature statiche (attesa 1.0 se Z ed encoder sono entrambi giusti; non filtra le feature in moto)"
+   },
+   "valid_frac_basso_mediana": 0.3185,
+   "frame_con_ostacolo_corridoio": 349,
+   "dist_enc_m": 1051.8108003802145
+  },
+  "oggetti": {
+   "ostacolo": 1499,
+   "car": 764,
+   "pole": 707,
+   "person": 393,
+   "bollard": 273,
+   "trash can": 62,
+   "truck": 45,
+   "motorcycle": 33,
+   "dog": 27,
+   "van": 24,
+   "bicycle": 22,
+   "bench": 19
+  }
+ },
+ "frenata1": {
+  "sess": "20261113_150337",
+  "n": 224,
+  "acts": {
+   "nessuna": 165,
+   "RALLENTA": 7,
+   "STERZA": 47,
+   "FRENA": 5
+  },
+  "allarmi_bordo": {
+   "sx": 40,
+   "dx": 7
+  },
+  "primo_arc_min": 2.25,
+  "primo_arc_n": 138,
+  "valid_zmap_med": 0.27795454545454545,
+  "valid_zmap_p10": 0.17757575757575758,
+  "valid_zmap_p90": 0.454449494949495,
+  "frames": [
+   0,
+   223
+  ],
+  "luma_med": 95.2,
+  "frac_luma>=150": 0.0,
+  "valid_zmap_luma>=150": null,
+  "valid_zmap_luma<150": 0.27795454545454545,
+  "sam_det_medio": 5.4375,
+  "sam_classi": {
+   "person": 153,
+   "cat": 102,
+   "dog": 37,
+   "pole": 24,
+   "car": 15,
+   "trash can": 12,
+   "gate": 12,
+   "child": 11,
+   "bollard": 9,
+   "stroller": 5
+  },
+  "sam_n": 224
+ },
+ "frenata2_monovolume": {
+  "sess": "20261113_150337",
+  "n": 301,
+  "acts": {
+   "nessuna": 206,
+   "FRENA": 64,
+   "RALLENTA": 31
+  },
+  "allarmi_bordo": {},
+  "primo_arc_min": 0.3,
+  "primo_arc_n": 239,
+  "valid_zmap_med": 0.17555555555555555,
+  "valid_zmap_p10": 0.1319191919191919,
+  "valid_zmap_p90": 0.2497979797979798,
+  "frames": [
+   4438,
+   4738
+  ],
+  "luma_med": 92.5,
+  "frac_luma>=150": 0.0,
+  "valid_zmap_luma>=150": null,
+  "valid_zmap_luma<150": 0.17555555555555555,
+  "sam_det_medio": 29.308970099667775,
+  "sam_classi": {
+   "pole": 1013,
+   "car": 624,
+   "traffic sign": 547,
+   "person": 390,
+   "bollard": 272,
+   "barrier": 233,
+   "van": 211,
+   "trash can": 167,
+   "bicycle": 65,
+   "stop sign": 62
+  },
+  "sam_n": 301
+ },
+ "controsole_a": {
+  "sess": "20261113_150337",
+  "n": 180,
+  "acts": {
+   "nessuna": 87,
+   "RALLENTA": 17,
+   "FRENA": 75,
+   "STERZA": 1
+  },
+  "allarmi_bordo": {
+   "sx": 1
+  },
+  "primo_arc_min": 0.3,
+  "primo_arc_n": 111,
+  "valid_zmap_med": 0.2938636363636363,
+  "valid_zmap_p10": 0.1709949494949495,
+  "valid_zmap_p90": 0.48728282828282826,
+  "frames": [
+   990,
+   1169
+  ],
+  "luma_med": 133.75,
+  "frac_luma>=150": 0.5,
+  "valid_zmap_luma>=150": 0.29573232323232324,
+  "valid_zmap_luma<150": 0.28684343434343434,
+  "sam_det_medio": 14.9,
+  "sam_classi": {
+   "bollard": 473,
+   "pole": 314,
+   "person": 65,
+   "barrier": 61,
+   "trash can": 26,
+   "bicycle": 24,
+   "cat": 13,
+   "stroller": 13,
+   "traffic cone": 13,
+   "car": 12
+  },
+  "sam_n": 180
+ },
+ "controsole_b": {
+  "sess": "20261113_150337",
+  "n": 180,
+  "acts": {
+   "nessuna": 140,
+   "RALLENTA": 14,
+   "FRENA": 26
+  },
+  "allarmi_bordo": {},
+  "primo_arc_min": 0.3,
+  "primo_arc_n": 99,
+  "valid_zmap_med": 0.2514141414141414,
+  "valid_zmap_p10": 0.19275757575757574,
+  "valid_zmap_p90": 0.3614494949494949,
+  "frames": [
+   2325,
+   2504
+  ],
+  "luma_med": 167.4,
+  "frac_luma>=150": 0.75,
+  "valid_zmap_luma>=150": 0.236010101010101,
+  "valid_zmap_luma<150": 0.3140909090909091,
+  "sam_det_medio": 24.044444444444444,
+  "sam_classi": {
+   "person": 523,
+   "car": 315,
+   "pole": 242,
+   "trash can": 120,
+   "motorcycle": 120,
+   "bollard": 50,
+   "dog": 38,
+   "truck": 28,
+   "child": 25,
+   "stroller": 21
+  },
+  "sam_n": 180
+ },
+ "controsole_c": {
+  "sess": "20261113_151400",
+  "n": 270,
+  "acts": {
+   "nessuna": 248,
+   "FRENA": 4,
+   "RALLENTA": 16,
+   "STERZA": 2
+  },
+  "allarmi_bordo": {
+   "dx": 2
+  },
+  "primo_arc_min": 1.2203247293771202,
+  "primo_arc_n": 142,
+  "valid_zmap_med": 0.3306060606060606,
+  "valid_zmap_p10": 0.28738888888888886,
+  "valid_zmap_p90": 0.3705151515151515,
+  "frames": [
+   3000,
+   3269
+  ],
+  "luma_med": 186.5,
+  "frac_luma>=150": 1.0,
+  "valid_zmap_luma>=150": 0.3306060606060606,
+  "valid_zmap_luma<150": null,
+  "sam_det_medio": 13.981481481481481,
+  "sam_classi": {
+   "person": 410,
+   "barrier": 283,
+   "car": 230,
+   "pole": 171,
+   "bollard": 98,
+   "stop sign": 62,
+   "stroller": 54,
+   "traffic sign": 49,
+   "traffic light": 31,
+   "truck": 26
+  },
+  "sam_n": 270
+ },
+ "sam1hz_150337": {
+  "n": 353,
+  "det_medio": 26.06798866855524,
+  "classi": {
+   "pole": 977,
+   "car": 647,
+   "person": 597,
+   "bollard": 452,
+   "trash can": 175,
+   "barrier": 174,
+   "traffic sign": 102,
+   "truck": 97,
+   "child": 84,
+   "traffic light": 82,
+   "stroller": 73,
+   "motorcycle": 72
+  }
+ },
+ "sam1hz_151400": {
+  "n": 362,
+  "det_medio": 21.07182320441989,
+  "classi": {
+   "car": 846,
+   "pole": 814,
+   "person": 397,
+   "bollard": 320,
+   "barrier": 200,
+   "traffic sign": 104,
+   "van": 77,
+   "trash can": 72,
+   "truck": 71,
+   "traffic light": 58,
+   "motorcycle": 47,
+   "child": 40
+  }
+ }
+}

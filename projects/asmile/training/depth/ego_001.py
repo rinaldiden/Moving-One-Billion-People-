@@ -14,6 +14,8 @@ LOGS = os.path.join(ROOT, "asmile-loggers", "asmile-001")
 SFILE = os.path.join(LOGS, "_sensors", "sensors", "sensors_20261109_085334.csv")
 M_PER_COUNT = 2.1219e-5; PROP = 0.3477 / 0.3374
 CENTER, DEG_STEP = 6606, 0.02197
+CENTER_1113 = 4112     # centro sterzo dopo il rimontaggio encoder (fleet/001/data/steering_limits_asmile-001.json, 13/11/2026)
+def center_for(sess): return CENTER_1113 if sess.replace("session_", "")[:8] >= "20261113" else CENTER
 C_STEER = 0.00968
 
 
@@ -42,11 +44,15 @@ def x_path(k0, Z):
 
 class Ego:
     def __init__(self, sess):
+        import glob
+        self.center = center_for(sess)
+        sf = sorted(glob.glob(os.path.join(LOGS, "_sensors", "sensors", "sensors_" + sess.replace("session_", "")[:8] + "_*.csv")))
+        SFILE_ = SFILE if sess.replace("session_", "")[:8] == "20261109" else sf[0]
         m = json.load(open(os.path.join(LOGS, sess, "metadata.json")))
         s0 = dt.datetime.fromisoformat(m["start_time"])
         a = s0 - dt.timedelta(seconds=15); b = s0 + dt.timedelta(seconds=float(m["duration_seconds"]) + 15)
         T, C, G, ST, AZ = [], [], [], [], []; allrest = []
-        for r in csv.DictReader(open(SFILE)):
+        for r in csv.DictReader(open(SFILE_)):
             if not (r["wall"] and r["enc_wheel_cum"] and r["imu_gz_dps"] and r["enc_steer_raw"]): continue
             allrest.append((float(r["t_ms"]), float(r["enc_wheel_cum"]), float(r["imu_gz_dps"])))
             w = dt.datetime.fromisoformat(r["wall"])
@@ -58,8 +64,13 @@ class Ego:
         self.t = t; dtm = 0.02
         def vel(w): return (np.interp(t + w * 1000, t, s) - np.interp(t - w * 1000, t, s)) / (2 * w)
         self.v = vel(0.25); self.s = s
+        # filtro picchi encoder ruota (13/11): velocita' fuori [-1, 12 m/s = 43 km/h] -> mediana mobile 1 s; si conta quanti campioni
+        bad = (self.v > 12.0) | (self.v < -1.0); self.n_spike = int(bad.sum())
+        if self.n_spike:
+            n_ = 51; vp = np.pad(self.v, n_ // 2, mode="edge"); med = np.array([np.median(vp[i:i + n_]) for i in range(len(self.v))]); self.v = np.where(bad, med, self.v)
+        self.v = np.maximum(self.v, 0.0)
         self.yaw_dx = -(np.array(G)[o] - self.bias)              # dps, + destra
-        self.steer = (np.array(ST)[o] - CENTER) * DEG_STEP        # gradi, + destra
+        self.steer = (np.array(ST)[o] - self.center) * DEG_STEP        # gradi, + destra
         n = int(round(0.2 / dtm)) * 2 + 1; ker = np.ones(n) / n
         sm = lambda x: np.convolve(np.pad(x, n // 2, mode="edge"), ker, mode="valid")
         self.yaw_s = sm(self.yaw_dx); self.steer_s = sm(self.steer); self.v_s = sm(self.v)

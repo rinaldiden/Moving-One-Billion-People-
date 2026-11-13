@@ -36,3 +36,6 @@ Fonde **monoculare learned (Depth-Anything-V2, denso)** + **scala ancorata allo 
 2. **Depth per-oggetto**: incrociare maschere segment_gate × depth-map → distanza mediana.
 3. **Deploy SGBM su #001** (quando si accende) con la SUA calibrazione (focale OV9281).
 4. **Sync hardware-trigger** delle 2 OV9281 (ora software_timestamp → sfasa la disparità su oggetti in movimento): valutare il trigger esterno (FSIN) per frame simultanei.
+
+## Giri 13/11 di #001 (notte)
+`giri_liste_001.py` (liste 1 Hz in moto e tratti 15 fps) -> `giri_sam_001.sh` (SAM 3, un processo) -> `giri_seg_001.sh` / `giri_run_fluidi.sh` (A fluido + stuff + video v10) -> `giri_report_001.py`, `controsole_001.py`, `controsole_valid_001.py`. Rapporto: `agents/rapporti/depth_seg_giri_20261113.md`.

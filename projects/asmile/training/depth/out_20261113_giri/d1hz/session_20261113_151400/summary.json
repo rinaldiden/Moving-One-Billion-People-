@@ -1,0 +1,20 @@
+{
+ "sess": "session_20261113_151400",
+ "n_frames": 6182,
+ "n_campionati": 362,
+ "durata_moto_s": 362,
+ "n_oggetti": 3938,
+ "s_per_campione": 0.68,
+ "klt": {
+  "n_tracce": 39,
+  "pendenza_mediana": 0.9720570658508987,
+  "iqr": [
+   0.9092159759658135,
+   1.0271878674734238
+  ],
+  "nota": "pendenza = -dZ/ds_encoder su feature statiche (attesa 1.0 se Z ed encoder sono entrambi giusti; non filtra le feature in moto)"
+ },
+ "valid_frac_basso_mediana": 0.3185,
+ "frame_con_ostacolo_corridoio": 349,
+ "dist_enc_m": 1051.8108003802145
+}

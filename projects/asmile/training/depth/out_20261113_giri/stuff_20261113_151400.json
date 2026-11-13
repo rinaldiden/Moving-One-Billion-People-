@@ -1,0 +1,1 @@
+{"frames": 90, "secondi": 26.6, "s_per_frame": 0.296, "step": 3, "device": "mps", "classi": ["strada", "strisce", "marciapiede", "cordolo", "prato", "alberi", "edifici", "muri", "cielo", "tombino", "buca"]}

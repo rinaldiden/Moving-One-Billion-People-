@@ -23,7 +23,7 @@ FILL_MIN_AREA = 3000
 ZNEAR = 3.0; ZN_OK = 0.5   # v3: blob con Z<3 m: almeno SUP_MIN dei pixel candidati con ZNCC 15x15 > 0.5 alla disparita' misurata (verifica L-R a piena risoluzione)
 SUP_MIN = 0.20; SCARTATI = []
 DENS_NEAR = 0.35   # blob con Z<1.9 m (passata vicina) richiedono densita pixel candidati >=0.35 del box (falsi asfalto 0.22-0.29, bici vera 0.49: soglia dichiarata su 4 blob, POCHI)
-OUT = os.path.join(D.HERE, "out_20261112_v5")
+OUT = os.environ.get("VD_OUT", os.path.join(D.HERE, "out_20261112_v5"))
 # v4 (VETO 1/3 occhio, ostacoli sottili fusi nel muro): (1) maschere d'istanza SAM 3 come oggetti, distanza = statistica della depth DENTRO la maschera;
 # (2) fallback senza maschera: componenti connesse per CONTINUITA' di profondita' (due pixel vicini sono collegati solo se |ln Za - ln Zb| < SLICE_LN):
 # un paletto a 4.5 m davanti a un muro a 9 m e' un'altra componente, la distanza si calcola per componente e non per box.

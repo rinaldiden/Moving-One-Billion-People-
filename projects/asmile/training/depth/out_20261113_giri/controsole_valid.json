@@ -1,0 +1,23 @@
+{
+ "controsole_a": {
+  "n": 36,
+  "sat_quota_med": 0.0679296875,
+  "valid_dentro_sat": 0.3198245283289515,
+  "valid_fuori_sat": 0.3266873511406462,
+  "n_dentro": 24
+ },
+ "controsole_b": {
+  "n": 36,
+  "sat_quota_med": 0.09108593749999999,
+  "valid_dentro_sat": 0.26424214657701434,
+  "valid_fuori_sat": 0.34848104164918914,
+  "n_dentro": 36
+ },
+ "controsole_c": {
+  "n": 54,
+  "sat_quota_med": 0.2064140625,
+  "valid_dentro_sat": 0.17058328085865326,
+  "valid_fuori_sat": 0.3001152862680363,
+  "n_dentro": 54
+ }
+}

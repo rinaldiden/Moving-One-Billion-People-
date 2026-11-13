@@ -15,7 +15,7 @@ from ego_001 import Ego, x_path, x_arc, CENTER, DEG_STEP
 sys.path.insert(0, os.path.join(D.HERE, "..", "..", "pi", "autonomous"))
 from corridoio import Corridoio, VelRuota     # corridoio UNICO bordo/Mac (2026-11-13): largo come la bici, curvatura causale da sterzo+giroscopio+velocita'
 CAL_0911 = {"unit": "asmile-001", "encoder_center_raw": CENTER, "deg_per_step": DEG_STEP, "encoder_pos_increases_to": "DX (destra)", "encoder_bits": 14, "delta_dx_deg": 45.0, "delta_sx_deg": -45.0}   # calib sterzo dei video del 09/11 (centro 6606)
-CORRIDOIO = Corridoio("asmile-001", calib=CAL_0911)
+CORRIDOIO = Corridoio("asmile-001", calib=CAL_0911)   # solo per il disegno del percorso (k imposto), la calib dello sterzo conta in k_causale
 
 
 def corr_path(k):
@@ -26,8 +26,8 @@ def corr_path(k):
 
 def k_causale(ego):
     """curvatura CAUSALE del corridoio sull'intera sessione (stessi ingressi che avra' lo shadow mode: sterzo grezzo, velocita', gz); salva in ego.k_c e ego.corr_log (sorgenti, orizzonte, sigma)"""
-    c = Corridoio("asmile-001", calib=CAL_0911); K = np.empty(len(ego.t)); LOG = []
-    gz = ego.bias - ego.yaw_dx; raw = np.rint(CENTER + ego.steer / DEG_STEP)
+    c = Corridoio("asmile-001", calib=CAL_0911 if ego.center == CENTER else None); K = np.empty(len(ego.t)); LOG = []    # 13/11: calib sterzo attuale (centro 4112) dal json dell'unita'
+    gz = ego.bias - ego.yaw_dx; raw = np.rint(ego.center + ego.steer / DEG_STEP)
     vr = VelRuota(1.0)      # velocita' CAUSALE del modulo (differenza all'indietro 0.2 s sull'odometria in m), non quella centrata +-0.25 s di ego.v
     for i in range(len(ego.t)):
         c.update(ego.t[i] / 1000.0, raw[i], vr.update(ego.t[i] / 1000.0, float(ego.s[i])), gz[i]); K[i] = c.k
@@ -564,7 +564,7 @@ def main():
     ap = argparse.ArgumentParser(); ap.add_argument("session"); ap.add_argument("--jpg", default=""); ap.add_argument("--out", default=None); ap.add_argument("--stats-only", action="store_true"); a = ap.parse_args()
     sess = "session_" + a.session.replace("session_", ""); sid = sess[8:]
     frames = pickle.load(open(os.path.join(OUT_A, sess + "_A", "frames.pkl"), "rb")); zf_ = os.path.join(OUT_A, sess + "_A", "zmap.npz"); zm = np.load(zf_) if os.path.exists(zf_) else None
-    sf_ = os.path.join(D.HERE, "out_20261112_v10", f"stuff_{sid}.npz"); stuff = np.load(sf_) if (V10 and os.path.exists(sf_) and not os.environ.get("VF_NOSTUFF")) else None
+    sf_ = os.environ.get("VF_STUFF") or os.path.join(D.HERE, "out_20261112_v10", f"stuff_{sid}.npz"); stuff = np.load(sf_) if (V10 and os.path.exists(sf_) and not os.environ.get("VF_NOSTUFF")) else None
     ego = Ego(sess); k_causale(ego); famv2 = load_famv2(sess)
     per = run_tracking(frames, ego, famv2); cs = corridor_logic(per, frames, ego, zm, stuff)
     f0, f1 = frames[0]["frame"], frames[-1]["frame"]; t0 = D.read_t(sess, "right")[0]
