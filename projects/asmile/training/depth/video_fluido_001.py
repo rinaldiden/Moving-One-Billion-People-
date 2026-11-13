@@ -35,17 +35,18 @@ def k_causale(ego):
     return K
 
 W, H, BAR = 1280, 800, 100
-MODE = os.environ.get("VFMODE", "v12")          # "v6"/"v7" = regole dei giri 6/7 (per il prima/dopo), "v8" = v7 + correzioni bug del giro 8
-V7 = MODE in ("v7", "v8", "v9", "v10", "v11", "v12")
-V8 = MODE in ("v8", "v9", "v10", "v11", "v12")
-V10 = MODE in ("v10", "v11", "v12")     # giro 10: H_ALTO 2.0 m (Daniele: da terra a 2 m e' ostacolo anche sospeso) + BORDI (muri/cordoli/marciapiede paralleli: allarme di distanza laterale, non primo ostacolo)
-V9 = MODE in ("v9", "v10", "v11", "v12")       # giro 9: quota da terra misurata sui pixel bassi/alti della MASCHERA (zmap), non sul box; esclude solo cio' che sta tutto sopra H_ALTO o sotto il piano
-V12 = MODE == "v12"     # giro 12: (a) laterali grandi/edificio 'altro'/blob |X|>0.8 solo bordo, mai FRENA; (b) blob STRETTI (<=1.0 m) dentro la sagoma non sono bordo; (c) oggetto vero sul percorso: STERZA se c'e' spazio libero dall'altro lato, altrimenti FRENA
-V11 = MODE in ("v11", "v12")     # giro 11: blob/altro LATERALI o paralleli declassati a bordo prima del primo ostacolo; STERZA solo con bordo entro margine+rallenta_entro+base misurata; FRENA/RALLENTA solo se tocca terra nel corridoio o la sagoma 0-2 m interseca la bici; FRENA <2 m con Z coerente (encoder) salvo persone
+MODE = os.environ.get("VFMODE", "v13")          # "v6"/"v7" = regole dei giri 6/7 (per il prima/dopo), "v8" = v7 + correzioni bug del giro 8
+V7 = MODE in ("v7", "v8", "v9", "v10", "v11", "v12", "v13")
+V8 = MODE in ("v8", "v9", "v10", "v11", "v12", "v13")
+V10 = MODE in ("v10", "v11", "v12", "v13")     # giro 10: H_ALTO 2.0 m (Daniele: da terra a 2 m e' ostacolo anche sospeso) + BORDI (muri/cordoli/marciapiede paralleli: allarme di distanza laterale, non primo ostacolo)
+V9 = MODE in ("v9", "v10", "v11", "v12", "v13")       # giro 9: quota da terra misurata sui pixel bassi/alti della MASCHERA (zmap), non sul box; esclude solo cio' che sta tutto sopra H_ALTO o sotto il piano
+V12 = MODE in ("v12", "v13")
+V13 = MODE == "v13"     # giro 13/11 (VETO 1/3 giri): Z = Z della maschera coerente con le dimensioni note, FRENA solo con maschera sulla sagoma e non in coast, maschere dentro veicolo escluse, stato NON MISURATO, orari da sensori     # giro 12: (a) laterali grandi/edificio 'altro'/blob |X|>0.8 solo bordo, mai FRENA; (b) blob STRETTI (<=1.0 m) dentro la sagoma non sono bordo; (c) oggetto vero sul percorso: STERZA se c'e' spazio libero dall'altro lato, altrimenti FRENA
+V11 = MODE in ("v11", "v12", "v13")     # giro 11: blob/altro LATERALI o paralleli declassati a bordo prima del primo ostacolo; STERZA solo con bordo entro margine+rallenta_entro+base misurata; FRENA/RALLENTA solo se tocca terra nel corridoio o la sagoma 0-2 m interseca la bici; FRENA <2 m con Z coerente (encoder) salvo persone
 PURE = os.environ.get("VF_PURE", "1") == "1"      # v7: terza ipotesi = arco a curvatura costante (il percorso reale in curva stretta si avvolge piu' del previsto)
 EXTRA = float(os.environ.get("VF_EXTRA", "0.0"))   # allargamento aggiuntivo del corridoio per m di distanza (m/m), 0 = nessuno
 OUT_A = os.environ.get("VF_OUT_A", os.path.join(D.HERE, "out_20261112_v6"))  # stadio A (misure per fotogramma) INVARIATO: riletto da v6
-OUT = os.environ.get("VF_OUT", os.path.join(D.HERE, "out_20261112_v12" if V12 else ("out_20261112_v11" if V11 else ("out_20261112_v10" if V10 else "out_20261112_v9"))))
+OUT = os.environ.get("VF_OUT", os.path.join(D.HERE, "out_20261113_giri_v2" if V13 else "out_20261112_v12" if V12 else ("out_20261112_v11" if V11 else ("out_20261112_v10" if V10 else "out_20261112_v9"))))
 os.makedirs(OUT, exist_ok=True)
 Z_RAW_GAP, Z_RAW_MAXZ = 0.7, 8.0   # v7 punto 3: se Z_filtrata - Z_grezza > 0.7 m sotto 8 m si usa la grezza (vince la piu' vicina)
 HITS_BLOB_NEAR, ZNEAR_BLOB = 3, 5.0  # v7 punto 1: sotto 5 m un blob senza classe conferma a 3 fotogrammi come gli altri
@@ -137,6 +138,28 @@ def iou(a, b):
     return i / max(1e-9, (a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - i)
 
 
+# giro 13/11 v13: dimensioni FISICHE note per classe (m): (estensione max visibile min, max, tipica) = max(larghezza, altezza) della maschera alla Z misurata.
+# Se la Z misurata dà un'estensione impossibile per la classe (persona alta 0.15 m, auto larga 0.2 m, bidone 0.16 m) la Z non e' quella dell'oggetto: si usa la Z da dimensione (tipica/estensione in px, +-50%, segnata 'Zdim').
+SIZE_M = {"person": (0.45, 2.2, 1.5), "child": (0.3, 1.6, 1.1), "stroller": (0.4, 1.6, 1.0), "wheelchair": (0.5, 1.6, 1.1), "car": (1.0, 6.0, 2.2), "van": (1.0, 7.5, 2.5), "truck": (1.2, 14.0, 3.0),
+          "bus": (1.5, 14.0, 6.0), "tractor": (1.0, 8.0, 3.0), "bicycle": (0.5, 2.4, 1.3), "motorcycle": (0.6, 2.8, 1.6), "trash can": (0.35, 1.8, 0.9), "bench": (0.4, 2.8, 1.2),
+          "traffic cone": (0.15, 1.0, 0.6), "pole": (0.25, 1e9, 1.5), "bollard": (0.25, 1.5, 0.8)}
+SIZE_LEAK = 1.3     # la maschera puo' sbordare di un 30% oltre la dimensione massima
+FPICCO_MIN = 0.30   # il picco (cluster piu' vicino) e' la Z della maschera solo se contiene >=30% dei pixel validi, altrimenti la mediana
+
+
+def mask_z(o):
+    """Z della maschera: picco se dominante (frac_picco>=0.30), altrimenti mediana dei pixel validi; poi controllo di coerenza con le dimensioni note della classe. Ritorna (Z, flag)."""
+    if o["src"] == "blob" or not V13: return o["Z_picco"], ""
+    Z = o["Z_picco"] if o.get("frac_picco", 1.0) >= FPICCO_MIN else o["Z_med"]
+    sz = SIZE_M.get(o["classe"])
+    if sz is None: return Z, ""
+    b = o["box"]; w = b[2] - b[0]; h = b[3] - b[1]; ext = max(w, h)
+    trunc = b[0] <= 2 or b[1] <= 2 or b[2] >= W - 2 or b[3] >= H - 2      # box tagliato dal bordo: la estensione e' per difetto, niente controllo del minimo
+    em = ext * Z / F_PX
+    if em > sz[1] * SIZE_LEAK or (em < sz[0] and not trunc): return float(F_PX * sz[2] / max(ext, 1)), "dim"
+    return Z, ""
+
+
 def fam_obj(o, famv2, frame):
     if o["src"] == "blob": return "ostacolo"
     if o["src"] == "sam":
@@ -202,6 +225,12 @@ def run_tracking(frames, ego, famv2):
         t = fr["t_ms"]; v = float(ego.at(t, "v_s")); dt = 1 / 15 if prev_t is None else (t - prev_t) / 1000.0; prev_t = t
         rot = -F_PX * np.radians(float(ego.at(t, "yaw_s"))) * dt     # spostamento orizzontale dell'immagine dovuto alla rotazione della bici (imbardata a destra -> scena a sinistra)
         for tr in tracks: tr.predict(dt, v)
+        if V13:
+            for o in fr["objs"]:
+                if "Z_picco0" in o: continue
+                o["Z_picco0"] = o["Z_picco"]; Zn, fl = mask_z(o)
+                if o["src"] != "blob" and Zn != o["Z_picco"]: o["X"] = o["X"] * Zn / max(o["Z_picco"], 0.1)      # stessa direzione (tan) alla nuova Z
+                o["Z_picco"] = Zn; o["Zdim"] = fl == "dim"
         obs = [o for o in fr["objs"] if o["Z_picco"] <= 60]
         fams = [fam_obj(o, famv2, fr["frame"]) for o in obs]
         C = np.full((len(tracks), len(obs)), 1e6)
@@ -237,8 +266,13 @@ def run_tracking(frames, ego, famv2):
                 pb = ([int(v) for v in (tr.box_now() if V8 else tr.pred_box(0.0))]) if tr.miss else list(tr.o["box"])
                 zf = float(tr.x[0]); zr = float(tr.o["Z_picco"]); zu = zf
                 if V7 and not tr.miss and zf - zr > Z_RAW_GAP and zf < Z_RAW_MAXZ: zu = zr    # punto 3: il filtro non allontana: vince la grezza (piu' vicina)
+                if V13:
+                    # Z scritta = Z della MASCHERA di questa traccia: se il filtro se ne allontana (>0.5 m e >15%) vince la misura della maschera; in coast (nessuna maschera ora) = ultima Z della maschera - strada percorsa dall'encoder
+                    if not tr.miss:
+                        if abs(zf - zr) > max(0.5, 0.15 * zr): zu = zr
+                    else: zu = max(0.3, float(tr.Zraw[-1]) - (float(ego.at(t, "s")) - tr.s_obs[-1])) if tr.s_obs else zf
                 rows.append(dict(inside=inside_frac(pb), id=tr.id, fam=tr.fam, src=tr.src, classe=tr.classe, Z=zu, Zf=zf, rawfix=zu != zf, w=float(tr.x[1]), Zraw=float(tr.o["Z_picco"]), tan=float(tr.tan), box=pb, poly=None if tr.miss else tr.o["poly"],
-                                 decl=bool(np.mean(tr.decl[-8:]) > 0.5), sosp=bool(np.mean(tr.sosp[-8:]) > 0.5), ext=tr.o.get("ext", False), hits=tr.hits, coast=tr.miss > 0, track=tr))
+                                 decl=bool(np.mean(tr.decl[-8:]) > 0.5), sosp=bool(np.mean(tr.sosp[-8:]) > 0.5), ext=tr.o.get("ext", False), hits=tr.hits, coast=tr.miss > 0, Zdim=bool(tr.o.get('Zdim', False)) and not tr.miss, track=tr))
         per.append(rows)
     return per
 
@@ -270,6 +304,47 @@ def lat_gaps(r, pz, px, use_fp=True):
     return max(Xl - xa - BD.HW, xa - Xr - BD.HW), max(Xl - BD.HW, -BD.HW - Xr)
 
 
+NM_VALID, NM_SAT = 0.15, 0.25     # v13 punto 3 (fissate PRIMA): quota di depth valida sulla strada nel corridoio < 0.15 oppure > 25% di pixel saturi (>=250) nel corridoio => NON MISURATO
+IV_FRAC, IV_DZ = 0.7, 1.0         # v13 punto 2: >=70% della maschera dentro la maschera di un veicolo e Z non piu' vicina di 1.0 m al veicolo => e' dentro il veicolo (finestrino), non ostacolo separato
+SATQ = {}                         # fotogramma -> immagine rettificata 320x200 (per la quota di saturazione), riempita da main
+
+
+def corr_poly_full(k, gp, zmax=30.0):
+    ga, gvh, gb = gp; Zs = np.geomspace(1.8, zmax, 40); pz, px = corr_path(k); Lp, Rp = [], []
+    for Z in Zs:
+        xc = float(np.interp(Z, pz, px)); d = F_PX * B_M / Z; lo, hi = corr_edges(xc, Z)
+        for X, o in ((lo, Lp), (hi, Rp)):
+            u = 660.142 + X * F_PX / Z; o.append((u, gvh + (d - gb * (u - 660.142)) / ga))
+    return np.array(Lp + Rp[::-1], np.float32)
+
+
+def nonmis(fr, k, gp, zf_, zmax):
+    """(quota_valida, quota_satura, nonmisurato) nel poligono del corridoio proiettato sulla strada"""
+    if gp is None or zf_ is None: return None, None, True
+    m = np.zeros(zf_.shape, np.uint8); cv2.fillPoly(m, [(corr_poly_full(k, gp, zmax) / 4.0).astype(np.int32)], 1); n = int(m.sum())
+    if n < 50: return None, None, True
+    vq = float(((zf_ != 255) & (zf_ < 250) & (zf_ >= 3))[m > 0].mean()); sq = None
+    sm = SATQ.get(fr["frame"])
+    if sm is not None: sq = float((sm[m > 0] >= 250).mean())
+    return vq, sq, bool(vq < NM_VALID or (sq is not None and sq > NM_SAT))     # (la decisione finale in corridor_logic: saturo => sempre NON MISURATO; poca depth => NON MISURATO solo se nessuna maschera misurata nel corridoio)
+
+
+def mark_in_vehicle(rows):
+    """v13: persona/bici/altro la cui maschera sta dentro la maschera di un veicolo (non coast) alla stessa distanza o dietro = visto dal finestrino"""
+    vs = [q for q in rows if q["fam"] == "veicolo" and not q["coast"] and q.get("poly") is not None and len(q["poly"]) >= 3]
+    for r in rows:
+        r["iv_now"] = False
+        if r["fam"] == "veicolo" or r["src"] == "blob" or r["coast"] or r.get("poly") is None or len(r["poly"]) < 3: continue
+        m = np.zeros((200, 320), np.uint8); cv2.fillPoly(m, [(np.asarray(r["poly"], np.float32) / 4.0).astype(np.int32)], 1); a = max(1, int(m.sum()))
+        for q in vs:
+            if q is r or r["Z"] < q["Z"] - IV_DZ: continue
+            mv = np.zeros((200, 320), np.uint8); cv2.fillPoly(mv, [(np.asarray(q["poly"], np.float32) / 4.0).astype(np.int32)], 1)
+            if (m & mv).sum() / a >= IV_FRAC: r["iv_now"] = True; break
+        tr = r["track"]; tr.iv = getattr(tr, "iv", []) + [r["iv_now"]]
+    for r in rows:
+        tr = r["track"]; h = getattr(tr, "iv", [])[-5:]; r["in_veh"] = bool(h and sum(h) >= (2 if len(h) >= 2 else 1))
+
+
 def corridor_logic(per, frames, ego, zm=None, stuff=None):
     """per ogni fotogramma: arco (k), appartenenza arco/dritta con isteresi, primo ostacolo (isteresi 0.5 m)"""
     res = []; prev_first = {"arc": None, "str": None}; bhist = {"L": [], "R": []}; bclr = {"L": [], "R": []}
@@ -284,6 +359,7 @@ def corridor_logic(per, frames, ego, zm=None, stuff=None):
         if V11 and skeys is not None and zf_ is not None and gpf is not None:      # v11: componenti muro (stuff) con PCA, per i blob-fette di muro
             nk0 = int(skeys[np.argmin(np.abs(skeys - fr["frame"]))])
             if abs(nk0 - fr["frame"]) <= 2: wcl, wpar = BD.wall_components(zf_, gpf, stuff[f"f{nk0}"], [q["poly"] for q in rows if q["src"] != "blob" and not q["coast"]], k, HP)
+        if V13: mark_in_vehicle(rows)
         for r in rows:
             Z = r["Z"]; X = r["tan"] * Z; r["X"] = X
             dx_arc = X - float(np.interp(Z, pz, px)); tr = r["track"]
@@ -348,10 +424,18 @@ def corridor_logic(per, frames, ego, zm=None, stuff=None):
                     if lab0 is not None:
                         mm = BD._fill([r["poly"]]).astype(bool)
                         if mm.sum() >= 12: wf = float(np.isin(lab0, BD.CL_WALL)[mm].mean())
+                    rf = 0.0
+                    if V13 and lab0 is not None:
+                        mm = BD._fill([r["poly"]]).astype(bool)
+                        if mm.sum() >= 12: rf = float(np.isin(lab0, BD.CL_ROAD + BD.CL_LOW)[mm].mean())
+                    wide = (bx[2] - bx[0]) > 0.6 * W
+                    # v13: superficie (fondo strada/marciapiede) segmentata come 'altro' = non e' un ostacolo: >=50% dei pixel in strada/marciapiede (stuff), oppure larga >60% dell'immagine e alta <0.5 m sul piano
+                    if V13 and (rf >= 0.5 or (wide and r.get("h_top") is not None and r["h_top"] < 0.5)): r["superficie"] = True; r["cand"] = False
                     r["wf"] = round(wf, 2); tr.wb.append(bool(abs(r["X"]) > LATW_X and (big or wf >= LATW_WALL)))
                 hw_ = tr.wb[-5:]
                 if hw_ and sum(hw_) >= (2 if len(hw_) >= 2 else 1) and abs(r["X"]) > LATW_X and not r.get("stretto"): r["bordo"] = True; r["lat_grande"] = True
-            if r["fuori_img"] or r["senza_base"] or r.get("bordo"): r["cand"] = False
+            if V13 and (r.get("in_veh") or r["coast"]): r["cand"] = False      # v13: in coast non c'e' maschera in questo fotogramma -> non puo' essere "primo ostacolo" (banner/azione) con una Z che non e' di una maschera
+            if r["fuori_img"] or r["senza_base"] or r.get("bordo") or r.get("superficie"): r["cand"] = False
         bsum = None; v_ = max(0.0, float(ego.at(fr["t_ms"], "v_s")))
         if V10:
             lab = None
@@ -401,7 +485,7 @@ def corridor_logic(per, frames, ego, zm=None, stuff=None):
                     f_["gap"] = (round(gA, 2), round(gS, 2), bool(ground))
                     if not (sagoma_int or corr_ground): act = None
                     elif Zf_ <= sg["frena_entro_m"]:
-                        if Zf_ < Z_COERENZA and f_["fam"] != "persona" and not z_coerente(f_["track"]): act = ("RALLENTA", "ostacolo davanti (Z < 2 m non coerente su 3 fotogrammi/encoder: no FRENA)")
+                        if Zf_ < Z_COERENZA and f_["fam"] != "persona" and not z_coerente(f_["track"]): act = ("RALLENTA", "ostacolo davanti (Z<2 m non coerente)")
                         else: act = ("FRENA", "ostacolo davanti")
                     elif Zf_ <= sg["rallenta_entro_m"]: act = ("RALLENTA", "ostacolo davanti")
                 elif abs(f_["X"] - float(np.interp(Zf_, pz, px))) > BD.HW + sg["bordo_margine_m"]: act = None    # fuori dalla sagoma + margine: non e' sul percorso (corridoio largo del tracking), nessuna azione
@@ -416,8 +500,13 @@ def corridor_logic(per, frames, ego, zm=None, stuff=None):
                             and ((xa_ - o_["X"]) if rgt else (o_["X"] - xa_)) <= BD.HW + shift + mg + 0.3 for o_ in rows)
                 if shift <= SHIFT_MAX and (oth_ is None or oth_ >= shift + mg) and not blocc:   # spostamento laterale necessario <= 1.0 m: oggetto largo (sbarra, muro) = FRENA
                     act = ("STERZA", f"via dall'oggetto a {'dx' if rgt else 'sx'}, libero a {'sx' if rgt else 'dx'}" + ("" if oth_ is None else f" {oth_:.1f} m")); f_["sterza_ogg"] = True
+            if V13 and act is not None and act[0] == "FRENA" and f_["coast"]: act = ("RALLENTA", "ostacolo davanti (senza maschera ora)")      # FRENA solo con la maschera presente
             act = dict(act=None if act is None else act[0], why=None if act is None else act[1], Z=None if f_ is None else float(f_["Z"]), sg=sg)
-        res.append(dict(k=k, first=first, bord=bsum, v=v_, act=act))
+        nm = (None, None, False)
+        if V13:
+            nm = nonmis(fr, k, gpf, zf_, max(8.0, min(30.0, BD.SOG.a(v_)['rallenta_entro_m']))); sat_ = nm[1] is not None and nm[1] > NM_SAT
+            nm = (nm[0], nm[1], bool(sat_ or (nm[2] and first["arc"] is None)))      # strada del corridoio fino a rallenta_entro (min 8 m)
+        res.append(dict(k=k, first=first, bord=bsum, v=v_, act=act, nm=nm))
     return res
 
 
@@ -480,7 +569,7 @@ def draw(img, fr, rows, cs, gp, zthumb, ego, sess, t0, i):
                 c = min(a_[3], b_[3]); col = (0, 0, 255) if c < mg else ((0, 165, 255) if c < 2 * mg else (0, 220, 0))
                 cv2.line(out, (int(a_[1]), int(a_[2])), (int(b_[1]), int(b_[2])), col, 5, cv2.LINE_AA)
     first = cs["first"]["arc"]; fid = None if first is None else first["id"]
-    draw_rows = [r for r in rows if not r["coast"] and r["Z"] <= 40 and not r["decl"] and not (r["src"] == "blob" and r["hits"] < need_hits(r)) and not r["sosp"] and not r.get("fuori_img") and not r.get("senza_base") and r["fam"] != "bordo" and not r.get("bordo")
+    draw_rows = [r for r in rows if not r["coast"] and r["Z"] <= 40 and not r["decl"] and not (r["src"] == "blob" and r["hits"] < need_hits(r)) and not r["sosp"] and not r.get("fuori_img") and not r.get("senza_base") and not r.get("superficie") and not r.get("in_veh") and r["fam"] != "bordo" and not r.get("bordo")
                  and (r["src"] != "blob" or (r["in_arc"] and r["Z"] <= 8)) and (r["fam"] in ("persona", "veicolo", "bici-moto", "paletto-palo", "barriera-cancello", "ostacolo") or r["in_arc"] or r["Z"] < 8)]
     solid = [r for r in draw_rows if r["src"] != "blob"]
     cont_ = lambda a, b: max(0, min(a[2], b[2]) - max(a[0], b[0])) * max(0, min(a[3], b[3]) - max(a[1], b[1])) / max(1e-9, (a[2] - a[0]) * (a[3] - a[1]))
@@ -502,7 +591,7 @@ def draw(img, fr, rows, cs, gp, zthumb, ego, sess, t0, i):
     placed = []
     lab = [r for r in draw_rows if (r["in_arc"] or r["Z"] < 8) and not (r["src"] == "blob" and r["Z"] > 8)]
     for r in sorted(lab, key=lambda r: r["Z"]):
-        tr = r["track"]; b = r["box"]; txt = f"{FAMNAME[r['fam']]} {ztxt(r['Z'])}"
+        tr = r["track"]; b = r["box"]; txt = f"{FAMNAME[r['fam']]} {'~' if r.get('Zdim') else ''}{ztxt(r['Z'])}"
         tx, ty = b[0], max(b[1] - 8, 96)
         if tr.lab_xy is not None: tx = 0.5 * tr.lab_xy[0] + 0.5 * tx; ty = 0.5 * tr.lab_xy[1] + 0.5 * ty
         (w_, h_), _ = cv2.getTextSize(txt, cv2.FONT_HERSHEY_DUPLEX, 0.7, 2)
@@ -513,7 +602,13 @@ def draw(img, fr, rows, cs, gp, zthumb, ego, sess, t0, i):
             if ty < 96: ty = b[3] + 24; break
         tr.lab_xy = (tx, ty); placed.append(chip(out, tx, ty, txt, FAMCOL[r["fam"]], 0.7, 2))
     t = (fr["t_ms"] - t0) / 1000; v = max(0.0, float(ego.at(fr["t_ms"], "v_s"))); st = float(ego.at(fr["t_ms"], "steer_s")); ttc = None
-    if first is not None:
+    nm_ = bool(V13 and cs.get("nm") is not None and cs["nm"][2])
+    if nm_:
+        vq, sq, _ = cs["nm"]; cv2.rectangle(out, (W // 2 - 270, 8), (W // 2 + 270, 76), (0, 0, 0), -1); cv2.rectangle(out, (W // 2 - 270, 8), (W // 2 + 270, 76), (150, 150, 150), 3)
+        shadow(out, W // 2 - 258, 38, "CORRIDOIO NON MISURATO (grigio = nessuna misura valida)", 0.55, (170, 170, 170), 1)
+        shadow(out, W // 2 - 258, 66, "depth valida " + ("-" if vq is None else f"{100 * vq:.0f}%") + "  saturo " + ("-" if sq is None else f"{100 * sq:.0f}%") + ("" if first is None else f"  | parziale: {ztxt(first['Z'])} {FAMNAME[first['fam']]}"), 0.6, (170, 170, 170), 1)
+        ttc = None
+    elif first is not None:
         cl = v if (first["fam"] in STATIC or first["fam"] == "bordo") else v - first["w"]   # famiglie ferme (paletti, barriere, senza classe): velocita' propria 0, TTC = Z/v_encoder; veicoli/persone/bici: Z/(v - w) con w dal Kalman
         ttc = first["Z"] / cl if cl > 0.3 else None
         col = FAMCOL[first["fam"]]
@@ -522,7 +617,11 @@ def draw(img, fr, rows, cs, gp, zthumb, ego, sess, t0, i):
         if first["fam"] == "bordo":
             lt = f"bordo {first['side']} " + (f"{first['clear']:.1f} m" if first["clear"] >= 0 else "nel percorso") if first["kind"] == "bordo" else f"muro davanti {ztxt(first['Z'])}"
             shadow(out, W // 2 - 258, 66, f"{lt} - sterza/frena  ({ztxt(first['Z'])})", 0.8, col, 2)
-        else: shadow(out, W // 2 - 258, 66, f"{ztxt(first['Z'])}  {FAMNAME[first['fam']]}   TTC " + (f"{ttc:.1f} s" if ttc is not None and ttc < 60 else "-"), 0.95, col, 2)
+        else: shadow(out, W // 2 - 258, 66, f"{'~' if first.get('Zdim') else ''}{ztxt(first['Z'])}  {FAMNAME[first['fam']]}   TTC " + (f"{ttc:.1f} s" if ttc is not None and ttc < 60 else "-"), 0.95, col, 2)
+    elif V13 and cs.get("nm") is not None and cs["nm"][2]:
+        vq, sq, _ = cs["nm"]; cv2.rectangle(out, (W // 2 - 270, 8), (W // 2 + 270, 76), (0, 0, 0), -1); cv2.rectangle(out, (W // 2 - 270, 8), (W // 2 + 270, 76), (150, 150, 150), 3)
+        shadow(out, W // 2 - 258, 40, "CORRIDOIO NON MISURATO", 0.9, (170, 170, 170), 2)
+        shadow(out, W // 2 - 258, 66, "depth valida " + ("-" if vq is None else f"{100 * vq:.0f}%") + "  saturo " + ("-" if sq is None else f"{100 * sq:.0f}%") + "  (non e' strada libera)", 0.6, (170, 170, 170), 1)
     else:
         cv2.rectangle(out, (W // 2 - 270, 8), (W // 2 + 270, 52), (0, 0, 0), -1); shadow(out, W // 2 - 258, 40, "corridoio: nessun ostacolo misurato", 0.8, (0, 255, 0), 2)
     ac = cs.get("act")
@@ -547,7 +646,7 @@ def draw(img, fr, rows, cs, gp, zthumb, ego, sess, t0, i):
         shadow(out, x0, y0 - 6, "depth stereo (stessa scala)", 0.45, (255, 255, 255), 1)
     canvas = np.zeros((H + BAR, W, 3), np.uint8); canvas[:H] = out
     Rm = "rett." if abs(k) < 0.004 else f"R {1 / abs(k):.0f} m"
-    txt = f"{sess[-6:]}  f{i}  t = {t:.1f} s   v = {v:.1f} m/s ({v * 3.6:.0f} km/h)   sterzo {st:+.0f} gradi (+ = destra)   curvatura {k:+.3f} 1/m ({Rm})"
+    txt = f"{sess[-6:]}  f{i}  {WALL(fr['t_ms']) if WALL else ''}  t = {t:.1f} s   v = {v:.1f} m/s ({v * 3.6:.0f} km/h)   sterzo {st:+.0f} gradi (+ = destra)   curvatura {k:+.3f} 1/m ({Rm})"
     cv2.putText(canvas, txt, (12, H + 31), cv2.FONT_HERSHEY_DUPLEX, 0.68, (0, 255, 0), 1, cv2.LINE_AA)
     ac = cs.get("act")
     if ac is not None:
@@ -560,16 +659,41 @@ def draw(img, fr, rows, cs, gp, zthumb, ego, sess, t0, i):
     return canvas, ttc
 
 
+WALL = None
+
+
+def load_wall(sess):
+    """orario di parete di ogni t_ms dei fotogrammi: frames_*.csv t_ms e sensors_*.csv t_ms sono lo STESSO orologio (metodo unico), wall = colonna 'wall' dei sensori interpolata"""
+    import glob, datetime as dtm
+    sf = sorted(glob.glob(os.path.join(D.LOGS, "_sensors", "sensors", "sensors_" + sess.replace("session_", "")[:8] + "_*.csv")))
+    T, Wl = [], []
+    for fn in sf:
+        for r in csv.DictReader(open(fn)):
+            try: T.append(float(r["t_ms"])); Wl.append(dtm.datetime.fromisoformat(r["wall"]).timestamp())
+            except Exception: pass
+    o = np.argsort(T); T = np.array(T)[o]; Wl = np.array(Wl)[o]
+    return lambda t_ms: dtm.datetime.fromtimestamp(float(np.interp(t_ms, T, Wl))).strftime("%H:%M:%S.%f")[:-5]
+
+
 def main():
+    global WALL
     ap = argparse.ArgumentParser(); ap.add_argument("session"); ap.add_argument("--jpg", default=""); ap.add_argument("--out", default=None); ap.add_argument("--stats-only", action="store_true"); a = ap.parse_args()
     sess = "session_" + a.session.replace("session_", ""); sid = sess[8:]
     frames = pickle.load(open(os.path.join(OUT_A, sess + "_A", "frames.pkl"), "rb")); zf_ = os.path.join(OUT_A, sess + "_A", "zmap.npz"); zm = np.load(zf_) if os.path.exists(zf_) else None
     sf_ = os.environ.get("VF_STUFF") or os.path.join(D.HERE, "out_20261112_v10", f"stuff_{sid}.npz"); stuff = np.load(sf_) if (V10 and os.path.exists(sf_) and not os.environ.get("VF_NOSTUFF")) else None
     ego = Ego(sess); k_causale(ego); famv2 = load_famv2(sess)
-    per = run_tracking(frames, ego, famv2); cs = corridor_logic(per, frames, ego, zm, stuff)
-    f0, f1 = frames[0]["frame"], frames[-1]["frame"]; t0 = D.read_t(sess, "right")[0]
+    f0, f1 = frames[0]["frame"], frames[-1]["frame"]
+    if V13:
+        rc0 = D.Rect(); fm0 = {f["frame"] for f in frames}
+        for i, Lr in enumerate(D.gray_frames(os.path.join(D.LOGS, sess + "_right.h264"))):
+            if i > f1: break
+            if i < f0 or i not in fm0: continue
+            SATQ[i] = cv2.resize(cv2.remap(Lr, rc0.r["m1x"], rc0.r["m1y"], cv2.INTER_LINEAR), (320, 200), interpolation=cv2.INTER_AREA)
+    per = run_tracking(frames, ego, famv2); cs = corridor_logic(per, frames, ego, zm, stuff); t0 = D.read_t(sess, "right")[0]
     name = f"video_fluido_{sid[-6:]}.mp4" if sid.endswith("093909") else f"video_fluido_{sid[-6:]}_{int(round((frames[0]['t_ms'] - t0) / 1000))}-{int(round((frames[-1]['t_ms'] - t0) / 1000))}.mp4"
     mp4 = a.out or os.path.join(OUT, name)
+    WALL = load_wall(sess)
+
     jpg = {int(x) for x in a.jpg.split(",") if x}
     stats_rows = []
     if not a.stats_only:
@@ -587,9 +711,9 @@ def main():
         ff.stdin.close(); ff.wait(); print(mp4)
     pickle.dump(dict(per=[[{k: v for k, v in r.items() if k not in ("track", "poly")} for r in rows] for rows in per], cs=[dict(k=c["k"], first={kk: (None if v is None else v["id"]) for kk, v in c["first"].items()},
                 firstZ={kk: (None if v is None else v["Z"]) for kk, v in c["first"].items()},
-                v=c["v"], act=None if c["act"] is None else dict(act=c["act"]["act"], why=c["act"]["why"], Z=c["act"]["Z"], sg=c["act"]["sg"]), bord=None if c["bord"] is None else dict(alarm=c["bord"]["alarm"], lab=c["bord"]["lab"], margin=None if c["bord"]["bf"] is None else c["bord"]["bf"]["margin"],
+                v=c["v"], nm=c.get("nm"), wall=WALL(frames[ci]["t_ms"]), act=None if c["act"] is None else dict(act=c["act"]["act"], why=c["act"]["why"], Z=c["act"]["Z"], sg=c["act"]["sg"]), bord=None if c["bord"] is None else dict(alarm=c["bord"]["alarm"], lab=c["bord"]["lab"], margin=None if c["bord"]["bf"] is None else c["bord"]["bf"]["margin"],
                 clearL=None if c["bord"]["bf"] is None else c["bord"]["bf"]["L"]["clear"], clearR=None if c["bord"]["bf"] is None else c["bord"]["bf"]["R"]["clear"],
-                nL=0 if c["bord"]["bf"] is None else len(c["bord"]["bf"]["L"]["bins"]), nR=0 if c["bord"]["bf"] is None else len(c["bord"]["bf"]["R"]["bins"]))) for c in cs], frames=[f["frame"] for f in frames], t_ms=[f["t_ms"] for f in frames]),
+                nL=0 if c["bord"]["bf"] is None else len(c["bord"]["bf"]["L"]["bins"]), nR=0 if c["bord"]["bf"] is None else len(c["bord"]["bf"]["R"]["bins"]))) for ci, c in enumerate(cs)], frames=[f["frame"] for f in frames], t_ms=[f["t_ms"] for f in frames]),
                 open(os.path.join(OUT, f"tracks_{sid}.pkl"), "wb"))
 
 
