@@ -1,0 +1,5 @@
+id,gruppo,qty,query,deve,escludi,note
+pi5_2gb,base,2,Raspberry Pi 5 2GB,Pi 5/Pi5|2GB/2 GB,4GB|8GB|16GB|case|custodia|kit|cover|dissipatore|alimentatore|cavo,cervello logger (1 per unità)
+ov9281_innomaker,base,4,Inno-Maker OV9281 global shutter camera MIPI,OV9281,USB|UVC|Camarray|quad|HAT,2 camere separate per logger (CAM0+CAM1) — stessa camera di #001 (CAM-MIPI9281RAW-V2)
+cavo_pi5_cam,base,4,cavo camera Raspberry Pi 5 22 pin 15 pin FFC,Pi 5/Pi5|22/15,Pi Zero|zero,Pi 5 ha connettore mini 22 pin: serve 22→15 se la camera non lo include
+cooler_pi5,opzionale,2,Raspberry Pi 5 Active Cooler ufficiale,Active Cooler/dissipatore|Pi 5/Pi5,case|custodia|kit,raffreddamento in registrazione continua
