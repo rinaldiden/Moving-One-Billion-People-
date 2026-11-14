@@ -1,0 +1,14 @@
+id,gruppo,qty,query,deve,escludi,note
+ads1115,base,1,ADS1115 modulo ADC 16 bit I2C,ADS1115,IDGSR|IDGST|MSOP|VSSOP|chip IC|integrato,lettura batteria (partitore 100k/33k su A0)
+ky016,base,1,KY-016 modulo LED RGB,KY-016|RGB,neopixel|WS2812|striscia|strip|kit 37|kit 45,LED stato batteria verde/arancio/rosso (catodo comune)
+ams1117,base,1,AMS1117 3.3V modulo regolatore,AMS1117|3.3/3V3,1.2V|1.5V|1.8V|2.5V|ADJ,alimentazione IMU (lista di Daniele) — vedi ht7533
+ao3401,base,1,AO3401 MOSFET SOT-23,AO3401,,P-MOS high-side (lista di Daniele) — revisione: Vgs max ±12V con 3S carica a 12.6V
+dongle4g,base,1,chiavetta 4G LTE USB modem Huawei E3372,4G/LTE|E3372/modem/chiavetta/dongle,antenna|router|cavo|adattatore|mifi|hotspot,upload file a fine giro; SIM dati a parte (non qui)
+resistenze,base,1,kit assortimento resistenze 1/4W 1%,resistenz/resistor,SMD|0603|0805|1206,100k+33k partitore + 10k pull-down (+100k pull-up e 220-330R se revisione)
+cond10u,base,1,kit assortimento condensatori elettrolitici,elettrolitic/electrolytic,ceramic|ceramici|SMD,10 µF in/out regolatore
+ao3407a,revisione,1,AO3407A MOSFET P SOT-23,AO3407,,revisione punto 2: P-MOS Vgs ±20V al posto di AO3401
+sot23adapter,revisione,1,adattatore SOT-23 DIP breakout PCB,SOT-23/SOT23|adatta/adapter/breakout/pcb,,per saldare a mano il MOSFET SOT-23
+npn,revisione,1,transistor 2N2222 TO-92,2N2222,SMD|SOT-23|MMBT,revisione punto 1: tira giù il gate del P-MOS (IMU OR GPIO Pi)
+pca9306,revisione,1,PCA9306 modulo traslatore livelli I2C,PCA9306,,revisione punto 4: isola I2C dell'IMU quando il Pi è spento
+ht7533,revisione,1,HT7533 regolatore LDO 3.3V,HT7533,HT7333|HT7133|HT7333,revisione punto 5: 2.5 µA a vuoto vs ~5 mA AMS1117; Vin max 30 V (Holtek)
+rtc_pi5,revisione,1,batteria RTC Raspberry Pi 5,RTC|Pi 5/Pi5/Raspberry,DS3231|DS1307|CR2032 holder,revisione punto 10: orologio vero fra un boot e l'altro (connettore J5)
