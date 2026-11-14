@@ -398,3 +398,31 @@ piccoli errori residui, come già in `calib_SOLUZIONE_DEFINITIVA_20261109.md`.
 stazione nostra — **non ora**.
 
 **Firma:** Daniele (testo, 2026-11-09)
+
+## D014 — Autonomia negli acquisti: account e password da solo, Amazon con indirizzo e carta imposti, clic finale con l'ok
+**Data proposta:** 2026-11-14 · **Autore:** doppio di Daniele (Claude) · **Stato:** DA FIRMARE
+
+**Voce di Daniele (2026-11-14).** Per gli acquisti (primo caso: BOM del logger hw_v2, `logger/hw_v2/acquisti/`) il
+doppio deve entrare nei siti, registrarsi, tenere le password nel Portachiavi, oppure procedere come ospite; su Amazon
+Daniele passa il primo accesso in Playwright, poi il doppio si arrangia — con **indirizzo "Rinaldi Daniele, via San
+Carlo 25" e la carta giusta**, perché sull'account ci sono più carte e più indirizzi.
+
+**Scelta proposta.**
+1. **Da solo, senza chiedere:** cercare e confrontare (`cerca_prezzi.py`), creare account (ospite se possibile),
+   generare e salvare password nel Portachiavi (`account.py`), riempire e svuotare il carrello Amazon, andare al
+   checkout e imporre indirizzo + carta (`amazon.py prepara`).
+2. **Con l'ok di Daniele, per ogni ordine:** il clic su "Acquista ora". L'ok è un messaggio con il **totale**;
+   `amazon.py compra` compra solo se totale (al centesimo), indirizzo e carta coincidono. Motivo: tocca denaro
+   (CLAUDE.md, §10 guida voce; `ACCESSI.md` → chiedi prima di toccare denaro). Evidenza: il checkout Amazon cambia
+   pagina spesso e la carta sbagliata su un account condiviso è un errore che costa più del messaggio.
+3. **Mai:** salvare numeri di carta (si usano solo quelle già sull'account, riconosciute dalle ultime 4 cifre),
+   cambiare impostazioni/password dell'account Amazon, abbonarsi a Prime o a prove gratuite, accettare termini a
+   pagamento.
+
+**Deroga possibile (da decidere da Daniele, Q12):** una soglia sotto cui il doppio compra senza chiedere quando la
+lista è già approvata (es. ordine ≤ N € dalla lista che hai già visto).
+
+**Strumenti.** `.claude/skills/compra-miglior-prezzo/{account.py, amazon.py, SKILL.md}`; accessi in `~/progetti/ACCESSI.md`.
+Provato da ospite il 2026-11-14: stato, aggiungi, carrello, svuota. Checkout vero NON ancora provato (manca login).
+
+**Firma:**

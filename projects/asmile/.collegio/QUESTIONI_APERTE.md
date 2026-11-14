@@ -85,3 +85,15 @@ riaprire la stazione nostra? Gli agenti non decidono. Dettagli: `agents/rapporti
 **Q11 — CHIUSA 2026-11-09 da Daniele → D013:** "jig fisso" = dima del fornitore + nostro script di collaudo a campione.
 Tolleranze (baseline, parallelismo, inclinazione sensore) nella RdO; stazione nostra solo se in industrializzazione la
 dima del fornitore non le tiene.
+
+## Q12 — Acquisti: cosa serve ancora da Daniele per essere autonomo (2026-11-14, → D014)
+1. **Primo accesso Amazon**: lanciare `amazon.py login` (Chrome visibile, password + codice, "Resta connesso"). Fatto
+   una volta, il resto è headless.
+2. **Ultime 4 cifre della carta giusta** (solo quelle, mai il numero intero): `account.py imposta amazon.carta_ultime4 NNNN`.
+3. **CAP e città di via San Carlo 25** (Tirano 23037? non lo do per scontato) + un **telefono** per i corrieri dei
+   negozi dove mi registro.
+4. **Codici di verifica email**: le registrazioni le faccio con `daniele@movingonebillionpeople.org`; la casella che
+   leggo da solo (Gmail collegato) è quella? Se no, quale uso?
+5. **Password Amazon nel Portachiavi** (consigliato, per quando la sessione scade): `account.py salva amazon.it --utente <email>`
+   — la digiti tu, non passa né in chat né nei log. Il codice OTP resterà comunque tuo.
+6. **Soglia**: vuoi una cifra sotto cui compro senza chiedere (lista già approvata), o ok su ogni ordine?

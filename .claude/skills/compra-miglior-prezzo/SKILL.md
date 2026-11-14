@@ -55,10 +55,49 @@ $PY $S carrello <cartella>/offerte.json [--prime]                            # r
 
 ## Confine (non negoziabile)
 Prepara, non compra. Quando Daniele darà la carta, l'acquisto resta un'azione che tocca **denaro**: carrello
-proposto → ok esplicito di Daniele per quell'ordine → solo allora checkout. Mai salvare i dati della carta in chiaro
+proposto → ok esplicito di Daniele per quell'ordine → solo allora checkout (`amazon.py compra`, vedi sotto:
+tutto il resto — account, password, carrello, indirizzo, carta — lo faccio da solo). Mai salvare i dati della carta in chiaro
 (Portachiavi macOS, come in `~/progetti/ACCESSI.md`).
 
 ## Dove scrivere il risultato
 Nella casa del progetto, accanto al BOM: es. `projects/asmile/logger/hw_v2/acquisti/` (lista CSV + offerte.json +
 carrello.md + README con le scelte da firmare). Le decisioni d'acquisto aperte vanno nel registro del progetto
 (`.collegio/QUESTIONI_APERTE.md` per Asmile).
+
+## Autonomia: account, password, Amazon (voce di Daniele 2026-11-14 — regola d'acquisto D014 DA FIRMARE)
+Daniele: *"devi essere in grado di farla da solo: salvare le password nel Portachiavi, creare gli account dove
+serve, oppure andare avanti come ospite… dopo devi essere in grado di fare tutto da solo."*
+
+**Ordine di preferenza in un negozio nuovo:** 1) **ospite** se il checkout lo permette (meno account = meno
+superficie); 2) se l'account è obbligatorio → lo creo io con `account.py nuovo <sito>` (password forte generata e
+salvata nel Portachiavi `claude-<sito>`, mai stampata) e email `daniele@movingonebillionpeople.org`; 3) codice di
+verifica via email → lo leggo dalla casella collegata (Gmail MCP `search_threads`); se arriva su una casella che non
+leggo o via SMS → una riga a Daniele (`scrivi_a_daniele.py`), non tento altro.
+
+```bash
+PY=~/.asmile_depth_venv/bin/python; D=~/.claude/skills/compra-miglior-prezzo
+$PY $D/account.py nuovo robotics.it            # crea password + registro (senza password) in ~/.config/doppio/
+$PY $D/account.py dati                          # nome, indirizzo di spedizione, email per form e ospite
+$PY $D/account.py elenco                        # dove ho già un account
+# nei form:  from account import password, dati ;  pg.fill("#pw", password("robotics.it"))
+```
+
+**Amazon (account di Daniele, più carte e più indirizzi sullo stesso account):** `amazon.py`, profilo Chrome
+`~/.claude_pw_shop` (headless; un processo alla volta, è lo stesso profilo di `cerca_prezzi.py`).
+- `login` — **una volta, lo fa Daniele**: Chrome visibile, entra con password + codice, "Resta connesso".
+- `stato --dettagli` — loggato? indirizzi (→ quello giusto) e carte per ultime 4 cifre.
+- `aggiungi ASIN:qty …` · `carrello` · `svuota` (sempre carrello pulito prima di un ordine: è condiviso con Daniele).
+- `prepara` — checkout: **impone indirizzo "Rinaldi Daniele, via San Carlo 25" e la carta con le ultime 4 cifre
+  di `acquisti.json`**, rilegge il riepilogo, legge il totale, fa screenshot e **si ferma**. Se indirizzo o carta
+  non tornano, o il totale non si legge → si ferma con il problema scritto. Non indovina mai una carta.
+- `compra --totale X --ok "Daniele, <canale>, <ora>"` — rifà `prepara` e clicca "Acquista ora" **solo** se totale
+  (al centesimo), indirizzo e carta coincidono con l'approvato. Registro + screenshot in `~/.config/doppio/amazon_checkout/`.
+
+**Sessione scaduta:** se Amazon chiede di nuovo la password, la leggo dal Portachiavi (`claude-amazon.it`, la
+salva Daniele con `account.py salva amazon.it --utente <email>`: la digita lui, non passa in chat). Se chiede il
+codice OTP (SMS/app) → Daniele, con `scrivi_a_daniele.py`; riapro `login` visibile solo se lui è al Mac.
+
+**Provato il 2026-11-14 (da ospite, profilo clonato):** stato (vede "non loggato"), aggiungi da scheda prodotto
+(il link `/gp/aws/cart/add` ora rimanda al login), carrello con righe e subtotale, svuota. **Non ancora provati:**
+`prepara`/`compra` sul checkout vero — servono login di Daniele e le ultime 4 cifre della carta. Il primo `prepara`
+reale va guardato a mano sullo screenshot: i selettori del checkout Amazon cambiano spesso.
