@@ -61,3 +61,6 @@ GIALLI (da decidere):
 1. Daniele conferma/sceglie sui punti 1–4 (sono la parte "accensione/spegnimento").
 2. Lista componenti completa definitiva + net-list per piedino (regola: lista pezzi prima, una saldatura sola).
 3. Prova a banco: corrente a riposo, accensione da movimento, autoritenuta, shutdown pulito.
+
+## Schema completo rifattorizzato (2026-11-15)
+`logger/hw_v2/schema_cablaggio_logger_v2.html`: BOM, schema a blocchi, net-list per nodo, per piedino, funzionamento, config, prova a banco. Risolve i 4 punti rossi sopra (proposta da validare).

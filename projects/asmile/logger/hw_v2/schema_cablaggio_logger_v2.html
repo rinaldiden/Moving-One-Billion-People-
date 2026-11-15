@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logger v2 cablaggio</title>
+<style>
+  @page { size: A4 portrait; margin: 13mm; }
+  :root { --acc:#b5179e; --acc2:#7209b7; --acc3:#3a0ca3; --bg:#fff; --fg:#1a1a1a; --th:#f3e8ff; --row:#faf7ff; --bd:#bbb; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#16131c; --fg:#ece8f2; --th:#2b2238; --row:#1d1826; --bd:#4a4058; } }
+  :root[data-theme="dark"] { --bg:#16131c; --fg:#ece8f2; --th:#2b2238; --row:#1d1826; --bd:#4a4058; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; color:var(--fg); background:var(--bg); font-size:12px; line-height:1.45; max-width:1000px; margin:0 auto; padding:16px; }
+  h1 { font-size:22px; margin:0 0 2px; color:var(--acc); }
+  h2 { font-size:15px; margin:20px 0 6px; padding-bottom:3px; border-bottom:2px solid var(--acc); color:var(--acc2); page-break-after:avoid; }
+  h3 { font-size:13px; margin:12px 0 4px; color:var(--acc3); }
+  .sub { color:#888; margin:0 0 6px; }
+  table { border-collapse:collapse; width:100%; margin:6px 0 10px; page-break-inside:avoid; }
+  th, td { border:1px solid var(--bd); padding:4px 6px; text-align:left; vertical-align:top; }
+  th { background:var(--th); font-weight:600; }
+  tr:nth-child(even) td { background:var(--row); }
+  .note { background:#fff8e1; color:#1a1a1a; border-left:4px solid #f4a100; padding:6px 10px; margin:6px 0; }
+  .warn { background:#ffecec; color:#1a1a1a; border-left:4px solid #e03131; padding:6px 10px; margin:6px 0; }
+  .ok { background:#e9fbe9; color:#1a1a1a; border-left:4px solid #2f9e44; padding:6px 10px; margin:6px 0; }
+  code, .mono { font-family: "SF Mono", Menlo, monospace; font-size:11px; }
+  svg { width:100%; height:auto; border:1px solid var(--bd); border-radius:6px; background:#fff; }
+  .chk { list-style:none; padding-left:0; } .chk li { margin:3px 0; } .chk li:before { content:"☐ "; font-weight:bold; }
+  @media (max-width:700px) { body { padding:16px; font-size:13px; } table { display:block; overflow-x:auto; } }
+</style>
+</head>
+<body>
+
+<h1>Logger v2 — schema di cablaggio completo (rifattorizzato)</h1>
+<p class="sub">asmile-logger001 · 2026-11-15 · base: schema di Daniele del 13/11 (<code>logger/hw_v2/README.md</code>) corretto nei 4 punti rossi della revisione. <b>PROPOSTA da validare con Daniele prima di saldare.</b></p>
+
+<div class="warn"><b>Cosa cambia rispetto allo schema del 13/11 (in breve)</b><br>
+1) Il MOSFET P non si accende più direttamente dall'INT dell'IMU (non si sarebbe mai spento): ora c'è un <b>pull-up gate→source</b> e un <b>piccolo N-MOS</b> che tira il gate.<br>
+2) MOSFET P con <b>Vgs ±20 V</b> (AO4407A) invece dell'AO3401 (±12 V, sotto la batteria piena da 12,6 V).<br>
+3) <b>Autoritenuta</b>: l'IMU accende, poi il Pi tiene acceso da solo e si spegne lui, pulito, quando ha finito (non più "l'IMU stacca").<br>
+4) <b>I2C dell'IMU senza resistenze di pull-up sul modulo</b>, così da Pi spento l'IMU non lo alimenta dai pin.<br>
+5) Regolatore sempre-acceso a <b>2 µA</b> (MCP1703A) invece dell'AMS1117 (~5 mA); partitore batteria <b>sulla linea commutata</b> (niente consumo da spento).<br>
+6) <b>Batteria RTC del Pi 5</b>: risolve l'orologio sbagliato che oggi fa sovrascrivere i video fra un'accensione e l'altra. Fusibile sulla batteria. Resistenze sui LED.</div>
+
+<h2>1 · Lista pezzi completa (BOM)</h2>
+<table>
+<tr><th>#</th><th>Pezzo</th><th>Q.tà</th><th>Valore / modello</th><th>Note</th></tr>
+<tr><td>1</td><td>Batteria</td><td>1</td><td>3S2P 6900 mAh (9,0–12,6 V)</td><td>già c'è</td></tr>
+<tr><td>2</td><td>Fusibile + portafusibile</td><td>1</td><td>3 A ritardato (lama o 5×20)</td><td>subito sul + batteria</td></tr>
+<tr><td>3</td><td>Regolatore 3,3 V sempre acceso</td><td>1</td><td><b>MCP1703A-3302</b> (Vin max 16 V, Iq 2 µA, 250 mA) — in SOT-23/TO-92</td><td>sostituisce l'AMS1117</td></tr>
+<tr><td>4</td><td>Condensatori LDO</td><td>2</td><td>1 µF ceramico (in) + 1 µF ceramico (out)</td><td>vicino all'MCP1703A</td></tr>
+<tr><td>5</td><td>IMU</td><td>1</td><td>MPU6050 (modulo GY-521 / HW-123)</td><td>già c'è · <b>togliere le 2 resistenze di pull-up I2C del modulo</b> (4,7 kΩ su SDA/SCL)</td></tr>
+<tr><td>6</td><td>MOSFET P (interruttore principale)</td><td>1</td><td><b>AO4407A</b> (−30 V, Vgs ±20 V, 12 A, SO-8)</td><td>al posto dell'AO3401</td></tr>
+<tr><td>7</td><td>MOSFET N piccolo (pilota del gate)</td><td>1</td><td><b>2N7002</b> (SOT-23) o BS170 (TO-92)</td><td></td></tr>
+<tr><td>8</td><td>Diodi Schottky (OR di accensione)</td><td>2</td><td>BAT54 (o 1N5817)</td><td>uno da INT IMU, uno da HOLD del Pi</td></tr>
+<tr><td>9</td><td>Resistenze</td><td>—</td><td>R1 100 kΩ · R2 47 kΩ · R3 100 kΩ · R4 100 kΩ · R5 33 kΩ · R6/R7/R8 220 Ω · R9 1 kΩ</td><td>tutte 1/4 W</td></tr>
+<tr><td>10</td><td>Condensatore filtro partitore</td><td>1</td><td>100 nF ceramico</td><td>su A0 dell'ADS1115</td></tr>
+<tr><td>11</td><td>Buck 5 V</td><td>1</td><td>5,1 V ≥ 5 A (es. Pololu D36V50F5 o quello che hai, se regge 5 A)</td><td>già c'è: <b>verificare che dia 5 A</b> (Pi 5 + Camarray + dongle 4G)</td></tr>
+<tr><td>12</td><td>Raspberry Pi 5</td><td>1</td><td>—</td><td>già c'è</td></tr>
+<tr><td>13</td><td>Batteria RTC Pi 5</td><td>1</td><td>batteria ufficiale RTC (ML-2020 ricaricabile) sul connettore J5 (BAT)</td><td>nuovo · orologio giusto anche senza rete</td></tr>
+<tr><td>14</td><td>Arducam Camarray</td><td>1</td><td>—</td><td>già c'è (cavo CSI, invariato)</td></tr>
+<tr><td>15</td><td>ADS1115</td><td>1</td><td>modulo standard, ADDR a GND = 0x48</td><td></td></tr>
+<tr><td>16</td><td>LED RGB</td><td>1</td><td>KY-016 catodo comune</td><td>con R6/R7/R8 se il modulo non le ha</td></tr>
+<tr><td>17</td><td>Dongle 4G USB</td><td>1</td><td>quello della foto</td><td>acceso/spento via software (uhubctl)</td></tr>
+<tr><td>18</td><td>Cavetti, millefori, guaina</td><td>—</td><td>—</td><td></td></tr>
+</table>
+
+<h2>2 · Schema a blocchi</h2>
+<svg viewBox="0 0 980 470" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial" font-size="12">
+  <defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#333"/></marker></defs>
+  <!-- batteria -->
+  <rect x="15" y="40" width="120" height="60" rx="6" fill="#ffe3e3" stroke="#c92a2a"/><text x="75" y="65" text-anchor="middle" font-weight="bold">Batteria 3S</text><text x="75" y="83" text-anchor="middle">9–12,6 V</text>
+  <rect x="160" y="55" width="70" height="30" rx="4" fill="#fff" stroke="#333"/><text x="195" y="75" text-anchor="middle">F1 3 A</text>
+  <line x1="135" y1="70" x2="160" y2="70" stroke="#c92a2a" stroke-width="2.5"/>
+  <line x1="230" y1="70" x2="300" y2="70" stroke="#c92a2a" stroke-width="2.5"/><text x="262" y="62" text-anchor="middle" fill="#c92a2a">VBAT</text>
+  <!-- LDO -->
+  <line x1="270" y1="70" x2="270" y2="190" stroke="#c92a2a" stroke-width="2"/>
+  <rect x="215" y="190" width="110" height="50" rx="6" fill="#e7f5ff" stroke="#1971c2"/><text x="270" y="212" text-anchor="middle" font-weight="bold">MCP1703A</text><text x="270" y="229" text-anchor="middle">3,3 V · 2 µA</text>
+  <line x1="270" y1="240" x2="270" y2="290" stroke="#1971c2" stroke-width="2"/><text x="278" y="270" fill="#1971c2">3V3_SEMPRE</text>
+  <!-- IMU -->
+  <rect x="200" y="290" width="140" height="60" rx="6" fill="#e7f5ff" stroke="#1971c2"/><text x="270" y="314" text-anchor="middle" font-weight="bold">MPU6050</text><text x="270" y="332" text-anchor="middle">sempre acceso · INT latch</text>
+  <!-- wake logic -->
+  <rect x="380" y="290" width="160" height="70" rx="6" fill="#fff3bf" stroke="#e67700"/><text x="460" y="312" text-anchor="middle" font-weight="bold">Logica accensione</text><text x="460" y="330" text-anchor="middle">D1 (INT) + D2 (HOLD) → OR</text><text x="460" y="347" text-anchor="middle">→ gate Q2 (2N7002)</text>
+  <line x1="340" y1="320" x2="380" y2="320" stroke="#e67700" stroke-width="2" marker-end="url(#a)"/><text x="345" y="312" fill="#e67700">INT</text>
+  <!-- P-MOS -->
+  <rect x="380" y="45" width="160" height="55" rx="6" fill="#ffe3e3" stroke="#c92a2a"/><text x="460" y="68" text-anchor="middle" font-weight="bold">Q1 AO4407A (P)</text><text x="460" y="86" text-anchor="middle">interruttore high-side</text>
+  <line x1="300" y1="70" x2="380" y2="70" stroke="#c92a2a" stroke-width="2.5"/>
+  <line x1="460" y1="290" x2="460" y2="100" stroke="#e67700" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#a)"/><text x="468" y="200" fill="#e67700">Q2 tira il gate di Q1</text>
+  <line x1="540" y1="70" x2="610" y2="70" stroke="#c92a2a" stroke-width="2.5"/><text x="575" y="62" text-anchor="middle" fill="#c92a2a">VSW</text>
+  <!-- buck -->
+  <rect x="610" y="45" width="120" height="55" rx="6" fill="#ffe3e3" stroke="#c92a2a"/><text x="670" y="68" text-anchor="middle" font-weight="bold">Buck 5,1 V</text><text x="670" y="86" text-anchor="middle">≥ 5 A</text>
+  <line x1="730" y1="70" x2="790" y2="70" stroke="#c92a2a" stroke-width="2.5"/><text x="760" y="62" text-anchor="middle" fill="#c92a2a">5V</text>
+  <!-- partitore -->
+  <line x1="590" y1="70" x2="590" y2="160" stroke="#c92a2a" stroke-width="1.5"/>
+  <rect x="545" y="160" width="95" height="40" rx="5" fill="#fff" stroke="#333"/><text x="592" y="178" text-anchor="middle">R4 100k / R5 33k</text><text x="592" y="193" text-anchor="middle">partitore</text>
+  <!-- Pi -->
+  <rect x="790" y="40" width="175" height="260" rx="8" fill="#ebfbee" stroke="#2f9e44"/><text x="877" y="62" text-anchor="middle" font-weight="bold">Raspberry Pi 5</text>
+  <text x="800" y="85">5V (pin 2/4) · GND</text><text x="800" y="105">GPIO2 SDA · GPIO3 SCL</text><text x="800" y="125">GPIO26 HOLD (gpio-poweroff)</text><text x="800" y="145">GPIO22/23/24 LED R/G/B</text><text x="800" y="165">USB → dongle 4G</text><text x="800" y="185">CSI → Camarray</text><text x="800" y="205">J5 BAT → batteria RTC</text>
+  <line x1="790" y1="125" x2="560" y2="125" stroke="#2f9e44" stroke-width="2"/><line x1="560" y1="125" x2="560" y2="300" stroke="#2f9e44" stroke-width="2" marker-end="url(#a)"/><text x="600" y="118" fill="#2f9e44">HOLD (tiene acceso)</text>
+  <!-- ADS -->
+  <rect x="640" y="230" width="110" height="50" rx="6" fill="#ebfbee" stroke="#2f9e44"/><text x="695" y="252" text-anchor="middle" font-weight="bold">ADS1115</text><text x="695" y="269" text-anchor="middle">A0 = batteria</text>
+  <line x1="592" y1="200" x2="640" y2="250" stroke="#333" stroke-width="1.5"/>
+  <!-- I2C bus -->
+  <line x1="340" y1="300" x2="370" y2="300" stroke="#2f9e44" stroke-width="1.5"/><line x1="370" y1="300" x2="370" y2="410" stroke="#2f9e44" stroke-width="1.5"/><line x1="370" y1="410" x2="780" y2="410" stroke="#2f9e44" stroke-width="1.5"/><line x1="780" y1="410" x2="780" y2="105" stroke="#2f9e44" stroke-width="1.5"/><line x1="780" y1="105" x2="790" y2="105" stroke="#2f9e44" stroke-width="1.5"/>
+  <line x1="695" y1="280" x2="695" y2="410" stroke="#2f9e44" stroke-width="1.5"/><text x="470" y="428" fill="#2f9e44">bus I2C1 (SDA/SCL): pull-up SOLO del Pi (1,8 kΩ interne) — niente pull-up sul modulo IMU</text>
+  <!-- LED/4G -->
+  <rect x="800" y="320" width="160" height="40" rx="6" fill="#fff" stroke="#333"/><text x="880" y="345" text-anchor="middle">KY-016 + 3×220 Ω</text>
+  <rect x="800" y="370" width="160" height="30" rx="6" fill="#fff" stroke="#333"/><text x="880" y="390" text-anchor="middle">Dongle 4G (uhubctl)</text>
+  <text x="20" y="455" font-size="11" fill="#555">GND comune: batteria −, LDO, IMU, Q2 source, buck, Pi, ADS1115, R5, KY-016 (catodo). Il gate di Q1 ha R1 100 kΩ verso VBAT (spento) e R2 47 kΩ verso il drain di Q2 (acceso).</text>
+</svg>
+
+<h2>3 · Net-list per nodo (ogni filo, una volta sola)</h2>
+<table>
+<tr><th>Nodo</th><th>Tutto ciò che ci arriva</th></tr>
+<tr><td><b>VBAT</b> (dopo F1)</td><td>F1 uscita · MCP1703A IN (+1 µF a GND) · Q1 <b>Source</b> (pin 1-2-3 AO4407A) · R1 lato alto (100 kΩ verso gate Q1)</td></tr>
+<tr><td><b>BAT_RAW</b></td><td>Batteria + · F1 ingresso</td></tr>
+<tr><td><b>GND</b></td><td>Batteria − · MCP1703A GND · IMU GND · Q2 <b>Source</b> · R3 lato basso · Buck GND (in e out) · Pi GND (pin 6, 9, 14…) · ADS1115 GND · ADS1115 ADDR · R5 lato basso · condensatori · KY-016 GND (catodo comune)</td></tr>
+<tr><td><b>3V3_SEMPRE</b></td><td>MCP1703A OUT (+1 µF a GND) · IMU VCC</td></tr>
+<tr><td><b>G_Q1</b> (gate MOSFET P)</td><td>Q1 <b>Gate</b> (pin 4) · R1 lato basso (100 kΩ da VBAT) · R2 lato alto (47 kΩ)</td></tr>
+<tr><td><b>D_Q2</b></td><td>R2 lato basso · Q2 <b>Drain</b></td></tr>
+<tr><td><b>WAKE</b> (gate Q2)</td><td>Q2 <b>Gate</b> · catodo D1 · catodo D2 · R3 lato alto (100 kΩ verso GND)</td></tr>
+<tr><td><b>INT_IMU</b></td><td>IMU INT · anodo D1 (solo questo: <b>non</b> va a un pin del Pi)</td></tr>
+<tr><td><b>HOLD</b></td><td>Pi GPIO26 (pin 37) · R9 1 kΩ · anodo D2</td></tr>
+<tr><td><b>VSW</b> (commutata)</td><td>Q1 <b>Drain</b> (pin 5-6-7-8) · Buck VIN · R4 lato alto (100 kΩ)</td></tr>
+<tr><td><b>VBAT_DIV</b></td><td>R4 lato basso · R5 lato alto (33 kΩ) · ADS1115 A0 · 100 nF a GND</td></tr>
+<tr><td><b>5V_PI</b></td><td>Buck VOUT · Pi 5V (pin 2 e 4; meglio dalla presa USB-C se il buck ha l'uscita USB-C/PD)</td></tr>
+<tr><td><b>3V3_PI</b></td><td>Pi 3V3 (pin 1) · ADS1115 VDD</td></tr>
+<tr><td><b>SDA</b></td><td>Pi GPIO2 (pin 3) · IMU SDA · ADS1115 SDA</td></tr>
+<tr><td><b>SCL</b></td><td>Pi GPIO3 (pin 5) · IMU SCL · ADS1115 SCL</td></tr>
+<tr><td><b>LED_R / G / B</b></td><td>Pi GPIO22 (pin 15) → R6 220 Ω → KY-016 R · GPIO23 (pin 16) → R7 → G · GPIO24 (pin 18) → R8 → B</td></tr>
+<tr><td><b>USB</b></td><td>Pi porta USB → dongle 4G</td></tr>
+<tr><td><b>CSI</b></td><td>Pi CAM/DISP → Camarray (invariato)</td></tr>
+<tr><td><b>RTC</b></td><td>Pi J5 (BAT) → batteria RTC ufficiale</td></tr>
+</table>
+
+<h2>4 · Per piedino (cosa saldare su ogni pezzo)</h2>
+<h3>Q1 — AO4407A (SO-8, P-MOS)</h3>
+<table><tr><th>Pin</th><th>Funzione</th><th>Va a</th></tr>
+<tr><td>1, 2, 3</td><td>Source</td><td>VBAT</td></tr><tr><td>4</td><td>Gate</td><td>G_Q1 (R1 100 kΩ a VBAT, R2 47 kΩ a drain Q2)</td></tr><tr><td>5, 6, 7, 8</td><td>Drain</td><td>VSW (buck VIN, R4)</td></tr></table>
+<h3>Q2 — 2N7002 (SOT-23)</h3>
+<table><tr><th>Pin</th><th>Funzione</th><th>Va a</th></tr><tr><td>1</td><td>Gate</td><td>WAKE (catodi D1, D2; R3 100 kΩ a GND)</td></tr><tr><td>2</td><td>Source</td><td>GND</td></tr><tr><td>3</td><td>Drain</td><td>R2 47 kΩ → gate Q1</td></tr></table>
+<h3>MCP1703A-3302</h3>
+<table><tr><th>Pin (SOT-23A)</th><th>Funzione</th><th>Va a</th></tr><tr><td>1</td><td>GND</td><td>GND</td></tr><tr><td>2</td><td>VOUT</td><td>3V3_SEMPRE + 1 µF</td></tr><tr><td>3</td><td>VIN</td><td>VBAT + 1 µF</td></tr></table>
+<p class="note">Il pinout del MCP1703A cambia fra contenitori (SOT-23A, SOT-89, TO-92): <b>controlla sul datasheet del pezzo che compri</b> prima di saldare.</p>
+<h3>MPU6050 (GY-521 / HW-123)</h3>
+<table><tr><th>Pin</th><th>Va a</th></tr><tr><td>VCC</td><td>3V3_SEMPRE</td></tr><tr><td>GND</td><td>GND</td></tr><tr><td>SDA</td><td>SDA (bus del Pi)</td></tr><tr><td>SCL</td><td>SCL (bus del Pi)</td></tr><tr><td>INT</td><td>anodo D1</td></tr><tr><td>AD0</td><td>GND (indirizzo 0x68)</td></tr><tr><td>XDA, XCL</td><td>liberi</td></tr></table>
+<p class="warn">Sul modulo togli le <b>due resistenze di pull-up da 4,7 kΩ</b> di SDA e SCL (dissaldale o taglia la pista). Il regolatore 3,3 V del modulo GY-521 resta: alimentalo da VCC con 3,3 V (passa attraverso il suo LDO con poca caduta) oppure collega il 3,3 V direttamente a valle — da verificare sul tuo modulo.</p>
+<h3>Raspberry Pi 5 (header 40 pin)</h3>
+<table><tr><th>Pin</th><th>Nome</th><th>Va a</th></tr>
+<tr><td>1</td><td>3V3</td><td>ADS1115 VDD</td></tr><tr><td>2, 4</td><td>5V</td><td>Buck VOUT</td></tr><tr><td>3</td><td>GPIO2 SDA</td><td>SDA</td></tr><tr><td>5</td><td>GPIO3 SCL</td><td>SCL</td></tr><tr><td>6, 9, 14, 20…</td><td>GND</td><td>GND</td></tr><tr><td>15</td><td>GPIO22</td><td>R6 → LED R</td></tr><tr><td>16</td><td>GPIO23</td><td>R7 → LED G</td></tr><tr><td>18</td><td>GPIO24</td><td>R8 → LED B</td></tr><tr><td>37</td><td>GPIO26</td><td>HOLD → R9 1 kΩ → D2</td></tr></table>
+<h3>ADS1115</h3>
+<table><tr><th>Pin</th><th>Va a</th></tr><tr><td>VDD</td><td>3V3_PI</td></tr><tr><td>GND</td><td>GND</td></tr><tr><td>SDA / SCL</td><td>bus I2C</td></tr><tr><td>ADDR</td><td>GND (0x48)</td></tr><tr><td>A0</td><td>VBAT_DIV (+100 nF)</td></tr><tr><td>A1–A3, ALRT</td><td>liberi</td></tr></table>
+
+<h2>5 · Come funziona</h2>
+<table>
+<tr><th>Fase</th><th>Cosa succede</th></tr>
+<tr><td><b>Riposo</b> (bici ferma)</td><td>Accesi solo MCP1703A e IMU in modalità "solo accelerometro, ciclo lento" con interrupt di movimento <b>latched</b>. Q2 spento → R1 tiene il gate di Q1 a VBAT → Q1 aperto → buck, Pi, partitore spenti. Consumo stimato: ~2 µA LDO + 10–110 µA IMU ≈ <b>0,1 mA</b> (la batteria si scarica prima da sola).</td></tr>
+<tr><td><b>Movimento</b></td><td>L'IMU alza INT e lo <b>tiene alto</b> (latch) → D1 → Q2 conduce → gate di Q1 tirato giù da R2 (Vgs ≈ −8,6 V con batteria piena) → Q1 chiuso → buck → <b>Pi si accende</b>.</td></tr>
+<tr><td><b>Pi acceso</b></td><td>Al boot il kernel porta GPIO26 (HOLD) <b>alto</b> (overlay <code>gpio-poweroff</code>, attivo basso) → D2 tiene acceso da solo. Poi il servizio del logger legge l'IMU (azzera l'INT), avvia la registrazione, legge la batteria (ADS1115), colora il LED (verde / arancio / rosso), accende il dongle 4G solo per caricare i file e poi lo spegne (<code>uhubctl</code>).</td></tr>
+<tr><td><b>Fine movimento</b></td><td>È il Pi a decidere: nessun movimento per N minuti (IMU + video fermi) → chiude il segmento video, sincronizza, <code>shutdown -h</code>, e riarma l'interrupt di movimento dell'IMU. A spegnimento finito <code>gpio-poweroff</code> porta HOLD <b>basso</b> → Q2 si spegne → Q1 si apre → tutto spento tranne IMU e LDO. Niente più tagli secchi a metà file.</td></tr>
+<tr><td><b>Orologio</b></td><td>La batteria RTC sul J5 tiene l'ora anche senza rete: i nomi dei video sono giusti dal primo istante (oggi ripartono da "29/10 16:33" e si sovrascrivono).</td></tr>
+</table>
+
+<h2>6 · Configurazione software (sul Pi, solo col vai)</h2>
+<ul>
+<li><code>/boot/firmware/config.txt</code>: <code>dtoverlay=gpio-poweroff,gpiopin=26,active_low=1</code> (HOLD alto mentre il Pi gira, basso a spegnimento finito) e <code>dtparam=rtc_bbat_vchg=3000000</code> solo se la batteria RTC è ricaricabile (ML-2020).</li>
+<li>Servizio <code>logger-power</code>: riarma l'IMU (MOT_THR, MOT_DUR, INT latched, low-power cycle), timeout di inattività, LED batteria (soglie su VBAT da tarare: verde &gt; 11,4 V, arancio 10,5–11,4 V, rosso &lt; 10,5 V — da validare con Daniele), dongle 4G on/off con <code>uhubctl</code>.</li>
+<li>Recorder: nomi dei file con data RTC; finché il Pi non è sicuro dell'ora, aggiungere comunque il <code>boot_id</code> al nome (doppia sicurezza contro le sovrascritture).</li>
+</ul>
+
+<h2>7 · Prova a banco prima di montarlo</h2>
+<ul class="chk">
+<li>Alimentatore da banco a 12,6 V con limite di corrente 1 A, senza Pi: misura la corrente a riposo (attesa ~0,1 mA).</li>
+<li>Muovi l'IMU: Q1 deve chiudersi (VSW = VBAT). Senza Pi, ponticella HOLD a 3,3 V: deve restare acceso anche dopo aver azzerato l'INT.</li>
+<li>Togli HOLD: Q1 si deve aprire. Misura Vgs di Q1 da acceso (−8…−9 V a 12,6 V; mai oltre −20 V).</li>
+<li>Con il Pi: accensione da movimento, <code>shutdown -h</code>, controlla che dopo l'halt tutto si spenga e che un nuovo movimento lo riaccenda.</li>
+<li>Da Pi spento: misura che su SDA/SCL non ci sia tensione verso il Pi (pull-up del modulo tolti).</li>
+<li>ADS1115: lettura VBAT contro il multimetro entro ±1%.</li>
+</ul>
+
+<h2>8 · Cose da verificare sui pezzi che hai</h2>
+<ul>
+<li>Il tuo buck 5 V regge 5 A in continuo? (Pi 5 + Camarray + dongle 4G).</li>
+<li>Il KY-016 ha già le resistenze sui LED? Se sì, R6–R8 non servono.</li>
+<li>Il dongle 4G si spegne davvero con <code>uhubctl</code> sul Pi 5 (spegne tutte le porte USB insieme)?</li>
+<li>Il modulo IMU è un GY-521 classico (pull-up 4,7 kΩ sulla scheda)?</li>
+</ul>
+<p class="ok">Per la sicurezza della guida (#001) il tema accensione/autoritenuta/watchdog è collegato a <code>agents/sicurezza/ARCHITETTURA_SICUREZZA.md</code>.</p>
+
+</body>
+</html>
