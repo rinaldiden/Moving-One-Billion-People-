@@ -53,3 +53,23 @@ Stato: **niente è ancora implementato sul Pi.** Ogni passo segue la palla (prod
 - Memoria: `project_asmile001_overlay_watchdog_arch.md`.
 - Freno: `agents/prove/sterzo_001/REGISTRO_20261112.md` (corrente di tenuta, pin hi-Z), `pi/autonomous/speed_limiter.py` (classe Servo).
 - Schema HW del logger v2 (stesso tema accensione/spegnimento/autoritenuta): `logger/hw_v2/README.md`.
+
+## 8. Nota di Daniele (15/11) — l'ESP32 è indipendente solo se il Pi non lo può riprogrammare
+Passata dal Doppio al capo, da aggiungere all'irrobustimento. **Proposta da firmare**: affina §4, non lo sostituisce.
+
+**Il buco.** Se l'ESP32 è collegato al Pi via USB o UART con EN e IO0 cablati, chi entra dalla rete nel Pi lo riflasha con esptool in pochi secondi (EN basso + IO0 basso = download mode) e il guardiano non c'è più. Un watchdog che il sorvegliato può riscrivere non è un watchdog.
+
+**Le tre cose da scrivere nei 5 passi (passo 3):**
+1. **Solo un filo dati fra Pi ed ESP32**: UART TX/RX + massa, nient'altro. Niente EN, niente IO0, niente USB del Pi sull'ESP32, nessun piedino di strapping (IO0, IO2, IO12, IO15) cablato al Pi. Il battito (t_ms, hash del manifest, armato, velocità, ultimi comandi) viaggia tutto sulla UART. Il flash si fa solo da un connettore sull'ESP32, a mano, da Daniele.
+2. **Secure Boot v2 con la chiave sul Mac**: l'ESP32 esegue solo firmware firmato da Daniele (stesso principio del firmatario unico, §2.1). Da accompagnare con: UART download mode disattivato o in "secure download mode" (altrimenti il Pi, pur senza poter flashare firmware valido, potrebbe ancora cancellarlo = guardiano morto lo stesso), JTAG disattivato, nessun wifi/OTA nel firmware di sicurezza. Richiede un chip che supporti Secure Boot v2: ESP32 classico solo da rev v3.0 (ESP32-D0WD-V3), oppure ESP32-S3/C3.
+3. **Arresto autonomo sul battito mancante**: se dal Pi non arriva il battito per N cicli (o arriva con hash diverso), l'ESP32 da solo porta il freno alla posizione sicura **≤60°** rispettando l'anti-impuntata (serve IMU propria, §4) **e taglia il motore** (alimentazione/EN del VESC; Bafang se montato). Non chiede conferma al Pi.
+
+**Cosa abbiamo oggi (verificato nel repo il 15/11):**
+- `esp32/esp32_wifi/esp32_wifi.ino` ha **ArduinoOTA via wifi**, password **in chiaro** in `esp32/flash_ota.sh` / `.bat` ("otabike", rete SpadaBike): riflashabile da chiunque sia sulla rete, senza nemmeno passare dal Pi. **Così com'è non può essere il guardiano.**
+- L'Arduino Uno del ponte encoder si flasha dal Pi (`pi/steering/flash_encoder_arduino.sh`, /dev/ttyACM0). Accettabile finché è solo sensore; regola proposta: **nessun micro con autorità su freno o motore è flashabile dal Pi.**
+
+**Domande per Daniele:**
+- **Q-D** Solo UART, o teniamo anche le linee discrete di §4 (ALIVE, FAULT, OVERRIDE) purché su piedini non di strapping e lontane da EN/IO0? Proposta: solo UART verso l'ESP32; l'OVERRIDE è un'uscita dell'ESP32 verso il mux degli attuatori, non un filo col Pi.
+- **Q-E** Quale ESP32 è a bordo (revisione chip)? Se è < v3.0 niente Secure Boot v2 → micro nuovo (S3/C3 o dedicato, cfr. Q-B).
+- **Q-F** Bruciare gli eFuse (Secure Boot, download mode) è **irreversibile**: prima su un ESP32 di prova, poi su quello di bordo, solo col vai.
+- Se muore l'ESP32 stesso: il Pi deve vederne l'assenza (risposta al battito) e **non armare la guida**.
