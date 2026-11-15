@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logger v2 montaggio</title>
+<style>
+  @page { size: A4 portrait; margin: 12mm; }
+  :root { --acc:#b5179e; --acc2:#7209b7; --bg:#fff; --fg:#1a1a1a; --th:#f3e8ff; --row:#faf7ff; --bd:#bbb; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#16131c; --fg:#ece8f2; --th:#2b2238; --row:#1d1826; --bd:#4a4058; } }
+  :root[data-theme="dark"] { --bg:#16131c; --fg:#ece8f2; --th:#2b2238; --row:#1d1826; --bd:#4a4058; }
+  * { box-sizing:border-box; }
+  body { font-family:-apple-system,"Helvetica Neue",Arial,sans-serif; color:var(--fg); background:var(--bg); font-size:12.5px; line-height:1.45; max-width:1000px; margin:0 auto; padding:16px; }
+  h1 { font-size:22px; margin:0 0 2px; color:var(--acc); }
+  h2 { font-size:15px; margin:22px 0 6px; padding-bottom:3px; border-bottom:2px solid var(--acc); color:var(--acc2); page-break-after:avoid; }
+  .sub { color:#888; margin:0 0 6px; }
+  table { border-collapse:collapse; width:100%; margin:6px 0 10px; page-break-inside:avoid; }
+  th,td { border:1px solid var(--bd); padding:4px 6px; text-align:left; vertical-align:top; }
+  th { background:var(--th); }
+  tr:nth-child(even) td { background:var(--row); }
+  .warn { background:#ffecec; color:#1a1a1a; border-left:4px solid #e03131; padding:6px 10px; margin:6px 0; }
+  .note { background:#fff8e1; color:#1a1a1a; border-left:4px solid #f4a100; padding:6px 10px; margin:6px 0; }
+  .card { display:grid; grid-template-columns: 330px 1fr; gap:14px; align-items:start; margin:10px 0 16px; page-break-inside:avoid; }
+  @media (max-width:760px) { .card { grid-template-columns: 1fr; } body { padding:16px; } table { display:block; overflow-x:auto; } }
+  svg { width:100%; height:auto; background:#fff; border:1px solid var(--bd); border-radius:6px; }
+  .w { display:inline-block; width:28px; height:8px; border-radius:3px; vertical-align:middle; margin-right:4px; border:1px solid #555; }
+  code { font-family:"SF Mono",Menlo,monospace; font-size:11.5px; }
+</style>
+</head>
+<body>
+<h1>Logger v2 — montaggio pin per pin, con le figure</h1>
+<p class="sub">asmile-logger001 · 2026-11-15 · stesso circuito di <code>schema_cablaggio_logger_v2.html</code>, con <b>pezzi a foro passante</b> (più facili da saldare a mano) e una figura per ogni pezzo: <b>come lo tieni in mano</b> e quale filo va su quale piedino.</p>
+
+<div class="warn"><b>Regola d'oro:</b> i piedini dei MOSFET cambiano da modello a modello (BS170 e 2N7000 hanno Drain e Source <b>invertiti</b>!). Compra <b>esattamente</b> i codici di questa pagina e, prima di saldare, controlla la scritta sul pezzo. Se il codice è diverso, fermati e chiedimi.</div>
+
+<h2>Colori dei fili (usali sempre uguali)</h2>
+<table>
+<tr><th>Colore</th><th>Linea</th><th>Cosa porta</th></tr>
+<tr><td><span class="w" style="background:#e03131"></span>rosso</td><td>VBAT</td><td>batteria + dopo il fusibile (9–12,6 V)</td></tr>
+<tr><td><span class="w" style="background:#f08c00"></span>arancio</td><td>VSW</td><td>batteria commutata (dopo il MOSFET P)</td></tr>
+<tr><td><span class="w" style="background:#fff;"></span>bianco</td><td>5V</td><td>uscita buck → Pi</td></tr>
+<tr><td><span class="w" style="background:#1c7ed6"></span>blu</td><td>3V3</td><td>3,3 V (sempre acceso per l'IMU; del Pi per l'ADS1115)</td></tr>
+<tr><td><span class="w" style="background:#212529"></span>nero</td><td>GND</td><td>massa comune</td></tr>
+<tr><td><span class="w" style="background:#ffd43b"></span>giallo</td><td>SDA</td><td>dati I2C</td></tr>
+<tr><td><span class="w" style="background:#2f9e44"></span>verde</td><td>SCL</td><td>clock I2C</td></tr>
+<tr><td><span class="w" style="background:#ae3ec9"></span>viola</td><td>segnali</td><td>INT, HOLD, gate, LED</td></tr>
+</table>
+
+<h2>Pezzi a foro passante (al posto di quelli SMD)</h2>
+<table>
+<tr><th>Ruolo</th><th>Codice da comprare</th><th>Contenitore</th><th>Perché</th></tr>
+<tr><td>Interruttore principale (MOSFET P)</td><td><b>IRF4905</b></td><td>TO-220</td><td>−55 V, Vgs ±20 V, 0,02 Ω: con la batteria piena lavora freddo</td></tr>
+<tr><td>Pilota del gate (MOSFET N piccolo)</td><td><b>BS170</b></td><td>TO-92</td><td>si accende con 3,3 V</td></tr>
+<tr><td>Regolatore 3,3 V sempre acceso</td><td><b>MCP1703-3302E/TO</b></td><td>TO-92</td><td>2 µA a vuoto, regge fino a 16 V</td></tr>
+<tr><td>Diodi dell'OR di accensione (×2)</td><td><b>1N5817</b></td><td>assiale</td><td>la <b>fascia</b> è il catodo</td></tr>
+<tr><td>Fusibile</td><td>3 A ritardato + portafusibile da filo</td><td>—</td><td>subito sul + batteria</td></tr>
+</table>
+
+<h2>1 · Interruttore principale — IRF4905 (TO-220)</h2>
+<div class="card">
+<svg viewBox="0 0 320 300" font-family="Helvetica,Arial" font-size="13">
+  <rect x="95" y="10" width="130" height="38" rx="4" fill="#adb5bd" stroke="#495057"/><circle cx="160" cy="29" r="9" fill="#fff" stroke="#495057"/><text x="160" y="62" text-anchor="middle" font-size="10" fill="#666">aletta metallica (= Drain!)</text>
+  <rect x="95" y="68" width="130" height="95" rx="3" fill="#343a40"/><text x="160" y="110" text-anchor="middle" fill="#fff" font-weight="bold">IRF4905</text><text x="160" y="128" text-anchor="middle" fill="#ccc" font-size="11">scritta verso di te</text>
+  <rect x="117" y="163" width="8" height="70" fill="#ced4da" stroke="#868e96"/><rect x="156" y="163" width="8" height="70" fill="#ced4da" stroke="#868e96"/><rect x="195" y="163" width="8" height="70" fill="#ced4da" stroke="#868e96"/>
+  <text x="121" y="252" text-anchor="middle" font-weight="bold">1</text><text x="160" y="252" text-anchor="middle" font-weight="bold">2</text><text x="199" y="252" text-anchor="middle" font-weight="bold">3</text>
+  <text x="121" y="270" text-anchor="middle">G</text><text x="160" y="270" text-anchor="middle">D</text><text x="199" y="270" text-anchor="middle">S</text>
+  <line x1="121" y1="275" x2="60" y2="292" stroke="#ae3ec9" stroke-width="3"/><text x="10" y="296" fill="#ae3ec9" font-size="11">G_Q1</text>
+  <line x1="160" y1="275" x2="160" y2="295" stroke="#f08c00" stroke-width="3"/>
+  <line x1="199" y1="275" x2="262" y2="292" stroke="#e03131" stroke-width="3"/><text x="266" y="296" fill="#e03131" font-size="11">VBAT</text>
+</svg>
+<div>
+<table><tr><th>Piedino</th><th>Nome</th><th>Filo</th><th>Va a</th></tr>
+<tr><td>1 (sinistra)</td><td>Gate</td><td><span class="w" style="background:#ae3ec9"></span>viola</td><td>R1 100 kΩ → VBAT <b>e</b> R2 47 kΩ → Drain del BS170</td></tr>
+<tr><td>2 (centro) + aletta</td><td>Drain</td><td><span class="w" style="background:#f08c00"></span>arancio</td><td>VSW: buck VIN + R4 100 kΩ (partitore)</td></tr>
+<tr><td>3 (destra)</td><td>Source</td><td><span class="w" style="background:#e03131"></span>rosso</td><td>VBAT (dopo il fusibile)</td></tr></table>
+<p class="note">Tieni il pezzo con la <b>scritta verso di te</b> e le gambe in basso: da sinistra G – D – S. L'aletta è collegata al Drain: <b>non deve toccare</b> massa o altro metallo (isolala o lasciala libera).</p>
+<p>R1 (100 kΩ) si salda <b>direttamente fra piedino 1 e piedino 3</b>: tiene il MOSFET spento quando nessuno lo comanda.</p>
+</div></div>
+
+<h2>2 · Pilota del gate — BS170 (TO-92)</h2>
+<div class="card">
+<svg viewBox="0 0 320 280" font-family="Helvetica,Arial" font-size="13">
+  <path d="M100,30 L220,30 L220,120 Q160,170 100,120 Z" fill="#212529"/><text x="160" y="70" text-anchor="middle" fill="#fff" font-weight="bold">BS170</text><text x="160" y="90" text-anchor="middle" fill="#ccc" font-size="11">lato PIATTO verso di te</text>
+  <rect x="122" y="140" width="6" height="70" fill="#ced4da" stroke="#868e96"/><rect x="157" y="150" width="6" height="60" fill="#ced4da" stroke="#868e96"/><rect x="192" y="140" width="6" height="70" fill="#ced4da" stroke="#868e96"/>
+  <text x="125" y="228" text-anchor="middle" font-weight="bold">1</text><text x="160" y="228" text-anchor="middle" font-weight="bold">2</text><text x="195" y="228" text-anchor="middle" font-weight="bold">3</text>
+  <text x="125" y="246" text-anchor="middle">D</text><text x="160" y="246" text-anchor="middle">G</text><text x="195" y="246" text-anchor="middle">S</text>
+  <line x1="125" y1="252" x2="70" y2="272" stroke="#ae3ec9" stroke-width="3"/><text x="8" y="276" fill="#ae3ec9" font-size="11">→ R2 47k</text>
+  <line x1="160" y1="252" x2="160" y2="275" stroke="#ae3ec9" stroke-width="3"/><text x="166" y="275" fill="#ae3ec9" font-size="11">WAKE</text>
+  <line x1="195" y1="252" x2="250" y2="272" stroke="#212529" stroke-width="3"/><text x="254" y="276" font-size="11">GND</text>
+</svg>
+<div>
+<table><tr><th>Piedino</th><th>Nome</th><th>Filo</th><th>Va a</th></tr>
+<tr><td>1 (sinistra)</td><td>Drain</td><td><span class="w" style="background:#ae3ec9"></span>viola</td><td>R2 47 kΩ → Gate dell'IRF4905 (piedino 1)</td></tr>
+<tr><td>2 (centro)</td><td>Gate</td><td><span class="w" style="background:#ae3ec9"></span>viola</td><td>WAKE: le due <b>fasce</b> dei 1N5817 + R3 100 kΩ → GND</td></tr>
+<tr><td>3 (destra)</td><td>Source</td><td><span class="w" style="background:#212529"></span>nero</td><td>GND</td></tr></table>
+<p class="warn">Solo per il <b>BS170</b>: lato piatto verso di te, da sinistra <b>D – G – S</b>. Un 2N7000 ha l'ordine opposto (S – G – D): se ti arriva un 2N7000, giralo o chiedimi.</p>
+</div></div>
+
+<h2>3 · Regolatore 3,3 V — MCP1703-3302E/TO (TO-92)</h2>
+<div class="card">
+<svg viewBox="0 0 320 280" font-family="Helvetica,Arial" font-size="13">
+  <path d="M100,30 L220,30 L220,120 Q160,170 100,120 Z" fill="#212529"/><text x="160" y="66" text-anchor="middle" fill="#fff" font-weight="bold">1703</text><text x="160" y="84" text-anchor="middle" fill="#fff" font-size="11">3302E</text><text x="160" y="102" text-anchor="middle" fill="#ccc" font-size="11">lato PIATTO verso di te</text>
+  <rect x="122" y="140" width="6" height="70" fill="#ced4da" stroke="#868e96"/><rect x="157" y="150" width="6" height="60" fill="#ced4da" stroke="#868e96"/><rect x="192" y="140" width="6" height="70" fill="#ced4da" stroke="#868e96"/>
+  <text x="125" y="228" text-anchor="middle" font-weight="bold">1</text><text x="160" y="228" text-anchor="middle" font-weight="bold">2</text><text x="195" y="228" text-anchor="middle" font-weight="bold">3</text>
+  <text x="125" y="246" text-anchor="middle">GND</text><text x="160" y="246" text-anchor="middle">IN</text><text x="195" y="246" text-anchor="middle">OUT</text>
+  <line x1="125" y1="252" x2="70" y2="272" stroke="#212529" stroke-width="3"/><line x1="160" y1="252" x2="160" y2="275" stroke="#e03131" stroke-width="3"/><line x1="195" y1="252" x2="250" y2="272" stroke="#1c7ed6" stroke-width="3"/>
+</svg>
+<div>
+<table><tr><th>Piedino</th><th>Nome</th><th>Filo</th><th>Va a</th></tr>
+<tr><td>1</td><td>GND</td><td><span class="w" style="background:#212529"></span>nero</td><td>GND</td></tr>
+<tr><td>2</td><td>VIN</td><td><span class="w" style="background:#e03131"></span>rosso</td><td>VBAT + condensatore 1 µF verso GND</td></tr>
+<tr><td>3</td><td>VOUT</td><td><span class="w" style="background:#1c7ed6"></span>blu</td><td>3V3_SEMPRE → VCC dell'IMU + condensatore 1 µF verso GND</td></tr></table>
+<p class="warn"><b>Da controllare prima di saldare:</b> il MCP1703A non esiste in TO-92: in TO-92 c'è il MCP1703 (stesse prestazioni: 16 V, 2 µA). I datasheet della famiglia non concordano sull'ordine dei piedini in TO-92: GND – IN – OUT nella figura è quello più citato, ma va LETTO sul datasheet Microchip del pezzo che arriva (sezione "Package Types", vista con lato piatto davanti). Prima di collegare l'IMU, dai 12 V e misura col multimetro 3,3 V fra il piedino OUT e GND.</p>
+</div></div>
+
+<h2>4 · Diodi 1N5817 (×2) — l'OR di accensione</h2>
+<div class="card">
+<svg viewBox="0 0 320 170" font-family="Helvetica,Arial" font-size="13">
+  <line x1="20" y1="45" x2="105" y2="45" stroke="#868e96" stroke-width="3"/><rect x="105" y="30" width="110" height="30" rx="8" fill="#212529"/><rect x="190" y="30" width="14" height="30" fill="#ced4da"/><line x1="215" y1="45" x2="300" y2="45" stroke="#868e96" stroke-width="3"/>
+  <text x="40" y="30">ANODO</text><text x="230" y="30">CATODO (fascia)</text>
+  <text x="20" y="90" fill="#ae3ec9">D1: anodo ← INT dell'IMU · catodo → WAKE</text>
+  <text x="20" y="115" fill="#ae3ec9">D2: anodo ← R9 1 kΩ ← GPIO26 (HOLD)</text><text x="44" y="135" fill="#ae3ec9">catodo → WAKE</text>
+  <text x="20" y="160" font-size="11">WAKE = le due fasce unite + gate BS170 + R3 100 kΩ a GND</text>
+</svg>
+<div><p>La <b>fascia chiara</b> è il catodo. Tutte e due le fasce vanno nello stesso punto (WAKE). Così basta uno dei due segnali, il movimento dell'IMU o il Pi che tiene acceso, per accendere.</p></div>
+</div>
+
+<h2>5 · IMU — modulo GY-521 / HW-123 (MPU6050)</h2>
+<div class="card">
+<svg viewBox="0 0 320 230" font-family="Helvetica,Arial" font-size="12">
+  <rect x="40" y="20" width="240" height="140" rx="6" fill="#1971c2"/><rect x="130" y="60" width="60" height="60" fill="#212529"/><text x="160" y="95" text-anchor="middle" fill="#fff" font-size="10">MPU6050</text>
+  <rect x="70" y="40" width="14" height="8" fill="#ffd43b" stroke="#e03131" stroke-width="2"/><rect x="90" y="40" width="14" height="8" fill="#ffd43b" stroke="#e03131" stroke-width="2"/><text x="112" y="48" fill="#fff" font-size="10">← R pull-up: TOGLIERE</text>
+  <g font-size="10" text-anchor="middle" fill="#fff">
+  <text x="60" y="152">VCC</text><text x="88" y="152">GND</text><text x="116" y="152">SCL</text><text x="144" y="152">SDA</text><text x="172" y="152">XDA</text><text x="200" y="152">XCL</text><text x="228" y="152">AD0</text><text x="256" y="152">INT</text></g>
+  <g><line x1="60" y1="160" x2="60" y2="200" stroke="#1c7ed6" stroke-width="3"/><line x1="88" y1="160" x2="88" y2="200" stroke="#212529" stroke-width="3"/><line x1="116" y1="160" x2="116" y2="200" stroke="#2f9e44" stroke-width="3"/><line x1="144" y1="160" x2="144" y2="200" stroke="#ffd43b" stroke-width="3"/><line x1="228" y1="160" x2="228" y2="200" stroke="#212529" stroke-width="3"/><line x1="256" y1="160" x2="256" y2="200" stroke="#ae3ec9" stroke-width="3"/></g>
+  <g font-size="10" text-anchor="middle"><text x="60" y="215">3V3</text><text x="88" y="215">GND</text><text x="116" y="215">SCL</text><text x="144" y="215">SDA</text><text x="228" y="215">GND</text><text x="256" y="215">D1</text></g>
+</svg>
+<div>
+<table><tr><th>Pin</th><th>Filo</th><th>Va a</th></tr>
+<tr><td>VCC</td><td><span class="w" style="background:#1c7ed6"></span>blu</td><td>3V3_SEMPRE (OUT del MCP1703A)</td></tr>
+<tr><td>GND</td><td><span class="w" style="background:#212529"></span>nero</td><td>GND</td></tr>
+<tr><td>SCL</td><td><span class="w" style="background:#2f9e44"></span>verde</td><td>Pi pin 5 (GPIO3) + ADS1115 SCL</td></tr>
+<tr><td>SDA</td><td><span class="w" style="background:#ffd43b"></span>giallo</td><td>Pi pin 3 (GPIO2) + ADS1115 SDA</td></tr>
+<tr><td>AD0</td><td><span class="w" style="background:#212529"></span>nero</td><td>GND (indirizzo 0x68)</td></tr>
+<tr><td>INT</td><td><span class="w" style="background:#ae3ec9"></span>viola</td><td>anodo di D1 (1N5817). <b>Non</b> va al Pi.</td></tr>
+<tr><td>XDA, XCL</td><td>—</td><td>liberi</td></tr></table>
+<p class="warn">Sul modulo ci sono due resistenze da 4,7 kΩ (spesso scritte "472") su SDA e SCL: <b>dissaldale</b>. L'ordine dei piedini varia fra i moduli: segui le <b>scritte stampate</b> sul tuo, non la posizione di questa figura.</p>
+</div></div>
+
+<h2>6 · ADS1115 (misura della batteria)</h2>
+<div class="card">
+<svg viewBox="0 0 320 210" font-family="Helvetica,Arial" font-size="11">
+  <rect x="30" y="20" width="260" height="120" rx="6" fill="#6741d9"/><text x="160" y="75" text-anchor="middle" fill="#fff" font-weight="bold" font-size="13">ADS1115</text>
+  <g text-anchor="middle" fill="#fff" font-size="10"><text x="50" y="132">VDD</text><text x="76" y="132">GND</text><text x="102" y="132">SCL</text><text x="128" y="132">SDA</text><text x="154" y="132">ADDR</text><text x="180" y="132">ALRT</text><text x="206" y="132">A0</text><text x="232" y="132">A1</text><text x="258" y="132">A2</text><text x="282" y="132">A3</text></g>
+  <line x1="50" y1="140" x2="50" y2="180" stroke="#1c7ed6" stroke-width="3"/><line x1="76" y1="140" x2="76" y2="180" stroke="#212529" stroke-width="3"/><line x1="102" y1="140" x2="102" y2="180" stroke="#2f9e44" stroke-width="3"/><line x1="128" y1="140" x2="128" y2="180" stroke="#ffd43b" stroke-width="3"/><line x1="154" y1="140" x2="154" y2="180" stroke="#212529" stroke-width="3"/><line x1="206" y1="140" x2="206" y2="180" stroke="#f08c00" stroke-width="3"/>
+  <g text-anchor="middle" font-size="10"><text x="50" y="195">3V3 Pi</text><text x="76" y="195">GND</text><text x="102" y="195">SCL</text><text x="128" y="195">SDA</text><text x="154" y="195">GND</text><text x="206" y="195">partitore</text></g>
+</svg>
+<div>
+<table><tr><th>Pin</th><th>Va a</th></tr><tr><td>VDD</td><td>Pi pin 1 (3,3 V del Pi)</td></tr><tr><td>GND</td><td>GND</td></tr><tr><td>SCL / SDA</td><td>bus I2C (verde / giallo)</td></tr><tr><td>ADDR</td><td>GND (indirizzo 0x48)</td></tr><tr><td>A0</td><td>punto centrale del partitore + 100 nF verso GND</td></tr><tr><td>ALRT, A1–A3</td><td>liberi</td></tr></table>
+<p><b>Partitore:</b> VSW (arancio, <b>dopo</b> il MOSFET) → R4 100 kΩ → <b>A0</b> → R5 33 kΩ → GND. Con 12,6 V su A0 arrivano circa 3,13 V. Va sulla linea commutata, così da spento non consuma.</p>
+</div></div>
+
+<h2>7 · Raspberry Pi 5 — header a 40 pin (visto dall'alto, porte USB in basso)</h2>
+<div class="card">
+<svg viewBox="0 0 320 420" font-family="Helvetica,Arial" font-size="10">
+  <rect x="110" y="10" width="100" height="400" rx="6" fill="#2b8a3e"/>
+  <g id="pins">
+  <!-- riga per riga: sinistra pin dispari, destra pin pari -->
+  </g>
+  <g font-size="9">
+  <circle cx="140" cy="25" r="7" fill="#1c7ed6"/><text x="104" y="28" text-anchor="end">1 · 3V3 → ADS VDD</text>
+  <circle cx="180" cy="25" r="7" fill="#fff" stroke="#000"/><text x="216" y="28">2 · 5V ← buck</text>
+  <circle cx="140" cy="45" r="7" fill="#ffd43b"/><text x="104" y="48" text-anchor="end">3 · GPIO2 SDA</text>
+  <circle cx="180" cy="45" r="7" fill="#fff" stroke="#000"/><text x="216" y="48">4 · 5V ← buck</text>
+  <circle cx="140" cy="65" r="7" fill="#2f9e44"/><text x="104" y="68" text-anchor="end">5 · GPIO3 SCL</text>
+  <circle cx="180" cy="65" r="7" fill="#212529"/><text x="216" y="68">6 · GND</text>
+  <circle cx="140" cy="85" r="6" fill="#ced4da"/><circle cx="180" cy="85" r="6" fill="#ced4da"/>
+  <circle cx="140" cy="105" r="6" fill="#ced4da"/><circle cx="180" cy="105" r="6" fill="#ced4da"/>
+  <circle cx="140" cy="125" r="6" fill="#ced4da"/><circle cx="180" cy="125" r="6" fill="#ced4da"/>
+  <circle cx="140" cy="145" r="6" fill="#ced4da"/><circle cx="180" cy="145" r="6" fill="#ced4da"/>
+  <circle cx="140" cy="165" r="7" fill="#ae3ec9"/><text x="104" y="168" text-anchor="end">15 · GPIO22 → LED R</text>
+  <circle cx="180" cy="165" r="7" fill="#ae3ec9"/><text x="216" y="168">16 · GPIO23 → LED G</text>
+  <circle cx="140" cy="185" r="6" fill="#ced4da"/><circle cx="180" cy="185" r="7" fill="#ae3ec9"/><text x="216" y="188">18 · GPIO24 → LED B</text>
+  <circle cx="140" cy="205" r="6" fill="#ced4da"/><circle cx="180" cy="205" r="7" fill="#212529"/><text x="216" y="208">20 · GND</text>
+  <circle cx="140" cy="225" r="6" fill="#ced4da"/><circle cx="180" cy="225" r="6" fill="#ced4da"/>
+  <circle cx="140" cy="245" r="6" fill="#ced4da"/><circle cx="180" cy="245" r="6" fill="#ced4da"/>
+  <circle cx="140" cy="265" r="6" fill="#ced4da"/><circle cx="180" cy="265" r="6" fill="#ced4da"/>
+  <circle cx="140" cy="285" r="6" fill="#ced4da"/><circle cx="180" cy="285" r="6" fill="#ced4da"/>
+  <circle cx="140" cy="305" r="6" fill="#ced4da"/><circle cx="180" cy="305" r="6" fill="#ced4da"/>
+  <circle cx="140" cy="325" r="6" fill="#ced4da"/><circle cx="180" cy="325" r="6" fill="#ced4da"/>
+  <circle cx="140" cy="345" r="6" fill="#ced4da"/><circle cx="180" cy="345" r="6" fill="#ced4da"/>
+  <circle cx="140" cy="365" r="7" fill="#ae3ec9"/><text x="104" y="368" text-anchor="end">37 · GPIO26 → HOLD</text>
+  <circle cx="180" cy="365" r="6" fill="#ced4da"/>
+  <circle cx="140" cy="385" r="7" fill="#212529"/><text x="104" y="388" text-anchor="end">39 · GND</text>
+  <circle cx="180" cy="385" r="6" fill="#ced4da"/>
+  </g>
+  <text x="160" y="406" text-anchor="middle" fill="#fff" font-size="9">↓ porte USB / Ethernet</text>
+</svg>
+<div>
+<table><tr><th>Pin</th><th>Nome</th><th>Filo</th><th>Va a</th></tr>
+<tr><td>1</td><td>3V3</td><td>blu</td><td>ADS1115 VDD</td></tr>
+<tr><td>2 e 4</td><td>5V</td><td>bianco</td><td>uscita del buck 5,1 V</td></tr>
+<tr><td>3</td><td>GPIO2 SDA</td><td>giallo</td><td>IMU SDA + ADS1115 SDA</td></tr>
+<tr><td>5</td><td>GPIO3 SCL</td><td>verde</td><td>IMU SCL + ADS1115 SCL</td></tr>
+<tr><td>6, 20, 39</td><td>GND</td><td>nero</td><td>GND comune</td></tr>
+<tr><td>15</td><td>GPIO22</td><td>viola</td><td>R6 220 Ω → LED R</td></tr>
+<tr><td>16</td><td>GPIO23</td><td>viola</td><td>R7 220 Ω → LED G</td></tr>
+<tr><td>18</td><td>GPIO24</td><td>viola</td><td>R8 220 Ω → LED B</td></tr>
+<tr><td>37</td><td>GPIO26</td><td>viola</td><td>R9 1 kΩ → anodo di D2 (HOLD)</td></tr>
+<tr><td>J5 (BAT)</td><td>RTC</td><td>—</td><td>batteria RTC ufficiale (connettore vicino alla USB-C)</td></tr></table>
+<p class="note">Il pin 1 è quello con il <b>bollino quadrato</b> sotto la scheda, vicino all'angolo con il foro di fissaggio e lontano dalle porte USB. Conta sempre a partire da lì: dispari a sinistra, pari a destra.</p>
+</div></div>
+
+<h2>8 · LED RGB KY-016</h2>
+<table><tr><th>Pin del modulo (leggi la scritta)</th><th>Va a</th></tr>
+<tr><td>R</td><td>R6 220 Ω → Pi pin 15</td></tr><tr><td>G</td><td>R7 220 Ω → Pi pin 16</td></tr><tr><td>B</td><td>R8 220 Ω → Pi pin 18</td></tr><tr><td>− (GND)</td><td>GND</td></tr></table>
+<p class="note">Se sul modulo vedi già tre resistenze vicino ai pin, R6–R8 non servono.</p>
+
+<h2>9 · Ordine di montaggio consigliato (una saldatura sola per filo)</h2>
+<ol>
+<li>Fusibile sul + batteria → linea rossa VBAT.</li>
+<li>MCP1703A con i due condensatori. Dai 12 V e <b>misura 3,3 V</b> prima di andare avanti.</li>
+<li>IRF4905 + R1 fra piedino 1 e piedino 3. BS170 + R2 + R3. Diodi D1 e D2 con le fasce unite.</li>
+<li>Prova senza Pi e senza buck: tocca WAKE con 3,3 V → sul piedino 2 dell'IRF4905 devi leggere la tensione della batteria. Togli il 3,3 V → 0 V.</li>
+<li>Buck sull'arancio. Misura 5,1 V prima di collegarlo al Pi.</li>
+<li>IMU (pull-up tolti), ADS1115, partitore, LED, Pi.</li>
+<li>Prova completa (sezione 7 di <code>schema_cablaggio_logger_v2.html</code>): corrente a riposo circa 0,1 mA, accensione al movimento, spegnimento pulito.</li>
+</ol>
+<p class="warn">Le figure mostrano la disposizione tipica dei pezzi. Su moduli cinesi (IMU, ADS1115, KY-016) vale sempre la <b>scritta stampata</b> sulla scheda. Sui MOSFET vale il <b>codice esatto</b>: se ne arriva un altro, mandami la foto prima di saldare.</p>
+</body>
+</html>
