@@ -1,0 +1,14 @@
+[Unit]
+Description=Logger v2: spegnimento automatico a bici ferma (poi riaccende l'IMU col movimento)
+After=imu_wake.service sensor_hub.service
+
+[Service]
+Environment=FERMO_MIN=5 MIN_ACCESO_MIN=3
+ExecStart=/usr/bin/python3 /home/asmile-logger/logger_autospegni.py
+Restart=on-failure
+RestartSec=10
+StartLimitIntervalSec=120
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

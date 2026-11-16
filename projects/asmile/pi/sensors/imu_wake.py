@@ -15,7 +15,7 @@ PWR_MGMT_1, PWR_MGMT_2 = 0x6B, 0x6C
 ACCEL_CONFIG, MOT_THR, MOT_DUR, MOT_DETECT_CTRL = 0x1C, 0x1F, 0x20, 0x69
 INT_PIN_CFG, INT_ENABLE, INT_STATUS = 0x37, 0x38, 0x3A
 
-MOT_THR_LSB = 20   # soglia movimento (LSB ~2 mg) — da tarare scuotendo la bici
+MOT_THR_LSB = 1    # soglia al minimo (16/11: scatta già a ~200 mg di scossone) — da tarare sulla bici
 MOT_DUR_MS = 40    # durata minima sopra soglia
 LP_WAKE = 1        # basso consumo: 0=1.25 Hz 1=5 Hz 2=20 Hz 3=40 Hz
 
