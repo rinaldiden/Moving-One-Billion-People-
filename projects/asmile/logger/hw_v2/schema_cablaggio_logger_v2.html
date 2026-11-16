@@ -35,10 +35,10 @@
 
 <div class="warn"><b>Cosa cambia rispetto allo schema del 13/11 (in breve)</b><br>
 1) Il MOSFET P non si accende più direttamente dall'INT dell'IMU (non si sarebbe mai spento): ora c'è un <b>pull-up gate→source</b> e un <b>piccolo N-MOS</b> che tira il gate.<br>
-2) MOSFET P con <b>Vgs ±20 V</b> (AO4407A) invece dell'AO3401 (±12 V, sotto la batteria piena da 12,6 V).<br>
+2) MOSFET P con <b>Vgs ±20 V</b> (IRF4905) invece dell'AO3401 (±12 V, sotto la batteria piena da 12,6 V).<br>
 3) <b>Autoritenuta</b>: l'IMU accende, poi il Pi tiene acceso da solo e si spegne lui, pulito, quando ha finito (non più "l'IMU stacca").<br>
 4) <b>I2C dell'IMU senza resistenze di pull-up sul modulo</b>, così da Pi spento l'IMU non lo alimenta dai pin.<br>
-5) Regolatore sempre-acceso a <b>2 µA</b> (MCP1703A) invece dell'AMS1117 (~5 mA); partitore batteria <b>sulla linea commutata</b> (niente consumo da spento).<br>
+5) Regolatore sempre acceso: per ora il <b>1117-3.3 che hai</b> (~5 mA a riposo, ~2 mesi da spento); più avanti MCP1703 (2 µA). Partitore batteria <b>sulla linea commutata</b> (niente consumo da spento).<br>
 6) <b>Batteria RTC del Pi 5</b>: risolve l'orologio sbagliato che oggi fa sovrascrivere i video fra un'accensione e l'altra. Fusibile sulla batteria. Resistenze sui LED.</div>
 
 <h2>1 · Lista pezzi completa (BOM)</h2>
@@ -46,12 +46,12 @@
 <tr><th>#</th><th>Pezzo</th><th>Q.tà</th><th>Valore / modello</th><th>Note</th></tr>
 <tr><td>1</td><td>Batteria</td><td>1</td><td>3S2P 6900 mAh (9,0–12,6 V)</td><td>già c'è</td></tr>
 <tr><td>2</td><td>Fusibile + portafusibile</td><td>1</td><td>3 A ritardato (lama o 5×20)</td><td>subito sul + batteria</td></tr>
-<tr><td>3</td><td>Regolatore 3,3 V sempre acceso</td><td>1</td><td><b>MCP1703A-3302</b> (SOT-23A/SOT-89) oppure <b>MCP1703-3302E/TO</b> (TO-92, da saldare a mano) — Vin max 16 V, Iq 2 µA, 250 mA</td><td>sostituisce l'AMS1117</td></tr>
-<tr><td>4</td><td>Condensatori LDO</td><td>2</td><td>1 µF ceramico (in) + 1 µF ceramico (out)</td><td>vicino all'MCP1703A</td></tr>
+<tr><td>3</td><td>Regolatore 3,3 V sempre acceso</td><td>1</td><td><b>1117-3.3</b> (XBLW 2612A, SOT-223) — hai già questo</td><td>~5 mA a riposo → batteria scarica in ~2 mesi da spento; in futuro MCP1703 (2 µA)</td></tr>
+<tr><td>4</td><td>Condensatori 1117</td><td>2</td><td>10 µF (ingresso) + 22 µF tantalio (uscita)</td><td>senza il 22 µF il 1117 può oscillare</td></tr>
 <tr><td>5</td><td>IMU</td><td>1</td><td>MPU6050 (modulo GY-521 / HW-123)</td><td>già c'è · <b>togliere le 2 resistenze di pull-up I2C del modulo</b> (4,7 kΩ su SDA/SCL)</td></tr>
-<tr><td>6</td><td>MOSFET P (interruttore principale)</td><td>1</td><td><b>AO4407A</b> (−30 V, Vgs ±20 V, 12 A, SO-8)</td><td>al posto dell'AO3401</td></tr>
-<tr><td>7</td><td>MOSFET N piccolo (pilota del gate)</td><td>1</td><td><b>2N7002</b> (SOT-23) o BS170 (TO-92)</td><td></td></tr>
-<tr><td>8</td><td>Diodi Schottky (OR di accensione)</td><td>2</td><td>BAT54 (o 1N5817)</td><td>uno da INT IMU, uno da HOLD del Pi</td></tr>
+<tr><td>6</td><td>MOSFET P (interruttore principale)</td><td>1</td><td><b>IRF4905</b> (TO-220, −55 V, Vgs ±20 V) — oppure IRF5305 / IRF9540N</td><td><b>da comprare</b></td></tr>
+<tr><td>7</td><td>MOSFET N logic-level (pilota del gate)</td><td>1</td><td><b>IRL540N</b> (TO-220) — hai già questo</td><td>non l'IRF3205 (con 3,3 V può non accendersi)</td></tr>
+<tr><td>8</td><td>Diodi Schottky (OR di accensione)</td><td>2</td><td><b>SB580</b> (hai già) oppure 1N5817 / BAT85</td><td>uno da INT IMU, uno da HOLD del Pi</td></tr>
 <tr><td>9</td><td>Resistenze</td><td>—</td><td>R1 100 kΩ · R2 47 kΩ · R3 100 kΩ · R4 100 kΩ · R5 33 kΩ · R6/R7/R8 220 Ω · R9 1 kΩ</td><td>tutte 1/4 W</td></tr>
 <tr><td>10</td><td>Condensatore filtro partitore</td><td>1</td><td>100 nF ceramico</td><td>su A0 dell'ADS1115</td></tr>
 <tr><td>11</td><td>Buck 5 V</td><td>1</td><td>5,1 V ≥ 5 A (es. Pololu D36V50F5 o quello che hai, se regge 5 A)</td><td>già c'è: <b>verificare che dia 5 A</b> (Pi 5 + Camarray + dongle 4G)</td></tr>
@@ -74,15 +74,15 @@
   <line x1="230" y1="70" x2="300" y2="70" stroke="#c92a2a" stroke-width="2.5"/><text x="262" y="62" text-anchor="middle" fill="#c92a2a">VBAT</text>
   <!-- LDO -->
   <line x1="270" y1="70" x2="270" y2="190" stroke="#c92a2a" stroke-width="2"/>
-  <rect x="215" y="190" width="110" height="50" rx="6" fill="#e7f5ff" stroke="#1971c2"/><text x="270" y="212" text-anchor="middle" font-weight="bold">MCP1703A</text><text x="270" y="229" text-anchor="middle">3,3 V · 2 µA</text>
+  <rect x="215" y="190" width="110" height="50" rx="6" fill="#e7f5ff" stroke="#1971c2"/><text x="270" y="212" text-anchor="middle" font-weight="bold">1117</text><text x="270" y="229" text-anchor="middle">3,3 V (SOT-223)</text>
   <line x1="270" y1="240" x2="270" y2="290" stroke="#1971c2" stroke-width="2"/><text x="278" y="270" fill="#1971c2">3V3_SEMPRE</text>
   <!-- IMU -->
   <rect x="200" y="290" width="140" height="60" rx="6" fill="#e7f5ff" stroke="#1971c2"/><text x="270" y="314" text-anchor="middle" font-weight="bold">MPU6050</text><text x="270" y="332" text-anchor="middle">sempre acceso · INT latch</text>
   <!-- wake logic -->
-  <rect x="380" y="290" width="160" height="70" rx="6" fill="#fff3bf" stroke="#e67700"/><text x="460" y="312" text-anchor="middle" font-weight="bold">Logica accensione</text><text x="460" y="330" text-anchor="middle">D1 (INT) + D2 (HOLD) → OR</text><text x="460" y="347" text-anchor="middle">→ gate Q2 (2N7002)</text>
+  <rect x="380" y="290" width="160" height="70" rx="6" fill="#fff3bf" stroke="#e67700"/><text x="460" y="312" text-anchor="middle" font-weight="bold">Logica accensione</text><text x="460" y="330" text-anchor="middle">D1 (INT) + D2 (HOLD) → OR</text><text x="460" y="347" text-anchor="middle">→ gate Q2 (IRL540N)</text>
   <line x1="340" y1="320" x2="380" y2="320" stroke="#e67700" stroke-width="2" marker-end="url(#a)"/><text x="345" y="312" fill="#e67700">INT</text>
   <!-- P-MOS -->
-  <rect x="380" y="45" width="160" height="55" rx="6" fill="#ffe3e3" stroke="#c92a2a"/><text x="460" y="68" text-anchor="middle" font-weight="bold">Q1 AO4407A (P)</text><text x="460" y="86" text-anchor="middle">interruttore high-side</text>
+  <rect x="380" y="45" width="160" height="55" rx="6" fill="#ffe3e3" stroke="#c92a2a"/><text x="460" y="68" text-anchor="middle" font-weight="bold">Q1 IRF4905 (P)</text><text x="460" y="86" text-anchor="middle">interruttore high-side</text>
   <line x1="300" y1="70" x2="380" y2="70" stroke="#c92a2a" stroke-width="2.5"/>
   <line x1="460" y1="290" x2="460" y2="100" stroke="#e67700" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#a)"/><text x="468" y="200" fill="#e67700">Q2 tira il gate di Q1</text>
   <line x1="540" y1="70" x2="610" y2="70" stroke="#c92a2a" stroke-width="2.5"/><text x="575" y="62" text-anchor="middle" fill="#c92a2a">VSW</text>
@@ -111,10 +111,10 @@
 <h2>3 · Net-list per nodo (ogni filo, una volta sola)</h2>
 <table>
 <tr><th>Nodo</th><th>Tutto ciò che ci arriva</th></tr>
-<tr><td><b>VBAT</b> (dopo F1)</td><td>F1 uscita · MCP1703A IN (+1 µF a GND) · Q1 <b>Source</b> (pin 1-2-3 AO4407A) · R1 lato alto (100 kΩ verso gate Q1)</td></tr>
+<tr><td><b>VBAT</b> (dopo F1)</td><td>F1 uscita · 1117 IN (+1 µF a GND) · Q1 <b>Source</b> (pin 1-2-3 IRF4905) · R1 lato alto (100 kΩ verso gate Q1)</td></tr>
 <tr><td><b>BAT_RAW</b></td><td>Batteria + · F1 ingresso</td></tr>
-<tr><td><b>GND</b></td><td>Batteria − · MCP1703A GND · IMU GND · Q2 <b>Source</b> · R3 lato basso · Buck GND (in e out) · Pi GND (pin 6, 9, 14…) · ADS1115 GND · ADS1115 ADDR · R5 lato basso · condensatori · KY-016 GND (catodo comune)</td></tr>
-<tr><td><b>3V3_SEMPRE</b></td><td>MCP1703A OUT (+1 µF a GND) · IMU VCC</td></tr>
+<tr><td><b>GND</b></td><td>Batteria − · 1117 GND · IMU GND · Q2 <b>Source</b> · R3 lato basso · Buck GND (in e out) · Pi GND (pin 6, 9, 14…) · ADS1115 GND · ADS1115 ADDR · R5 lato basso · condensatori · KY-016 GND (catodo comune)</td></tr>
+<tr><td><b>3V3_SEMPRE</b></td><td>1117 OUT (+1 µF a GND) · IMU VCC</td></tr>
 <tr><td><b>G_Q1</b> (gate MOSFET P)</td><td>Q1 <b>Gate</b> (pin 4) · R1 lato basso (100 kΩ da VBAT) · R2 lato alto (47 kΩ)</td></tr>
 <tr><td><b>D_Q2</b></td><td>R2 lato basso · Q2 <b>Drain</b></td></tr>
 <tr><td><b>WAKE</b> (gate Q2)</td><td>Q2 <b>Gate</b> · catodo D1 · catodo D2 · R3 lato alto (100 kΩ verso GND)</td></tr>
@@ -133,14 +133,13 @@
 </table>
 
 <h2>4 · Per piedino (cosa saldare su ogni pezzo)</h2>
-<h3>Q1 — AO4407A (SO-8, P-MOS)</h3>
+<h3>Q1 — IRF4905 (TO-220, P-MOS) — scritta verso di te</h3>
 <table><tr><th>Pin</th><th>Funzione</th><th>Va a</th></tr>
-<tr><td>1, 2, 3</td><td>Source</td><td>VBAT</td></tr><tr><td>4</td><td>Gate</td><td>G_Q1 (R1 100 kΩ a VBAT, R2 47 kΩ a drain Q2)</td></tr><tr><td>5, 6, 7, 8</td><td>Drain</td><td>VSW (buck VIN, R4)</td></tr></table>
-<h3>Q2 — 2N7002 (SOT-23)</h3>
-<table><tr><th>Pin</th><th>Funzione</th><th>Va a</th></tr><tr><td>1</td><td>Gate</td><td>WAKE (catodi D1, D2; R3 100 kΩ a GND)</td></tr><tr><td>2</td><td>Source</td><td>GND</td></tr><tr><td>3</td><td>Drain</td><td>R2 47 kΩ → gate Q1</td></tr></table>
-<h3>MCP1703A-3302</h3>
-<table><tr><th>Pin (SOT-23A)</th><th>Funzione</th><th>Va a</th></tr><tr><td>1</td><td>GND</td><td>GND</td></tr><tr><td>2</td><td>VOUT</td><td>3V3_SEMPRE + 1 µF</td></tr><tr><td>3</td><td>VIN</td><td>VBAT + 1 µF</td></tr></table>
-<p class="note">Il pinout del MCP1703A cambia fra contenitori (SOT-23A, SOT-89, TO-92): <b>controlla sul datasheet del pezzo che compri</b> prima di saldare.</p>
+<tr><td>1</td><td>Gate</td><td>G_Q1 (R1 100 kΩ a VBAT, R2 47 kΩ al Drain di Q2)</td></tr><tr><td>2 + aletta</td><td>Drain</td><td>VSW (buck VIN, R4)</td></tr><tr><td>3</td><td>Source</td><td>VBAT</td></tr></table>
+<h3>Q2 — IRL540N (TO-220, N-MOS logic-level) — scritta verso di te</h3>
+<table><tr><th>Pin</th><th>Funzione</th><th>Va a</th></tr><tr><td>1</td><td>Gate</td><td>WAKE (catodi D1, D2; R3 100 kΩ a GND)</td></tr><tr><td>2 + aletta</td><td>Drain</td><td>R2 47 kΩ → gate Q1</td></tr><tr><td>3</td><td>Source</td><td>GND</td></tr></table>
+<h3>Regolatore 1117-3.3 (SOT-223) — scritta verso di te</h3>
+<table><tr><th>Pin</th><th>Funzione</th><th>Va a</th></tr><tr><td>1</td><td>GND/ADJ</td><td>GND</td></tr><tr><td>2 + aletta</td><td>VOUT</td><td>3V3_SEMPRE + 22 µF</td></tr><tr><td>3</td><td>VIN</td><td>VBAT + 10 µF</td></tr></table>
 <h3>MPU6050 (GY-521 / HW-123)</h3>
 <table><tr><th>Pin</th><th>Va a</th></tr><tr><td>VCC</td><td>3V3_SEMPRE</td></tr><tr><td>GND</td><td>GND</td></tr><tr><td>SDA</td><td>SDA (bus del Pi)</td></tr><tr><td>SCL</td><td>SCL (bus del Pi)</td></tr><tr><td>INT</td><td>anodo D1</td></tr><tr><td>AD0</td><td>GND (indirizzo 0x68)</td></tr><tr><td>XDA, XCL</td><td>liberi</td></tr></table>
 <p class="warn">Sul modulo togli le <b>due resistenze di pull-up da 4,7 kΩ</b> di SDA e SCL (dissaldale o taglia la pista). Il regolatore 3,3 V del modulo GY-521 resta: alimentalo da VCC con 3,3 V (passa attraverso il suo LDO con poca caduta) oppure collega il 3,3 V direttamente a valle — da verificare sul tuo modulo.</p>
@@ -153,7 +152,7 @@
 <h2>5 · Come funziona</h2>
 <table>
 <tr><th>Fase</th><th>Cosa succede</th></tr>
-<tr><td><b>Riposo</b> (bici ferma)</td><td>Accesi solo MCP1703A e IMU in modalità "solo accelerometro, ciclo lento" con interrupt di movimento <b>latched</b>. Q2 spento → R1 tiene il gate di Q1 a VBAT → Q1 aperto → buck, Pi, partitore spenti. Consumo stimato: ~2 µA LDO + 10–110 µA IMU ≈ <b>0,1 mA</b> (la batteria si scarica prima da sola).</td></tr>
+<tr><td><b>Riposo</b> (bici ferma)</td><td>Accesi solo 1117 e IMU in modalità "solo accelerometro, ciclo lento" con interrupt di movimento <b>latched</b>. Q2 spento → R1 tiene il gate di Q1 a VBAT → Q1 aperto → buck, Pi, partitore spenti. Consumo stimato con il 1117: ~5 mA (regolatore) + 10–110 µA IMU ≈ <b>5 mA</b> → 6900 mAh durano ~2 mesi da spento (con un MCP1703 sarebbero anni).</td></tr>
 <tr><td><b>Movimento</b></td><td>L'IMU alza INT e lo <b>tiene alto</b> (latch) → D1 → Q2 conduce → gate di Q1 tirato giù da R2 (Vgs ≈ −8,6 V con batteria piena) → Q1 chiuso → buck → <b>Pi si accende</b>.</td></tr>
 <tr><td><b>Pi acceso</b></td><td>Al boot il kernel porta GPIO26 (HOLD) <b>alto</b> (overlay <code>gpio-poweroff</code>, attivo basso) → D2 tiene acceso da solo. Poi il servizio del logger legge l'IMU (azzera l'INT), avvia la registrazione, legge la batteria (ADS1115), colora il LED (verde / arancio / rosso), accende il dongle 4G solo per caricare i file e poi lo spegne (<code>uhubctl</code>).</td></tr>
 <tr><td><b>Fine movimento</b></td><td>È il Pi a decidere: nessun movimento per N minuti (IMU + video fermi) → chiude il segmento video, sincronizza, <code>shutdown -h</code>, e riarma l'interrupt di movimento dell'IMU. A spegnimento finito <code>gpio-poweroff</code> porta HOLD <b>basso</b> → Q2 si spegne → Q1 si apre → tutto spento tranne IMU e LDO. Niente più tagli secchi a metà file.</td></tr>
@@ -169,7 +168,7 @@
 
 <h2>7 · Prova a banco prima di montarlo</h2>
 <ul class="chk">
-<li>Alimentatore da banco a 12,6 V con limite di corrente 1 A, senza Pi: misura la corrente a riposo (attesa ~0,1 mA).</li>
+<li>Alimentatore da banco a 12,6 V con limite di corrente 1 A, senza Pi: misura la corrente a riposo (attesa ~5 mA col 1117).</li>
 <li>Muovi l'IMU: Q1 deve chiudersi (VSW = VBAT). Senza Pi, ponticella HOLD a 3,3 V: deve restare acceso anche dopo aver azzerato l'INT.</li>
 <li>Togli HOLD: Q1 si deve aprire. Misura Vgs di Q1 da acceso (−8…−9 V a 12,6 V; mai oltre −20 V).</li>
 <li>Con il Pi: accensione da movimento, <code>shutdown -h</code>, controlla che dopo l'halt tutto si spenga e che un nuovo movimento lo riaccenda.</li>
