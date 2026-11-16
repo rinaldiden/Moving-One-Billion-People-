@@ -65,3 +65,4 @@ GIALLI (da decidere):
 ## Schema completo rifattorizzato (2026-11-15)
 `logger/hw_v2/schema_cablaggio_logger_v2.html`: BOM, schema a blocchi, net-list per nodo, per piedino, funzionamento, config, prova a banco. Risolve i 4 punti rossi sopra (proposta da validare).
 - Montaggio con figure pin per pin (pezzi a foro passante: IRF4905, BS170, MCP1703-3302E/TO, 1N5817): `logger/hw_v2/montaggio_pin_logger_v2.html`.
+- PDF unico da stampare (montaggio con figure + schema completo): `logger/hw_v2/collegamento_logger_v2.pdf`.
