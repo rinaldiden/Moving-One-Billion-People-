@@ -53,7 +53,7 @@
 <tr><td>7</td><td>MOSFET N logic-level (pilota del gate)</td><td>1</td><td><b>IRL540N</b> (TO-220) — hai già questo</td><td>non l'IRF3205 (con 3,3 V può non accendersi)</td></tr>
 <tr><td>8</td><td>Diodi Schottky (OR di accensione)</td><td>2</td><td><b>SB580</b> (hai già) oppure 1N5817 / BAT85</td><td>uno da INT IMU, uno da HOLD del Pi</td></tr>
 <tr><td>9</td><td>Resistenze</td><td>—</td><td>R1 100 kΩ · R2 47 kΩ · R3 100 kΩ · R4 100 kΩ · R5 33 kΩ · R6/R7/R8 220 Ω · R9 1 kΩ</td><td>tutte 1/4 W</td></tr>
-<tr><td>10</td><td>Condensatore filtro partitore</td><td>1</td><td>100 nF ceramico</td><td>su A0 dell'ADS1115</td></tr>
+<tr><td>10</td><td>Condensatore filtro partitore</td><td>0</td><td><s>100 nF</s> TOLTO (Daniele 16/11)</td><td>non serve: media nel software</td></tr>
 <tr><td>11</td><td>Buck 5 V</td><td>1</td><td>5,1 V ≥ 5 A (es. Pololu D36V50F5 o quello che hai, se regge 5 A)</td><td>già c'è: <b>verificare che dia 5 A</b> (Pi 5 + Camarray + dongle 4G)</td></tr>
 <tr><td>12</td><td>Raspberry Pi 5</td><td>1</td><td>—</td><td>già c'è</td></tr>
 <tr><td>13</td><td>Batteria RTC Pi 5</td><td>1</td><td>batteria ufficiale RTC (ML-2020 ricaricabile) sul connettore J5 (BAT)</td><td>nuovo · orologio giusto anche senza rete</td></tr>
@@ -121,7 +121,7 @@
 <tr><td><b>INT_IMU</b></td><td>IMU INT · anodo D1 (solo questo: <b>non</b> va a un pin del Pi)</td></tr>
 <tr><td><b>HOLD</b></td><td>Pi GPIO26 (pin 37) · R9 1 kΩ · anodo D2</td></tr>
 <tr><td><b>VSW</b> (commutata)</td><td>Q1 <b>Drain</b> (pin 5-6-7-8) · Buck VIN · R4 lato alto (100 kΩ)</td></tr>
-<tr><td><b>VBAT_DIV</b></td><td>R4 lato basso · R5 lato alto (33 kΩ) · ADS1115 A0 · 100 nF a GND</td></tr>
+<tr><td><b>VBAT_DIV</b></td><td>R4 lato basso · R5 lato alto (33 kΩ) · ADS1115 A0</td></tr>
 <tr><td><b>5V_PI</b></td><td>Buck VOUT · Pi 5V (pin 2 e 4; meglio dalla presa USB-C se il buck ha l'uscita USB-C/PD)</td></tr>
 <tr><td><b>3V3_PI</b></td><td>Pi 3V3 (pin 1) · ADS1115 VDD</td></tr>
 <tr><td><b>SDA</b></td><td>Pi GPIO2 (pin 3) · IMU SDA · ADS1115 SDA</td></tr>
@@ -147,7 +147,7 @@
 <table><tr><th>Pin</th><th>Nome</th><th>Va a</th></tr>
 <tr><td>1</td><td>3V3</td><td>ADS1115 VDD</td></tr><tr><td>2, 4</td><td>5V</td><td>Buck VOUT</td></tr><tr><td>3</td><td>GPIO2 SDA</td><td>SDA</td></tr><tr><td>5</td><td>GPIO3 SCL</td><td>SCL</td></tr><tr><td>6, 9, 14, 20…</td><td>GND</td><td>GND</td></tr><tr><td>15</td><td>GPIO22</td><td>R6 → LED R</td></tr><tr><td>16</td><td>GPIO23</td><td>R7 → LED G</td></tr><tr><td>18</td><td>GPIO24</td><td>R8 → LED B</td></tr><tr><td>37</td><td>GPIO26</td><td>HOLD → R9 1 kΩ → D2</td></tr></table>
 <h3>ADS1115</h3>
-<table><tr><th>Pin</th><th>Va a</th></tr><tr><td>VDD</td><td>3V3_PI</td></tr><tr><td>GND</td><td>GND</td></tr><tr><td>SDA / SCL</td><td>bus I2C</td></tr><tr><td>ADDR</td><td>GND (0x48)</td></tr><tr><td>A0</td><td>VBAT_DIV (+100 nF)</td></tr><tr><td>A1–A3, ALRT</td><td>liberi</td></tr></table>
+<table><tr><th>Pin</th><th>Va a</th></tr><tr><td>VDD</td><td>3V3_PI</td></tr><tr><td>GND</td><td>GND</td></tr><tr><td>SDA / SCL</td><td>bus I2C</td></tr><tr><td>ADDR</td><td>GND (0x48)</td></tr><tr><td>A0</td><td>VBAT_DIV</td></tr><tr><td>A1–A3, ALRT</td><td>liberi</td></tr></table>
 
 <h2>5 · Come funziona</h2>
 <table>

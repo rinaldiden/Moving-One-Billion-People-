@@ -160,7 +160,7 @@
   <g text-anchor="middle" font-size="10"><text x="50" y="195">3V3 Pi</text><text x="76" y="195">GND</text><text x="102" y="195">SCL</text><text x="128" y="195">SDA</text><text x="154" y="195">GND</text><text x="206" y="195">partitore</text></g>
 </svg>
 <div>
-<table><tr><th>Pin</th><th>Va a</th></tr><tr><td>VDD</td><td>Pi pin 1 (3,3 V del Pi)</td></tr><tr><td>GND</td><td>GND</td></tr><tr><td>SCL / SDA</td><td>bus I2C (verde / giallo)</td></tr><tr><td>ADDR</td><td>GND (indirizzo 0x48)</td></tr><tr><td>A0</td><td>punto centrale del partitore + 100 nF verso GND</td></tr><tr><td>ALRT, A1–A3</td><td>liberi</td></tr></table>
+<table><tr><th>Pin</th><th>Va a</th></tr><tr><td>VDD</td><td>Pi pin 1 (3,3 V del Pi)</td></tr><tr><td>GND</td><td>GND</td></tr><tr><td>SCL / SDA</td><td>bus I2C (verde / giallo)</td></tr><tr><td>ADDR</td><td>GND (indirizzo 0x48)</td></tr><tr><td>A0</td><td>punto centrale del partitore (niente condensatore: la media la fa il software)</td></tr><tr><td>ALRT, A1–A3</td><td>liberi</td></tr></table>
 <p><b>Partitore:</b> VSW (arancio, <b>dopo</b> il MOSFET) → R4 100 kΩ → <b>A0</b> → R5 33 kΩ → GND. Con 12,6 V su A0 arrivano circa 3,13 V. Va sulla linea commutata, così da spento non consuma.</p>
 </div></div>
 
