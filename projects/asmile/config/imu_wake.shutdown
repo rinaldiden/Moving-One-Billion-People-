@@ -7,3 +7,6 @@ if ! /usr/bin/python3 /home/asmile-logger/imu_wake.py ultimo; then
     echo "imu_wake: bici in movimento allo spegnimento -> riavvio" > /dev/kmsg
     echo b > /proc/sysrq-trigger
 fi
+# HOLD a 0 V qui, senza aspettare gpio-poweroff (sul Pi 5 lo spegnimento lo fa il firmware e GPIO26 può restare alto).
+# I dischi sono già smontati/sola lettura: staccare la corrente adesso è sicuro.
+/usr/bin/pinctrl set 26 op dl
