@@ -4,6 +4,7 @@
 L'IMU resta alimentata dal 3V3_SEMPRE anche a Pi spento: il suo INT (latched, attivo alto) alza WAKE e accende il Pi.
   sveglia  -> al boot, PRIMA di sensor_hub: modo normale, giroscopio acceso, latch pulito
   arma     -> allo spegnimento, DOPO sensor_hub: motion interrupt + modo basso consumo, latch pulito
+  ultimo   -> ultimo passo dello spegnimento: riarma, azzera il latch, rilegge; exit 1 se l'INT si rialza (bici in moto)
   stato    -> legge registri e INT_STATUS (attenzione: la lettura pulisce il latch)
   prova [s] [soglia] -> arma senza basso consumo e stampa ogni movimento per N secondi (muovi la bici)
 """
@@ -48,6 +49,14 @@ def main():
             w(b, PWR_MGMT_2, (LP_WAKE << 6) | 0x07)  # giroscopio in standby
             w(b, PWR_MGMT_1, 0x28)                    # CYCLE + sensore temperatura spento
             b.read_byte_data(ADDR, INT_STATUS)
+        elif cmd == "ultimo":
+            motion(b)
+            w(b, PWR_MGMT_2, (LP_WAKE << 6) | 0x07)
+            w(b, PWR_MGMT_1, 0x28)
+            b.read_byte_data(ADDR, INT_STATUS)
+            time.sleep(0.5)                          # almeno 2 campioni a 5 Hz
+            if b.read_byte_data(ADDR, INT_STATUS) & 0x40:
+                sys.exit(1)
         elif cmd == "prova":
             global MOT_THR_LSB
             secs = float(sys.argv[2]) if len(sys.argv) > 2 else 30

@@ -4,7 +4,7 @@
 Movimento = giroscopio sopra GYRO_DPS oppure variazione dell'accelerometro sopra ACC_MG fra due letture.
 Allo spegnimento systemd ferma il recorder (chiude i file), imu_wake.service arma l'IMU e gpio-poweroff
 porta HOLD a 0 V: l'IRF4905 stacca tutto. Il prossimo movimento riaccende il Pi dall'INT dell'IMU.
-Non spegne se c'è uno scaricamento in corso (rsync/scp) o una sessione ssh aperta.
+Non spegne se c'è uno scaricamento in corso (rsync/scp/sftp).
 """
 import os, subprocess, time
 import smbus2
@@ -31,8 +31,7 @@ def occupato():
     for nome in ("rsync", "scp", "sftp-server"):
         if subprocess.run(["pgrep", "-x", nome], capture_output=True).returncode == 0:
             return nome
-    who = subprocess.run(["who"], capture_output=True, text=True).stdout.strip()
-    return "ssh" if who else None
+    return None   # niente `who`: sul logger c'è sempre la sessione automatica di tty1/seat0
 
 
 def main():
