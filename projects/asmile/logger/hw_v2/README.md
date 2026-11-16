@@ -67,3 +67,6 @@ GIALLI (da decidere):
 - Montaggio con figure pin per pin (pezzi a foro passante: IRF4905, BS170, MCP1703-3302E/TO, 1N5817): `logger/hw_v2/montaggio_pin_logger_v2.html`.
 - PDF unico da stampare (montaggio con figure + schema completo): `logger/hw_v2/collegamento_logger_v2.pdf`.
 - Schema elettrico completo su una pagina A3 (etichette di rete, tutti i pin): `logger/hw_v2/schema_elettrico_logger_v2.pdf` (generato da `gen_schema_elettrico.py`); è anche la prima pagina di `collegamento_logger_v2.pdf`.
+
+## Prima accensione 2026-11-16
+Stato e passi rimasti: `agents/TODO_capo.md`, sezione 2026-11-16. Script IMU: `pi/sensors/imu_wake.py`, servizio `config/imu_wake.service` (non ancora installati in modo permanente).

@@ -1,0 +1,14 @@
+[Unit]
+Description=Logger v2: IMU sveglia al boot, armata per il risveglio col movimento allo spegnimento
+# Before= : parte prima di sensor_hub e, allo spegnimento, si ferma DOPO di lui (arma per ultima)
+Before=sensor_hub.service
+After=systemd-modules-load.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/python3 /home/asmile-logger/imu_wake.py sveglia
+ExecStop=/usr/bin/python3 /home/asmile-logger/imu_wake.py arma
+
+[Install]
+WantedBy=multi-user.target
