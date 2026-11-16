@@ -47,7 +47,7 @@
 <tr><td>1</td><td>Batteria</td><td>1</td><td>3S2P 6900 mAh (9,0–12,6 V)</td><td>già c'è</td></tr>
 <tr><td>2</td><td>Fusibile + portafusibile</td><td>1</td><td>3 A ritardato (lama o 5×20)</td><td>subito sul + batteria</td></tr>
 <tr><td>3</td><td>Regolatore 3,3 V sempre acceso</td><td>1</td><td><b>1117-3.3</b> (XBLW 2612A, SOT-223) — hai già questo</td><td>~5 mA a riposo → batteria scarica in ~2 mesi da spento; in futuro MCP1703 (2 µA)</td></tr>
-<tr><td>4</td><td>Condensatori 1117</td><td>2</td><td>10 µF (ingresso) + 22 µF tantalio (uscita)</td><td>senza il 22 µF il 1117 può oscillare</td></tr>
+<tr><td>4</td><td>Condensatore 1117</td><td>1</td><td>elettrolitico 22–100 µF ≥10 V in uscita (ingresso: non serve con cavetti corti, opz. 100 nF)</td><td>obbligatorio in uscita: senza, il 1117 può oscillare</td></tr>
 <tr><td>5</td><td>IMU</td><td>1</td><td>MPU6050 (modulo GY-521 / HW-123)</td><td>già c'è · <b>togliere le 2 resistenze di pull-up I2C del modulo</b> (4,7 kΩ su SDA/SCL)</td></tr>
 <tr><td>6</td><td>MOSFET P (interruttore principale)</td><td>1</td><td><b>IRF4905</b> (TO-220, −55 V, Vgs ±20 V) — oppure IRF5305 / IRF9540N</td><td><b>da comprare</b></td></tr>
 <tr><td>7</td><td>MOSFET N logic-level (pilota del gate)</td><td>1</td><td><b>IRL540N</b> (TO-220) — hai già questo</td><td>non l'IRF3205 (con 3,3 V può non accendersi)</td></tr>
@@ -139,7 +139,7 @@
 <h3>Q2 — IRL540N (TO-220, N-MOS logic-level) — scritta verso di te</h3>
 <table><tr><th>Pin</th><th>Funzione</th><th>Va a</th></tr><tr><td>1</td><td>Gate</td><td>WAKE (catodi D1, D2; R3 100 kΩ a GND)</td></tr><tr><td>2 + aletta</td><td>Drain</td><td>R2 47 kΩ → gate Q1</td></tr><tr><td>3</td><td>Source</td><td>GND</td></tr></table>
 <h3>Regolatore 1117-3.3 (SOT-223) — scritta verso di te</h3>
-<table><tr><th>Pin</th><th>Funzione</th><th>Va a</th></tr><tr><td>1</td><td>GND/ADJ</td><td>GND</td></tr><tr><td>2 + aletta</td><td>VOUT</td><td>3V3_SEMPRE + 22 µF</td></tr><tr><td>3</td><td>VIN</td><td>VBAT + 10 µF</td></tr></table>
+<table><tr><th>Pin</th><th>Funzione</th><th>Va a</th></tr><tr><td>1</td><td>GND/ADJ</td><td>GND</td></tr><tr><td>2 + aletta</td><td>VOUT</td><td>3V3_SEMPRE + elettrolitico 22–100 µF</td></tr><tr><td>3</td><td>VIN</td><td>VBAT (cavetti corti: niente condensatore)</td></tr></table>
 <h3>MPU6050 (GY-521 / HW-123)</h3>
 <table><tr><th>Pin</th><th>Va a</th></tr><tr><td>VCC</td><td>3V3_SEMPRE</td></tr><tr><td>GND</td><td>GND</td></tr><tr><td>SDA</td><td>SDA (bus del Pi)</td></tr><tr><td>SCL</td><td>SCL (bus del Pi)</td></tr><tr><td>INT</td><td>anodo D1</td></tr><tr><td>AD0</td><td>GND (indirizzo 0x68)</td></tr><tr><td>XDA, XCL</td><td>liberi</td></tr></table>
 <p class="warn">Sul modulo togli le <b>due resistenze di pull-up da 4,7 kΩ</b> di SDA e SCL (dissaldale o taglia la pista). Il regolatore 3,3 V del modulo GY-521 resta: alimentalo da VCC con 3,3 V (passa attraverso il suo LDO con poca caduta) oppure collega il 3,3 V direttamente a valle — da verificare sul tuo modulo.</p>

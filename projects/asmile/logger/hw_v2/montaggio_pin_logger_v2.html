@@ -54,7 +54,7 @@
 <tr><td>Regolatore 3,3 V sempre acceso</td><td><b>1117-3.3</b> (XBLW 2612A)</td><td>SOT-223</td><td>ce l'hai — consuma ~5 mA a riposo: batteria scarica in ~2 mesi da spento</td></tr>
 <tr><td>Diodi dell'OR di accensione (×2)</td><td><b>SB580</b> (va bene) oppure più piccoli: <b>1N5817</b> / <b>BAT85</b></td><td>assiale</td><td>SB580 ce l'hai; la <b>fascia</b> è il catodo</td></tr>
 <tr><td>Fusibile</td><td>3 A ritardato + portafusibile da filo</td><td>—</td><td>subito sul + batteria</td></tr>
-<tr><td>Condensatori 1117</td><td>10 µF (ingresso) + <b>22 µF</b> (uscita, meglio tantalio)</td><td>—</td><td>senza il 22 µF il 1117 può oscillare</td></tr>
+<tr><td>Condensatore 1117</td><td><b>elettrolitico 22–100 µF, ≥10 V</b> in uscita (piedino 2 → GND). Ingresso: non serve con cavetti corti (opz. 100 nF)</td><td>radiale</td><td>obbligatorio in uscita: senza, il 1117 può oscillare</td></tr>
 </table>
 <p class="warn"><b>Non vanno al posto dell'IRF4905:</b> IRL540N e IRF3205 sono MOSFET <b>N</b>, sul + della batteria serve un <b>P</b>. L'IRF3205 non va bene neanche come pilota del gate (con 3,3 V può non accendersi): usa l'IRL540N.</p>
 
@@ -112,8 +112,8 @@
 <div>
 <table><tr><th>Piedino</th><th>Nome</th><th>Filo</th><th>Va a</th></tr>
 <tr><td>1 (sinistra)</td><td>GND/ADJ</td><td><span class="w" style="background:#212529"></span>nero</td><td>GND</td></tr>
-<tr><td>2 (centro) + aletta</td><td>VOUT 3,3 V</td><td><span class="w" style="background:#1c7ed6"></span>blu</td><td>IMU VCC + <b>22 µF</b> verso GND</td></tr>
-<tr><td>3 (destra)</td><td>VIN</td><td><span class="w" style="background:#e03131"></span>rosso</td><td>VBAT (dopo il fusibile) + 10 µF verso GND</td></tr></table>
+<tr><td>2 (centro) + aletta</td><td>VOUT 3,3 V</td><td><span class="w" style="background:#1c7ed6"></span>blu</td><td>IMU VCC + <b>elettrolitico 22–100 µF</b> verso GND (striscia − a GND)</td></tr>
+<tr><td>3 (destra)</td><td>VIN</td><td><span class="w" style="background:#e03131"></span>rosso</td><td>VBAT (dopo il fusibile) — condensatore d'ingresso non necessario con cavetti corti</td></tr></table>
 <p class="note">L'aletta è VOUT: non deve toccare massa. Prima di collegare l'IMU dai 12 V e misura <b>3,3 V</b> fra piedino 2 e GND. Consuma ~5 mA anche a logger spento (in futuro: MCP1703, 2 µA).</p>
 </div></div>
 
@@ -223,7 +223,7 @@
 <h2>9 · Ordine di montaggio consigliato (una saldatura sola per filo)</h2>
 <ol>
 <li>Fusibile sul + batteria → linea rossa VBAT.</li>
-<li>1117-3.3 con i condensatori 10 µF e 22 µF. Dai 12 V e <b>misura 3,3 V</b> prima di andare avanti.</li>
+<li>1117-3.3 con l'elettrolitico d'uscita (22–100 µF, striscia − a GND). Dai 12 V e <b>misura 3,3 V</b> prima di andare avanti.</li>
 <li>IRF4905 + R1 fra piedino 1 e piedino 3. IRL540N + R2 + R3. Diodi D1 e D2 con le fasce unite.</li>
 <li>Prova senza Pi e senza buck: tocca WAKE con 3,3 V → sul piedino 2 dell'IRF4905 devi leggere la tensione della batteria. Togli il 3,3 V → 0 V.</li>
 <li>Buck sull'arancio. Misura 5,1 V prima di collegarlo al Pi.</li>
