@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <unistd.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/i2c_master.h"
@@ -100,7 +101,7 @@ static void imu_task(void *arg)
                     s_ax, s_ay, s_az, s_gx, s_gy, s_gz);
             if (s_campioni % 50 == 0 && s_batt > 0) fprintf(s_csv, "%.2f", s_batt);
             fputc('\n', s_csv);
-            if (t - flush > 2000000) { fflush(s_csv); flush = t; }
+            if (t - flush > 2000000) { fflush(s_csv); fsync(fileno(s_csv)); flush = t; }   /* FAT: senza fsync la dimensione resta 0 */
         }
         if (t > MIN_ACCESO_MIN * 60000000LL && t - s_ultimo_moto > FERMO_MIN * 60000000LL) {
             logger02_dormi("bici ferma da 5 minuti");
