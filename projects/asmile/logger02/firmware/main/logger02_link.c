@@ -27,6 +27,9 @@ static double s_a = 0, s_b = 0;           /* offset(tB) = a + b*(tB - tB0) */
 static int64_t s_tb0;
 static double s_resid_us = -1, s_resid_max_us = -1;
 static uint32_t s_campioni;
+static double s_fase_us = 1e9, s_fase_max_us;     /* B: sfasamento fotogrammi B - A (µs) all'ultimo sync */
+static double s_fase_hist[N_FIT];
+static int s_fh;
 static bool s_valido;
 static portMUX_TYPE s_mux = portMUX_INITIALIZER_UNLOCKED;
 
@@ -89,9 +92,11 @@ void logger02_link_invia(const char *riga)
 static void comando(const char *riga)
 {
     if (riga[0] == 'S' && !logger02_ruolo()->is_a) {
-        unsigned seq;
-        long long ta;
-        if (sscanf(riga, "S %u %lld", &seq, &ta) == 2) {
+        unsigned seq, fa = 0;
+        long long ta, tfa = -1;
+        double pa = 0;
+        int k = sscanf(riga, "S %u %lld %u %lld %lf", &seq, &ta, &fa, &tfa, &pa);
+        if (k >= 2) {
             int64_t tb = s_fronte_b;
             if (tb == 0 || esp_timer_get_time() - tb > 500000) {
                 return;                         /* fronte vecchio o perso: scarto */
@@ -102,6 +107,24 @@ static void comando(const char *riga)
             if (s_n < N_FIT) s_n++;
             s_campioni++;
             fit();
+            if (k == 5 && s_valido && pa > 1000 && tfa > 0) {
+                /* aggancio di fase delle camere (come rpicam --sync su #001) */
+                int64_t tb;
+                uint32_t fb;
+                double pb;
+                logger02_rec_fase(&tb, &fb, &pb);
+                logger02_rec_riferimento(tfa, fa, pa);
+                double ph = fmod((double)(logger02_t_a(tb) - tfa), pa);
+                if (ph < 0) ph += pa;
+                if (ph > pa / 2) ph -= pa;                      /* >0: la B scatta dopo la A */
+                s_fase_us = ph;
+                s_fase_hist[s_fh++ % N_FIT] = fabs(ph);
+                double riga = logger02_rec_riga_us();
+                if (riga > 0 && fabs(ph) > riga * 0.75) {
+                    if (ph > 0 && ph < riga * 40) logger02_rec_ritarda((int64_t)-ph);     /* anticipa di poco */
+                    else logger02_rec_ritarda((int64_t)(ph > 0 ? pa - ph : -ph));       /* ritarda */
+                }
+            }
         }
     } else if (!strcmp(riga, "Z")) {
         logger02_dormi("comando dalla A");
@@ -139,8 +162,13 @@ static void sync_task(void *arg)
         ta = esp_timer_get_time();
         gpio_set_level(L02_PIN_SYNC_A, 1);
         portENABLE_INTERRUPTS();
-        char m[48];
-        snprintf(m, sizeof(m), "S %lu %lld", (unsigned long)++seq, (long long)ta);
+        int64_t tf;
+        uint32_t ff;
+        double pf;
+        logger02_rec_fase(&tf, &ff, &pf);
+        char m[96];
+        snprintf(m, sizeof(m), "S %lu %lld %lu %lld %.3f", (unsigned long)++seq, (long long)ta, (unsigned long)ff,
+                 (long long)tf, pf);
         logger02_link_invia(m);
         vTaskDelay(pdMS_TO_TICKS(5));
         gpio_set_level(L02_PIN_SYNC_A, 0);
@@ -182,9 +210,15 @@ void logger02_sync_stato(char *json, size_t n)
         snprintf(json, n, "{\"ruolo\":\"A\",\"nota\":\"orologio di riferimento\"}");
         return;
     }
+    int nh = s_fh < N_FIT ? s_fh : N_FIT;
+    double mx = 0, somma = 0;
+    for (int i = 0; i < nh; i++) { if (s_fase_hist[i] > mx) mx = s_fase_hist[i]; somma += s_fase_hist[i]; }
     snprintf(json, n,
              "{\"ruolo\":\"B\",\"valido\":%s,\"campioni\":%lu,\"fronti\":%lu,\"offset_us\":%.1f,"
-             "\"deriva_ppm\":%.3f,\"scarto_rms_us\":%.2f,\"scarto_max_us\":%.2f}",
+             "\"deriva_ppm\":%.3f,\"scarto_orologi_rms_us\":%.2f,\"scarto_orologi_max_us\":%.2f,"
+             "\"fase_camere_us\":%.1f,\"fase_camere_media_30s_us\":%.1f,\"fase_camere_max_30s_us\":%.1f,"
+             "\"riga_us\":%.2f,\"correzioni\":%lu}",
              s_valido ? "true" : "false", (unsigned long)s_campioni, (unsigned long)s_fronti, s_a, s_b,
-             s_resid_us, s_resid_max_us);
+             s_resid_us, s_resid_max_us, s_fase_us, nh ? somma / nh : -1, mx, logger02_rec_riga_us(),
+             (unsigned long)logger02_rec_correzioni());
 }

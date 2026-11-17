@@ -13,9 +13,23 @@
 #include "lwip/apps/netbiosns.h"
 #include "protocol_examples_common.h"
 #include "example_video_common.h"
+#include "freertos/event_groups.h"
 #include "logger02.h"
 
 static const char *TAG = "logger02";
+static EventGroupHandle_t s_ev;
+
+/* wifi in background: riprova all'infinito (CONFIG_EXAMPLE_WIFI_CONN_MAX_RETRY=-1), la registrazione non lo aspetta */
+static void rete_task(void *arg)
+{
+    if (example_connect() == ESP_OK) {
+        logger02_ip_fisso();
+        mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);
+        xEventGroupSetBits(s_ev, 1);
+        ESP_LOGI(TAG, "wifi connesso");
+    }
+    vTaskDelete(NULL);
+}
 
 void app_main(void)
 {
@@ -37,11 +51,10 @@ void app_main(void)
     netbiosns_init();
     netbiosns_set_name(ru->nome);
     logger02_link_init();                  /* prima del wifi: SYNC e WAKE subito attivi */
-    if (example_connect() == ESP_OK) {
-        logger02_ip_fisso();
-        mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);
-    } else {
-        ESP_LOGW(TAG, "wifi non connesso: registro lo stesso");
+    s_ev = xEventGroupCreate();
+    xTaskCreate(rete_task, "rete", 6144, NULL, 5, NULL);
+    if (!(xEventGroupWaitBits(s_ev, 1, pdFALSE, pdTRUE, pdMS_TO_TICKS(15000)) & 1)) {
+        ESP_LOGW(TAG, "wifi non ancora connesso: registro lo stesso, lui continua a riprovare");
     }
     logger02_ora_init();
     if (logger02_sd_monta() == ESP_OK) {

@@ -4,6 +4,7 @@
  *   frame,t_us,t_a_us,bytes     (t_us = orologio della scheda, t_a_us = orologio della A: confrontabile fra A e B)
  * Lo streaming prende lo stesso fotogramma e lo comprime in JPEG solo se qualcuno guarda. */
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -17,6 +18,7 @@
 #include "linux/videodev2.h"
 #include "esp_video_device.h"
 #include "driver/jpeg_encode.h"
+#include "driver/i2c_master.h"
 #include "logger02.h"
 
 static const char *TAG = "rec";
@@ -44,6 +46,42 @@ static jpeg_encoder_handle_t s_jpeg;
 static uint8_t *s_jpg;
 static size_t s_jpg_len, s_jpg_cap;
 static volatile int64_t s_jpg_chiesto;    /* ultimo istante in cui qualcuno ha chiesto un JPEG */
+
+/* istanti di fine fotogramma presi nell'ISR della CSI (patch in components/esp_video) */
+extern volatile int64_t l02_frame_t[32];
+extern volatile uint32_t l02_frame_n;
+static uint32_t s_deq;
+static volatile int64_t s_ultimo_t;           /* ultimo fotogramma, orologio locale */
+static double s_periodo_us = 20000;           /* periodo misurato */
+static volatile int64_t s_t_rif = -1;         /* B: ultimo fotogramma noto della A (tempo A) ... */
+static volatile uint32_t s_f_rif;             /* ... e il suo numero */
+static volatile double s_p_rif = 0;
+
+/* sensore OV9281 (SCCB 0x60, registri a 16 bit): VTS per spostare la fase della B */
+static i2c_master_dev_handle_t s_sens;
+static uint16_t s_vts0;
+static volatile int s_sposta_righe;
+static int s_sposta_stato;
+static uint32_t s_correzioni;
+
+static void sens_w(uint16_t reg, uint8_t v)
+{
+    uint8_t b[3] = {reg >> 8, reg & 0xff, v};
+    i2c_master_transmit(s_sens, b, 3, 20);
+}
+
+static uint8_t sens_r(uint16_t reg)
+{
+    uint8_t a[2] = {reg >> 8, reg & 0xff}, v = 0;
+    i2c_master_transmit_receive(s_sens, a, 2, &v, 1, 20);
+    return v;
+}
+
+static void vts(uint16_t v)
+{
+    sens_w(0x380E, v >> 8);
+    sens_w(0x380F, v & 0xff);
+}
 
 static int64_t s_ultimi[N_ULTIMI];
 static uint32_t s_ultimi_f[N_ULTIMI];
@@ -114,10 +152,50 @@ static void rec_task(void *arg)
             vTaskDelay(1);
             continue;
         }
-        int64_t t = (b.timestamp.tv_sec || b.timestamp.tv_usec)
-                        ? (int64_t)b.timestamp.tv_sec * 1000000 + b.timestamp.tv_usec : esp_timer_get_time();
-        uint32_t f = ++s_frame;
-        s_ultimi[s_ui] = logger02_t_a(t);
+        int64_t t;
+        if (l02_frame_n - s_deq <= 30) {
+            t = l02_frame_t[s_deq % 32];
+        } else {                                     /* troppo indietro: riallineo */
+            s_deq = l02_frame_n - 1;
+            t = l02_frame_t[s_deq % 32];
+        }
+        s_deq++;
+        if (s_ultimo_t > 0) {
+            double d = (double)(t - s_ultimo_t);
+            if (d > 0.5 * s_periodo_us && d < 1.5 * s_periodo_us) s_periodo_us += (d - s_periodo_us) * 0.02;
+        }
+        s_ultimo_t = t;
+        /* numerazione COMUNE ad A e B: indice del fotogramma nel tempo della A (stesso numero = stesso istante) */
+        int64_t ta = logger02_t_a(t);
+        uint32_t f = (s_t_rif >= 0 && s_p_rif > 0 && ta > 0)
+                         ? s_f_rif + (uint32_t)llround((double)(ta - s_t_rif) / s_p_rif)   /* B: numero della A */
+                         : s_deq;                                                           /* A: il suo contatore */
+        s_frame = f;
+        /* B: fase rispetto alla griglia dei fotogrammi della A (predetta fra un sync e l'altro), corretta ogni 5 */
+        static uint32_t ultima_corr;
+        if (s_t_rif >= 0 && s_p_rif > 0 && ta > 0 && s_vts0 && f - ultima_corr >= 5) {
+            double ph = fmod((double)(ta - s_t_rif), s_p_rif);
+            if (ph < 0) ph += s_p_rif;
+            if (ph > s_p_rif / 2) ph -= s_p_rif;
+            double riga = s_periodo_us / s_vts0;
+            if (fabs(ph) > riga * 0.75 && fabs(ph) < riga * 40 && !s_sposta_righe && !s_sposta_stato) {
+                s_sposta_righe = -(int)llround(ph / riga);       /* in ritardo → accorcia, in anticipo → allunga */
+                ultima_corr = f;
+            }
+        }
+        /* B: allunga UN fotogramma di N righe per agganciare la fase alla A */
+        if (s_sens && s_vts0) {
+            if (s_sposta_stato == 0 && s_sposta_righe) {
+                vts(s_vts0 + s_sposta_righe);
+                s_sposta_stato = 1;
+            } else if (s_sposta_stato == 1) {
+                vts(s_vts0);
+                s_sposta_stato = 0;
+                s_sposta_righe = 0;
+                s_correzioni++;
+            }
+        }
+        s_ultimi[s_ui] = ta;
         s_ultimi_f[s_ui] = f;
         s_ui = (s_ui + 1) % N_ULTIMI;
 
@@ -232,6 +310,14 @@ esp_err_t logger02_rec_start(void)
         s_jpg = jpeg_alloc_encoder_mem(W * H / 2, &mc, &s_jpg_cap);
     }
 
+    i2c_master_bus_handle_t bus;
+    if (i2c_master_get_bus_handle(0, &bus) == ESP_OK) {
+        i2c_device_config_t dc = {.dev_addr_length = I2C_ADDR_BIT_LEN_7, .device_address = 0x60, .scl_speed_hz = 100000};
+        if (i2c_master_bus_add_device(bus, &dc, &s_sens) == ESP_OK) {
+            s_vts0 = (sens_r(0x380E) << 8) | sens_r(0x380F);
+            ESP_LOGI(TAG, "OV9281 VTS=%u righe, HTS=%u", s_vts0, (sens_r(0x380C) << 8) | sens_r(0x380D));
+        }
+    }
     logger02_nome_sessione(s_sess, sizeof(s_sess));
     s_rec = true;
     xTaskCreatePinnedToCore(rec_task, "rec", 6144, NULL, 8, NULL, 1);
@@ -283,4 +369,39 @@ void logger02_rec_ultimi(char *json, size_t n)
         k += snprintf(json + k, n - k, "%s[%lu,%lld]", i ? "," : "", (unsigned long)s_ultimi_f[j], (long long)s_ultimi[j]);
     }
     snprintf(json + k, n - k, "]}");
+}
+
+/* --- fase delle camere --- */
+void logger02_rec_fase(int64_t *t_ultimo_locale, uint32_t *frame, double *periodo_us)
+{
+    *t_ultimo_locale = s_ultimo_t;
+    *frame = s_frame;
+    *periodo_us = s_periodo_us;
+}
+
+void logger02_rec_riferimento(int64_t t_rif_a, uint32_t f_rif, double p_us)
+{
+    s_t_rif = t_rif_a;
+    s_f_rif = f_rif;
+    s_p_rif = p_us;
+}
+
+/* B: sposta la propria fase di 'us' microsecondi: >0 allunga un fotogramma (ritarda), <0 lo accorcia (anticipa,
+ * solo di poche righe per non toccare l'esposizione) */
+void logger02_rec_ritarda(int64_t us)
+{
+    if (!s_vts0 || s_sposta_righe || s_sposta_stato) return;
+    double riga_us = s_periodo_us / s_vts0;
+    int n = (int)llround((double)us / riga_us);
+    if (n != 0 && n < 4 * s_vts0 && n > -(int)(s_vts0 / 8)) s_sposta_righe = n;
+}
+
+double logger02_rec_riga_us(void)
+{
+    return s_vts0 ? s_periodo_us / s_vts0 : 0;
+}
+
+uint32_t logger02_rec_correzioni(void)
+{
+    return s_correzioni;
 }

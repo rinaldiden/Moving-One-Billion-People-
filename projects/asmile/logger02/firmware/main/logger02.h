@@ -50,6 +50,11 @@ uint32_t logger02_rec_frame(void);            /* indice dell'ultimo fotogramma *
 void logger02_rec_stato(char *json, size_t n);
 size_t logger02_rec_jpeg(uint8_t *out, size_t max);   /* ultimo fotogramma in JPEG per lo streaming (0 = niente) */
 void logger02_rec_ultimi(char *json, size_t n);       /* ultimi tempi dei fotogrammi, già in tempo A */
+void logger02_rec_fase(int64_t *t_ultimo_locale, uint32_t *frame, double *periodo_us);
+void logger02_rec_riferimento(int64_t t_rif_a, uint32_t f_rif, double p_us);   /* B: numerazione comune */
+void logger02_rec_ritarda(int64_t us);                          /* B: sposta la fase della camera */
+uint32_t logger02_rec_correzioni(void);
+double logger02_rec_riga_us(void);
 
 /* A: IMU, batteria, autospegnimento */
 esp_err_t logger02_imu_start(void);
