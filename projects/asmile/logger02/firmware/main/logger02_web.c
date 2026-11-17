@@ -10,6 +10,7 @@
  *   POST /ota               nuovo firmware (corpo = .bin), poi riavvio
  *   POST /dormi             deep sleep subito (prova) */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -18,6 +19,9 @@
 #include "esp_http_server.h"
 #include "esp_http_client.h"
 #include "esp_ota_ops.h"
+#include "esp_app_desc.h"
+#include "nvs.h"
+#include <time.h>
 #include "esp_timer.h"
 #include "esp_heap_caps.h"
 #include "esp_log.h"
@@ -73,14 +77,16 @@ static esp_err_t h_stream(httpd_req_t *req)
 
 static esp_err_t h_stato(httpd_req_t *req)
 {
-    char rec[320], sync[480], imu[320], ts[96], out[1400];
+    char rec[320], sync[480], imu[320], ts[96], out[1600];
     logger02_rec_stato(rec, sizeof(rec));
     logger02_sync_stato(sync, sizeof(sync));
     if (logger02_ruolo()->is_a) logger02_imu_stato(imu, sizeof(imu));
     else snprintf(imu, sizeof(imu), "null");
     logger02_tailscale_stato(ts, sizeof(ts));
-    snprintf(out, sizeof(out), "{\"scheda\":\"%s\",\"ram_interna_libera\":%u,\"ram_interna_min\":%u,\"uptime_s\":%lld,\"t_us\":%lld,\"t_a_us\":%lld,\"rec\":%s,\"sync\":%s,\"imu\":%s,\"tailscale\":%s}",
-             logger02_ruolo()->nome, (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+    const esp_app_desc_t *app = esp_app_get_description();
+    snprintf(out, sizeof(out), "{\"scheda\":\"%s\",\"versione\":\"%s %s %s\",\"partizione\":\"%s\",\"ram_interna_libera\":%u,\"ram_interna_min\":%u,\"uptime_s\":%lld,\"t_us\":%lld,\"t_a_us\":%lld,\"rec\":%s,\"sync\":%s,\"imu\":%s,\"tailscale\":%s}",
+             logger02_ruolo()->nome, app->version, app->date, app->time, esp_ota_get_running_partition()->label,
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
              (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL), esp_timer_get_time() / 1000000, esp_timer_get_time(),
              logger02_t_a(esp_timer_get_time()), rec, sync, imu, ts);
     httpd_resp_set_type(req, "application/json");
@@ -151,6 +157,68 @@ static esp_err_t h_del(httpd_req_t *req)
     return httpd_resp_sendstr(req, remove(p) == 0 ? "ok" : "errore");
 }
 
+/* storico aggiornamenti nella NVS della scheda: ultime 8 righe "data ora | da versione → partizione" */
+static void storia_aggiungi(const char *riga)
+{
+    nvs_handle_t h;
+    if (nvs_open("storia", NVS_READWRITE, &h) != ESP_OK) return;
+    uint8_t i = 0;
+    nvs_get_u8(h, "i", &i);
+    char k[4];
+    snprintf(k, sizeof(k), "r%u", i % 8);
+    nvs_set_str(h, k, riga);
+    nvs_set_u8(h, "i", (uint8_t)(i + 1));
+    nvs_commit(h);
+    nvs_close(h);
+}
+
+static esp_err_t h_storia(httpd_req_t *req)
+{
+    nvs_handle_t h;
+    httpd_resp_set_type(req, "text/plain");
+    if (nvs_open("storia", NVS_READONLY, &h) != ESP_OK) return httpd_resp_sendstr(req, "(vuota)\n");
+    uint8_t i = 0;
+    nvs_get_u8(h, "i", &i);
+    char k[4], v[128];
+    for (int n = 0; n < 8; n++) {
+        size_t len = sizeof(v);
+        snprintf(k, sizeof(k), "r%u", (unsigned)((i + n) % 8));
+        if (nvs_get_str(h, k, v, &len) == ESP_OK) { httpd_resp_sendstr_chunk(req, v); httpd_resp_sendstr_chunk(req, "\n"); }
+    }
+    nvs_close(h);
+    return httpd_resp_sendstr_chunk(req, NULL);
+}
+
+static void riga_storia(char *out, size_t n, const char *cosa, const char *verso)
+{
+    time_t t = time(NULL);
+    struct tm tm;
+    localtime_r(&t, &tm);
+    char d[20];
+    strftime(d, sizeof(d), "%Y-%m-%d %H:%M", &tm);
+    snprintf(out, n, "%s | %s | da %s (%s) -> %s", d, cosa, esp_app_get_description()->version,
+             esp_ota_get_running_partition()->label, verso);
+}
+
+/* torna alla versione precedente (è sempre nell'altra partizione OTA) */
+static esp_err_t h_rollback(httpd_req_t *req)
+{
+    const esp_partition_t *altra = esp_ota_get_next_update_partition(NULL);
+    esp_app_desc_t d;
+    if (!altra || esp_ota_get_partition_description(altra, &d) != ESP_OK) {
+        return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "nessuna versione precedente");
+    }
+    char r[128];
+    riga_storia(r, sizeof(r), "ROLLBACK", d.version);
+    storia_aggiungi(r);
+    esp_ota_set_boot_partition(altra);
+    httpd_resp_sendstr(req, r);
+    logger02_rec_stop();
+    vTaskDelay(pdMS_TO_TICKS(500));
+    esp_restart();
+    return ESP_OK;
+}
+
 static esp_err_t h_ota(httpd_req_t *req)
 {
     const esp_partition_t *part = esp_ota_get_next_update_partition(NULL);
@@ -177,6 +245,10 @@ static esp_err_t h_ota(httpd_req_t *req)
     if (esp_ota_end(h) != ESP_OK || esp_ota_set_boot_partition(part) != ESP_OK) {
         return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "ota fine");
     }
+    esp_app_desc_t nuovo;
+    char r[128];
+    riga_storia(r, sizeof(r), "OTA", esp_ota_get_partition_description(part, &nuovo) == ESP_OK ? nuovo.version : "?");
+    storia_aggiungi(r);
     httpd_resp_sendstr(req, "ok, riavvio");
     ESP_LOGW(TAG, "nuovo firmware in %s: riavvio", part->label);
     vTaskDelay(pdMS_TO_TICKS(500));
@@ -202,6 +274,11 @@ static esp_err_t h_formatta(httpd_req_t *req)
 
 static esp_err_t h_dormi(httpd_req_t *req)
 {
+    extern uint32_t g_dormi_prova_s;
+    char q[32], v[8];
+    if (httpd_req_get_url_query_str(req, q, sizeof(q)) == ESP_OK && httpd_query_key_value(q, "s", v, sizeof(v)) == ESP_OK) {
+        g_dormi_prova_s = atoi(v);                  /* prova: si risveglia da sola dopo s secondi */
+    }
     httpd_resp_sendstr(req, "vado in deep sleep");
     vTaskDelay(pdMS_TO_TICKS(300));
     logger02_dormi("comando web");
@@ -288,7 +365,7 @@ esp_err_t logger02_web_start(void)
         httpd_register_uri_handler(s82, &bs);
     }
     httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
-    cfg.max_uri_handlers = 16;
+    cfg.max_uri_handlers = 20;
     cfg.stack_size = 8192;
     cfg.max_open_sockets = 7;
     cfg.lru_purge_enable = true;
@@ -301,6 +378,7 @@ esp_err_t logger02_web_start(void)
         {"/", HTTP_GET, h_root}, {"/api/stato", HTTP_GET, h_stato},
         {"/api/frames", HTTP_GET, h_frames}, {"/api/files", HTTP_GET, h_files}, {"/dl", HTTP_GET, h_dl},
         {"/del", HTTP_POST, h_del}, {"/ota", HTTP_POST, h_ota}, {"/dormi", HTTP_POST, h_dormi}, {"/formatta", HTTP_POST, h_formatta},
+        {"/api/storia", HTTP_GET, h_storia}, {"/rollback", HTTP_POST, h_rollback},
     };
     for (size_t i = 0; i < sizeof(u) / sizeof(u[0]); i++) httpd_register_uri_handler(s, &u[i]);
     if (logger02_ruolo()->is_a) {

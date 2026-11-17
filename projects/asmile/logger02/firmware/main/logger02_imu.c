@@ -181,6 +181,8 @@ static bool arma_imu(void)
     return !(s & 0x40) && !gpio_get_level(L02_PIN_IMU_INT);
 }
 
+uint32_t g_dormi_prova_s;   /* >0: sveglia anche a tempo (solo per le prove dal web) */
+
 void logger02_dormi(const char *motivo)
 {
     ESP_LOGW(TAG, "deep sleep: %s", motivo);
@@ -211,6 +213,7 @@ void logger02_dormi(const char *motivo)
         gpio_set_level(L02_PIN_WAKE, 0);
         rtc_gpio_pulldown_en(L02_PIN_IMU_INT);
         esp_sleep_enable_ext1_wakeup_io(1ULL << L02_PIN_IMU_INT, ESP_EXT1_WAKEUP_ANY_HIGH);
+        if (g_dormi_prova_s) esp_sleep_enable_timer_wakeup((uint64_t)g_dormi_prova_s * 1000000ULL);
     } else {
         rtc_gpio_pulldown_en(L02_PIN_WAKE);
         esp_sleep_enable_ext1_wakeup_io(1ULL << L02_PIN_WAKE, ESP_EXT1_WAKEUP_ANY_HIGH);
