@@ -1,0 +1,146 @@
+{
+ "regola": {
+  "congelato": "2026-11-10, scelto SOLO su DEV con il criterio dichiarato prima (falsi DEV<=2% su entrambe le unita', poi recall medio per evento massimo, poi soglia gate piu' bassa)",
+  "variant": "base",
+  "tg": 0.9,
+  "tf": 0.95,
+  "significato": "nessuna regola di contesto ne' sottrazione door (a e b non migliorano su DEV a pari falsi); solo soglie per classe: gate conf>=0.90, fence conf>=0.95 sulle detection grezze SAM 3 (conf 0.30), THINGS invariati",
+  "dev_evidenza": "dev_v2.json (griglia 4 varianti x 36 soglie)",
+  "dev_numeri": {
+   "falsi_001": "0/68",
+   "falsi_logger001": "0/44",
+   "recall_medio_eventi_DEV": 0.154,
+   "recall_rientro_DEV": 0.964
+  }
+ },
+ "TEST": {
+  "asmile-001": {
+   "n_neg": 69,
+   "falsi": 0,
+   "pct": 0.0,
+   "falsi_idx": []
+  },
+  "asmile-logger001": {
+   "n_neg": 48,
+   "falsi": 0,
+   "pct": 0.0,
+   "falsi_idx": []
+  },
+  "eventi": {
+   "asmile-001_set_run0": {
+    "n": 2,
+    "rec": 0.0
+   },
+   "asmile-001_set_run1": {
+    "n": 1,
+    "rec": 0.0
+   },
+   "asmile-001_set_run2": {
+    "n": 4,
+    "rec": 0.0
+   },
+   "asmile-001_set_run3": {
+    "n": 2,
+    "rec": 0.0
+   },
+   "pos_001_E1": {
+    "n": 6,
+    "rec": 0.0
+   },
+   "pos_001_E2": {
+    "n": 8,
+    "rec": 0.0
+   },
+   "pos_logger_rientro": {
+    "n": 27,
+    "rec": 0.926
+   }
+  }
+ },
+ "TEST_senza_regola_v1_0p70": {
+  "asmile-001": {
+   "n_neg": 69,
+   "falsi": 5,
+   "pct": 7.25,
+   "falsi_idx": [
+    117,
+    121,
+    123,
+    145,
+    151
+   ]
+  },
+  "asmile-logger001": {
+   "n_neg": 48,
+   "falsi": 9,
+   "pct": 18.75,
+   "falsi_idx": [
+    51,
+    77,
+    83,
+    97,
+    99,
+    103,
+    125,
+    127,
+    129
+   ]
+  },
+  "eventi": {
+   "asmile-001_set_run0": {
+    "n": 2,
+    "rec": 1.0
+   },
+   "asmile-001_set_run1": {
+    "n": 1,
+    "rec": 1.0
+   },
+   "asmile-001_set_run2": {
+    "n": 4,
+    "rec": 1.0
+   },
+   "asmile-001_set_run3": {
+    "n": 2,
+    "rec": 1.0
+   },
+   "pos_001_E1": {
+    "n": 6,
+    "rec": 0.667
+   },
+   "pos_001_E2": {
+    "n": 8,
+    "rec": 0.875
+   },
+   "pos_logger_rientro": {
+    "n": 27,
+    "rec": 1.0
+   }
+  }
+ },
+ "classi_vecchie": {
+  "asmile-001@0.45": {
+   "old": 1007,
+   "full": 1007,
+   "delta_pct": 0.0,
+   "max_class_delta_pct": 0.0
+  },
+  "asmile-001@0.7": {
+   "old": 451,
+   "full": 451,
+   "delta_pct": 0.0,
+   "max_class_delta_pct": 0.0
+  },
+  "asmile-logger001@0.45": {
+   "old": 354,
+   "full": 354,
+   "delta_pct": 0.0,
+   "max_class_delta_pct": 0.0
+  },
+  "asmile-logger001@0.7": {
+   "old": 131,
+   "full": 131,
+   "delta_pct": 0.0,
+   "max_class_delta_pct": 0.0
+  }
+ }
+}

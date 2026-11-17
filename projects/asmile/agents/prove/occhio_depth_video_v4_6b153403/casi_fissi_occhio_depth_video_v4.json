@@ -1,0 +1,60 @@
+{
+ "nota": "094146 salvo diversa indicazione; casi nuovi trovati sul set cieco v4 (commit 6b153403). Z attesa = riferimento a pixel (altezza bollard 0.85 m costante nei frame, base a terra uguale fra paletti vicini). Regressione ok: persone 3105/6561/7810, moto 9893, paletti 093909 (catena encoder).",
+ "correzioni_verita_post_hoc": {
+  "6561": "persona 11.7 -> 8.1 (altezza 288 px, errore mio di lettura)",
+  "7555/7570": "persone 15 -> ~20.7 (112-116 px, errore aritmetico mio)",
+  "093909 f165/f225 paletti sx": "3.7/2.9 -> stessi Z del centrale (basi a terra alla stessa riga), 6.27/3.8",
+  "8260/8275 fioriera": "riferimento solo largezza 1.0-1.2 m: 9.8-11.8 / 5.9-7.1, non usato per il verdetto"
+ },
+ "casi": [
+  {
+   "frame": 7570,
+   "oggetto": "persona lontanissima dietro muretto, box 593,454,608,482 (15x28 px)",
+   "Z_attesa": ">20",
+   "scritta": 1.77,
+   "esito": "ERRORE: Z picco da pochi pixel di disparita (frac_valid 0.26) -> ostacolo inventato a 1.8 m, X=-0.08 in corridoio"
+  },
+  {
+   "frame": 5976,
+   "oggetto": "palo di recinzione dietro furgone, box 288,408,306,541 (18x133)",
+   "Z_attesa": "~9",
+   "scritta": 3.83,
+   "esito": "ERRORE vicino (frac_valid 0.25, non sospetto)"
+  },
+  {
+   "frame": 9473,
+   "oggetto": "paletto sottile sinistro davanti a muro, x~706 y 432-528 (SAM non lo trova)",
+   "Z_attesa": 10.4,
+   "scritta": 13.03,
+   "esito": "ERRORE +25% lato lontano (blob 696,344,765,401, solo la parte sul muro)"
+  },
+  {
+   "frame": 8260,
+   "oggetto": "fioriera davanti a muro, blob 436,258,828,446",
+   "Z_attesa": "10-12",
+   "scritta": "scartata (fantasma_accanto_maschera_SAM) e sostituita da SAM person 12.5 sulla finestra",
+   "esito": "regola ghost scarta un oggetto vero; distanza resta ok per caso"
+  },
+  {
+   "frame": 3060,
+   "oggetto": "ombrellone chiuso, SAM pole box 619,98,667,499",
+   "Z_attesa": "~17 (rough)",
+   "scritta": 10.8,
+   "esito": "-38% lato vicino (sicuro), non provato"
+  },
+  {
+   "frame": 5507,
+   "oggetto": "angolo basso dx, SAM bollard 1198,752,1279,799",
+   "Z_attesa": "non ostacolo (cordolo/pavimento)",
+   "scritta": 3.66,
+   "esito": "falso piccolo"
+  },
+  {
+   "frame": 7840,
+   "oggetto": "angolo basso dx, SAM bollard 1249,742,1279,796",
+   "Z_attesa": "non ostacolo",
+   "scritta": 2.67,
+   "esito": "falso piccolo"
+  }
+ ]
+}

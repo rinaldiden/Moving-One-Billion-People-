@@ -1,0 +1,2 @@
+{"STERZA_lato_non_misurato_deve_essere_FRENA":[{"frame":2060,"nota":"bordo dx, sterza a sx dove c'e' muro vicino + furgone: ERRORE"},{"frame":2752,"nota":"pilastro angolo, dx mR -0.53, sx non misurato, muro/porta a sx: dubbio->FRENA"},{"frame":2763,"nota":"sx non misurato, parete+bidoni: dubbio->FRENA"}],
+"falso_sbarra":[1988,1990],"non_risolto":[3173],"sbarra_da_provare_in_avvicinamento":"0.15 m a 1.0 e 1.7 m, Z da 8 a 1.5 a 3.5 m/s, FRENA entro 0.3 s dalla comparsa e prima di 6.3 m"}

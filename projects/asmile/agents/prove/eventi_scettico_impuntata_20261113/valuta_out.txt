@@ -1,0 +1,36 @@
+### 20261113_145727 dur moto min 11.9 ay0 0.055 gx0 -2.65 corr dec/-wheelacc 0.47
+ P1 dec>=2&d03>=1.5           episodi in moto   6 (0.50/min)
+ P2 dec>=2.5&d03>=1.5         episodi in moto   3 (0.25/min)
+ cap dec>=3                   episodi in moto  12 (1.01/min)
+ cap dec>=3.5                 episodi in moto   7 (0.59/min)
+ d03>=3                       episodi in moto   6 (0.50/min)
+ old rate/pitch(not recon.)   episodi in moto  27 (2.27/min)
+  P1 @ 15:03:29 v= 1.9km/h dec=2.7 d03pk=2.8 lead_to_d03pk=0.00s servo=nan
+  P1 @ 15:03:51 v= 5.0km/h dec=3.3 d03pk=5.0 lead_to_d03pk=0.22s servo=3.7
+  P1 @ 15:04:04 v=11.2km/h dec=2.0 d03pk=3.9 lead_to_d03pk=0.16s servo=5.6
+  P1 @ 15:08:52 v= 1.3km/h dec=3.9 d03pk=3.1 lead_to_d03pk=0.20s servo=1.1
+  P1 @ 15:18:32 v= 3.6km/h dec=2.3 d03pk=2.7 lead_to_d03pk=0.00s servo=0.0
+  P1 @ 15:20:35 v=12.1km/h dec=2.0 d03pk=2.1 lead_to_d03pk=0.00s servo=6.2
+### 20261109_085334 dur moto min 7.9 ay0 0.074 gx0 -2.73 corr dec/-wheelacc 0.47
+ P1 dec>=2&d03>=1.5           episodi in moto   8 (1.01/min)
+ P2 dec>=2.5&d03>=1.5         episodi in moto   5 (0.63/min)
+ cap dec>=3                   episodi in moto  18 (2.27/min)
+ cap dec>=3.5                 episodi in moto   7 (0.88/min)
+ d03>=3                       episodi in moto   5 (0.63/min)
+ old rate/pitch(not recon.)   episodi in moto  22 (2.77/min)
+  P1 @ 09:24:05 v= 7.8km/h dec=3.1 d03pk=1.7 lead_to_d03pk=0.00s servo=nan
+  P1 @ 09:44:07 v= 8.8km/h dec=3.3 d03pk=2.0 lead_to_d03pk=0.02s servo=14.4
+  P1 @ 09:44:15 v= 9.5km/h dec=2.1 d03pk=1.6 lead_to_d03pk=0.02s servo=7.0
+  P1 @ 09:48:24 v=11.6km/h dec=2.2 d03pk=2.3 lead_to_d03pk=0.02s servo=3.3
+  P1 @ 09:50:50 v=14.5km/h dec=2.1 d03pk=1.9 lead_to_d03pk=0.00s servo=5.8
+  P1 @ 09:51:02 v=13.8km/h dec=2.2 d03pk=2.1 lead_to_d03pk=0.02s servo=16.6
+  P1 @ 09:51:05 v=13.5km/h dec=2.1 d03pk=2.3 lead_to_d03pk=0.00s servo=8.6
+  P1 @ 09:52:50 v=10.6km/h dec=2.3 d03pk=2.2 lead_to_d03pk=0.00s servo=7.4
+### 20261108_160150 dur moto min 2.5 ay0 0.08 gx0 -2.71 corr dec/-wheelacc 0.5
+ P1 dec>=2&d03>=1.5           episodi in moto   1 (0.40/min)
+ P2 dec>=2.5&d03>=1.5         episodi in moto   0 (0.00/min)
+ cap dec>=3                   episodi in moto   1 (0.40/min)
+ cap dec>=3.5                 episodi in moto   0 (0.00/min)
+ d03>=3                       episodi in moto   2 (0.80/min)
+ old rate/pitch(not recon.)   episodi in moto   6 (2.39/min)
+  P1 @ 16:30:05 v= 2.8km/h dec=2.1 d03pk=2.9 lead_to_d03pk=0.00s servo=nan

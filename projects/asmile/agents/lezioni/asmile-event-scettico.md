@@ -12,3 +12,5 @@ Scritte da palla.py (VETO dei critici + bilanci giusto/sbagliato). Leggile prima
 - 2026-11-13 SBAGLIATO (`agents/rapporti/registro_guide_logger_20261113.md`): avrei dovuto controllare subito il mapping wall hub-vs-mtime (offset ~1-2 s lascia ambiguita sui singoli eventi) e usare frame di conferma
 - 2026-11-13 GIUSTO (`agents/rapporti/registro_guide_logger_20261113.md`): Tasso base del gate su finestre casuali in moto: misura che smaschera un gate non discriminante
 - 2026-11-13 SBAGLIATO (`agents/rapporti/registro_guide_logger_20261113.md`): Nel VETO 1 avrei dovuto chiedere subito il tasso base del flusso in moto e non solo gli arresti singoli
+- 2026-11-13 GIUSTO (`agents/rapporti/eventi_guida_20261113.md`): Segno rifatto da video con test sintetico; rifatte le regole con codice indipendente e provate su un secondo giro (09/11) dove il doppio dei falsi non si vedeva in-sample
+- 2026-11-13 SBAGLIATO (`agents/rapporti/eventi_guida_20261113.md`): Non ho potuto etichettare gli scatti 09/11 (nessuna verita): avrei dovuto guardare i fotogrammi di quei 8 scatti; ay vs az confusi nel mio primo dump

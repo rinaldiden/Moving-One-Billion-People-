@@ -1,0 +1,8 @@
+{"nota":"giro 5 (662debc3), 094146 salvo diversa indicazione. Frame = indice video a 15 fps.",
+"R1_veri_persi":[
+ {"frame":9160,"oggetto":"paletto centrale tra due paletti, box 586,401,604,505","Z_scritta":9.7,"esito":"declassato R1 (461 px validi); gli altri 2 paletti (10.0, 10.5) restano"},
+ {"frame":9145,"oggetto":"paletto centrale ~13.7 m","esito":"declassato R1, nel video senza etichetta"},
+ {"frame":6876,"oggetto":"palo accanto a cassonetto Z14.4 X-0.2","esito":"declassato R1"}],
+"R1_declassati_corretti_sotto_5m":[2097,5777,5897,5976,7570,8710,8755],
+"muri_come_primo_ostacolo_nel_video":[0,2207,2775,5552,6801,8305,8440,8845,9115,9250,9698,9833],
+"da_fare_per_chi_produce":"test: nei frame sopra il primo ostacolo NON deve essere un muro/vano porta/finestra classless con TTC<3 s; in f9145/f9160 il paletto centrale deve restare etichettato."}

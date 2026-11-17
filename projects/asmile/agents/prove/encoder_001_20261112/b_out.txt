@@ -1,0 +1,27 @@
+GPS: velocita' interpolata a 50 Hz da 10 Hz Doppler; accel GPS = SG derivata sulla stessa finestra W
+W(s) | lag: GPS in RITARDO di |L| s se L<0 | corr(enc,GPS) | pendenza OLS enc=a*GPS | frenata GPS<-0.5: n, rapp. mediano, corr | std enc/GPS | accel picco
+0.5 | -0.16 | 0.630 | 0.47 | n=1853 rapp 0.54 corr 0.45 | 0.37/0.50 | enc max 1.55 min -3.10
+0.8 | -0.22 | 0.748 | 0.62 | n=1340 rapp 0.77 corr 0.58 | 0.33/0.40 | enc max 1.15 min -2.81
+1.0 | -0.22 | 0.798 | 0.68 | n=1213 rapp 0.83 corr 0.65 | 0.32/0.37 | enc max 1.04 min -2.58
+1.5 | -0.22 | 0.874 | 0.77 | n=1055 rapp 0.91 corr 0.78 | 0.30/0.34 | enc max 1.07 min -2.08
+2.0 | -0.22 | 0.916 | 0.82 | n=945 rapp 0.90 corr 0.84 | 0.28/0.31 | enc max 1.02 min -1.69
+
+Limite fisico: filtro W=1 s e' lo stesso del GPS -> le frenate brevi (<1 s) sono smussate da ENTRAMBI; rapporto 0.9 in frenata include ritardo/smussamento diversi.
+lag velocita' enc vs GPS (picco corr): GPS ritarda -0.16 s (corr 0.977)
+
+IMU: regressione accel IMU (g, smussata 1.0 s) contro accel encoder (m/s2), solo moto
+  imu_ax: corr con acc_enc +0.019  pendenza 0.0040 g per m/s2 (=0.04 del teorico 0.102)  intercetta 0.064 g
+  imu_ay: corr con acc_enc -0.648  pendenza -0.0874 g per m/s2 (=-0.86 del teorico 0.102)  intercetta 0.082 g
+  imu_az: corr con acc_enc +0.111  pendenza 0.0103 g per m/s2 (=0.10 del teorico 0.102)  intercetta 0.915 g
+  -ay vs enc: lag ottimo 0.00 s corr 0.648
+  -ax vs enc: lag ottimo -0.78 s corr 0.216
+  in frenata (GPS<-0.5, n=1213): media ay 0.148 g | media ay resto-moto 0.078 g | differenza 0.070 g = 0.69 m/s2 (con encoder: media acc_enc in frenata -0.69 m/s2)
+  accel IMU(-ay, bias da fermo, x9.81) vs GPS: corr 0.553 pendenza 0.62 ; vs encoder: corr 0.648 pendenza 0.86
+  (IMU non corretta per pendenza della strada/pitch: entra come bias lento; il filtro passa-alto non e' applicato)
+
+EVENTI di frenata: intervalli con accel GPS(W=1.5, allineata) < -0.4 m/s2 per >= 1.5 s; Delta-v su estremi dell'evento (v smussata 0.3 s)
+  n eventi 12 | durata mediana 2.2 s
+  somma Delta-v: GPS -28.3 m/s, encoder -28.6 m/s -> rapporto 1.012 ; mediana rapporto per evento 1.00
+  decel media per evento m/s2: GPS 0.98 enc 0.99 ; IMU(-ay, vs 3 s prima) -0.97
+  evento piu' forte: GPS 1.54, enc 1.46, IMU -1.75 m/s2 (media sull'evento)
+  picco |accel| nel file: GPS(W=0.5) min -3.36 ; enc(W=0.5) min -3.18 ; IMU x9.81 max(-ay-bias) -3.76

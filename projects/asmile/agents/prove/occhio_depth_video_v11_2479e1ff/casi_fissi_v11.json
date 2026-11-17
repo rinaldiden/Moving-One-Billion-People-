@@ -1,0 +1,48 @@
+{
+ "casi": [
+  {
+   "frame": 2903,
+   "atteso": "NESSUN FRENA: facciata dx a 1.7 m dal bordo, primo ostacolo 'altro' 5.8 m e' un muro (2903-2910, 8 fotogrammi)"
+  },
+  {
+   "frame": 2711,
+   "atteso": "NESSUN FRENA: facciata d'angolo sx 4.8 m (2711-2715)"
+  },
+  {
+   "frame": 1931,
+   "atteso": "NESSUN FRENA: muro sx (1931-1932)"
+  },
+  {
+   "frame": [
+    3163,
+    3164
+   ],
+   "atteso": "primo ostacolo = vaso dx 2.9 m (regressione v11, in v10 c'era)"
+  },
+  {
+   "frame": 3173,
+   "atteso": "primo ostacolo = barile/vaso dx 2.8 m (regressione v11)"
+  },
+  {
+   "frame": 2766,
+   "atteso": "pilastro d'angolo ~3.5 m: allarme bordo o RALLENTA (non perso)"
+  },
+  {
+   "frame": 2748,
+   "atteso": "vero: pilastro+vetrina 4.7 m (Z coerente con 2760); azione giusta = STERZA a sx"
+  },
+  {
+   "frame": [
+    1917,
+    2192,
+    2194,
+    2064
+   ],
+   "atteso": "nessun RALLENTA: angolo edificio / macchia / porta / tubo del muro"
+  },
+  {
+   "frame": "sbarra",
+   "atteso": "stadio A con hh>=0.08 m se w>=0.60 m: barra 0.15x1.4 m a 1.0 m da terra, Z=4, rilevata 16/16 fotogrammi 2284-2300 (stadioA_occhio_barra.py); falsi su tutto il giro NON misurati"
+  }
+ ]
+}

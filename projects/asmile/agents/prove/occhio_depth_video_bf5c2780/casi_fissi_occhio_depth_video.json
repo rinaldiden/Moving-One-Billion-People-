@@ -1,0 +1,13 @@
+{"nota":"sessione 094146 salvo diversa indicazione; Z attesa = misura indipendente di occhio (encoder-catena, targa 0.52 m, ground-contact); tol 5% <5 m, 10% 5-15 m",
+"casi":[
+{"frame":6051,"oggetto":"auto argento dietro furgone box 634,320,718,490","Z_attesa":15.0,"scritta":7.1,"esito":"ERRORE regola picco (prende lo specchio del furgone a 6.97 m)"},
+{"frame":9938,"oggetto":"bici parcheggiata a dx (manubrio/ruota x1050-1280,y200-800)","Z_attesa":1.2,"scritta":"nessuna","esito":"MANCANTE (Zmin 1.22 m, nessuna detection)"},
+{"frame":9190,"oggetto":"colonnine nere x515-570 e x1095-1170","Z_attesa":[3.6,3.95],"scritta":[3.3,3.4],"esito":"-8%/-14% (reference ground-contact, horizon da fondo vicolo y~437, incertezza ~3%)"},
+{"frame":9518,"oggetto":"colonnina dx x968-1028","Z_attesa":3.25,"scritta":3.0,"esito":"-8%"},
+{"frame":2112,"oggetto":"auto parcheggiata (catena encoder: fronte a s=17.95 m)","Z_attesa":2.95,"scritta":2.8,"esito":"-5%"},
+{"frame":2097,"oggetto":"auto Rifter","Z_attesa":5.19,"scritta":5.1,"esito":"OK"},
+{"frame":6051,"oggetto":"targa furgone 0.52 m = 170 px","Z_attesa":4.2,"scritta":4.1,"esito":"OK"},
+{"frame":6081,"oggetto":"targa 120 px","Z_attesa":6.0,"scritta":6.1,"esito":"OK"},
+{"frame":9833,"oggetto":"vicolo vuoto: nessun ostacolo vero","Z_attesa":null,"scritta":"6 blob 5.7-15.8 m (muri)","esito":"FALSI (muri laterali)"},
+{"frame":9848,"oggetto":"vicolo vuoto","Z_attesa":null,"scritta":"blob 4.1, 5.6, 10.4 m (muro dx)","esito":"FALSI"},
+{"frame":9265,"oggetto":"lastra bianca appoggiata a muro (vero ostacolo)","Z_attesa":4.86,"scritta":5.0,"esito":"OK + 5 falsi muro"}]}

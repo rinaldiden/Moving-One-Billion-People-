@@ -1,0 +1,203 @@
+{
+ "gate": "L1.depth_video",
+ "v": "v7",
+ "casi": [
+  {
+   "frame": 1879,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 1880,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 1881,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 1930,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 1936,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 1937,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 1940,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 2051,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 2100,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 2187,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 2741,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 2748,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 2779,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 2781,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 2783,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 2877,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 2921,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 2973,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 3025,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 3173,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 3171,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 2091,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 1929,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 2199,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 2307,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 2739,
+   "sessione": "094146",
+   "atteso": "NESSUN primo ostacolo scritto da questo box (muro/vegetazione/fuori immagine/asfalto)"
+  },
+  {
+   "frame": 2548,
+   "sessione": "094146",
+   "atteso": "oggetto vero: fioriera"
+  },
+  {
+   "frame": 2584,
+   "sessione": "094146",
+   "atteso": "oggetto vero: fioriera"
+  },
+  {
+   "frame": 2594,
+   "sessione": "094146",
+   "atteso": "oggetto vero: fioriera"
+  },
+  {
+   "frame": 2595,
+   "sessione": "094146",
+   "atteso": "oggetto vero: fioriera"
+  },
+  {
+   "frame": 2596,
+   "sessione": "094146",
+   "atteso": "oggetto vero: fioriera"
+  },
+  {
+   "frame": 2614,
+   "sessione": "094146",
+   "atteso": "oggetto vero: fioriera"
+  },
+  {
+   "frame": 2622,
+   "sessione": "094146",
+   "atteso": "oggetto vero: fioriera"
+  },
+  {
+   "frame": 3008,
+   "sessione": "094146",
+   "atteso": "oggetto vero: fioriera+persona"
+  },
+  {
+   "frame": 3014,
+   "sessione": "094146",
+   "atteso": "oggetto vero: fioriera"
+  },
+  {
+   "frame": 3093,
+   "sessione": "094146",
+   "atteso": "oggetto vero: vaso"
+  },
+  {
+   "frame": 3181,
+   "sessione": "094146",
+   "atteso": "oggetto vero: barile/cassetta"
+  },
+  {
+   "frame": 3173,
+   "nota": "box [890,-227,1137,-84] interamente sopra l immagine, Z 2.5 m: FALSO"
+  },
+  {
+   "frame": 1930,
+   "nota": "banner 3.8 m TTC 1.3 s su muro"
+  }
+ ],
+ "vincoli": [
+  "primo ostacolo con box <50% dentro immagine: 199/1338 su 094146 (15%)",
+  "corridoio held-out 1Hz 330-662 s: 9/109 veicoli/persone su traiettoria reale fuori corridoio v7 (v6: 23/109)"
+ ]
+}

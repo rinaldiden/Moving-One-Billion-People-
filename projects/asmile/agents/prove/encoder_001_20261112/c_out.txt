@@ -1,0 +1,15 @@
+[h264 @ 0x12bf08fb0] corrupted macroblock 1 49 (total_coeff=-1)
+[h264 @ 0x12bf08fb0] error while decoding MB 1 49
+1) wall - t_ms/1000: mediana 1794210796.597 s, ptp 9 ms (tutto il file 3600 s) | clock_map wall-monotonic 1794207196.595 s
+   (differenza fra le due costanti = fuso orario/epoca: 3600 s = 1.00 h)
+2) enc_t_ms - t_ms (riga sensor_hub): mediana -1 ms, p1 -3 p99 2, min -11 max 8
+   passo campioni encoder: mediana 20 ms p99 23 max 78 ms (n=179992); righe con enc ripetuto: 0.0%
+   frame sx 10066 dx 10066; t_ms primo 6518742 ultimo 7189754 (rel 2901.2..3572.3 s)
+   frame -> campione encoder piu' vicino: mediana 5.0 max 22 p99 10 ms
+   frame decodificati 10066
+3) flusso ottico (gray 160x100, mediana meta' bassa) vs |v| encoder, lag L (v campionata a t_frame+L):
+   corr a L=0: -0.172 ; picco a L=+586 ms (corr -0.129), parabola +523 ms; corr a +-200 ms: -0.188 / -0.161
+   intervallo lag con corr entro 0.01 dal picco: +486 .. +586 ms
+   terzo 0.00-0.33: picco a +385 ms (corr -0.057)
+   terzo 0.33-0.67: picco a +385 ms (corr -0.186)
+   terzo 0.67-1.00: picco a +368 ms (corr -0.116)

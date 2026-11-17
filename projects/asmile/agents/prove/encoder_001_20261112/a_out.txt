@@ -1,0 +1,52 @@
+== 1. ROTOLATA: confronto dei 3 candidati (mpc nuovo 2.1219e-05)
+ 1821.9-1838.5 s dur 16.6 s dcount 1258840 (26.71 m) vmax_enc 2.95 m/s vmedia 1.61 | GPS vmax 2.66 m/s fix 1.00 n=166 | retrograde 0.07%
+ 2736.8-2765.6 s dur 28.8 s dcount 742818 (15.76 m) vmax_enc 1.05 m/s vmedia 0.55 | GPS vmax 1.00 m/s fix 1.00 n=287 | retrograde 0.05%
+ 3044.9-3057.6 s dur 12.7 s dcount 1400448 (29.72 m) vmax_enc 4.29 m/s vmedia 2.34 | GPS vmax 3.74 m/s fix 1.00 n=127 | retrograde 0.09%
+  fermo 2730.0-2737.0 s: ptp 544 count (11.5 mm)
+  fermo 2765.6-2772.0 s: ptp 252 count (5.3 mm)
+  wall inizio spinta: 2026-11-09T09:39:10.893  fine: 2026-11-09T09:39:39.693
+  profilo velocita' spinta (m/s) percentili 10/50/90/max: [0.18 0.6  0.8  1.05]  -> 3.8 km/h max
+
+== incertezza: rapporto encoder/GPS per ogni tratto di moto (mpc nuovo) = dispersione indipendente dalla spinta
+  3021-3115 s: GPS 214.7 m enc 219.9 m ratio 1.024
+  3250-3390 s: GPS 433.1 m enc 435.4 m ratio 1.005
+  3390-3522 s: GPS 462.2 m enc 468.2 m ratio 1.013
+  3524-3565 s: GPS 76.4 m enc 80.5 m ratio 1.054
+  ratio medio 1.024 dev.std 0.021 (n=4)
+
+== GPS qualita' (intero file, in moto >1.5 m/s)
+  righe GPS distinte 17966 in 1804 s => 10.0 Hz; fix==1 100.0%; HDOP mediano 0.82 p90 1.18 max 2.28; sats mediana 12 min 12
+  dt GPS: mediana 100 ms p99 148 ms
+
+== 2. giro con script ufficiale, --mpc 2.1219e-05
+-- sensors_20261109_085334.csv
+file asmile-loggers/asmile-001/_sensors/sensors/sensors_20261109_085334.csv · m_per_count 2.1219e-05 (0.3477 m/giro-enc) · GPS validi 17966
+distanza encoder (|Δ| sommati): 1386.6 m
+tratti in moto (GPS >1.5 m/s): GPS 1256.2 m · encoder 1273.6 m · encoder/GPS = 1.014
+velocità 6-25 km/h, blocchi 1 s (n=369, lag 0.0 s): err mediano 1.9% p90 8.8% bias +0.8%  [criterio ≤5%]
+  6-12 km/h n=174 err med 4.0% bias +3.4%
+  12-18 km/h n=191 err med 1.0% bias +0.1%
+accelerazione (1 s): corr enc↔GPS 0.79 · std enc 0.35 GPS 0.39 m/s² · frenate (GPS<-0.5) n=275 enc/GPS mediano 0.90
+-- sensors_20261109_095334.csv
+/opt/homebrew/lib/python3.14/site-packages/numpy/lib/_function_base_impl.py:587: RuntimeWarning: Mean of empty slice
+  avg = a.mean(axis, **keepdims_kw)
+/opt/homebrew/lib/python3.14/site-packages/numpy/_core/_methods.py:134: RuntimeWarning: invalid value encountered in divide
+  ret = um.true_divide(
+/opt/homebrew/lib/python3.14/site-packages/numpy/lib/_function_base_impl.py:3028: RuntimeWarning: Degrees of freedom <= 0 for slice
+  c = cov(x, y, rowvar, dtype=dtype)
+/opt/homebrew/lib/python3.14/site-packages/numpy/lib/_function_base_impl.py:2901: RuntimeWarning: divide by zero encountered in divide
+  c *= np.true_divide(1, fact)
+/opt/homebrew/lib/python3.14/site-packages/numpy/lib/_function_base_impl.py:2901: RuntimeWarning: invalid value encountered in multiply
+  c *= np.true_divide(1, fact)
+file asmile-loggers/asmile-001/_sensors/sensors/sensors_20261109_095334.csv · m_per_count 2.1219e-05 (0.3477 m/giro-enc) · GPS validi 18519
+distanza encoder (|Δ| sommati): 0.9 m
+tratti in moto (GPS >1.5 m/s): GPS 0.0 m · encoder 0.0 m · encoder/GPS = 0.000
+nessun blocco GPS tra 6 e 25 km/h.
+file asmile-loggers/asmile-001/_sensors/sensors/sensors_20261109_085334.csv · m_per_count 2.0593e-05 (0.3374 m/giro-enc) · GPS validi 17966
+distanza encoder (|Δ| sommati): 1345.7 m
+tratti in moto (GPS >1.5 m/s): GPS 1256.2 m · encoder 1236.0 m · encoder/GPS = 0.984
+velocità 6-25 km/h, blocchi 1 s (n=369, lag 0.0 s): err mediano 2.9% p90 7.5% bias -2.2%  [criterio ≤5%]
+  6-12 km/h n=174 err med 2.9% bias +0.3%
+  12-18 km/h n=191 err med 2.9% bias -2.9%
+accelerazione (1 s): corr enc↔GPS 0.79 · std enc 0.34 GPS 0.39 m/s² · frenate (GPS<-0.5) n=275 enc/GPS mediano 0.87
+-- confronto con mpc attivo 2.0593e-5 (0.3374)

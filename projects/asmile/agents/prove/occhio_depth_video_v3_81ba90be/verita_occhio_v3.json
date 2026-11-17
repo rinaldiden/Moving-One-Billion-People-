@@ -1,0 +1,731 @@
+{
+ "093909": {
+  "0": [
+   {
+    "obj": "paletto centrale",
+    "Z": 12.56,
+    "tol": 0.07,
+    "ref": "solid_encoder_chain",
+    "stato": "corridoio"
+   }
+  ],
+  "60": [
+   {
+    "obj": "paletto centrale",
+    "Z": 10.0,
+    "tol": 0.07,
+    "ref": "solid_encoder_chain",
+    "stato": "corridoio"
+   }
+  ],
+  "90": [
+   {
+    "obj": "paletto centrale",
+    "Z": 8.95,
+    "tol": 0.07,
+    "ref": "solid_encoder_chain",
+    "stato": "corridoio"
+   }
+  ],
+  "105": [
+   {
+    "obj": "paletto centrale",
+    "Z": 8.26,
+    "tol": 0.07,
+    "ref": "solid_encoder_chain",
+    "stato": "corridoio"
+   },
+   {
+    "obj": "paletti sx e dx",
+    "Z": "~3-6",
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "corridoio"
+   }
+  ],
+  "120": [
+   {
+    "obj": "paletto centrale",
+    "Z": 7.78,
+    "tol": 0.07,
+    "ref": "solid_encoder_chain",
+    "stato": "corridoio"
+   },
+   {
+    "obj": "paletti sx e dx",
+    "Z": "~3-6",
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "corridoio"
+   }
+  ],
+  "135": [
+   {
+    "obj": "paletto centrale",
+    "Z": 7.18,
+    "tol": 0.07,
+    "ref": "solid_encoder_chain",
+    "stato": "corridoio"
+   },
+   {
+    "obj": "paletti sx e dx",
+    "Z": "~3-6",
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "corridoio"
+   }
+  ],
+  "150": [
+   {
+    "obj": "paletto centrale",
+    "Z": 6.6,
+    "tol": 0.07,
+    "ref": "solid_encoder_chain",
+    "stato": "corridoio"
+   },
+   {
+    "obj": "paletti sx e dx",
+    "Z": "~3-6",
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "corridoio"
+   }
+  ],
+  "180": [
+   {
+    "obj": "paletto centrale",
+    "Z": 5.34,
+    "tol": 0.07,
+    "ref": "solid_encoder_chain",
+    "stato": "corridoio"
+   },
+   {
+    "obj": "paletti sx e dx",
+    "Z": "~3-6",
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "corridoio"
+   }
+  ],
+  "195": [
+   {
+    "obj": "paletto centrale",
+    "Z": 4.86,
+    "tol": 0.07,
+    "ref": "solid_encoder_chain",
+    "stato": "corridoio"
+   },
+   {
+    "obj": "paletti sx e dx",
+    "Z": "~3-6",
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "corridoio"
+   }
+  ],
+  "210": [
+   {
+    "obj": "paletto centrale",
+    "Z": 4.22,
+    "tol": 0.07,
+    "ref": "solid_encoder_chain",
+    "stato": "corridoio"
+   },
+   {
+    "obj": "paletti sx e dx",
+    "Z": "~3-6",
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "corridoio"
+   }
+  ],
+  "240": [
+   {
+    "obj": "paletto centrale",
+    "Z": 3.07,
+    "tol": 0.07,
+    "ref": "solid_encoder_chain",
+    "stato": "corridoio"
+   },
+   {
+    "obj": "paletti sx e dx",
+    "Z": "~3-6",
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "corridoio"
+   }
+  ],
+  "255": [
+   {
+    "obj": "paletto centrale",
+    "Z": 2.58,
+    "tol": 0.07,
+    "ref": "solid_encoder_chain",
+    "stato": "corridoio"
+   },
+   {
+    "obj": "paletti sx e dx",
+    "Z": "~3-6",
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "corridoio"
+   }
+  ]
+ },
+ "094146": {
+  "1840": [
+   {
+    "obj": "auto lontana",
+    "Z": 40,
+    "tol": 0.3,
+    "ref": "rough",
+    "stato": "oltre15",
+    "note": ""
+   }
+  ],
+  "1855": [
+   {
+    "obj": "auto lontana",
+    "Z": 40,
+    "tol": 0.3,
+    "ref": "rough",
+    "stato": "oltre15",
+    "note": ""
+   }
+  ],
+  "1870": [
+   {
+    "obj": "auto lontana",
+    "Z": 40,
+    "tol": 0.3,
+    "ref": "rough",
+    "stato": "oltre15",
+    "note": ""
+   }
+  ],
+  "1915": [
+   {
+    "obj": "bidone vicino al muro dx",
+    "Z": 17,
+    "tol": 0.3,
+    "ref": "rough",
+    "stato": "bordo_oltre15",
+    "note": ""
+   }
+  ],
+  "2052": [
+   {
+    "obj": "furgone fondo",
+    "Z": 15,
+    "tol": 0.15,
+    "ref": "rough",
+    "stato": "bordo",
+    "note": "X -1.7, ~Z15 al limite"
+   }
+  ],
+  "2237": [
+   {
+    "obj": "Audi nera sx",
+    "Z": 11.7,
+    "tol": 0.2,
+    "ref": "rough",
+    "stato": "bordo",
+    "note": "X -1.8"
+   }
+  ],
+  "2282": [
+   {
+    "obj": "scritta STOP su asfalto",
+    "Z": null,
+    "tol": null,
+    "ref": "visivo",
+    "stato": "NON_OSTACOLO",
+    "note": "vernice piatta: se rilevata e un falso"
+   },
+   {
+    "obj": "auto/furgone a sx e dx",
+    "Z": 9,
+    "tol": 0.3,
+    "ref": "rough",
+    "stato": "laterale",
+    "note": "X +-2.2..3.2"
+   }
+  ],
+  "2327": [
+   {
+    "obj": "furgone dx (ruote)",
+    "Z": 11,
+    "tol": 0.2,
+    "ref": "rough",
+    "stato": "bordo",
+    "note": "X +1.8"
+   }
+  ],
+  "2400": [
+   {
+    "obj": "fianco liscio furgone bianco che attraversa",
+    "Z": 10,
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "corridoio",
+    "note": "angolo posteriore a 7.9 m (targa 91px) X+1.8; il fianco incrocia X=0 a ~10 m"
+   }
+  ],
+  "2415": [
+   {
+    "obj": "paletto",
+    "Z": 6.1,
+    "tol": 0.2,
+    "ref": "rough",
+    "stato": "corridoio",
+    "note": ""
+   },
+   {
+    "obj": "palo cartello",
+    "Z": 6.7,
+    "tol": 0.2,
+    "ref": "rough",
+    "stato": "corridoio",
+    "note": ""
+   },
+   {
+    "obj": "muro liscio frontale oltre il marciapiede",
+    "Z": 8.3,
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "corridoio",
+    "note": ""
+   }
+  ],
+  "2430": [
+   {
+    "obj": "paletto 2 marciapiede sx",
+    "Z": 6.8,
+    "tol": 0.2,
+    "ref": "rough",
+    "stato": "corridoio",
+    "note": "X -1.15"
+   },
+   {
+    "obj": "furgone dx",
+    "Z": 11,
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "bordo",
+    "note": ""
+   }
+  ],
+  "2550": [
+   {
+    "obj": "tavoli/fioriere lontane",
+    "Z": null,
+    "tol": null,
+    "ref": "visivo",
+    "stato": "oltre15",
+    "note": ""
+   }
+  ],
+  "2625": [
+   {
+    "obj": "persone lontane",
+    "Z": null,
+    "tol": null,
+    "ref": "visivo",
+    "stato": "oltre15",
+    "note": ""
+   }
+  ],
+  "2700": [
+   {
+    "obj": "uomo 2 (1.75 m = 463px)",
+    "Z": 5.2,
+    "tol": 0.1,
+    "ref": "altezza_persona",
+    "stato": "bordo",
+    "note": "X -1.6"
+   },
+   {
+    "obj": "uomo 1 (629px)",
+    "Z": 3.8,
+    "tol": 0.1,
+    "ref": "altezza_persona",
+    "stato": "bordo",
+    "note": "X -1.5"
+   }
+  ],
+  "2865": [
+   {
+    "obj": "persona lontana",
+    "Z": 17.9,
+    "tol": 0.2,
+    "ref": "altezza_persona",
+    "stato": "oltre15",
+    "note": ""
+   },
+   {
+    "obj": "bidone sx",
+    "Z": 11,
+    "tol": 0.3,
+    "ref": "rough",
+    "stato": "laterale",
+    "note": ""
+   }
+  ],
+  "2895": [
+   {
+    "obj": "persona ferma sx",
+    "Z": 9.3,
+    "tol": 0.1,
+    "ref": "altezza_persona",
+    "stato": "laterale",
+    "note": "X -3.7"
+   }
+  ],
+  "5627": [
+   {
+    "obj": "persona che cammina davanti (piedi)",
+    "Z": 3.6,
+    "tol": 0.12,
+    "ref": "rough_contatto",
+    "stato": "corridoio",
+    "note": "X +0.9, scarpe y709"
+   }
+  ],
+  "5732": [
+   {
+    "obj": "SUV Suzuki che attraversa (ruota anteriore 194px)",
+    "Z": 4.6,
+    "tol": 0.15,
+    "ref": "ruota",
+    "stato": "corridoio",
+    "note": "X ~+0.3, retro piu vicino 3-4"
+   }
+  ],
+  "5867": [
+   {
+    "obj": "SUV piccolo",
+    "Z": 14,
+    "tol": 0.3,
+    "ref": "rough",
+    "stato": "bordo",
+    "note": ""
+   },
+   {
+    "obj": "persona",
+    "Z": 13.7,
+    "tol": 0.2,
+    "ref": "altezza_persona",
+    "stato": "laterale",
+    "note": ""
+   }
+  ],
+  "5882": [
+   {
+    "obj": "auto argento sx (ruota)",
+    "Z": 3.9,
+    "tol": 0.2,
+    "ref": "ruota",
+    "stato": "laterale",
+    "note": "X -1.6 bordo"
+   },
+   {
+    "obj": "paletti dx",
+    "Z": 6.5,
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "bordo",
+    "note": "X +1.7"
+   }
+  ],
+  "5897": [
+   {
+    "obj": "auto argento che attraversa (targa 100px)",
+    "Z": 7.2,
+    "tol": 0.05,
+    "ref": "targa",
+    "stato": "corridoio",
+    "note": "X -0.75"
+   }
+  ],
+  "5961": [
+   {
+    "obj": "fianco liscio furgone bianco (ruota ant 177px / post 251px)",
+    "Z": 4.2,
+    "tol": 0.12,
+    "ref": "ruota",
+    "stato": "corridoio",
+    "note": "fianco da 3.5 a 5 m"
+   }
+  ],
+  "5976": [
+   {
+    "obj": "retro furgone (ruota post 217px)",
+    "Z": 4.3,
+    "tol": 0.12,
+    "ref": "ruota",
+    "stato": "corridoio",
+    "note": ""
+   }
+  ],
+  "6381": [
+   {
+    "obj": "asfalto vuoto vicino",
+    "Z": null,
+    "tol": null,
+    "ref": "visivo",
+    "stato": "NON_OSTACOLO",
+    "note": "falso se segnalato"
+   },
+   {
+    "obj": "fioriera dx",
+    "Z": 6.6,
+    "tol": 0.3,
+    "ref": "rough",
+    "stato": "bordo",
+    "note": "X +1.6"
+   },
+   {
+    "obj": "paletto dx",
+    "Z": 4.8,
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "laterale",
+    "note": "X +2.1"
+   }
+  ],
+  "6396": [
+   {
+    "obj": "asfalto vuoto vicino",
+    "Z": null,
+    "tol": null,
+    "ref": "visivo",
+    "stato": "NON_OSTACOLO",
+    "note": ""
+   },
+   {
+    "obj": "fioriera dx grande",
+    "Z": 4.0,
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "bordo",
+    "note": "X +1.6"
+   },
+   {
+    "obj": "fioriere dx",
+    "Z": 6.4,
+    "tol": 0.3,
+    "ref": "rough",
+    "stato": "bordo",
+    "note": ""
+   }
+  ],
+  "6696": [
+   {
+    "obj": "asfalto/piazza vuota vicino",
+    "Z": null,
+    "tol": null,
+    "ref": "visivo",
+    "stato": "NON_OSTACOLO",
+    "note": ""
+   },
+   {
+    "obj": "persona che corre",
+    "Z": 19.5,
+    "tol": 0.2,
+    "ref": "altezza_persona",
+    "stato": "oltre15",
+    "note": ""
+   }
+  ],
+  "7000": [
+   {
+    "obj": "muro lungo sx liscio scuro",
+    "Z": null,
+    "tol": null,
+    "ref": "visivo",
+    "stato": "laterale",
+    "note": "nessun ostacolo in corridoio"
+   }
+  ],
+  "7105": [
+   {
+    "obj": "auto parcheggiata dx",
+    "Z": 9.4,
+    "tol": 0.3,
+    "ref": "rough",
+    "stato": "laterale",
+    "note": "X +2.5"
+   },
+   {
+    "obj": "persona lontana",
+    "Z": 29,
+    "tol": 0.2,
+    "ref": "altezza_persona",
+    "stato": "oltre15",
+    "note": ""
+   }
+  ],
+  "7150": [
+   {
+    "obj": "persona lontana",
+    "Z": 22,
+    "tol": 0.2,
+    "ref": "altezza_persona",
+    "stato": "oltre15",
+    "note": ""
+   },
+   {
+    "obj": "pilastri cancello dx",
+    "Z": null,
+    "tol": null,
+    "ref": "visivo",
+    "stato": "laterale",
+    "note": ""
+   }
+  ],
+  "7285": [
+   {
+    "obj": "strada vuota, muro sx",
+    "Z": null,
+    "tol": null,
+    "ref": "visivo",
+    "stato": "NON_OSTACOLO",
+    "note": ""
+   }
+  ],
+  "7690": [
+   {
+    "obj": "auto nera ferma ahead-right (177px)",
+    "Z": 13.6,
+    "tol": 0.1,
+    "ref": "larghezza_auto",
+    "stato": "corridoio",
+    "note": "X +1.5, bordo gate"
+   },
+   {
+    "obj": "paletti marciapiede dx",
+    "Z": 6.8,
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "laterale",
+    "note": "X +2.3"
+   }
+  ],
+  "7855": [
+   {
+    "obj": "Panda sx (ruota 166px)",
+    "Z": 5.0,
+    "tol": 0.15,
+    "ref": "ruota",
+    "stato": "corridoio",
+    "note": "corpo X -2.4..-0.8, bumper ~4.0-5"
+   }
+  ],
+  "7975": [
+   {
+    "obj": "persona a dx",
+    "Z": 8.9,
+    "tol": 0.1,
+    "ref": "altezza_persona",
+    "stato": "laterale",
+    "note": "X +2.25"
+   }
+  ],
+  "8035": [
+   {
+    "obj": "persona sx",
+    "Z": 8.7,
+    "tol": 0.1,
+    "ref": "altezza_persona",
+    "stato": "laterale",
+    "note": ""
+   },
+   {
+    "obj": "donna con borsa",
+    "Z": 14,
+    "tol": 0.15,
+    "ref": "altezza_persona",
+    "stato": "laterale",
+    "note": ""
+   }
+  ],
+  "8065": [
+   {
+    "obj": "auto dx",
+    "Z": 7.9,
+    "tol": 0.3,
+    "ref": "rough",
+    "stato": "laterale",
+    "note": "X +2.2"
+   }
+  ],
+  "8185": [
+   {
+    "obj": "piazza vuota vicino",
+    "Z": null,
+    "tol": null,
+    "ref": "visivo",
+    "stato": "NON_OSTACOLO",
+    "note": ""
+   }
+  ],
+  "8365": [
+   {
+    "obj": "vicolo libero",
+    "Z": null,
+    "tol": null,
+    "ref": "visivo",
+    "stato": "NON_OSTACOLO",
+    "note": ""
+   }
+  ],
+  "8635": [
+   {
+    "obj": "auto parcheggiata dx",
+    "Z": 13,
+    "tol": 0.3,
+    "ref": "rough",
+    "stato": "bordo",
+    "note": "X +1.0"
+   },
+   {
+    "obj": "bidoni dx",
+    "Z": 5.1,
+    "tol": 0.3,
+    "ref": "rough",
+    "stato": "laterale",
+    "note": "X +2.1"
+   }
+  ],
+  "8695": [
+   {
+    "obj": "auto scura dx",
+    "Z": 6.5,
+    "tol": 0.3,
+    "ref": "rough",
+    "stato": "laterale",
+    "note": "X +2.7"
+   }
+  ],
+  "8980": [
+   {
+    "obj": "fianco/ruota furgone dx (regressione)",
+    "Z": 3.4,
+    "tol": 0.15,
+    "ref": "ruota",
+    "stato": "bordo",
+    "note": "X +1.1..1.3, solo regressione"
+   }
+  ],
+  "9653": [
+   {
+    "obj": "muro liscio frontale con porta",
+    "Z": 5.0,
+    "tol": 0.25,
+    "ref": "rough",
+    "stato": "corridoio",
+    "note": "encoder-chain non fatto"
+   }
+  ]
+ }
+}

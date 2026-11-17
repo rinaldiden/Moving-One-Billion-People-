@@ -1,0 +1,1057 @@
+{
+ "regola": "Set di controllo FISSO L1.classi (2026-11-10), deterministico, scritto PRIMA di girare SAM 3.\n#001: session_20261109_094146 (originale 10066 frame), frame>=30, scena in moto (blocks mediana\u00b17 >= 60), 100 punti linspace.\nlogger001: clip_20261029_163359_00000..00025, 4 frame/clip a offset 60,180,300,420, meta' SINISTRA dell'SBS 2560x800 (104 frame).\nLe due unita' restano SEPARATE.",
+ "asmile-001": [
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 653
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 1905
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 1957
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2032
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2082
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2169
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2219
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2268
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2318
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2433
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2483
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2535
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2596
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2646
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2696
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2746
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2796
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2846
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2896
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2945
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3021
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3071
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3121
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3171
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5334
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5384
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5434
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5484
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5534
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5584
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5634
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5683
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5751
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5801
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5851
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5901
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5996
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6074
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6139
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6189
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6239
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6318
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6368
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6418
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6475
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6584
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6663
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6713
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6763
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6813
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6863
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6930
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7008
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7261
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7345
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7504
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7608
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7658
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7710
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7760
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7824
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7874
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7924
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7974
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8024
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8074
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8124
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8174
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8224
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8273
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8323
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8373
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8423
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8473
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8523
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8573
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8623
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8673
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8723
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8773
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8837
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8886
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8936
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8986
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9036
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9086
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9136
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9186
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9246
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9367
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9455
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9505
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9555
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9604
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9666
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9724
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9774
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9824
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9904
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9954
+  }
+ ],
+ "asmile-logger001": [
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00000.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00000.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00000.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00000.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00001.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00001.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00001.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00001.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00002.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00002.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00002.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00002.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00003.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00003.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00003.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00003.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00004.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00004.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00004.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00004.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00005.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00005.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00005.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00005.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00006.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00006.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00006.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00006.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00007.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00007.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00007.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00007.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00008.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00008.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00008.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00008.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00009.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00009.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00009.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00009.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00010.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00010.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00010.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00010.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00011.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00011.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00011.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00011.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00012.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00012.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00012.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00012.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00013.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00013.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00013.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00013.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00014.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00014.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00014.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00014.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00015.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00015.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00015.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00015.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00016.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00016.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00016.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00016.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00017.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00017.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00017.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00017.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00018.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00018.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00018.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00018.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00019.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00019.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00019.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00019.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00020.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00020.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00020.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00020.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00021.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00021.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00021.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00021.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00022.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00022.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00022.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00022.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00023.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00023.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00023.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00023.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00024.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00024.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00024.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00024.h264",
+   "frame": 420,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00025.h264",
+   "frame": 60,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00025.h264",
+   "frame": 180,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00025.h264",
+   "frame": 300,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00025.h264",
+   "frame": 420,
+   "crop": "left_half"
+  }
+ ],
+ "riserva_asmile-001": [
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 1879
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2201
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2526
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2794
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3078
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5448
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5724
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6054
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6356
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6709
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7012
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7672
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7944
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8201
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8459
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8716
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8988
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9255
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9622
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9929
+  }
+ ],
+ "note_2026-11-10": "ESCLUSI a occhio da asmile-001 (fence/gate/ringhiere vere visibili): indici 44,46,56,57,58,59 (certificazione prima di vedere gli esiti SAM). Clip logger 00008 ha 255 frame: mancano offset 300,420 -> logger = 102 frame. riserva_asmile-001 = 20 frame aggiunti per tornare a >=100. Clip logger 00025 vuota (0 byte frame): -4 frame. Aggiunta riserva_asmile-logger001 (9 frame, offset 240) -> logger = 98+9 = 107.",
+ "riserva_asmile-logger001": [
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00000.h264",
+   "frame": 240,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00001.h264",
+   "frame": 240,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00002.h264",
+   "frame": 240,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00003.h264",
+   "frame": 240,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00004.h264",
+   "frame": 240,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00005.h264",
+   "frame": 240,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00006.h264",
+   "frame": 240,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00007.h264",
+   "frame": 240,
+   "crop": "left_half"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261029_163359_00009.h264",
+   "frame": 240,
+   "crop": "left_half"
+  }
+ ]
+}

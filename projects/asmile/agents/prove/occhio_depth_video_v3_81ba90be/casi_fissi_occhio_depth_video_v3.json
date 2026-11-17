@@ -1,0 +1,9 @@
+{"nota":"093909, frame del video (15 fps), riferimento = catena encoder su altezza px del paletto (k=h*Z=726 px*m, fit 10 frame, incertezza Z240 +-0.17 m). Verita in verita_occhio_v3.json (sha e478c8b2...e9b2, scritta prima della pipeline).",
+ "casi":[
+ {"sess":"093909","frame":195,"oggetto":"paletto centrale (X~+0.4) e paletto sx (X~-1.0, stessa base)","Z_attesa":4.95,"tol":0.07,"esito_v3":"MANCANTE: nessun blob a X~0; il sx e' dentro il box muro 9.1 m"},
+ {"sess":"093909","frame":210,"oggetto":"paletto centrale e sx","Z_attesa":4.31,"tol":0.07,"esito_v3":"MANCANTE; box muro sx 8.0 m (+85%)"},
+ {"sess":"093909","frame":180,"oggetto":"paletto sx (base y uguale al centrale)","Z_attesa":5.4,"tol":0.1,"esito_v3":"fuso nel muro: scritto 9.08 m"},
+ {"sess":"093909","frame":150,"oggetto":"paletto centrale e sx","Z_attesa":6.7,"tol":0.1,"esito_v3":"centrale mancante, sx scritto 10.46"},
+ {"sess":"093909","frame":240,"oggetto":"paletto centrale","Z_attesa":3.16,"tol":0.07,"esito_v3":"3.37 (+6.6%)"},
+ {"sess":"093909","frame":255,"oggetto":"paletto centrale","Z_attesa":2.67,"tol":0.07,"esito_v3":"2.88 (+7.8%)"}
+ ]}

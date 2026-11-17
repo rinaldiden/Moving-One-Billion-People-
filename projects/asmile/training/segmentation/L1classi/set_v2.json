@@ -1,0 +1,3313 @@
+{
+ "regola": "Set NUOVO v2 L1.classi (2026-11-10), deterministico, scritto PRIMA di girare SAM 3. Unita' SEPARATE.\n#001: session_20261109_094146 (10066 fr), frame>=30, scena in moto (blocks mediana+-7 >= 1: con >=60 e l'esclusione +-30 restano solo 155 frame, v1 ne copriva quasi tutti),\n  esclusi +-30 da TUTTI i frame del controllo v1 (main+riserva), spaziatura minima 10 frame, fino a 200 punti linspace unici (meno se i candidati sono pochi).\nlogger001: sessioni clip_20261109_100554 e clip_20261109_085836 (diverse da 20261029_163359), meta' SINISTRA SBS (il k-esimo clip di metrics = k-esimo file esistente in ordine, clip numerati con buchi),\n  scena in moto (blocks mediana+-7 >= 20), spaziatura minima 45 frame, 200 punti linspace (140 da 100554, 60 da 085836).\nDEV/TEST: alternato sull'ordine dell'indice (pari=DEV, dispari=TEST), deciso prima degli esiti.\nSUPPLEMENTO logger (idx 174-253, aggiunto prima di SAM perche' i frame 0-43 e 140-173 sono officina/mani): 80 clip di clip_20261108_160535 (esclusi i file 55-85 vicini al cancello del rientro), linspace, offset alternato 150/330.",
+ "asmile-001": [
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 66,
+   "idx": 0,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 213,
+   "idx": 1,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 297,
+   "idx": 2,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 441,
+   "idx": 3,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 451,
+   "idx": 4,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 461,
+   "idx": 5,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 471,
+   "idx": 6,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 481,
+   "idx": 7,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 491,
+   "idx": 8,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 501,
+   "idx": 9,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 511,
+   "idx": 10,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 521,
+   "idx": 11,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 609,
+   "idx": 12,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 619,
+   "idx": 13,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 1805,
+   "idx": 14,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 1815,
+   "idx": 15,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 1825,
+   "idx": 16,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 1835,
+   "idx": 17,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 1845,
+   "idx": 18,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 1988,
+   "idx": 19,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 1998,
+   "idx": 20,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2113,
+   "idx": 21,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2123,
+   "idx": 22,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2381,
+   "idx": 23,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2391,
+   "idx": 24,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2401,
+   "idx": 25,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2976,
+   "idx": 26,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 2986,
+   "idx": 27,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3202,
+   "idx": 28,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3212,
+   "idx": 29,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3222,
+   "idx": 30,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3304,
+   "idx": 31,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3314,
+   "idx": 32,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3324,
+   "idx": 33,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3334,
+   "idx": 34,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3344,
+   "idx": 35,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3354,
+   "idx": 36,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3364,
+   "idx": 37,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3374,
+   "idx": 38,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3384,
+   "idx": 39,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3394,
+   "idx": 40,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3485,
+   "idx": 41,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3495,
+   "idx": 42,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3505,
+   "idx": 43,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3515,
+   "idx": 44,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3525,
+   "idx": 45,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3763,
+   "idx": 46,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3773,
+   "idx": 47,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3783,
+   "idx": 48,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3793,
+   "idx": 49,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3803,
+   "idx": 50,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3813,
+   "idx": 51,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3823,
+   "idx": 52,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3833,
+   "idx": 53,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3843,
+   "idx": 54,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 3853,
+   "idx": 55,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4044,
+   "idx": 56,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4054,
+   "idx": 57,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4064,
+   "idx": 58,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4074,
+   "idx": 59,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4084,
+   "idx": 60,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4094,
+   "idx": 61,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4104,
+   "idx": 62,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4114,
+   "idx": 63,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4124,
+   "idx": 64,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4424,
+   "idx": 65,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4434,
+   "idx": 66,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4444,
+   "idx": 67,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4474,
+   "idx": 68,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4484,
+   "idx": 69,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4494,
+   "idx": 70,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4504,
+   "idx": 71,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4514,
+   "idx": 72,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4603,
+   "idx": 73,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4613,
+   "idx": 74,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4623,
+   "idx": 75,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4790,
+   "idx": 76,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4800,
+   "idx": 77,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4810,
+   "idx": 78,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4820,
+   "idx": 79,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4830,
+   "idx": 80,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4840,
+   "idx": 81,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4850,
+   "idx": 82,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4870,
+   "idx": 83,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4880,
+   "idx": 84,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4890,
+   "idx": 85,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4900,
+   "idx": 86,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4910,
+   "idx": 87,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4920,
+   "idx": 88,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4981,
+   "idx": 89,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 4991,
+   "idx": 90,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5001,
+   "idx": 91,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5011,
+   "idx": 92,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5021,
+   "idx": 93,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5031,
+   "idx": 94,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5041,
+   "idx": 95,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5051,
+   "idx": 96,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5231,
+   "idx": 97,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5241,
+   "idx": 98,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5251,
+   "idx": 99,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5261,
+   "idx": 100,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5271,
+   "idx": 101,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5281,
+   "idx": 102,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5291,
+   "idx": 103,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5301,
+   "idx": 104,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5932,
+   "idx": 105,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5942,
+   "idx": 106,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5952,
+   "idx": 107,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 5962,
+   "idx": 108,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6105,
+   "idx": 109,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6270,
+   "idx": 110,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6280,
+   "idx": 111,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6506,
+   "idx": 112,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6516,
+   "idx": 113,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6526,
+   "idx": 114,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6536,
+   "idx": 115,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6546,
+   "idx": 116,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6615,
+   "idx": 117,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6625,
+   "idx": 118,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6894,
+   "idx": 119,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6962,
+   "idx": 120,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 6972,
+   "idx": 121,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7043,
+   "idx": 122,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7053,
+   "idx": 123,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7063,
+   "idx": 124,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7073,
+   "idx": 125,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7083,
+   "idx": 126,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7093,
+   "idx": 127,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7103,
+   "idx": 128,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7113,
+   "idx": 129,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7123,
+   "idx": 130,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7133,
+   "idx": 131,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7143,
+   "idx": 132,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7153,
+   "idx": 133,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7163,
+   "idx": 134,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7173,
+   "idx": 135,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7183,
+   "idx": 136,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7193,
+   "idx": 137,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7203,
+   "idx": 138,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7213,
+   "idx": 139,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7223,
+   "idx": 140,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7292,
+   "idx": 141,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7302,
+   "idx": 142,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7312,
+   "idx": 143,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7376,
+   "idx": 144,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7386,
+   "idx": 145,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7396,
+   "idx": 146,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7406,
+   "idx": 147,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7416,
+   "idx": 148,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7426,
+   "idx": 149,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7436,
+   "idx": 150,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7446,
+   "idx": 151,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7456,
+   "idx": 152,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7466,
+   "idx": 153,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7535,
+   "idx": 154,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7545,
+   "idx": 155,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7555,
+   "idx": 156,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7565,
+   "idx": 157,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7575,
+   "idx": 158,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 7791,
+   "idx": 159,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 8804,
+   "idx": 160,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9286,
+   "idx": 161,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9296,
+   "idx": 162,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9306,
+   "idx": 163,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9316,
+   "idx": 164,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9398,
+   "idx": 165,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9408,
+   "idx": 166,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9418,
+   "idx": 167,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9855,
+   "idx": 168,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-001/session_20261109_094146_left.h264",
+   "frame": 9865,
+   "idx": 169,
+   "split": "TEST"
+  }
+ ],
+ "asmile-logger001": [
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00001.h264",
+   "frame": 158,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 608,
+   "idx": 0,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00001.h264",
+   "frame": 251,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 701,
+   "idx": 1,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00001.h264",
+   "frame": 361,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 811,
+   "idx": 2,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00002.h264",
+   "frame": 411,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 1326,
+   "idx": 3,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00003.h264",
+   "frame": 36,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 1416,
+   "idx": 4,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00003.h264",
+   "frame": 321,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 1701,
+   "idx": 5,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00004.h264",
+   "frame": 435,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 2280,
+   "idx": 6,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00009.h264",
+   "frame": 208,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 4378,
+   "idx": 7,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00009.h264",
+   "frame": 327,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 4497,
+   "idx": 8,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00010.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 4785,
+   "idx": 9,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00010.h264",
+   "frame": 286,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 4921,
+   "idx": 10,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00011.h264",
+   "frame": 58,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 5158,
+   "idx": 11,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00011.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 5250,
+   "idx": 12,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00011.h264",
+   "frame": 363,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 5463,
+   "idx": 13,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00012.h264",
+   "frame": 255,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 5820,
+   "idx": 14,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00013.h264",
+   "frame": 88,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 6118,
+   "idx": 15,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00013.h264",
+   "frame": 303,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 6333,
+   "idx": 16,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00014.h264",
+   "frame": 163,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 6658,
+   "idx": 17,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00016.h264",
+   "frame": 205,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 7630,
+   "idx": 18,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00016.h264",
+   "frame": 349,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 7774,
+   "idx": 19,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00016.h264",
+   "frame": 439,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 7864,
+   "idx": 20,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00017.h264",
+   "frame": 64,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 7954,
+   "idx": 21,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00017.h264",
+   "frame": 154,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 8044,
+   "idx": 22,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00017.h264",
+   "frame": 349,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 8239,
+   "idx": 23,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00018.h264",
+   "frame": 179,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 8534,
+   "idx": 24,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00019.h264",
+   "frame": 102,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 8922,
+   "idx": 25,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00019.h264",
+   "frame": 197,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 9017,
+   "idx": 26,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00023.h264",
+   "frame": 273,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 10953,
+   "idx": 27,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00026.h264",
+   "frame": 366,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 12441,
+   "idx": 28,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00027.h264",
+   "frame": 30,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 12555,
+   "idx": 29,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00027.h264",
+   "frame": 212,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 12752,
+   "idx": 30,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00028.h264",
+   "frame": 215,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 13220,
+   "idx": 31,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00028.h264",
+   "frame": 305,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 13310,
+   "idx": 32,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00029.h264",
+   "frame": 411,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 13881,
+   "idx": 33,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00030.h264",
+   "frame": 74,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 14009,
+   "idx": 34,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00030.h264",
+   "frame": 209,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 14144,
+   "idx": 35,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00031.h264",
+   "frame": 96,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 14496,
+   "idx": 36,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00031.h264",
+   "frame": 241,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 14641,
+   "idx": 37,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00031.h264",
+   "frame": 331,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 14731,
+   "idx": 38,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00032.h264",
+   "frame": 144,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 15009,
+   "idx": 39,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00032.h264",
+   "frame": 461,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 15326,
+   "idx": 40,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00036.h264",
+   "frame": 241,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 16966,
+   "idx": 41,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00036.h264",
+   "frame": 333,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 17058,
+   "idx": 42,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00043.h264",
+   "frame": 30,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 19990,
+   "idx": 43,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00043.h264",
+   "frame": 100,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 20080,
+   "idx": 44,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00072.h264",
+   "frame": 93,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 32988,
+   "idx": 45,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00086.h264",
+   "frame": 231,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 38241,
+   "idx": 46,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00086.h264",
+   "frame": 321,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 38331,
+   "idx": 47,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00086.h264",
+   "frame": 456,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 38466,
+   "idx": 48,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00087.h264",
+   "frame": 81,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 38556,
+   "idx": 49,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00087.h264",
+   "frame": 171,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 38646,
+   "idx": 50,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00087.h264",
+   "frame": 261,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 38736,
+   "idx": 51,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00087.h264",
+   "frame": 396,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 38871,
+   "idx": 52,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00088.h264",
+   "frame": 30,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 38961,
+   "idx": 53,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00088.h264",
+   "frame": 111,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 39051,
+   "idx": 54,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00088.h264",
+   "frame": 201,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 39141,
+   "idx": 55,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00088.h264",
+   "frame": 336,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 39276,
+   "idx": 56,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00088.h264",
+   "frame": 426,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 39366,
+   "idx": 57,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00089.h264",
+   "frame": 51,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 39456,
+   "idx": 58,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00089.h264",
+   "frame": 141,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 39546,
+   "idx": 59,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00089.h264",
+   "frame": 276,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 39681,
+   "idx": 60,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00089.h264",
+   "frame": 366,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 39771,
+   "idx": 61,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00089.h264",
+   "frame": 456,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 39861,
+   "idx": 62,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00090.h264",
+   "frame": 81,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 39951,
+   "idx": 63,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00090.h264",
+   "frame": 216,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 40086,
+   "idx": 64,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00090.h264",
+   "frame": 306,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 40176,
+   "idx": 65,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00090.h264",
+   "frame": 396,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 40266,
+   "idx": 66,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00091.h264",
+   "frame": 30,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 40356,
+   "idx": 67,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00091.h264",
+   "frame": 156,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 40491,
+   "idx": 68,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00091.h264",
+   "frame": 246,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 40581,
+   "idx": 69,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00091.h264",
+   "frame": 336,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 40671,
+   "idx": 70,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00091.h264",
+   "frame": 426,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 40761,
+   "idx": 71,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00092.h264",
+   "frame": 96,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 40896,
+   "idx": 72,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00092.h264",
+   "frame": 186,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 40986,
+   "idx": 73,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00092.h264",
+   "frame": 276,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 41076,
+   "idx": 74,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00092.h264",
+   "frame": 366,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 41166,
+   "idx": 75,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00093.h264",
+   "frame": 36,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 41301,
+   "idx": 76,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00093.h264",
+   "frame": 126,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 41391,
+   "idx": 77,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00093.h264",
+   "frame": 216,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 41481,
+   "idx": 78,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00093.h264",
+   "frame": 306,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 41571,
+   "idx": 79,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00093.h264",
+   "frame": 441,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 41706,
+   "idx": 80,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00094.h264",
+   "frame": 66,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 41796,
+   "idx": 81,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00094.h264",
+   "frame": 156,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 41886,
+   "idx": 82,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00094.h264",
+   "frame": 246,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 41976,
+   "idx": 83,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00094.h264",
+   "frame": 381,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 42111,
+   "idx": 84,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00095.h264",
+   "frame": 41,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 42236,
+   "idx": 85,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00095.h264",
+   "frame": 131,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 42326,
+   "idx": 86,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00095.h264",
+   "frame": 272,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 42467,
+   "idx": 87,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00122.h264",
+   "frame": 428,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 55178,
+   "idx": 88,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00123.h264",
+   "frame": 53,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 55268,
+   "idx": 89,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00123.h264",
+   "frame": 143,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 55358,
+   "idx": 90,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00123.h264",
+   "frame": 233,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 55448,
+   "idx": 91,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00123.h264",
+   "frame": 368,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 55583,
+   "idx": 92,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00123.h264",
+   "frame": 458,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 55673,
+   "idx": 93,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00124.h264",
+   "frame": 83,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 55763,
+   "idx": 94,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00124.h264",
+   "frame": 173,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 55853,
+   "idx": 95,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00124.h264",
+   "frame": 263,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 55943,
+   "idx": 96,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00124.h264",
+   "frame": 398,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 56078,
+   "idx": 97,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00125.h264",
+   "frame": 30,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 56168,
+   "idx": 98,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00125.h264",
+   "frame": 113,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 56258,
+   "idx": 99,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00125.h264",
+   "frame": 203,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 56348,
+   "idx": 100,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00125.h264",
+   "frame": 338,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 56483,
+   "idx": 101,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00125.h264",
+   "frame": 428,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 56573,
+   "idx": 102,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00126.h264",
+   "frame": 53,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 56663,
+   "idx": 103,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00126.h264",
+   "frame": 143,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 56753,
+   "idx": 104,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00126.h264",
+   "frame": 278,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 56888,
+   "idx": 105,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00126.h264",
+   "frame": 368,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 56978,
+   "idx": 106,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00126.h264",
+   "frame": 458,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 57068,
+   "idx": 107,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00127.h264",
+   "frame": 83,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 57158,
+   "idx": 108,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00127.h264",
+   "frame": 218,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 57293,
+   "idx": 109,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00127.h264",
+   "frame": 308,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 57383,
+   "idx": 110,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00127.h264",
+   "frame": 398,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 57473,
+   "idx": 111,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00128.h264",
+   "frame": 30,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 57563,
+   "idx": 112,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00128.h264",
+   "frame": 158,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 57698,
+   "idx": 113,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00128.h264",
+   "frame": 248,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 57788,
+   "idx": 114,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00128.h264",
+   "frame": 338,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 57878,
+   "idx": 115,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00128.h264",
+   "frame": 428,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 57968,
+   "idx": 116,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00129.h264",
+   "frame": 98,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 58103,
+   "idx": 117,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00129.h264",
+   "frame": 188,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 58193,
+   "idx": 118,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00129.h264",
+   "frame": 278,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 58283,
+   "idx": 119,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00129.h264",
+   "frame": 368,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 58373,
+   "idx": 120,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00130.h264",
+   "frame": 38,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 58508,
+   "idx": 121,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00130.h264",
+   "frame": 128,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 58598,
+   "idx": 122,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00130.h264",
+   "frame": 218,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 58688,
+   "idx": 123,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00130.h264",
+   "frame": 308,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 58778,
+   "idx": 124,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00130.h264",
+   "frame": 443,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 58913,
+   "idx": 125,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00131.h264",
+   "frame": 68,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 59003,
+   "idx": 126,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00131.h264",
+   "frame": 158,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 59093,
+   "idx": 127,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00131.h264",
+   "frame": 248,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 59183,
+   "idx": 128,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00131.h264",
+   "frame": 383,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 59318,
+   "idx": 129,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00132.h264",
+   "frame": 30,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 59408,
+   "idx": 130,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00132.h264",
+   "frame": 98,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 59498,
+   "idx": 131,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00132.h264",
+   "frame": 188,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 59588,
+   "idx": 132,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00132.h264",
+   "frame": 323,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 59723,
+   "idx": 133,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00132.h264",
+   "frame": 415,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 59815,
+   "idx": 134,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00144.h264",
+   "frame": 139,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 65119,
+   "idx": 135,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00145.h264",
+   "frame": 402,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 65847,
+   "idx": 136,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00151.h264",
+   "frame": 405,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 68640,
+   "idx": 137,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00152.h264",
+   "frame": 126,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 68826,
+   "idx": 138,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_100554_00152.h264",
+   "frame": 308,
+   "crop": "left_half",
+   "sess": "clip_20261109_100554",
+   "glob": 69008,
+   "idx": 139,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00000.h264",
+   "frame": 30,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 12,
+   "idx": 140,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00000.h264",
+   "frame": 57,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 57,
+   "idx": 141,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00000.h264",
+   "frame": 108,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 108,
+   "idx": 142,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00000.h264",
+   "frame": 153,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 153,
+   "idx": 143,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00000.h264",
+   "frame": 198,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 198,
+   "idx": 144,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00000.h264",
+   "frame": 243,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 243,
+   "idx": 145,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00000.h264",
+   "frame": 288,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 288,
+   "idx": 146,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00000.h264",
+   "frame": 333,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 333,
+   "idx": 147,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00000.h264",
+   "frame": 378,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 378,
+   "idx": 148,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00000.h264",
+   "frame": 423,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 423,
+   "idx": 149,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00001.h264",
+   "frame": 30,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 468,
+   "idx": 150,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00001.h264",
+   "frame": 48,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 513,
+   "idx": 151,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00001.h264",
+   "frame": 93,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 558,
+   "idx": 152,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00001.h264",
+   "frame": 138,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 603,
+   "idx": 153,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00001.h264",
+   "frame": 183,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 648,
+   "idx": 154,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00001.h264",
+   "frame": 228,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 693,
+   "idx": 155,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00001.h264",
+   "frame": 273,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 738,
+   "idx": 156,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00001.h264",
+   "frame": 319,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 784,
+   "idx": 157,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00001.h264",
+   "frame": 364,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 829,
+   "idx": 158,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00001.h264",
+   "frame": 409,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 874,
+   "idx": 159,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00002.h264",
+   "frame": 30,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 958,
+   "idx": 160,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00002.h264",
+   "frame": 136,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 1066,
+   "idx": 161,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00002.h264",
+   "frame": 181,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 1111,
+   "idx": 162,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00002.h264",
+   "frame": 246,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 1176,
+   "idx": 163,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00003.h264",
+   "frame": 197,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 1592,
+   "idx": 164,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00003.h264",
+   "frame": 408,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 1803,
+   "idx": 165,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00003.h264",
+   "frame": 453,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 1848,
+   "idx": 166,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00004.h264",
+   "frame": 162,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 2022,
+   "idx": 167,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00005.h264",
+   "frame": 233,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 2558,
+   "idx": 168,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00005.h264",
+   "frame": 358,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 2683,
+   "idx": 169,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00005.h264",
+   "frame": 403,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 2728,
+   "idx": 170,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00005.h264",
+   "frame": 448,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 2773,
+   "idx": 171,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00006.h264",
+   "frame": 30,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 2818,
+   "idx": 172,
+   "split": "DEV"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261109_085836_00006.h264",
+   "frame": 171,
+   "crop": "left_half",
+   "sess": "clip_20261109_085836",
+   "glob": 2961,
+   "idx": 173,
+   "split": "TEST"
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00000.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 174,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00001.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 175,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00003.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 176,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00004.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 177,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00005.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 178,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00006.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 179,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00008.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 180,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00009.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 181,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00010.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 182,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00011.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 183,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00013.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 184,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00014.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 185,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00015.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 186,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00016.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 187,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00018.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 188,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00019.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 189,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00020.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 190,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00022.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 191,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00023.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 192,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00024.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 193,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00025.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 194,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00027.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 195,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00028.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 196,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00029.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 197,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00030.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 198,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00032.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 199,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00033.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 200,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00034.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 201,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00035.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 202,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00037.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 203,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00038.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 204,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00039.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 205,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00041.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 206,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00042.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 207,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00043.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 208,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00044.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 209,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00046.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 210,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00047.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 211,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00048.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 212,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00049.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 213,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00051.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 214,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00052.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 215,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00053.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 216,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00054.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 217,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00087.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 218,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00088.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 219,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00089.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 220,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00090.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 221,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00092.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 222,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00093.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 223,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00094.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 224,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00096.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 225,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00097.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 226,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00098.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 227,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00099.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 228,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00101.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 229,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00102.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 230,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00103.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 231,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00104.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 232,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00106.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 233,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00107.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 234,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00108.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 235,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00109.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 236,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00111.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 237,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00112.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 238,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00113.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 239,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00115.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 240,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00116.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 241,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00117.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 242,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00118.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 243,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00120.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 244,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00121.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 245,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00122.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 246,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00123.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 247,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00125.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 248,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00126.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 249,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00127.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 250,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00128.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 251,
+   "split": "TEST",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00130.h264",
+   "frame": 150,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 252,
+   "split": "DEV",
+   "supplemento": true
+  },
+  {
+   "video": "asmile-loggers/asmile-logger/clip_20261108_160535_00131.h264",
+   "frame": 330,
+   "crop": "left_half",
+   "sess": "clip_20261108_160535",
+   "idx": 253,
+   "split": "TEST",
+   "supplemento": true
+  }
+ ]
+}

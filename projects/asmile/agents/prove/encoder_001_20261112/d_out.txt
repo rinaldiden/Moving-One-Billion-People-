@@ -1,0 +1,10 @@
+v 0.3-1.0 m/s: flusso medio 1.13 (n=209)
+v 1.0-2.0 m/s: flusso medio 1.80 (n=586)
+v 2.0-3.0 m/s: flusso medio 2.11 (n=1202)
+v 3.0-4.0 m/s: flusso medio 1.75 (n=2395)
+v 4.0-5.0 m/s: flusso medio 1.41 (n=1356)
+eventi avvio/arresto trovati: 15
+tutti gli eventi: picco lag -33 ms corr 0.606; corr a 0 ms 0.602; a +-200 ms 0.598/0.601
+bootstrap eventi (200): lag mediano -33 ms, p5-p95 -483..+300 ms
+per evento (n=15): mediana +33 ms, p25-p75 -208..+392 ms
+(convenzione: v encoder campionata a t_frame+L; L>0 = il frame vede il moto DOPO l'encoder? L negativo = il video e' in anticipo)

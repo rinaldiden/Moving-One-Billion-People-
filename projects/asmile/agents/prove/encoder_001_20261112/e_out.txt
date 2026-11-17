@@ -1,0 +1,4 @@
+W=0.3 s: picco -20 ms (corr 0.500; a 0 ms 0.493; a +-100 ms 0.369/0.266)  bootstrap a blocchi 20 s: mediana -20 p5-p95 -20..-20 ms
+W=0.5 s: picco +0 ms (corr 0.547; a 0 ms 0.547; a +-100 ms 0.502/0.507)  bootstrap a blocchi 20 s: mediana +0 p5-p95 +0..+10 ms
+W=1.0 s: picco +0 ms (corr 0.661; a 0 ms 0.661; a +-100 ms 0.653/0.642)  bootstrap a blocchi 20 s: mediana +0 p5-p95 -10..+0 ms
+(L>0: l'IMU e' in ANTICIPO sull'encoder di L ms; L<0 in ritardo)

@@ -1,0 +1,5 @@
+{"congelato": "2026-11-10, scelto SOLO su DEV con il criterio dichiarato prima (falsi DEV<=2% su entrambe le unita', poi recall medio per evento massimo, poi soglia gate piu' bassa)",
+ "variant": "base", "tg": 0.9, "tf": 0.95,
+ "significato": "nessuna regola di contesto ne' sottrazione door (a e b non migliorano su DEV a pari falsi); solo soglie per classe: gate conf>=0.90, fence conf>=0.95 sulle detection grezze SAM 3 (conf 0.30), THINGS invariati",
+ "dev_evidenza": "dev_v2.json (griglia 4 varianti x 36 soglie)",
+ "dev_numeri": {"falsi_001": "0/68", "falsi_logger001": "0/44", "recall_medio_eventi_DEV": 0.154, "recall_rientro_DEV": 0.964}}

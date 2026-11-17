@@ -1,0 +1,13 @@
+{
+ "m_per_count": 2.1219e-05,
+ "wheel_circum_m": 0.3477,
+ "enc_counts_per_rev": 16384,
+ "forward_sign": "+",
+ "ruota_circonferenza_m": 1.576,
+ "enc_giri_per_giro_ruota": 4.5332,
+ "incertezza_dichiarata": "+-1.5% (metro 0.06%; fine spinta/valvola non documentata; in marcia col ciclista il GPS legge 1.4% in meno -> scala efficace possibile 0.343)",
+ "metodo": "rotolata 10 giri col metro (15.760 m), sensors_20261109_085334.csv 2736.8-2765.6 s, confermata 2026-11-12 (agents/prove/encoder_001_20261112/)",
+ "accel_proposta": {"tipo": "derivata della velocita' encoder filtrata (Savitzky-Golay ord.2 sul cumulativo, poi derivata)", "finestra_s": 1.5, "nota": "sostituisce enc_accel grezzo (rumore std 6.5 m/s2). La finestra e' un compromesso: corr col GPS 0.63 a 0.5 s, 0.87 a 1.5 s, ma ritardo ~W/2 per il freno. NON provata sul freno."},
+ "stato": "PROPOSTA - non deployata; deploy solo col vai di Daniele (cambia il freno) + firma D011",
+ "generated": "2026-11-12"
+}

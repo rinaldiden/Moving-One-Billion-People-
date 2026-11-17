@@ -1,0 +1,8 @@
+{"sessione":"20261109_094146","note":"frame = indice h264 right; mm:ss = tempo nel video v8 (15 fps, inizio frame 1875)",
+"casi":[
+{"frame":[3163,3172],"mmss":"1:25.9-1:26.5","atteso":"primo ostacolo = vaso/fioriera a destra 2.1-2.8 m, X~1.1 (in corridoio), v7 lo dava 2.3-2.9 m; v8 da 8.4 m (VETO)","tracce":[2991,2997,2909]},
+{"frame":[3174,3178],"mmss":"1:26.6-1:26.9","atteso":"barile a destra, base a terra visibile, SAM 'altro' Z 1.3 m: v7 1.3 m, v8 10.2 m (traccia 3009 senza_base h=0.68)"},
+{"frame":[2679,2692,2449],"mmss":"0:53.6 0:54.5 0:38.3","atteso":"paletti con base visibile (SAM paletto-palo) NON devono essere esclusi: tracce 1384,1427,854 senza_base h 0.25-0.45 per errore Z"},
+{"frame":[2772,2779,2781,2783],"mmss":"0:59.7-1:00.5","atteso":"bidone nero alto a destra (non muro): primo ostacolo 3.8-4.7 m e' un oggetto vero al bordo; il produttore lo chiama parete"},
+{"frame":[1923,2086,2092,2184,2197,2206,2210,2215,2716,2752,2755,2764,2766,2774],"atteso":"muri/porte/pilastri: nessun ostacolo (14 tracce di blob su 16 verificate a occhio)"},
+{"test_mancante":"oggetto sospeso (ramo/transenna/specchio/insegna) con base >=0.25 m a Z<5 m in corridoio: la regola v8 lo esclude per costruzione; nessun test lo copre"}]}

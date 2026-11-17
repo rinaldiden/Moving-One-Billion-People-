@@ -1,0 +1,296 @@
+{
+ "094146": {
+  "0": [],
+  "646": [],
+  "2805": [],
+  "2940": [],
+  "3060": [],
+  "3090": [],
+  "5417": [],
+  "5447": [],
+  "6201": [],
+  "6276": [],
+  "6291": [],
+  "6306": [],
+  "7045": [],
+  "7465": [],
+  "7795": [],
+  "8110": [],
+  "8140": [],
+  "8410": [],
+  "8440": [],
+  "8575": [],
+  "8905": [],
+  "8920": [],
+  "9055": [],
+  "9353": [],
+  "9428": [],
+  "9593": [],
+  "9728": [],
+  "3105": [
+   {
+    "obj": "persona che cammina",
+    "Z": 9.4,
+    "tol": 0.2,
+    "X": -0.8,
+    "ref": "altezza 1.7 m a px",
+    "stato": "corridoio"
+   }
+  ],
+  "6561": [
+   {
+    "obj": "persona vicino a muro",
+    "Z": 11.7,
+    "tol": 0.2,
+    "X": 1.9,
+    "ref": "altezza px",
+    "stato": "bordo"
+   }
+  ],
+  "7555": [
+   {
+    "obj": "2 persone con trolley",
+    "Z": 15,
+    "tol": 0.3,
+    "X": 0.0,
+    "ref": "altezza px",
+    "stato": "corridoio_oltre15"
+   }
+  ],
+  "7570": [
+   {
+    "obj": "2 persone con trolley",
+    "Z": 14,
+    "tol": 0.3,
+    "X": 0.0,
+    "ref": "altezza px",
+    "stato": "corridoio"
+   }
+  ],
+  "7810": [
+   {
+    "obj": "persona davanti a facciata",
+    "Z": 12.2,
+    "tol": 0.2,
+    "X": 1.0,
+    "ref": "altezza px",
+    "stato": "corridoio"
+   }
+  ],
+  "8230": [
+   {
+    "obj": "vaso con pianta davanti a muro",
+    "Z": 12.5,
+    "tol": 0.3,
+    "X": -0.9,
+    "ref": "dimensione 0.8 m",
+    "stato": "corridoio"
+   }
+  ],
+  "8260": [
+   {
+    "obj": "vaso/fioriera davanti a muro",
+    "Z": 8,
+    "tol": 0.3,
+    "X": 0.3,
+    "ref": "larghezza 0.7-1.0 m",
+    "stato": "corridoio"
+   }
+  ],
+  "8275": [
+   {
+    "obj": "fioriera",
+    "Z": 5,
+    "tol": 0.25,
+    "X": -1.4,
+    "ref": "scalatura da f8260",
+    "stato": "bordo"
+   }
+  ],
+  "8890": [
+   {
+    "obj": "auto scura parcheggiata, spigolo sx",
+    "Z": 8,
+    "tol": 0.3,
+    "X": 1.2,
+    "ref": "contatto a terra",
+    "stato": "bordo"
+   }
+  ],
+  "9458": [
+   {
+    "obj": "capanna/muro basso a sx",
+    "Z": 12,
+    "tol": 0.3,
+    "X": -0.3,
+    "ref": "contatto",
+    "stato": "corridoio"
+   },
+   {
+    "obj": "paletti sottili davanti a muro",
+    "Z": 14,
+    "tol": 0.3,
+    "X": 0.5,
+    "ref": "altezza 0.9 m",
+    "stato": "corridoio"
+   }
+  ],
+  "9473": [
+   {
+    "obj": "capanna/muro a sx",
+    "Z": 8,
+    "tol": 0.3,
+    "X": -0.3,
+    "ref": "contatto",
+    "stato": "corridoio"
+   },
+   {
+    "obj": "paletti sottili davanti a muro (X 0.4, 1.5)",
+    "Z": 9,
+    "tol": 0.3,
+    "X": 0.4,
+    "ref": "altezza 0.9 m",
+    "stato": "corridoio"
+   }
+  ],
+  "9893": [
+   {
+    "obj": "moto parcheggiata",
+    "Z": 7,
+    "tol": 0.25,
+    "X": -0.9,
+    "ref": "altezza 1.1 m",
+    "stato": "corridoio"
+   }
+  ]
+ },
+ "093909": {
+  "15": [
+   {
+    "obj": "paletto centrale",
+    "Z": 11.92,
+    "tol": 0.07,
+    "X": 0.1,
+    "ref": "interp catena encoder v3",
+    "stato": "corridoio"
+   }
+  ],
+  "45": [
+   {
+    "obj": "paletto centrale",
+    "Z": 10.64,
+    "tol": 0.07,
+    "X": 0.1,
+    "ref": "interp catena encoder v3",
+    "stato": "corridoio"
+   }
+  ],
+  "75": [
+   {
+    "obj": "paletto centrale",
+    "Z": 9.48,
+    "tol": 0.07,
+    "X": 0.1,
+    "ref": "interp catena encoder v3",
+    "stato": "corridoio"
+   }
+  ],
+  "165": [
+   {
+    "obj": "paletto centrale",
+    "Z": 5.96,
+    "tol": 0.07,
+    "X": 0.1,
+    "ref": "interp catena encoder v3",
+    "stato": "corridoio"
+   },
+   {
+    "obj": "paletto sx",
+    "Z": 3.7,
+    "tol": 0.25,
+    "X": -0.6,
+    "ref": "scal k=705/h px",
+    "stato": "corridoio"
+   }
+  ],
+  "225": [
+   {
+    "obj": "paletto centrale",
+    "Z": 3.65,
+    "tol": 0.07,
+    "X": 0.1,
+    "ref": "interp catena encoder v3",
+    "stato": "corridoio"
+   },
+   {
+    "obj": "paletto sx",
+    "Z": 2.9,
+    "tol": 0.3,
+    "X": -1.0,
+    "ref": "rough",
+    "stato": "corridoio"
+   }
+  ],
+  "270": [
+   {
+    "obj": "paletto centrale (bici ferma)",
+    "Z": 2.27,
+    "tol": 0.1,
+    "X": 0.2,
+    "ref": "larghezza px*Z=157 calibrata sul f225",
+    "stato": "corridoio"
+   }
+  ],
+  "285": [
+   {
+    "obj": "paletto centrale (bici ferma)",
+    "Z": 2.2,
+    "tol": 0.1,
+    "X": 0.2,
+    "ref": "larghezza px*Z=157 calibrata sul f225",
+    "stato": "corridoio"
+   }
+  ],
+  "300": [
+   {
+    "obj": "paletto centrale (bici ferma)",
+    "Z": 2.2,
+    "tol": 0.1,
+    "X": 0.2,
+    "ref": "larghezza px*Z=157 calibrata sul f225",
+    "stato": "corridoio"
+   }
+  ],
+  "330": [
+   {
+    "obj": "paletto centrale (bici ferma)",
+    "Z": 2.0,
+    "tol": 0.1,
+    "X": 0.2,
+    "ref": "larghezza px*Z=157 calibrata sul f225",
+    "stato": "corridoio"
+   }
+  ],
+  "360": [
+   {
+    "obj": "paletto centrale (bici ferma)",
+    "Z": 2.0,
+    "tol": 0.1,
+    "X": 0.2,
+    "ref": "larghezza px*Z=157 calibrata sul f225",
+    "stato": "corridoio"
+   }
+  ],
+  "390": [
+   {
+    "obj": "paletto centrale (bici ferma)",
+    "Z": 2.0,
+    "tol": 0.1,
+    "X": 0.2,
+    "ref": "larghezza px*Z=157 calibrata sul f225",
+    "stato": "corridoio"
+   }
+  ]
+ },
+ "note": "Z a vista con f=1380 rect, orizzonte ~415, altezze persone 1.7 m, bollard 0.9-1.0 m; tol sul riferimento. Scritta PRIMA di aprire out_20261112_v4 su questi frame e prima di lanciare la pipeline. Corridoio |X|<=1.5+0.03Z. Lateral: bollard 6276/6291/8410, auto 3090/3105/6201/7045 non elencati. Dubbi esclusi: f9593 oggetto scuro su base muro."
+}

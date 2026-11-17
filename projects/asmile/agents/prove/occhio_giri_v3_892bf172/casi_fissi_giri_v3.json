@@ -1,0 +1,16 @@
+{"gate":"L1.depth_video giri 13/11 giro 3","commit":"892bf172","casi":[
+{"tratto":"frenata2_monovolume","frame":"4530-4554","atteso":"nessuna azione sul monovolume finche' Z vera >11.7 m (vero ~16 m a f4545, 12.8 a f4555)","v14":"traccia 198 in conferma f4503-4554 (50 fr), nessuna azione; prima RALLENTA f4569 8.9 m","esito":"PASSA (ma ritardo 1.1 s dichiarato)"},
+{"tratto":"frenata2_monovolume","frame":4542,"atteso":"nessun FRENA","v14":"None","esito":"PASSA"},
+{"tratto":"frenata2_monovolume","frame":4474,"atteso":"nessun primo ostacolo 1.5 m","v14":"None, primo 13.1 m","esito":"PASSA"},
+{"tratto":"frenata2_monovolume","frame":"4681-4690","atteso":"auto di traverso ~5 m tracciata (v~0.3 m/s: nessuna azione dovuta)","v14":"veicolo 4.9->4.6 m, nessuna azione","esito":"PASSA"},
+{"tratto":"frenata2_monovolume","frame":"4709,4737 (e 187 frenata1)","atteso":"persi 'in conferma': non ostacoli nel corridoio","v14":"4709 pali sx fuori corridoio a 3.5-7.8 m (pole 604 gia' tracciato 4.0 m a X -0.5); 4737 palo a sx ~4 m fuori corridoio; f187 chiazza su muro sx, non nel corridoio","esito":"PASSA (0/4 veri persi)"},
+{"tratto":"controsole_a","frame":"1124-1141","atteso":"FRENA paletto vero 6.7->2.4 m","v14":"FRENA","esito":"PASSA"},
+{"tratto":"controsole_a","frame":"1142-1157","atteso":"paletto vero nel corridoio, identita' cambia in fila (5.1/4.7/1.5/4.2)","v14":"FRENA continuo, 1145 a 1.5 m = pilastro di pietra al bordo dx","esito":"PASSA con riserva (Z a salti fra paletti diversi)"},
+{"tratto":"controsole_a","frame":1037,"atteso":"chiazza scura su muro in controluce saturo 59%: non verificabile se vero a 4.6 m","v14":"FRENA 1 fotogramma (v2 STERZA, 1036/1038 nessuna azione)","esito":"RISERVA (flicker 1 fr, NON VERIFICABILE)"},
+{"tratto":"controsole_b","frame":"2380-2386","atteso":"palo a bordo + bidone giallo ~7 m nel corridoio: FRENA/RALLENTA, non STERZA a sx","v14":"2380-82 FRENA, 2383 nessuna azione con Z 6.2<frena_entro 7.4 (flicker residuo), 2384 RALLENTA, 2385-86 FRENA","esito":"PASSA (STERZA sx eliminato); RISERVA flicker 2383"},
+{"tratto":"controsole_c/frenata1","frame":"3128,3185,148,201,213,216,217","atteso":"bordo vicino (muro 0.1-0.3 m): allarme dovuto per regola Daniele","v14":"FRENA 'nessuno spazio dall'altro lato' (lato opposto non misurato anche se libero a vista)","esito":"PASSA come regola; osservazione: FRENA al posto di STERZA in vicolo aperto a dx"},
+{"tratto":"frenata1","frame":"72,105,112","atteso":"chiazze su muro sx non ostacoli","v14":"in conferma/nessuna azione","esito":"PASSA"},
+{"tratto":"frenata2_monovolume","frame":"4465,4499,4729","atteso":"strada sgombra leggibile","v14":"valid 9-12%, tex ~0, nm=0 (verde)","esito":"PASSA"},
+{"tratto":"tutti","frame":"1155 fr","atteso":"STERZA 42 solo con lato libero misurato >= margine","v14":"0 STERZA senza lato libero misurato (ricontrollato su pkl); FRENA 46, min Z 1.5 m, nessuna con Z<1 m","esito":"PASSA"},
+{"tratto":"tutti","frame":"regola tessitura","atteso":"ostacolo liscio non saturo senza classe nel corridoio -> NON MISURATO se valid<5%","v14":"valid in corridoio mai <5% sui 1155 fr (min 6.3% su asfalto vuoto, 46 fr <8%); tex>8% solo 231 fr: la regola non e' mai scattata ne' provata su ostacolo liscio","esito":"NON VERIFICATO (nessun caso fisso con furgone liscio non classificato in questo giro)"}
+]}

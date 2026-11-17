@@ -10,3 +10,6 @@
 - 2026-11-10 12:12 **info** — Giro capo 10/11 partito (solo Mac). 1) Ostacoli senza nome su #001 in ombra; 2) SAM 3 cancelli sul rientro logger + controllo falsi; 3) triage delle 15 sessioni #001. Depth in moto FERMA a 2 veto: aspetta il tuo video col metro (<5 m e bordi). Nessun gate L1 si chiude oggi (L0 ancora aperto).
 - 2026-11-10 13:00 **chiedi** — Ostacoli senza nome su #001 (in ombra, solo Mac): 3 giri col contro-agente, 3 VETO, quindi decidi tu. Dove siamo: vede il 73% degli ostacoli davanti (era 21% stamattina), MAI ostacoli inventati sull'asfalto vuoto; sbaglia ancora prendendo muri e facciate a bordo strada come ostacoli (0.47 a fotogramma, il limite e' 0.2). Cosa preferisci? · regola della palla: al 3° veto decide Daniele
 - 2026-11-10 13:10 **telegram** — [20261110_130003] inviato
+- 2026-11-12 14:21 **info** — Buondì 🙏 Oggi i Pi sono spenti, lavoro sul Mac: prima chiudo la taratura dell'encoder ruota dai log del 9/11 (sembra +3%: 0,3477 invece di 0,3374, NON cambio niente sul Pi senza il tuo vai). Poi, se mi dai l'ok, controllo la calibrazione B30 mentre la bici si muove usando l'encoder come metro.
+- 2026-11-12 14:21 **chiedi** — Ostacoli: dopo 3 bocciature quasi tutti i falsi allarmi rimasti sono muri a bordo strada. Come vado avanti?
+- 2026-11-12 14:51 **telegram** — [20261112_142110] inviato

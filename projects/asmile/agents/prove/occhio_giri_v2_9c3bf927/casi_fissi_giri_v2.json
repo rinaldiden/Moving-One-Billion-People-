@@ -1,0 +1,11 @@
+{"gate":"L1.depth_video giri 13/11 giro 2","commit":"9c3bf927","casi":[
+{"tratto":"frenata2_monovolume","frame":4542,"atteso":"nessun FRENA; veicolo fermo a ~16 m (Z della traccia 15.6 a f4534, 16.2 a f4544)","v13":"FRENA 7.3 m","esito":"FALLISCE"},
+{"tratto":"frenata2_monovolume","frame":4474,"atteso":"nessun primo ostacolo 1.5 m (blob scuro fuori corridoio a dx)","v13":"altro 1.5 m RALLENTA, TTC 0.4 s, 1 fotogramma","esito":"FALLISCE (RALLENTA)"},
+{"tratto":"frenata2_monovolume","frame":4681,"atteso":"auto ferma di traverso a ~5 m (lato 4.6 m su 1120 px, f1312 => 5.4 m)","v13":"veicolo 4.9 m","esito":"PASSA"},
+{"tratto":"controsole_a","frame":"1124-1141","atteso":"FRENA paletto vero sul percorso 6.7->2.4 m","v13":"FRENA","esito":"PASSA"},
+{"tratto":"controsole_a","frame":"1142-1144,1147-1149,1154,1157","atteso":"paletto vero nel corridoio ma identita' traccia cambia (Z 2.4->5.1->1.5->4.0)","v13":"FRENA con Z a salti","esito":"PASSA con riserva"},
+{"tratto":"controsole_b","frame":2380,"atteso":"palo a bordo corridoio (X 0.45 vs mezza larghezza 0.55): caso di bordo, ma f2383 (6.2 m < frena_entro 7.4) senza azione = flicker","esito":"RISERVA"},
+{"tratto":"controsole_b","frame":"2381-2382,2385-2386","atteso":"STERZA a sx 'libero' ma cestino/vaso altro 7.8 m a X -0.1..-0.3 nel corridoio sx","esito":"FALLISCE (STERZA verso lato non libero)"},
+{"tratto":"controsole_a/b/c","frame":"1025,1039,1044,1055,1059,1091,2465,2471,2473,3218,3267","atteso":"nessun ostacolo vero <5 m nel corridoio (strada vuota o saturo)","esito":"PASSA"},
+{"tratto":"frenata2_monovolume","frame":"4465,4499,4729","atteso":"strada sgombra leggibile, NON MISURATO per depth valida 6-8%","esito":"NON MISURATO troppo severo"}
+]}

@@ -71,3 +71,12 @@ projects/asmile/training/training_data/
 projects/asmile/asmile-loggers/
 *.h264
 *.mp4
+
+# 17/11/2026 dati generati: restano sul Mac, su git solo codice/testi/CSV (repo in pari senza GB)
+projects/asmile/training/depth/out_*/
+projects/asmile/agents/prove/**/*.jpg
+projects/asmile/agents/prove/**/*.png
+projects/asmile/logger/depth/*.maps.npz
+projects/asmile/mobileclip2_b.ts
+projects/asmile/agents/prove/**/*.npz
+projects/asmile/agents/prove/**/*.pkl

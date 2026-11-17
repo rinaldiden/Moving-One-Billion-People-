@@ -1,0 +1,9 @@
+{"_nota":"casi fissi asmile-occhio, L1.corridoio, session 094146 (calib sterzo 09/11 centro 6606). Z, previsto (corridoio causale), reale (odometria ruota + gz) a 3/5/8 m, laterale +destra",
+ "curve_sottostimate":[
+  {"frame_left":8849,"k":-0.192,"prev":[-0.67,-1.49,-2.94],"reale":[-1.04,-5.36,"giro>90 gradi"]},
+  {"frame_left":7799,"k":-0.128,"prev":[-0.43,-0.96,-1.88],"reale":[-0.73,-2.27,-7.23]},
+  {"frame_left":9492,"k":0.129,"prev":[0.44,0.98,1.91],"reale":[0.58,1.41,2.44]}],
+ "inversione_sterzo":[{"frame_left":2742,"k":0.116,"prev":[0.39,0.87,1.7],"reale":[0.11,-0.35,-2.27]}],
+ "frena_persi_legittimi_right_frames":[2066,2068,2467,2473,2483,2486,2495,2500,2506],
+ "margine_stretto":{"frame_right":2500,"nota":"auto parcheggiata X=-0.66 a Z=1.95, bordo corridoio -0.55: margine 0.11 m a 3.5 m/s, FRENA non scatta (giusto) ma serve l'allarme bordo"},
+ "verita_visiva":"visyaw2.py (flusso LK, modello u=a+b x, f=656 a 640 px): corr con gz -0.96..-0.998, pendenza 0.87-0.92; errore laterale vs verita visiva 3/5/10 m med/p90: corr 0.033/0.16, 0.083/0.47, 0.279/1.53 (n 417/417/400) vs dritto 0.039/0.29, 0.099/0.72, 0.327/1.68"}
