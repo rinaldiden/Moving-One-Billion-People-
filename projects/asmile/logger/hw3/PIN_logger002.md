@@ -9,7 +9,11 @@ Già occupati sulla scheda: GPIO7/8 I2C (camera SCCB + ES8311), 9-13 audio I2S, 
 VCC→pin1 (3V3) · GND→pin9 · SDA→pin3 (GPIO7) · SCL→pin5 (GPIO8) · INT→pin18 (GPIO4, LP: sveglia dal deep sleep)
 
 ## Batteria → A
-Batteria+ (dopo interruttore) → 100 kΩ → nodo → pin13 (GPIO20, ADC1_CH4); nodo → 33 kΩ → GND (pin25). Satura sopra ~12,4 V (ok: interessa la soglia bassa).
+Per contatto (3 nodi):
+- Batteria+ (dopo interruttore): capo 1 R 100 kΩ (+ IN+ buck in scatola)
+- Nodo centrale: capo 2 R 100 kΩ + capo 1 R 33 kΩ + pin13 A (GPIO20, ADC1_CH4)
+- GND: capo 2 R 33 kΩ + batteria− + pin25 A (GND)  ← batteria− su GND della A OBBLIGATORIO (riferimento ADC)
+Prima di collegare pin13: nodo ≈ batteria/4, mai > 3,3 V. Satura sopra ~12,4 V (ok: interessa la soglia bassa).
 
 ## A ↔ B
 GND pin9↔pin9 · SYNC GPIO21 pin11↔pin11 · WAKE GPIO5 pin16↔pin16 (LP su B) ·
