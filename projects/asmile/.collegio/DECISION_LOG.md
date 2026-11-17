@@ -426,3 +426,35 @@ lista è già approvata (es. ordine ≤ N € dalla lista che hai già visto).
 Provato da ospite il 2026-11-14: stato, aggiungi, carrello, svuota. Checkout vero NON ancora provato (manca login).
 
 **Firma:**
+
+## D015 — logger02: chiave Tailscale fuori dal firmware, .bin fuori da git, storia ripulita
+**Data proposta:** 2026-11-17 · **Autore:** doppio di Daniele (Claude) · **Stato:** DA FIRMARE (solo il punto 4)
+
+**Voce di Daniele (2026-11-17).** GitHub secret scanning: Tailscale key esposta in
+`logger02/rilasci/logger02_38fd492f-dirty.bin`, commit 02e5b2a3. Revocare e rigenerare, togliere il .bin dal repo e
+dalla storia, la chiave non deve più essere compilata nel firmware.
+
+**Fatti verificati.**
+- Era una **auth key monouso** (`tskey-auth-krFxNy…`), compilata da `CONFIG_L02_TS_AUTHKEY` (`sdkconfig.defaults.local`
+  → `sdkconfig` → stringa in chiaro nel .bin). Le password wifi NON sono nel .bin (controllato).
+- Pannello Tailscale (17/11 21:15): **nessuna auth key valida**, quella esposta è «invalidated» (consumata dalla A
+  alla prima registrazione). Macchine nel tailnet: solo le 5 note (asmile-001, asmile-logger, logger02, Mac,
+  raspberrypi-stramba) → nessuno è entrato. La revoca è già di fatto avvenuta.
+- Il .bin è solo nel commit 02e5b2a3 (punta di `main`, già su GitHub); nessun altro ramo lo contiene.
+
+**Fatto (reversibile, locale).**
+1. Firmware: chiave letta dalla NVS (`logger02`/`ts_key`), endpoint `POST /tskey` solo-scrittura,
+   `CONFIG_L02_TS_AUTHKEY` tolto dal Kconfig e dai file locali. Senza chiave MicroLink si ricollega con le chiavi
+   macchina (già registrata, scadenza disattivata). Compilato: il nuovo .bin non ha chiavi. **NON ancora caricato.**
+2. `rilasci/` in `.gitignore`, .bin tolto dall'indice (resta sul Mac); `ota.sh` blocca un .bin con segreti
+   (`controlla_segreti.sh`); `chiave_tailscale.sh` per rimettere la chiave nella NVS quando serve.
+3. **Nuova chiave NON generata ora**: la A non ne ha bisogno, e una chiave che aspetta (max 90 giorni) è solo un
+   segreto in più in giro. Si genera al momento, monouso e a scadenza 1 giorno, con i passi in `chiave_tailscale.sh`.
+
+**Da firmare (4).** Riscrivere la storia di GitHub e force push: `FIRMA=D015 bash projects/asmile/logger02/purga_storia_bin.sh`.
+Prova a secco OK: cambia solo 02e5b2a3 (hash precedenti intatti fino a 38fd492f), nessuna `tskey-` in nessun oggetto.
+Costo: chi ha `main` dopo 02e5b2a3 (Mac, eventuali Pi) deve riallinearsi (`git rebase --onto origin/main 02e5b2a3 main`);
+fermare gli agenti che fanno push durante. Alternativa: non riscrivere (la chiave è morta) e chiudere l'avviso come «Revoked».
+Dopo: chiudere l'avviso su GitHub come «Revoked»; primo OTA del firmware nuovo sulla A guardando che torni su 100.117.207.99.
+
+**Firma:**

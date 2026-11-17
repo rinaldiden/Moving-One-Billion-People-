@@ -1,6 +1,9 @@
 #!/bin/bash
 # Aggiorna logger02 via wifi (prima la A, poi la B passando dalla A) e lascia traccia per il rollback:
-#  - il .bin va in logger02/rilasci/<versione>.bin (su git)
+#  - il .bin va in logger02/rilasci/<versione>.bin (SOLO in locale: rilasci/ è in .gitignore dal 17/11, un .bin
+#    su git aveva dentro la chiave Tailscale). Il rollback vero è sulla scheda: l'altra partizione OTA.
+#  - prima di caricare, il .bin viene controllato: se contiene una chiave Tailscale o un valore di
+#    firmware/sdkconfig.defaults.local (password, chiavi), mi fermo
 #  - una riga per scheda in logger02/DEPLOY_LOG.md (su git)
 #  - la scheda tiene il suo storico in NVS: GET /api/storia ; torna indietro con POST /rollback
 # Uso:  bash logger02/ota.sh            (usa firmware/build/logger02.bin già compilato)
@@ -35,6 +38,7 @@ if [ "${1:-}" = "rollback" ]; then
 fi
 
 [ -f "$BIN" ] || { echo "manca $BIN: compila prima"; exit 1; }
+bash "$QUI/controlla_segreti.sh" "$BIN" || exit 1
 mkdir -p "$QUI/rilasci"
 GIT=$(git -C "$QUI" describe --always --dirty 2>/dev/null)
 cp "$BIN" "$QUI/rilasci/logger02_$GIT.bin"

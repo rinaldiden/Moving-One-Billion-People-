@@ -130,3 +130,10 @@ Dettaglio e domande in `agents/sicurezza/ARCHITETTURA_SICUREZZA.md` §8. Ordine:
 - 2026-11-17 logger001: CONFERMATO da Daniele: a logger spento il 1117 dà 6,7 V (senza 1 kΩ). Colpevole = 1117 senza carico minimo (o difettoso). Subito: 1 kΩ fra uscita e GND (se resta >4-5 V → rimettere 1 kΩ in serie all'IMU). Definitivo: sostituire con HT7533 (12,6 V in ingresso, Iq ~3 µA, nessun carico minimo); carrello solo su richiesta, niente acquisto senza ok.
 - 2026-11-17 logger02 (HW3): TUTTO con timestamp sullo stesso orologio della A (frame A/B, IMU, batteria, CooSpo BLE ruota). Idea di Daniele: stimare la velocità dai pixel (stereo, baseline nota → metrica; + IMU = VIO) e togliere il BLE. Decisione: tenere il BLE come verità finché la velocità visiva non è misurata (< ~5% di errore anche con buio/asfalto liscio/folla); poi toglierlo dai logger successivi. Calcolo offline sul Mac. Esternamente logger02 = UN apparecchio: solo IP della A (.122) + Tailscale "logger02"; B dietro la A (proxy /b/...), wifi di B solo interno (video + OTA).
 - 2026-11-17 [CODA logger02, da Daniele] usare la seconda porta MIPI (quella del display, DSI) per la seconda camera, così una sola scheda legge le due cam. VERIFICARE PRIMA: la P4 ha 1 solo ricevitore CSI (camera); la porta DSI è un trasmettitore (manda dati al display), quindi a firmware non può ricevere da una camera. Alternative da valutare: due camere sullo stesso CSI con un moltiplexer/aggregatore MIPI (tipo Arducam Camarray: SBS 2560×720 sul solo CSI, come il logger001) oppure restare a 2 schede (oggi sync camere 3 µs medi).
+
+## 2026-11-17 sera — logger02: chiave Tailscale nel .bin (avviso GitHub) → D015
+- Chiave esposta già morta (monouso, consumata; pannello: nessuna auth key valida, solo le 5 macchine note).
+- Firmware nuovo (chiave in NVS, `/tskey`) compilato, NON caricato. Primo OTA: farlo IN CASA (se Tailscale non
+  torna a chiave vuota, la A resta su 192.168.1.122 → `LOGGER02_HOST=192.168.1.122 bash logger02/ota.sh rollback`).
+- Da firmare: `FIRMA=D015 bash logger02/purga_storia_bin.sh` (force push, solo commit 02e5b2a3) → poi rebase locale,
+  avviso GitHub chiuso come «Revoked».

@@ -69,3 +69,4 @@ void logger02_dormi(const char *motivo);      /* chiude tutto e va in deep sleep
 esp_err_t logger02_web_start(void);
 esp_err_t logger02_tailscale_start(void);       /* A: MicroLink, nome "logger02" */
 void logger02_tailscale_stato(char *out, size_t n);
+esp_err_t logger02_tailscale_salva_chiave(const char *k);   /* scrive la chiave auth nella NVS (mai nel firmware) */

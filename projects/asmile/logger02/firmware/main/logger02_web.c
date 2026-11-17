@@ -256,6 +256,20 @@ static esp_err_t h_ota(httpd_req_t *req)
     return ESP_OK;
 }
 
+/* chiave Tailscale nella NVS (solo scrittura: non si rilegge mai via web). La manda logger02/chiave_tailscale.sh */
+static esp_err_t h_tskey(httpd_req_t *req)
+{
+    char k[128] = {0};
+    if (req->content_len <= 0 || req->content_len >= (int)sizeof(k) || httpd_req_recv(req, k, req->content_len) != req->content_len) {
+        return httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "chiave mancante");
+    }
+    k[strcspn(k, "\r\n ")] = 0;
+    esp_err_t r = logger02_tailscale_salva_chiave(k);
+    memset(k, 0, sizeof(k));
+    if (r != ESP_OK) return httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "chiave non valida (tskey-auth-...)");
+    return httpd_resp_sendstr(req, "chiave salvata nella NVS: vale dal prossimo avvio\n");
+}
+
 static esp_err_t h_formatta(httpd_req_t *req)
 {
     char q[48], v[16];
@@ -378,7 +392,7 @@ esp_err_t logger02_web_start(void)
         {"/", HTTP_GET, h_root}, {"/api/stato", HTTP_GET, h_stato},
         {"/api/frames", HTTP_GET, h_frames}, {"/api/files", HTTP_GET, h_files}, {"/dl", HTTP_GET, h_dl},
         {"/del", HTTP_POST, h_del}, {"/ota", HTTP_POST, h_ota}, {"/dormi", HTTP_POST, h_dormi}, {"/formatta", HTTP_POST, h_formatta},
-        {"/api/storia", HTTP_GET, h_storia}, {"/rollback", HTTP_POST, h_rollback},
+        {"/api/storia", HTTP_GET, h_storia}, {"/rollback", HTTP_POST, h_rollback}, {"/tskey", HTTP_POST, h_tskey},
     };
     for (size_t i = 0; i < sizeof(u) / sizeof(u[0]); i++) httpd_register_uri_handler(s, &u[i]);
     if (logger02_ruolo()->is_a) {

@@ -1,7 +1,5 @@
 menu "logger02"
-    config L02_TS_AUTHKEY
-        string "Chiave Tailscale (auth key) — NON su git: va in sdkconfig.defaults.local dal Portachiavi"
-        default ""
+    # Niente chiave Tailscale qui: un CONFIG_ finisce nel .bin (17/11). La chiave va nella NVS: logger02/chiave_tailscale.sh
     config L02_TS_NOME
         string "Nome sul tailnet"
         default "logger02"

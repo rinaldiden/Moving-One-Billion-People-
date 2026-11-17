@@ -29,3 +29,14 @@ printf 'CONFIG_EXAMPLE_WIFI_SSID="EOLO_378899"\nCONFIG_EXAMPLE_WIFI_PASSWORD="%s
 idf.py -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.esp32p4;sdkconfig.defaults.local" set-target esp32p4
 idf.py build && idf.py -p /dev/cu.usbmodemXXXX flash
 ```
+
+## Segreti: mai nel firmware (17/11/2026, avviso GitHub secret scanning)
+Un `CONFIG_...` di `sdkconfig` finisce in chiaro nel `.bin`. La chiave Tailscale era un CONFIG ed è finita su GitHub
+dentro `rilasci/logger02_38fd492f-dirty.bin` (commit 02e5b2a3; chiave monouso già consumata → morta). Da allora:
+- **chiave Tailscale nella NVS della A**, non nel firmware: `bash chiave_tailscale.sh` (legge il Portachiavi
+  `claude-tailscale-logger02`, fa POST `/tskey`). Serve solo per registrare da capo la scheda: già registrata si
+  ricollega con le chiavi macchina di MicroLink (NVS "microlink"), anche a chiave vuota.
+- **`rilasci/` fuori da git** (`.gitignore`): i .bin restano sul Mac; il rollback vero è l'altra partizione OTA.
+- **`ota.sh` controlla il .bin** con `controlla_segreti.sh` (chiavi `tskey-…` e valori di `sdkconfig.defaults.local`
+  tranne il wifi) e si ferma se trova qualcosa.
+- Pulizia della storia su GitHub: `purga_storia_bin.sh` (prova a secco di default; force push solo con `FIRMA=D015`).
