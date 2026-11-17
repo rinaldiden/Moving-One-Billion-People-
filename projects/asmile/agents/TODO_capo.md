@@ -125,3 +125,4 @@ Dettaglio e domande in `agents/sicurezza/ARCHITETTURA_SICUREZZA.md` §8. Ordine:
 - logger001 resta così: niente condensatore/pulsante di prima accensione (se l'IMU perde alimentazione serve il ponticello WAKE→3V3).
 - Prossimi logger (HW3 ESP32-P4): LED di stato all'accensione (colore = recording / batteria scarica / errore); ripensare la prima accensione senza ponticello.
 - 2026-11-17 logger001: ritorno di corrente sul 3,3 V del Pi spento dal modulo ADS1115 → togliere le 2 pull-up 10k del modulo (SDA/SCL). Verifica: pin 1 a logger spento ≈ 0 V; poi rileggere IMU 0x68 + ADS 0x48. HW3: moduli sul bus I2C senza pull-up proprie se c'è un dispositivo sempre alimentato.
+- 2026-11-17 logger001: 1117 del 3V3_SEMPRE dà 7,8 V (forse rotto). Sostituire (1117-3.3 con 1 kΩ di carico, oppure HT7533), verificare IMU WHO_AM_I + risveglio, poi rifare la prova di spegnimento (LED tutto spento) con ADS e soglia di stamattina.
