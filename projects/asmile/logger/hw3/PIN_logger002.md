@@ -15,9 +15,9 @@ Per contatto (3 nodi):
 - GND: capo 2 R 33 kΩ + batteria− + pin25 A (GND)  ← batteria− su GND della A OBBLIGATORIO (riferimento ADC)
 Prima di collegare pin13: nodo ≈ batteria/4, mai > 3,3 V. Satura sopra ~12,4 V (ok: interessa la soglia bassa).
 
-## A ↔ B
-GND pin9↔pin9 · SYNC GPIO21 pin11↔pin11 · WAKE GPIO5 pin16↔pin16 (LP su B) ·
-UART incrociata: A pin12 (GPIO22 TX)→B pin7 (GPIO23 RX), B pin12 (TX)→A pin7 (RX).
+## A ↔ B (come cablato da Daniele 17/11, per GPIO)
+GND↔GND · SYNC A GPIO3 (pin 19) → B GPIO21 (pin 11) · WAKE A GPIO5 → B GPIO5 (pin 16, LP su B) ·
+UART incrociata: A GPIO22 (TX) → B GPIO23 (RX), B GPIO22 (TX) → A GPIO23 (RX).
 
 ## Dopo (prova 4)
 TRIG camere: A pin19 (GPIO3) → J3 TRIG camera SX + DX; J3 GND → GND.

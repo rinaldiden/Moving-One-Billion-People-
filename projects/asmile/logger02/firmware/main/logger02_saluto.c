@@ -13,7 +13,7 @@ static const char *TAG = "saluto";
 
 #define SAL_RATE      16000
 #define SAL_MCLK_MULT 256
-#define SAL_VOLUME    90
+#define SAL_VOLUME    100
 
 extern const uint8_t saluto_start[] asm("_binary_saluto_pcm_start");
 extern const uint8_t saluto_end[] asm("_binary_saluto_pcm_end");

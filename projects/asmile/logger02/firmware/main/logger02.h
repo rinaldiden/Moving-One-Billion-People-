@@ -12,7 +12,8 @@
 /* pin (PIN_logger002.md) */
 #define L02_PIN_IMU_INT     4       /* A: INT MPU6050, LP GPIO → risveglio dal deep sleep */
 #define L02_PIN_WAKE        5       /* A out → B in (LP GPIO su B) */
-#define L02_PIN_SYNC        21      /* A out → B in: impulso ogni secondo per allineare gli orologi */
+#define L02_PIN_SYNC_A      3       /* A out (pin 19) → B GPIO21 (pin 11): impulso ogni secondo per allineare gli orologi */
+#define L02_PIN_SYNC_B      21
 #define L02_PIN_UART_TX     22
 #define L02_PIN_UART_RX     23
 #define L02_PIN_BATT_ADC    20      /* A: partitore 100k/33k */

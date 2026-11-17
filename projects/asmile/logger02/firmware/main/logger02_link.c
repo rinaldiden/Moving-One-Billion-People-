@@ -1,4 +1,4 @@
-/* Collegamento A↔B: filo SYNC (GPIO21) + UART1 (TX22/RX23, incrociata).
+/* Collegamento A↔B: filo SYNC (A GPIO3 → B GPIO21) + UART1 (TX22/RX23, incrociata).
  * Ogni secondo A alza SYNC e manda "S <seq> <t_A_us>". B prende l'istante del fronte con il SUO orologio (ISR),
  * poi abbina il messaggio: offset = t_A - t_B. Con gli ultimi N campioni fa una retta (offset + deriva) e
  * misura lo scarto residuo = quanto bene i due orologi sono allineati (la "latenza fra i sync"). */
@@ -137,13 +137,13 @@ static void sync_task(void *arg)
         int64_t ta;
         portDISABLE_INTERRUPTS();
         ta = esp_timer_get_time();
-        gpio_set_level(L02_PIN_SYNC, 1);
+        gpio_set_level(L02_PIN_SYNC_A, 1);
         portENABLE_INTERRUPTS();
         char m[48];
         snprintf(m, sizeof(m), "S %lu %lld", (unsigned long)++seq, (long long)ta);
         logger02_link_invia(m);
         vTaskDelay(pdMS_TO_TICKS(5));
-        gpio_set_level(L02_PIN_SYNC, 0);
+        gpio_set_level(L02_PIN_SYNC_A, 0);
     }
 }
 
@@ -157,20 +157,20 @@ esp_err_t logger02_link_init(void)
     xTaskCreate(rx_task, "link_rx", 4096, NULL, 6, NULL);
 
     if (logger02_ruolo()->is_a) {
-        gpio_config_t o = {.pin_bit_mask = (1ULL << L02_PIN_SYNC) | (1ULL << L02_PIN_WAKE), .mode = GPIO_MODE_OUTPUT};
+        gpio_config_t o = {.pin_bit_mask = (1ULL << L02_PIN_SYNC_A) | (1ULL << L02_PIN_WAKE), .mode = GPIO_MODE_OUTPUT};
         gpio_config(&o);
-        gpio_set_level(L02_PIN_SYNC, 0);
+        gpio_set_level(L02_PIN_SYNC_A, 0);
         gpio_set_level(L02_PIN_WAKE, 1);            /* sveglia la B (resta alto finché A è sveglia) */
         xTaskCreate(sync_task, "sync", 3072, NULL, 10, NULL);
     } else {
         gpio_config_t wk = {.pin_bit_mask = 1ULL << L02_PIN_WAKE, .mode = GPIO_MODE_INPUT,
                             .pull_down_en = GPIO_PULLDOWN_ENABLE};
         gpio_config(&wk);
-        gpio_config_t i = {.pin_bit_mask = 1ULL << L02_PIN_SYNC, .mode = GPIO_MODE_INPUT,
+        gpio_config_t i = {.pin_bit_mask = 1ULL << L02_PIN_SYNC_B, .mode = GPIO_MODE_INPUT,
                            .pull_down_en = GPIO_PULLDOWN_ENABLE, .intr_type = GPIO_INTR_POSEDGE};
         gpio_config(&i);
         gpio_install_isr_service(ESP_INTR_FLAG_IRAM | ESP_INTR_FLAG_LEVEL3);
-        gpio_isr_handler_add(L02_PIN_SYNC, sync_isr, NULL);
+        gpio_isr_handler_add(L02_PIN_SYNC_B, sync_isr, NULL);
     }
     ESP_LOGI(TAG, "link A↔B pronto (%s)", logger02_ruolo()->is_a ? "master" : "slave");
     return ESP_OK;
