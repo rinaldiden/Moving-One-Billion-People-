@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Logger HW3 schema</title>
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--mut:#666;--line:#ccc;--hd:#f1ecff;
+--pw:#d23;--gnd:#222;--i2c:#1a8a3a;--trig:#c60;--sync:#06c;--csi:#7a3db8;--adc:#b08800;--led:#e0a}
+body{background:var(--bg);color:var(--fg);font:15px/1.45 -apple-system,Helvetica,Arial,sans-serif;margin:0;padding:16px;max-width:1100px}
+h1{font-size:22px;margin:.2em 0}h2{font-size:18px;margin:1.4em 0 .4em;border-bottom:2px solid var(--hd)}
+table{border-collapse:collapse;width:100%;margin:.4em 0}td,th{border:1px solid var(--line);padding:5px 8px;vertical-align:top;text-align:left}
+th{background:var(--hd)}.mut{color:var(--mut)}.warn{background:#fff4e0;border-left:4px solid var(--trig);padding:8px 12px;margin:.6em 0}
+svg{width:100%;height:auto;border:1px solid var(--line);border-radius:6px}
+code{background:#f4f4f4;padding:0 4px;border-radius:3px}
+@media print{body{max-width:none}}
+</style></head><body>
+<h1>Logger HW3: 2 × ESP32-P4 al posto del Pi 5</h1>
+<p class="mut">Bozza 17/11/2026. Solo logger (situazioni, nessun attuatore). I numeri dei GPIO si fissano quando confermo il modello delle schede: qui ogni filo ha un nome e il vincolo che deve rispettare.</p>
+
+<h2>1. Componenti (tutti, prima di saldare)</h2>
+<table>
+<tr><th>#</th><th>Pezzo</th><th>Q.tà</th><th>Note</th></tr>
+<tr><td>1</td><td>Scheda ESP32-P4 con C6 a bordo (wifi + BLE) e slot microSD</td><td>2</td><td><b>A = master</b> (camera sinistra, IMU, trigger, BLE, batteria, LED) · <b>B = slave</b> (camera destra)</td></tr>
+<tr><td>2</td><td>Camera OV9281 MIPI Inno-Maker con ingresso J3 EXT TRIG</td><td>2</td><td>+ flat MIPI adatto al connettore della scheda (15 o 22 poli)</td></tr>
+<tr><td>3</td><td>microSD 64-128 GB</td><td>2</td><td>una per scheda: ognuna registra la sua camera</td></tr>
+<tr><td>4</td><td>Batteria 3S Li-ion (quella del logger001) + fusibile 3 A</td><td>1</td><td>10-12,6 V</td></tr>
+<tr><td>5</td><td>Buck 12 V → 5 V, almeno 3 A (quello del v2)</td><td>1</td><td>alimenta tutte e due le schede</td></tr>
+<tr><td>6</td><td>MPU6050 (GY-521)</td><td>1</td><td>sul 3,3 V della scheda A; INT = risveglio</td></tr>
+<tr><td>7</td><td>Resistenze 100 kΩ e 33 kΩ (partitore batteria)</td><td>1+1</td><td>come sul v2</td></tr>
+<tr><td>8</td><td>LED RGB WS2812 (1 pixel) + resistenza 330 Ω sul dato</td><td>1</td><td>il LED di stato previsto: registra / batteria scarica / errore</td></tr>
+<tr><td>9</td><td>Interruttore generale a levetta</td><td>1</td><td>sulla batteria, per stoccaggio</td></tr>
+<tr><td>10</td><td>Filo 0,25 mm² (segnali) e 0,75 mm² (alimentazione), morsetto GND comune</td><td>—</td><td></td></tr>
+</table>
+<p class="mut">Spariscono rispetto al v2: Pi 5, Camarray, IRF4905, IRL540N, diodi, 1117, ADS1115 (la P4 ha l'ADC suo). Se la prova 7 (deep sleep) va male, il circuito MOSFET del v2 si rimette davanti al buck uguale a oggi.</p>
+
+<h2>2. Schema a blocchi</h2>
+<svg viewBox="0 0 1000 560" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica,Arial" font-size="13">
+<defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#444"/></marker></defs>
+<!-- power -->
+<rect x="20" y="20" width="130" height="60" rx="6" fill="#fde" stroke="#d23"/><text x="85" y="45" text-anchor="middle" font-weight="bold">Batteria 3S</text><text x="85" y="63" text-anchor="middle">10-12,6 V</text>
+<rect x="200" y="20" width="110" height="60" rx="6" fill="#fff" stroke="#d23"/><text x="255" y="45" text-anchor="middle">Fusibile 3 A</text><text x="255" y="63" text-anchor="middle">+ interruttore</text>
+<rect x="360" y="20" width="120" height="60" rx="6" fill="#fff" stroke="#d23"/><text x="420" y="45" text-anchor="middle" font-weight="bold">Buck 5 V</text><text x="420" y="63" text-anchor="middle">≥ 3 A</text>
+<line x1="150" y1="50" x2="200" y2="50" stroke="#d23" stroke-width="3"/><line x1="310" y1="50" x2="360" y2="50" stroke="#d23" stroke-width="3"/>
+<line x1="480" y1="50" x2="560" y2="50" stroke="#d23" stroke-width="3"/>
+<line x1="560" y1="50" x2="560" y2="150" stroke="#d23" stroke-width="3"/><line x1="560" y1="50" x2="800" y2="50" stroke="#d23" stroke-width="3"/><line x1="800" y1="50" x2="800" y2="150" stroke="#d23" stroke-width="3"/>
+<text x="600" y="42" fill="#d23">5 V → pin 5V di A e di B</text>
+<!-- boards -->
+<rect x="420" y="150" width="260" height="290" rx="8" fill="#f1ecff" stroke="#7a3db8" stroke-width="2"/>
+<text x="550" y="175" text-anchor="middle" font-weight="bold" font-size="15">Scheda A (master)</text>
+<text x="550" y="195" text-anchor="middle">ESP32-P4 + C6 + microSD</text>
+<rect x="740" y="150" width="240" height="290" rx="8" fill="#f1ecff" stroke="#7a3db8" stroke-width="2"/>
+<text x="860" y="175" text-anchor="middle" font-weight="bold" font-size="15">Scheda B (slave)</text>
+<text x="860" y="195" text-anchor="middle">ESP32-P4 + C6 + microSD</text>
+<!-- pins on A -->
+<g font-size="12"><text x="430" y="225">CSI ⇐ camera SX</text><text x="430" y="250">GPIO TRIG →</text><text x="430" y="275">I2C SDA / SCL</text><text x="430" y="300">LP-GPIO IMU_INT ←</text><text x="430" y="325">ADC BATT ←</text><text x="430" y="350">GPIO LED →</text>
+<text x="590" y="250">SYNC →</text><text x="590" y="275">WAKE_B →</text><text x="590" y="300">UART TX →</text><text x="590" y="325">UART RX ←</text><text x="560" y="420">GND</text></g>
+<g font-size="12"><text x="750" y="250">← SYNC</text><text x="750" y="275">← WAKE (LP-GPIO)</text><text x="750" y="300">← UART RX</text><text x="750" y="325">→ UART TX</text><text x="860" y="225">CSI ⇐ camera DX</text><text x="860" y="420">GND</text></g>
+<!-- A-B links -->
+<line x1="680" y1="246" x2="740" y2="246" stroke="#06c" stroke-width="2"/><line x1="680" y1="271" x2="740" y2="271" stroke="#06c" stroke-width="2"/>
+<line x1="680" y1="296" x2="740" y2="296" stroke="#06c" stroke-width="2"/><line x1="680" y1="321" x2="740" y2="321" stroke="#06c" stroke-width="2"/>
+<line x1="680" y1="416" x2="740" y2="416" stroke="#222" stroke-width="3"/>
+<!-- cameras -->
+<rect x="200" y="140" width="170" height="70" rx="6" fill="#fff" stroke="#7a3db8"/><text x="285" y="165" text-anchor="middle" font-weight="bold">OV9281 SINISTRA</text><text x="285" y="183" text-anchor="middle">J3: TRIG + GND</text><text x="285" y="200" text-anchor="middle" class="mut">flat MIPI → A</text>
+<line x1="370" y1="175" x2="420" y2="220" stroke="#7a3db8" stroke-width="4"/>
+<rect x="760" y="470" width="190" height="70" rx="6" fill="#fff" stroke="#7a3db8"/><text x="855" y="495" text-anchor="middle" font-weight="bold">OV9281 DESTRA</text><text x="855" y="513" text-anchor="middle">J3: TRIG + GND</text><text x="855" y="530" text-anchor="middle" class="mut">flat MIPI → B</text>
+<line x1="900" y1="470" x2="900" y2="440" stroke="#7a3db8" stroke-width="4"/>
+<!-- trigger fanout -->
+<path d="M420,246 L390,246 L390,215" stroke="#c60" stroke-width="2.5" fill="none"/>
+<path d="M390,246 L390,500 L760,500" stroke="#c60" stroke-width="2.5" fill="none"/>
+<text x="400" y="495" fill="#c60">TRIG (stesso filo a tutte e due le J3)</text>
+<!-- IMU -->
+<rect x="200" y="260" width="170" height="70" rx="6" fill="#fff" stroke="#1a8a3a"/><text x="285" y="285" text-anchor="middle" font-weight="bold">MPU6050</text><text x="285" y="303" text-anchor="middle">VCC 3,3 V di A</text><text x="285" y="320" text-anchor="middle">INT → risveglio</text>
+<line x1="370" y1="275" x2="420" y2="271" stroke="#1a8a3a" stroke-width="2.5"/><line x1="370" y1="300" x2="420" y2="296" stroke="#1a8a3a" stroke-width="2.5" stroke-dasharray="5,3"/>
+<!-- battery divider -->
+<rect x="200" y="350" width="170" height="60" rx="6" fill="#fff" stroke="#b08800"/><text x="285" y="374" text-anchor="middle" font-weight="bold">Partitore batteria</text><text x="285" y="392" text-anchor="middle">100 kΩ / 33 kΩ</text>
+<line x1="370" y1="380" x2="420" y2="321" stroke="#b08800" stroke-width="2.5"/>
+<path d="M150,80 L150,380 L200,380" stroke="#d23" stroke-width="1.5" fill="none" stroke-dasharray="4,3"/><text x="40" y="240" fill="#d23" font-size="12">batteria (dopo</text><text x="40" y="255" fill="#d23" font-size="12">l'interruttore)</text>
+<!-- LED -->
+<rect x="200" y="430" width="170" height="45" rx="6" fill="#fff" stroke="#e0a"/><text x="285" y="458" text-anchor="middle" font-weight="bold">LED WS2812</text>
+<line x1="370" y1="452" x2="420" y2="346" stroke="#e0a" stroke-width="2.5"/>
+</svg>
+
+<h2>3. Ogni contatto e cosa ci arriva</h2>
+<table>
+<tr><th>Nodo / piedino</th><th>Ci arriva</th><th>Vincolo</th></tr>
+<tr><td><b>Batteria +</b></td><td>fusibile 3 A → interruttore → IN+ del buck; dopo l'interruttore anche R 100 kΩ del partitore</td><td></td></tr>
+<tr><td><b>Buck OUT 5 V</b></td><td>pin 5V di A · pin 5V di B</td><td>fili corti, 0,75 mm²</td></tr>
+<tr><td><b>GND comune</b> (morsetto)</td><td>batteria − · buck IN−/OUT− · GND di A · GND di B · GND MPU6050 · R 33 kΩ · J3 GND camera SX · J3 GND camera DX · GND LED</td><td>un solo punto; il GND fra A e B è obbligatorio (segnali SYNC/UART/TRIG)</td></tr>
+<tr><td><b>A · CSI</b></td><td>flat camera SINISTRA</td><td></td></tr>
+<tr><td><b>B · CSI</b></td><td>flat camera DESTRA</td><td></td></tr>
+<tr><td><b>A · GPIO TRIG</b></td><td>J3 TRIG camera SX + J3 TRIG camera DX (in parallelo)</td><td>3,3 V; misuro la corrente delle 2 opto: se > 20 mA uso 2 GPIO separati</td></tr>
+<tr><td><b>A · I2C SDA / SCL</b></td><td>SDA / SCL MPU6050</td><td>MPU6050 sempre sullo stesso 3,3 V di A: niente ritorno di corrente (lezione 17/11)</td></tr>
+<tr><td><b>A · 3V3</b></td><td>VCC MPU6050 · VDD LED</td><td>in deep sleep resta acceso</td></tr>
+<tr><td><b>A · LP-GPIO IMU_INT</b></td><td>INT MPU6050</td><td><b>deve essere un GPIO LP (0-15)</b>: sono gli unici che svegliano la P4 dal deep sleep</td></tr>
+<tr><td><b>A · ADC BATT</b></td><td>punto centrale del partitore (100 kΩ verso batteria, 33 kΩ verso GND)</td><td>pin ADC1; 12,6 V → 3,13 V</td></tr>
+<tr><td><b>A · GPIO LED</b></td><td>330 Ω → DIN del WS2812</td><td></td></tr>
+<tr><td><b>A · SYNC → B · SYNC</b></td><td>filo diretto</td><td>impulso a inizio registrazione: azzera il contatore frame su tutte e due</td></tr>
+<tr><td><b>A · WAKE_B → B · WAKE</b></td><td>filo diretto</td><td>su B un GPIO LP: A sveglia B</td></tr>
+<tr><td><b>A · UART TX → B · RX</b> e <b>B · TX → A · RX</b></td><td>incrociati</td><td>comandi (start/stop), ora comune, stato SD/batteria di B</td></tr>
+</table>
+
+<h2>4. Come lavora</h2>
+<ul>
+<li><b>Accensione:</b> A dorme in deep sleep. Il movimento alza l'INT del MPU6050 e sveglia A, poi A sveglia B col filo WAKE. La stessa idea del v2, ma senza MOSFET.</li>
+<li><b>Sincronia:</b> A manda il TRIG a 15 Hz a tutte e due le camere: i due scatti partono nello stesso istante, perché il filo è lo stesso. SYNC azzera i contatori: il frame N di A e il frame N di B sono lo stesso istante.</li>
+<li><b>Dati:</b> ognuna registra in H.264 sulla sua SD. A scrive anche il CSV IMU a 50 Hz con il numero di frame, la batteria e la velocità BLE (CooSpo via C6).</li>
+<li><b>Scarico:</b> a bici ferma il wifi delle C6 si accende e il Mac scarica i file via HTTP. Niente Tailscale.</li>
+<li><b>Spegnimento:</b> dopo 5 minuti fermo A chiude i file, ferma B e tutti e due vanno in deep sleep. A arma il risveglio sull'INT.</li>
+<li><b>LED:</b> verde = registra · blu = scarica via wifi · rosso lampeggiante = batteria sotto 10 V · rosso fisso = errore (SD o camera).</li>
+</ul>
+<div class="warn"><b>Da chiudere con le prove di oggi</b> (<code>logger/hw3/PROVA_20261117.md</code>): modello esatto delle schede (connettore del flat, GPIO LP liberi, C6 a bordo sì/no) · trigger esterno dell'OV9281 nel driver · consumo in deep sleep (prova 7): se è alto, rimetto il latch MOSFET del v2 davanti al buck.</div>
+</body></html>
