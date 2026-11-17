@@ -10,3 +10,12 @@ fi
 # HOLD a 0 V qui, senza aspettare gpio-poweroff (sul Pi 5 lo spegnimento lo fa il firmware e GPIO26 può restare alto).
 # I dischi sono già smontati/sola lettura: staccare la corrente adesso è sicuro.
 /usr/bin/pinctrl set 26 op dl
+# Con HOLD a 0 V la corrente deve cadere SUBITO. Se siamo ancora vivi, WAKE lo tiene alto l'INT dell'IMU riscattato
+# dopo il controllo (sensibilità al massimo: basta la ventola che si ferma). Pulisco il latch ogni secondo; se
+# continua a riscattare per 10 s la bici si muove davvero -> riavvio. Mai fermo col LED rosso (Daniele 17/11).
+for i in 1 2 3 4 5 6 7 8 9 10; do
+    sleep 1
+    /usr/bin/python3 /home/asmile-logger/imu_wake.py stato > /dev/null 2>&1   # leggere INT_STATUS pulisce il latch
+done
+echo "imu_wake: corrente non tagliata dopo 10 s -> riavvio" > /dev/kmsg
+echo b > /proc/sysrq-trigger
