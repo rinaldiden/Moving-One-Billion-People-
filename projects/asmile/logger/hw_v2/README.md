@@ -74,4 +74,5 @@ Stato e passi rimasti: `agents/TODO_capo.md`, sezione 2026-11-16. Script IMU: `p
 ## Modifiche a banco 2026-11-17 (Daniele) — funzionante
 - Modulo ADS1115: tolte le 2 pull-up 10k (1002) su SDA e SCL (ritorno di corrente sul 3,3 V del Pi spento).
 - 3V3_SEMPRE: tolto il condensatore in uscita al 1117 (era a 7,8 V); 1 kΩ in SERIE fra 3V3_SEMPRE e VCC dell'IMU. Uscita 3,3 V, IMU ok.
+- Poi, senza la 1 kΩ: a logger spento il 1117 sale a 6,7 V (manca il carico minimo). Il 1117 va sostituito con un HT7533; nel frattempo resta una 1 kΩ (in parallelo verso GND, oppure in serie all IMU).
 - Risultato: spegnimento automatico pulito (LED spento, corrente tagliata) e riaccensione al primo tocco, con la soglia IMU al massimo (MOT_DUR 1, 40 Hz, passa-alto 0,63 Hz).
