@@ -195,6 +195,57 @@ def sync_sensors(lg, dest):
                            stderr=subprocess.DEVNULL)
 
 
+# --- Batteria del SOLO logger001 (hostname ancora "asmile-logger"): ADS1115 0x48, A0 = VSW dopo il MOSFET,
+# partitore 100k/33k. Sotto 10 V avviso Daniele su Telegram (Daniele 2026-11-17). Ai prossimi logger: LED di stato.
+BATT_HOST = "asmile-logger"
+BATT_MIN_V, BATT_OK_V = 10.0, 10.3          # isteresi: torna a "carica" sopra 10.3 V
+BATT_RIPETI_S = 6 * 3600                    # se resta bassa, riavvisa ogni 6 ore
+BATT_STATO = os.path.join(DEST_BASE, ".batteria_logger001.json")
+TG_ENV = os.path.expanduser("~/progetti/doppio/telegram-brain/.env")
+ADS_PY = (
+    "import smbus2,time\n"
+    "b=smbus2.SMBus(1);v=[]\n"
+    "for _ in range(8):\n"
+    " b.write_i2c_block_data(0x48,1,[0xC3,0x83]);time.sleep(0.01)\n"   # AIN0-GND, ±4.096 V, single-shot
+    " r=b.read_i2c_block_data(0x48,0,2);x=r[0]<<8|r[1];x-=65536 if x&0x8000 else 0;v.append(x*4.096/32768)\n"
+    "print(sum(v)/len(v)*133/33)\n")
+
+
+def telegram(testo):
+    import urllib.request
+    env = dict(l.strip().split("=", 1) for l in open(TG_ENV) if "=" in l and not l.startswith("#"))
+    env = {k: v.strip().strip('"\'') for k, v in env.items()}
+    req = urllib.request.Request(f"https://api.telegram.org/bot{env['TELEGRAM_TOKEN']}/sendMessage",
+                                 data=json.dumps({"chat_id": int(env["ALLOWED_USER_ID"]), "text": testo}).encode(),
+                                 headers={"Content-Type": "application/json"})
+    urllib.request.urlopen(req, timeout=15).read()
+
+
+def check_batteria(lg):
+    import time
+    r = ssh(lg, "python3 -c " + shlex.quote(ADS_PY))
+    try:
+        v = float(r.stdout.strip())
+    except ValueError:
+        print(f"[{lg['name']}] batteria: lettura fallita ({r.stderr.strip()[:80]})")
+        return
+    print(f"[{lg['name']}] batteria {v:.2f} V")
+    try:
+        st = json.load(open(BATT_STATO))
+    except Exception:
+        st = {}
+    now = time.time()
+    if v < BATT_MIN_V:
+        if now - st.get("avvisato", 0) >= BATT_RIPETI_S:
+            telegram(f"🔋 Logger 001: batteria a {v:.1f} V (sotto {BATT_MIN_V:.0f} V). Attaccalo alla corrente.")
+            st["avvisato"] = now
+            print(f"[{lg['name']}] avviso Telegram inviato")
+    elif v >= BATT_OK_V:
+        st["avvisato"] = 0
+    st.update(ultimo_v=round(v, 2), ultimo_t=now)
+    json.dump(st, open(BATT_STATO, "w"))
+
+
 def main():
     os.makedirs(DEST_BASE, exist_ok=True)
     loggers = discover_loggers()
@@ -211,6 +262,8 @@ def main():
         if not reachable(lg):
             print(f"[{lg['name']}] non raggiungibile (Tailscale off?) - skip")
             continue
+        if lg["name"] == BATT_HOST:
+            check_batteria(lg)
         n = pull_sessions(lg) if lg.get("layout") == "sessions" else pull_logger(lg)
         print(f"[{lg['name']}] scaricati+cancellati {n} segmenti")
         tot += n
