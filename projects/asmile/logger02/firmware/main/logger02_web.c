@@ -26,14 +26,18 @@
 static const char *TAG = "web";
 #define IP_B "192.168.1.124"
 
-static const char PAGINA[] =
-    "<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width'>"
-    "<title>logger02</title><style>body{font-family:sans-serif;background:#111;color:#eee;margin:12px}"
-    "img{width:49%;min-width:300px;background:#222}pre{font-size:12px;white-space:pre-wrap}</style></head><body>"
-    "<h3>logger02 — A (sinistra) | B (destra)</h3><img id=a><img id=b>"
-    "<pre id=s></pre><script>let h=location.hostname;a.src='http://'+h+':81/stream';b.src='http://'+h+':82/b/stream';async function t(){try{let a=await(await fetch('/api/stato')).json();"
-    "let b=await(await fetch('/b/api/stato')).json();document.getElementById('s').textContent="
-    "JSON.stringify({A:a,B:b},null,1)}catch(e){}}setInterval(t,2000);t()</script></body></html>";
+static const char PAGINA[] =        /* stessa pagina dello streaming di asmile #001 (pi/camera/stream_server.py) */
+    "<!DOCTYPE html><html><head><meta charset=utf-8><title>Asmile Cameras</title><style>"
+    "body{background:#111;margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh}"
+    "h1{color:#888;font-family:monospace}.cams{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}"
+    "img{border:2px solid #333;width:640px;max-width:48vw;background:#222}"
+    "pre{color:#777;font:11px monospace;max-width:1300px;white-space:pre-wrap}</style></head><body>"
+    "<h1>ASMILE STEREO — logger02</h1><div class=cams><img id=a><img id=b></div><pre id=s></pre>"
+    "<script>let h=location.hostname;a.src='http://'+h+':81/stream';b.src='http://'+h+':82/b/stream';"
+    "async function t(){try{let A=await(await fetch('/api/stato')).json(),B=await(await fetch('/b/api/stato')).json();"
+    "s.textContent='A luce '+A.rec.luma+' esp '+A.rec.esposizione_us+'us g '+A.rec.guadagno+' | B luce '+B.rec.luma+"
+    "' | sync camere '+(B.sync.fase_camere_us||'-')+' us | batteria '+(A.imu?A.imu.batteria_v:'-')+' V'}catch(e){}}"
+    "setInterval(t,2000);t()</script></body></html>";
 
 static esp_err_t h_root(httpd_req_t *req)
 {

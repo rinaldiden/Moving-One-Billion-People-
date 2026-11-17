@@ -139,6 +139,9 @@ static void comando(const char *riga)
                 }
             }
         }
+    } else if (riga[0] == 'E' && !logger02_ruolo()->is_a) {
+        unsigned long e, g;
+        if (sscanf(riga, "E %lu %lu", &e, &g) == 2) logger02_rec_esposizione(e, g);
     } else if (!strcmp(riga, "Z")) {
         logger02_dormi("comando dalla A");
     } else if (!strncmp(riga, "L ", 2)) {

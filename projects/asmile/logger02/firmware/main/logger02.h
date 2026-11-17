@@ -56,7 +56,8 @@ void logger02_rec_fase(int64_t *t_ultimo_locale, uint32_t *frame, double *period
 void logger02_rec_riferimento(int64_t t_rif_a, uint32_t f_rif, double p_us);   /* B: numerazione comune */
 void logger02_rec_ritarda(int64_t us);                          /* B: sposta la fase della camera */
 uint32_t logger02_rec_correzioni(void);
-void logger02_rec_standby(void);              /* camera in standby software (prima del deep sleep) */
+void logger02_rec_standby(void);
+void logger02_rec_esposizione(uint32_t exp16, uint32_t gain);  /* B: valori decisi dalla A */              /* camera in standby software (prima del deep sleep) */
 double logger02_rec_riga_us(void);
 
 /* A: IMU, batteria, autospegnimento */

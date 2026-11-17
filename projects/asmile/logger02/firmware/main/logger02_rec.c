@@ -111,6 +111,67 @@ static uint8_t sens_r(uint16_t reg)
     return v;
 }
 
+/* --- esposizione automatica (il driver OV9281 non ne ha: esposizione fissa ~0,5 ms = immagine scura) ---
+ * La A misura la luminosità e decide; manda gli stessi valori alla B (stereo: due camere identiche). */
+#define AE_TARGET       105          /* luminosità media voluta (0-255), come rpicam su #001 */
+#define AE_EXP_MAX_US   19000        /* come #001 (rpicam non limita l'otturatore): fino a quasi tutto il fotogramma */
+#define AE_GAIN_MAX     0xF0         /* 15× (0x10 = 1×) */
+static volatile uint32_t s_exp16 = 0x2a9;    /* esposizione in 1/16 di riga */
+static volatile uint32_t s_gain = 0x18;
+static volatile int s_ae_luma = -1;
+
+static void sens_w(uint16_t reg, uint8_t v);
+static void applica_esposizione(uint32_t exp16, uint32_t gain)
+{
+    if (!s_sens) return;
+    sens_w(0x3500, (exp16 >> 16) & 0x0f);
+    sens_w(0x3501, (exp16 >> 8) & 0xff);
+    sens_w(0x3502, exp16 & 0xff);
+    sens_w(0x3509, gain & 0xff);
+}
+
+static int luma_media(const uint8_t *yuv, uint32_t len)
+{
+    /* YUV420 Espressif (righe "U Y Y" / "V Y Y"): la camera è mono, U/V ≈ 128 → Y = (3*media - 128) / 2 */
+    uint64_t somma = 0;
+    uint32_t n = 0;
+    for (uint32_t i = 0; i < len; i += 61) { somma += yuv[i]; n++; }
+    int m = n ? (int)(somma / n) : 0;
+    int y = (3 * m - 128) / 2;
+    return y < 0 ? 0 : y > 255 ? 255 : y;
+}
+
+static void ae_passo(const uint8_t *yuv, uint32_t len)
+{
+    int y = luma_media(yuv, len);
+    s_ae_luma = y;
+    if (y < 1) y = 1;
+    double f = (double)AE_TARGET / y;
+    if (f > 0.93 && f < 1.07) return;                  /* già a posto: niente sfarfallio */
+    if (f > 2.0) f = 2.0;
+    if (f < 0.5) f = 0.5;
+    double riga = s_vts0 ? s_periodo_us / s_vts0 : 11.0;
+    double exp_max16 = AE_EXP_MAX_US / riga * 16;
+    double prodotto = (double)s_exp16 * s_gain * f;     /* luce totale = esposizione × guadagno */
+    double e = prodotto / 0x10, g = 0x10;               /* prima allunga l'esposizione col guadagno a 1× */
+    if (e > exp_max16) { e = exp_max16; g = prodotto / e; }
+    if (e < 16) e = 16;
+    if (g > AE_GAIN_MAX) g = AE_GAIN_MAX;
+    s_exp16 = (uint32_t)e;
+    s_gain = (uint32_t)g;
+    applica_esposizione(s_exp16, s_gain);
+    char m[40];
+    snprintf(m, sizeof(m), "E %lu %lu", (unsigned long)s_exp16, (unsigned long)s_gain);
+    logger02_link_invia(m);                            /* la B usa gli stessi valori */
+}
+
+void logger02_rec_esposizione(uint32_t exp16, uint32_t gain)
+{
+    s_exp16 = exp16;
+    s_gain = gain;
+    applica_esposizione(exp16, gain);
+}
+
 static void vts(uint16_t v)
 {
     sens_w(0x380E, v >> 8);
@@ -264,6 +325,8 @@ static void rec_task(void *arg)
                 ioctl(s_enc, VIDIOC_DQBUF, &eo);
             }
         }
+        if (logger02_ruolo()->is_a && f % 10 == 0) ae_passo(s_buf[b.index], b.bytesused);
+        else if (!logger02_ruolo()->is_a && f % 10 == 0) s_ae_luma = luma_media(s_buf[b.index], b.bytesused);
         jpeg_dal_frame(s_buf[b.index], b.bytesused);
         ioctl(s_cap, VIDIOC_QBUF, &b);
     }
@@ -397,8 +460,9 @@ size_t logger02_rec_jpeg(uint8_t *out, size_t max)
 
 void logger02_rec_stato(char *json, size_t n)
 {
-    snprintf(json, n, "{\"registra\":%s,\"sessione\":\"%s\",\"file\":\"%s\",\"fotogrammi\":%lu,\"scritti\":%lu,"
+    snprintf(json, n, "{\"luma\":%d,\"esposizione_us\":%.0f,\"guadagno\":%.2f,\"registra\":%s,\"sessione\":\"%s\",\"file\":\"%s\",\"fotogrammi\":%lu,\"scritti\":%lu,"
              "\"pezzi\":%lu,\"mb\":%.1f,\"sd_libero_mb\":%llu}",
+             s_ae_luma, s_vts0 ? s_exp16 / 16.0 * s_periodo_us / s_vts0 : 0, s_gain / 16.0,
              s_rec ? "true" : "false", s_sess, s_file, (unsigned long)s_frame, (unsigned long)s_scritti,
              (unsigned long)s_seg, s_bytes / 1e6, logger02_sd_libero_mb());
 }
