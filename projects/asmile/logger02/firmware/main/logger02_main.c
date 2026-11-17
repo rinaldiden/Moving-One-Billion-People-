@@ -27,6 +27,7 @@ static void rete_task(void *arg)
         mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);
         xEventGroupSetBits(s_ev, 1);
         ESP_LOGI(TAG, "wifi connesso");
+        logger02_tailscale_start();         /* A: compare come "logger02" su Tailscale */
     }
     vTaskDelete(NULL);
 }

@@ -68,14 +68,15 @@ static esp_err_t h_stream(httpd_req_t *req)
 
 static esp_err_t h_stato(httpd_req_t *req)
 {
-    char rec[320], sync[320], imu[320], out[1100];
+    char rec[320], sync[480], imu[320], ts[96], out[1400];
     logger02_rec_stato(rec, sizeof(rec));
     logger02_sync_stato(sync, sizeof(sync));
     if (logger02_ruolo()->is_a) logger02_imu_stato(imu, sizeof(imu));
     else snprintf(imu, sizeof(imu), "null");
-    snprintf(out, sizeof(out), "{\"scheda\":\"%s\",\"uptime_s\":%lld,\"t_us\":%lld,\"t_a_us\":%lld,\"rec\":%s,\"sync\":%s,\"imu\":%s}",
+    logger02_tailscale_stato(ts, sizeof(ts));
+    snprintf(out, sizeof(out), "{\"scheda\":\"%s\",\"uptime_s\":%lld,\"t_us\":%lld,\"t_a_us\":%lld,\"rec\":%s,\"sync\":%s,\"imu\":%s,\"tailscale\":%s}",
              logger02_ruolo()->nome, esp_timer_get_time() / 1000000, esp_timer_get_time(),
-             logger02_t_a(esp_timer_get_time()), rec, sync, imu);
+             logger02_t_a(esp_timer_get_time()), rec, sync, imu, ts);
     httpd_resp_set_type(req, "application/json");
     return httpd_resp_sendstr(req, out);
 }
