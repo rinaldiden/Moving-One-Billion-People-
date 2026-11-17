@@ -124,3 +124,4 @@ Dettaglio e domande in `agents/sicurezza/ARCHITETTURA_SICUREZZA.md` §8. Ordine:
 - logger001: ogni giro di download (launchd 5 min) legge la batteria (ADS1115 A0, partitore 100k/33k). Sotto 10 V → Telegram a Daniele, ripete ogni 6 h finché non torna sopra 10,3 V. SOLO su logger001.
 - logger001 resta così: niente condensatore/pulsante di prima accensione (se l'IMU perde alimentazione serve il ponticello WAKE→3V3).
 - Prossimi logger (HW3 ESP32-P4): LED di stato all'accensione (colore = recording / batteria scarica / errore); ripensare la prima accensione senza ponticello.
+- 2026-11-17 logger001: ritorno di corrente sul 3,3 V del Pi spento dal modulo ADS1115 → togliere le 2 pull-up 10k del modulo (SDA/SCL). Verifica: pin 1 a logger spento ≈ 0 V; poi rileggere IMU 0x68 + ADS 0x48. HW3: moduli sul bus I2C senza pull-up proprie se c'è un dispositivo sempre alimentato.
