@@ -1,0 +1,30 @@
+#!/bin/bash
+# Blocca il commit se porta segreti su GitHub (deciso 17/11/2026 dopo la chiave Tailscale nel .bin di logger02).
+#  1) niente firmware/binari compilati (.bin .elf .hex .uf2): dentro ci finiscono in chiaro i CONFIG_ (chiavi, wifi)
+#  2) niente chiavi riconoscibili: Tailscale, GitHub, OpenAI/Anthropic, AWS, Telegram bot, chiavi private
+#  3) niente valori dei file locali segreti (sdkconfig.defaults.local, .env) dentro altri file
+# Non stampa mai il segreto. Installazione: bash .githooks/installa.sh
+set -u
+male=0
+FILE=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$FILE" ] && exit 0
+while IFS= read -r f; do
+    case "$f" in *.bin|*.elf|*.hex|*.uf2) echo "STOP segreti: $f è un firmware compilato, non va su git"; male=1 ;; esac
+done <<< "$FILE"
+RE='tskey-[a-z]+-[A-Za-z0-9]{6,}-[A-Za-z0-9]{12,}|gh[pousr]_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{40,}|sk-ant-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{32,}|AKIA[0-9A-Z]{16}|[0-9]{8,10}:AA[A-Za-z0-9_-]{33}|-----BEGIN [A-Z ]*PRIVATE KEY-----'
+VALORI=$(mktemp); trap 'rm -f "$VALORI"' EXIT
+# valori dei file segreti locali (gitignorati), lunghi almeno 8 caratteri
+find . -path ./.git -prune -o \( -name 'sdkconfig.defaults.local' -o -name '.env' \) -type f -print 2>/dev/null | while read -r s; do
+    sed -nE 's/^[A-Za-z0-9_]+="?([^"]{8,})"?$/\1/p' "$s"
+done | sort -u > "$VALORI"
+while IFS= read -r f; do
+    case "$f" in *sdkconfig.defaults.local|*.env) echo "STOP segreti: $f è un file di segreti locali"; male=1; continue ;; esac
+    if git show ":$f" 2>/dev/null | LC_ALL=C grep -q -a -E -- "$RE"; then
+        echo "STOP segreti: $f contiene una chiave/token (non la stampo)"; male=1
+    fi
+    if [ -s "$VALORI" ] && git show ":$f" 2>/dev/null | LC_ALL=C grep -q -a -F -f "$VALORI"; then
+        echo "STOP segreti: $f contiene un valore di sdkconfig.defaults.local/.env (password o chiave)"; male=1
+    fi
+done <<< "$FILE"
+[ $male -eq 0 ] || echo "Commit fermato. Togli il segreto (Portachiavi/NVS), non usare --no-verify."
+exit $male

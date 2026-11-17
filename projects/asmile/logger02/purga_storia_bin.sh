@@ -1,7 +1,7 @@
 #!/bin/bash
 # Toglie i firmware .bin di logger02/rilasci/ da TUTTA la storia di GitHub (17/11/2026: logger02_38fd492f-dirty.bin,
 # commit 02e5b2a3, aveva dentro una chiave auth Tailscale → avviso secret scanning).
-# La chiave è già morta (monouso, consumata dalla A, pannello: "invalidated"), quindi questo è pulizia, non emergenza.
+# FATTO il 17/11/2026 22:45 (Daniele: "sistema"): main su GitHub 02e5b2a3 → 68f929d8. La chiave era già morta (monouso, consumata dalla A, pannello: "invalidated"), quindi questo è pulizia, non emergenza.
 #
 # RISCRIVE LA STORIA E FA FORCE PUSH: parte solo con la firma di Daniele (D015) e con FIRMA=D015.
 # Lavora su un clone --mirror in /tmp: il repo di lavoro (con le modifiche non committate degli agenti) non si tocca.
@@ -43,7 +43,8 @@ if [ "${FIRMA:-}" != "D015" ]; then
     echo "prova a secco finita (clone in $DIR). Per spingere: FIRMA=D015 bash $0"
     exit 0
 fi
-git remote add origin "$URL"
+git config --unset remote.origin.mirror 2>/dev/null || true   # 17/11: il clone --mirror rifiuta i refspec
+git remote get-url origin >/dev/null 2>&1 || git remote add origin "$URL"
 git push --force origin 'refs/heads/*:refs/heads/*'
 echo "fatto. Ora: 1) nel repo di lavoro git fetch origin && git rebase --onto origin/main 02e5b2a3 main"
 echo "           2) GitHub → Security → Secret scanning → chiudi l'avviso come «Revoked»"
