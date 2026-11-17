@@ -1,11 +1,5 @@
-set(srcs "simple_video_server_example.c" "logger02_ruolo.c" "logger02_rete.c" "logger02_saluto.c")
-set(html_files "../frontend/gzipped/index.html.gz"
-               "../frontend/gzipped/loading.jpg.gz"
-               "../frontend/gzipped/favicon.ico.gz"
-               "../frontend/gzipped/assets/index.js.gz"
-               "../frontend/gzipped/assets/index.css.gz")
-
-idf_component_register(SRCS "${srcs}"
+idf_component_register(SRCS "logger02_main.c" "logger02_ruolo.c" "logger02_rete.c" "logger02_saluto.c"
+                            "logger02_sd_ora.c" "logger02_link.c" "logger02_rec.c" "logger02_imu.c" "logger02_web.c"
                        PRIV_INCLUDE_DIRS .
-                       EMBED_TXTFILES ${html_files}
                        EMBED_FILES "saluto.pcm")
+target_compile_options(${COMPONENT_LIB} PRIVATE -Wno-format-truncation)

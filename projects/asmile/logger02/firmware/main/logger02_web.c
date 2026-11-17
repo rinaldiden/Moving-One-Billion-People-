@@ -1,0 +1,294 @@
+/* Server HTTP (porta 80). La A è l'unica faccia verso l'esterno: /b/<percorso> viene girato alla B.
+ *   GET  /                  pagina con streaming A + B
+ *   GET  :81/stream         MJPEG (solo banco: nei logger nessuno lo apre e non costa niente). Server a parte:
+ *                           uno streaming occupa il suo server finché resta aperto. Su A, :82/b/stream = quello della B.
+ *   GET  /api/stato         JSON: ruolo, uptime, registrazione, sync, IMU, batteria
+ *   GET  /api/frames        ultimi tempi dei fotogrammi in tempo A (per misurare lo sfasamento A↔B)
+ *   GET  /api/files         elenco file in /sd/rec
+ *   GET  /dl?f=<nome>       scarica un file
+ *   POST /del?f=<nome>      cancella (il Mac cancella solo dopo aver controllato la dimensione)
+ *   POST /ota               nuovo firmware (corpo = .bin), poi riavvio
+ *   POST /dormi             deep sleep subito (prova) */
+#include <stdio.h>
+#include <string.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "esp_http_server.h"
+#include "esp_http_client.h"
+#include "esp_ota_ops.h"
+#include "esp_timer.h"
+#include "esp_heap_caps.h"
+#include "esp_log.h"
+#include "logger02.h"
+
+static const char *TAG = "web";
+#define IP_B "192.168.1.124"
+
+static const char PAGINA[] =
+    "<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width'>"
+    "<title>logger02</title><style>body{font-family:sans-serif;background:#111;color:#eee;margin:12px}"
+    "img{width:49%;min-width:300px;background:#222}pre{font-size:12px;white-space:pre-wrap}</style></head><body>"
+    "<h3>logger02 — A (sinistra) | B (destra)</h3><img id=a><img id=b>"
+    "<pre id=s></pre><script>let h=location.hostname;a.src='http://'+h+':81/stream';b.src='http://'+h+':82/b/stream';async function t(){try{let a=await(await fetch('/api/stato')).json();"
+    "let b=await(await fetch('/b/api/stato')).json();document.getElementById('s').textContent="
+    "JSON.stringify({A:a,B:b},null,1)}catch(e){}}setInterval(t,2000);t()</script></body></html>";
+
+static esp_err_t h_root(httpd_req_t *req)
+{
+    httpd_resp_set_type(req, "text/html");
+    return httpd_resp_send(req, PAGINA, sizeof(PAGINA) - 1);
+}
+
+static esp_err_t h_stream(httpd_req_t *req)
+{
+    static const char *B = "123456789000000000000987654321";
+    char hdr[96];
+    size_t max = 1280 * 720 / 2;
+    uint8_t *jpg = heap_caps_malloc(max, MALLOC_CAP_SPIRAM);
+    if (!jpg) return ESP_FAIL;
+    httpd_resp_set_type(req, "multipart/x-mixed-replace;boundary=123456789000000000000987654321");
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+    esp_err_t r = ESP_OK;
+    while (r == ESP_OK) {
+        size_t n = logger02_rec_jpeg(jpg, max);
+        if (!n) {
+            vTaskDelay(pdMS_TO_TICKS(30));
+            continue;
+        }
+        int k = snprintf(hdr, sizeof(hdr), "\r\n--%s\r\nContent-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n", B,
+                         (unsigned)n);
+        r = httpd_resp_send_chunk(req, hdr, k);
+        if (r == ESP_OK) r = httpd_resp_send_chunk(req, (const char *)jpg, n);
+    }
+    free(jpg);
+    return ESP_OK;
+}
+
+static esp_err_t h_stato(httpd_req_t *req)
+{
+    char rec[320], sync[320], imu[320], out[1100];
+    logger02_rec_stato(rec, sizeof(rec));
+    logger02_sync_stato(sync, sizeof(sync));
+    if (logger02_ruolo()->is_a) logger02_imu_stato(imu, sizeof(imu));
+    else snprintf(imu, sizeof(imu), "null");
+    snprintf(out, sizeof(out), "{\"scheda\":\"%s\",\"uptime_s\":%lld,\"t_us\":%lld,\"t_a_us\":%lld,\"rec\":%s,\"sync\":%s,\"imu\":%s}",
+             logger02_ruolo()->nome, esp_timer_get_time() / 1000000, esp_timer_get_time(),
+             logger02_t_a(esp_timer_get_time()), rec, sync, imu);
+    httpd_resp_set_type(req, "application/json");
+    return httpd_resp_sendstr(req, out);
+}
+
+static esp_err_t h_frames(httpd_req_t *req)
+{
+    char out[1400];
+    logger02_rec_ultimi(out, sizeof(out));
+    httpd_resp_set_type(req, "application/json");
+    return httpd_resp_sendstr(req, out);
+}
+
+static esp_err_t h_files(httpd_req_t *req)
+{
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_sendstr_chunk(req, "[");
+    DIR *d = opendir(L02_REC_DIR);
+    bool primo = true;
+    struct dirent *e;
+    char riga[320], p[300];
+    while (d && (e = readdir(d))) {
+        struct stat st;
+        snprintf(p, sizeof(p), L02_REC_DIR "/%s", e->d_name);
+        if (stat(p, &st) != 0 || S_ISDIR(st.st_mode)) continue;
+        snprintf(riga, sizeof(riga), "%s{\"nome\":\"%s\",\"byte\":%ld}", primo ? "" : ",", e->d_name, (long)st.st_size);
+        httpd_resp_sendstr_chunk(req, riga);
+        primo = false;
+    }
+    if (d) closedir(d);
+    httpd_resp_sendstr_chunk(req, "]");
+    return httpd_resp_sendstr_chunk(req, NULL);
+}
+
+static bool nome_ok(httpd_req_t *req, char *path, size_t n)
+{
+    char q[128], f[96];
+    if (httpd_req_get_url_query_str(req, q, sizeof(q)) != ESP_OK || httpd_query_key_value(q, "f", f, sizeof(f)) != ESP_OK
+        || strchr(f, '/') || strstr(f, "..")) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "f mancante o non valido");
+        return false;
+    }
+    snprintf(path, n, L02_REC_DIR "/%s", f);
+    return true;
+}
+
+static esp_err_t h_dl(httpd_req_t *req)
+{
+    char p[160];
+    if (!nome_ok(req, p, sizeof(p))) return ESP_OK;
+    FILE *f = fopen(p, "rb");
+    if (!f) return httpd_resp_send_404(req);
+    httpd_resp_set_type(req, "application/octet-stream");
+    char *buf = heap_caps_malloc(32768, MALLOC_CAP_SPIRAM);
+    size_t n;
+    esp_err_t r = ESP_OK;
+    while (r == ESP_OK && (n = fread(buf, 1, 32768, f)) > 0) r = httpd_resp_send_chunk(req, buf, n);
+    fclose(f);
+    free(buf);
+    return httpd_resp_send_chunk(req, NULL, 0);
+}
+
+static esp_err_t h_del(httpd_req_t *req)
+{
+    char p[160];
+    if (!nome_ok(req, p, sizeof(p))) return ESP_OK;
+    return httpd_resp_sendstr(req, remove(p) == 0 ? "ok" : "errore");
+}
+
+static esp_err_t h_ota(httpd_req_t *req)
+{
+    const esp_partition_t *part = esp_ota_get_next_update_partition(NULL);
+    esp_ota_handle_t h;
+    if (!part || esp_ota_begin(part, OTA_SIZE_UNKNOWN, &h) != ESP_OK) {
+        return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "ota begin");
+    }
+    char *buf = malloc(8192);
+    int resto = req->content_len, n;
+    while (resto > 0) {
+        n = httpd_req_recv(req, buf, resto < 8192 ? resto : 8192);
+        if (n == HTTPD_SOCK_ERR_TIMEOUT) continue;
+        if (n <= 0 || esp_ota_write(h, buf, n) != ESP_OK) {
+            free(buf);
+            esp_ota_abort(h);
+            return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "ota scrittura");
+        }
+        resto -= n;
+    }
+    free(buf);
+    if (esp_ota_end(h) != ESP_OK || esp_ota_set_boot_partition(part) != ESP_OK) {
+        return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "ota fine");
+    }
+    httpd_resp_sendstr(req, "ok, riavvio");
+    ESP_LOGW(TAG, "nuovo firmware in %s: riavvio", part->label);
+    logger02_rec_stop();
+    vTaskDelay(pdMS_TO_TICKS(500));
+    esp_restart();
+    return ESP_OK;
+}
+
+static esp_err_t h_formatta(httpd_req_t *req)
+{
+    char q[48], v[16];
+    if (httpd_req_get_url_query_str(req, q, sizeof(q)) != ESP_OK || httpd_query_key_value(q, "si", v, sizeof(v)) != ESP_OK
+        || strcmp(v, "cancella")) {
+        return httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "serve ?si=cancella");
+    }
+    esp_err_t r = logger02_sd_formatta();
+    httpd_resp_sendstr(req, r == ESP_OK ? "riavvio e formatto la SD in FAT32" : esp_err_to_name(r));
+    if (r == ESP_OK) {
+        vTaskDelay(pdMS_TO_TICKS(500));
+        esp_restart();
+    }
+    return ESP_OK;
+}
+
+static esp_err_t h_dormi(httpd_req_t *req)
+{
+    httpd_resp_sendstr(req, "vado in deep sleep");
+    vTaskDelay(pdMS_TO_TICKS(300));
+    logger02_dormi("comando web");
+    return ESP_OK;
+}
+
+/* A: /b/<x> → http://B/<x>, in streaming (anche POST /b/ota) */
+static esp_err_t proxy_b(httpd_req_t *req, const char *porta)
+{
+    char url[192];
+    snprintf(url, sizeof(url), "http://" IP_B "%s%s", porta, req->uri + 2);
+    esp_http_client_config_t cc = {.url = url, .timeout_ms = 15000, .buffer_size = 8192,
+                                   .method = req->method == HTTP_POST ? HTTP_METHOD_POST : HTTP_METHOD_GET};
+    esp_http_client_handle_t c = esp_http_client_init(&cc);
+    esp_err_t r = esp_http_client_open(c, req->method == HTTP_POST ? req->content_len : 0);
+    char *buf = heap_caps_malloc(16384, MALLOC_CAP_SPIRAM);
+    if (r == ESP_OK && req->method == HTTP_POST) {
+        int resto = req->content_len, n;
+        while (resto > 0 && (n = httpd_req_recv(req, buf, resto < 16384 ? resto : 16384)) > 0) {
+            esp_http_client_write(c, buf, n);
+            resto -= n;
+        }
+    }
+    if (r != ESP_OK || esp_http_client_fetch_headers(c) < 0) {
+        free(buf);
+        esp_http_client_cleanup(c);
+        return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "B non raggiungibile");
+    }
+    char *ct = NULL;
+    if (esp_http_client_get_header(c, "Content-Type", &ct) == ESP_OK && ct) httpd_resp_set_type(req, ct);
+    int n;
+    while ((n = esp_http_client_read(c, buf, 16384)) > 0) {
+        if (httpd_resp_send_chunk(req, buf, n) != ESP_OK) break;
+    }
+    free(buf);
+    esp_http_client_close(c);
+    esp_http_client_cleanup(c);
+    return httpd_resp_send_chunk(req, NULL, 0);
+}
+
+static httpd_handle_t server(uint16_t porta, uint16_t ctrl, int handlers)
+{
+    httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
+    cfg.server_port = porta;
+    cfg.ctrl_port = ctrl;
+    cfg.max_uri_handlers = handlers;
+    cfg.stack_size = 8192;
+    cfg.max_open_sockets = 3;
+    cfg.lru_purge_enable = true;
+    cfg.uri_match_fn = httpd_uri_match_wildcard;
+    httpd_handle_t s = NULL;
+    ESP_ERROR_CHECK(httpd_start(&s, &cfg));
+    return s;
+}
+
+static esp_err_t h_b(httpd_req_t *req)
+{
+    return proxy_b(req, "");
+}
+
+static esp_err_t h_b_stream(httpd_req_t *req)
+{
+    return proxy_b(req, ":81");
+}
+
+esp_err_t logger02_web_start(void)
+{
+    httpd_handle_t s81 = server(81, 32769, 2);
+    httpd_uri_t st = {"/stream", HTTP_GET, h_stream};
+    httpd_register_uri_handler(s81, &st);
+    if (logger02_ruolo()->is_a) {
+        httpd_handle_t s82 = server(82, 32770, 2);
+        httpd_uri_t bs = {"/b/*", HTTP_GET, h_b_stream};
+        httpd_register_uri_handler(s82, &bs);
+    }
+    httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
+    cfg.max_uri_handlers = 16;
+    cfg.stack_size = 8192;
+    cfg.max_open_sockets = 7;
+    cfg.lru_purge_enable = true;
+    cfg.uri_match_fn = httpd_uri_match_wildcard;
+    cfg.recv_wait_timeout = 30;
+    cfg.send_wait_timeout = 30;
+    httpd_handle_t s;
+    ESP_ERROR_CHECK(httpd_start(&s, &cfg));
+    const httpd_uri_t u[] = {
+        {"/", HTTP_GET, h_root}, {"/api/stato", HTTP_GET, h_stato},
+        {"/api/frames", HTTP_GET, h_frames}, {"/api/files", HTTP_GET, h_files}, {"/dl", HTTP_GET, h_dl},
+        {"/del", HTTP_POST, h_del}, {"/ota", HTTP_POST, h_ota}, {"/dormi", HTTP_POST, h_dormi}, {"/formatta", HTTP_POST, h_formatta},
+    };
+    for (size_t i = 0; i < sizeof(u) / sizeof(u[0]); i++) httpd_register_uri_handler(s, &u[i]);
+    if (logger02_ruolo()->is_a) {
+        httpd_uri_t bg = {"/b/*", HTTP_GET, h_b}, bp = {"/b/*", HTTP_POST, h_b};
+        httpd_register_uri_handler(s, &bg);
+        httpd_register_uri_handler(s, &bp);
+    }
+    ESP_LOGI(TAG, "server web su http://%s/", logger02_ruolo()->ip);
+    return ESP_OK;
+}

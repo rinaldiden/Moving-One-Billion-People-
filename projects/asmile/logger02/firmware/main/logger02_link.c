@@ -1,0 +1,190 @@
+/* Collegamento A↔B: filo SYNC (GPIO21) + UART1 (TX22/RX23, incrociata).
+ * Ogni secondo A alza SYNC e manda "S <seq> <t_A_us>". B prende l'istante del fronte con il SUO orologio (ISR),
+ * poi abbina il messaggio: offset = t_A - t_B. Con gli ultimi N campioni fa una retta (offset + deriva) e
+ * misura lo scarto residuo = quanto bene i due orologi sono allineati (la "latenza fra i sync"). */
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "driver/gpio.h"
+#include "driver/uart.h"
+#include "esp_timer.h"
+#include "esp_log.h"
+#include "logger02.h"
+
+static const char *TAG = "link";
+
+#define UARTN       UART_NUM_1
+#define N_FIT       30
+
+static volatile int64_t s_fronte_b;       /* B: istante dell'ultimo fronte SYNC (orologio B) */
+static volatile uint32_t s_fronti;
+
+static int64_t s_tb[N_FIT], s_off[N_FIT];
+static int s_n, s_i;
+static double s_a = 0, s_b = 0;           /* offset(tB) = a + b*(tB - tB0) */
+static int64_t s_tb0;
+static double s_resid_us = -1, s_resid_max_us = -1;
+static uint32_t s_campioni;
+static bool s_valido;
+static portMUX_TYPE s_mux = portMUX_INITIALIZER_UNLOCKED;
+
+static void IRAM_ATTR sync_isr(void *arg)
+{
+    s_fronte_b = esp_timer_get_time();
+    s_fronti++;
+}
+
+static void fit(void)
+{
+    /* minimi quadrati offset = a + b*(tb - tb0) */
+    int n = s_n;
+    int64_t tb0 = s_tb[(s_i - n + N_FIT) % N_FIT];
+    double sx = 0, sy = 0, sxx = 0, sxy = 0;
+    for (int k = 0; k < n; k++) {
+        int j = (s_i - n + k + N_FIT) % N_FIT;
+        double x = (double)(s_tb[j] - tb0) / 1e6, y = (double)s_off[j];
+        sx += x; sy += y; sxx += x * x; sxy += x * y;
+    }
+    double den = n * sxx - sx * sx;
+    double b = n > 1 && den != 0 ? (n * sxy - sx * sy) / den : 0;
+    double a = (sy - b * sx) / n;
+    double ss = 0, mx = 0;
+    for (int k = 0; k < n; k++) {
+        int j = (s_i - n + k + N_FIT) % N_FIT;
+        double x = (double)(s_tb[j] - tb0) / 1e6;
+        double r = (double)s_off[j] - (a + b * x);
+        ss += r * r;
+        if (fabs(r) > mx) mx = fabs(r);
+    }
+    portENTER_CRITICAL(&s_mux);
+    s_a = a; s_b = b; s_tb0 = tb0;
+    s_resid_us = n > 2 ? sqrt(ss / (n - 2)) : -1;
+    s_resid_max_us = mx;
+    s_valido = n >= 3;
+    portEXIT_CRITICAL(&s_mux);
+}
+
+int64_t logger02_t_a(int64_t t)
+{
+    if (logger02_ruolo()->is_a) {
+        return t;
+    }
+    if (!s_valido) {
+        return -1;
+    }
+    portENTER_CRITICAL(&s_mux);
+    double off = s_a + s_b * ((double)(t - s_tb0) / 1e6);
+    portEXIT_CRITICAL(&s_mux);
+    return t + (int64_t)llround(off);
+}
+
+void logger02_link_invia(const char *riga)
+{
+    uart_write_bytes(UARTN, riga, strlen(riga));
+    uart_write_bytes(UARTN, "\n", 1);
+}
+
+static void comando(const char *riga)
+{
+    if (riga[0] == 'S' && !logger02_ruolo()->is_a) {
+        unsigned seq;
+        long long ta;
+        if (sscanf(riga, "S %u %lld", &seq, &ta) == 2) {
+            int64_t tb = s_fronte_b;
+            if (tb == 0 || esp_timer_get_time() - tb > 500000) {
+                return;                         /* fronte vecchio o perso: scarto */
+            }
+            s_tb[s_i] = tb;
+            s_off[s_i] = ta - tb;
+            s_i = (s_i + 1) % N_FIT;
+            if (s_n < N_FIT) s_n++;
+            s_campioni++;
+            fit();
+        }
+    } else if (!strcmp(riga, "Z")) {
+        logger02_dormi("comando dalla A");
+    } else if (!strncmp(riga, "L ", 2)) {
+        ESP_LOGI(TAG, "dall'altra scheda: %s", riga + 2);
+    }
+}
+
+static void rx_task(void *arg)
+{
+    char riga[96];
+    int n = 0;
+    uint8_t c;
+    while (1) {
+        if (uart_read_bytes(UARTN, &c, 1, portMAX_DELAY) == 1) {
+            if (c == '\n' || n == sizeof(riga) - 1) {
+                riga[n] = 0;
+                if (n) comando(riga);
+                n = 0;
+            } else if (c != '\r') {
+                riga[n++] = c;
+            }
+        }
+    }
+}
+
+static void sync_task(void *arg)
+{
+    uint32_t seq = 0;
+    TickType_t t0 = xTaskGetTickCount();
+    while (1) {
+        vTaskDelayUntil(&t0, pdMS_TO_TICKS(1000));
+        int64_t ta;
+        portDISABLE_INTERRUPTS();
+        ta = esp_timer_get_time();
+        gpio_set_level(L02_PIN_SYNC, 1);
+        portENABLE_INTERRUPTS();
+        char m[48];
+        snprintf(m, sizeof(m), "S %lu %lld", (unsigned long)++seq, (long long)ta);
+        logger02_link_invia(m);
+        vTaskDelay(pdMS_TO_TICKS(5));
+        gpio_set_level(L02_PIN_SYNC, 0);
+    }
+}
+
+esp_err_t logger02_link_init(void)
+{
+    uart_config_t cfg = {.baud_rate = 921600, .data_bits = UART_DATA_8_BITS, .parity = UART_PARITY_DISABLE,
+                         .stop_bits = UART_STOP_BITS_1, .flow_ctrl = UART_HW_FLOWCTRL_DISABLE, .source_clk = UART_SCLK_DEFAULT};
+    ESP_ERROR_CHECK(uart_driver_install(UARTN, 2048, 2048, 0, NULL, 0));
+    ESP_ERROR_CHECK(uart_param_config(UARTN, &cfg));
+    ESP_ERROR_CHECK(uart_set_pin(UARTN, L02_PIN_UART_TX, L02_PIN_UART_RX, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    xTaskCreate(rx_task, "link_rx", 4096, NULL, 6, NULL);
+
+    if (logger02_ruolo()->is_a) {
+        gpio_config_t o = {.pin_bit_mask = (1ULL << L02_PIN_SYNC) | (1ULL << L02_PIN_WAKE), .mode = GPIO_MODE_OUTPUT};
+        gpio_config(&o);
+        gpio_set_level(L02_PIN_SYNC, 0);
+        gpio_set_level(L02_PIN_WAKE, 1);            /* sveglia la B (resta alto finché A è sveglia) */
+        xTaskCreate(sync_task, "sync", 3072, NULL, 10, NULL);
+    } else {
+        gpio_config_t wk = {.pin_bit_mask = 1ULL << L02_PIN_WAKE, .mode = GPIO_MODE_INPUT,
+                            .pull_down_en = GPIO_PULLDOWN_ENABLE};
+        gpio_config(&wk);
+        gpio_config_t i = {.pin_bit_mask = 1ULL << L02_PIN_SYNC, .mode = GPIO_MODE_INPUT,
+                           .pull_down_en = GPIO_PULLDOWN_ENABLE, .intr_type = GPIO_INTR_POSEDGE};
+        gpio_config(&i);
+        gpio_install_isr_service(ESP_INTR_FLAG_IRAM | ESP_INTR_FLAG_LEVEL3);
+        gpio_isr_handler_add(L02_PIN_SYNC, sync_isr, NULL);
+    }
+    ESP_LOGI(TAG, "link A↔B pronto (%s)", logger02_ruolo()->is_a ? "master" : "slave");
+    return ESP_OK;
+}
+
+void logger02_sync_stato(char *json, size_t n)
+{
+    if (logger02_ruolo()->is_a) {
+        snprintf(json, n, "{\"ruolo\":\"A\",\"nota\":\"orologio di riferimento\"}");
+        return;
+    }
+    snprintf(json, n,
+             "{\"ruolo\":\"B\",\"valido\":%s,\"campioni\":%lu,\"fronti\":%lu,\"offset_us\":%.1f,"
+             "\"deriva_ppm\":%.3f,\"scarto_rms_us\":%.2f,\"scarto_max_us\":%.2f}",
+             s_valido ? "true" : "false", (unsigned long)s_campioni, (unsigned long)s_fronti, s_a, s_b,
+             s_resid_us, s_resid_max_us);
+}

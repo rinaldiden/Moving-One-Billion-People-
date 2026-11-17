@@ -1,10 +1,26 @@
-/* logger02 (HW3): 2 × Waveshare ESP32-P4-Module-DEV-KIT. Stesso firmware su A e B, il ruolo lo dà il MAC. */
+/* logger02 (HW3): 2 × Waveshare ESP32-P4-Module-DEV-KIT. Stesso firmware su A e B, il ruolo lo dà il MAC.
+ * Orologio unico: esp_timer (µs dal boot) di ogni scheda; B converte i suoi tempi in quelli di A col filo SYNC. */
 #pragma once
 #include <stdbool.h>
+#include <stdint.h>
+#include <stddef.h>
 #include "esp_err.h"
 
+#define L02_SD          "/sd"
+#define L02_REC_DIR     L02_SD "/rec"
+
+/* pin (PIN_logger002.md) */
+#define L02_PIN_IMU_INT     4       /* A: INT MPU6050, LP GPIO → risveglio dal deep sleep */
+#define L02_PIN_WAKE        5       /* A out → B in (LP GPIO su B) */
+#define L02_PIN_SYNC        21      /* A out → B in: impulso ogni secondo per allineare gli orologi */
+#define L02_PIN_UART_TX     22
+#define L02_PIN_UART_RX     23
+#define L02_PIN_BATT_ADC    20      /* A: partitore 100k/33k */
+#define L02_PIN_C6_EN       54      /* reset della C6 (wifi): basso prima del deep sleep */
+#define L02_PIN_SD_PWR      45
+
 typedef struct {
-    bool is_a;            /* A = master: IMU, batteria, trigger, BLE; B = slave */
+    bool is_a;            /* A = master: IMU, batteria, BLE, faccia verso l'esterno; B = slave */
     char nome[16];        /* hostname (NetBIOS: max 15 caratteri) */
     const char *ip;       /* IP fisso su EOLO */
 } logger02_ruolo_t;
@@ -12,3 +28,32 @@ typedef struct {
 const logger02_ruolo_t *logger02_ruolo(void);
 esp_err_t logger02_saluto(void);              /* "Narmade Har!" dall'altoparlante, una volta a ogni accensione */
 esp_err_t logger02_ip_fisso(void);            /* dopo example_connect(): passa da DHCP all'IP fisso del ruolo */
+void logger02_ora_init(void);                 /* SNTP + fuso Italia */
+bool logger02_ora_valida(void);
+void logger02_nome_sessione(char *out, size_t n);  /* YYYYmmdd_HHMMSS, o bootNNNN se l'ora non c'è ancora */
+
+esp_err_t logger02_sd_monta(void);
+uint64_t logger02_sd_libero_mb(void);
+esp_err_t logger02_sd_formatta(void);        /* cancella tutto: solo con l'ok di Daniele */
+
+/* sync A↔B */
+esp_err_t logger02_link_init(void);
+int64_t logger02_t_a(int64_t t_locale_us);    /* tempo locale → tempo della A (su A è identità) */
+void logger02_link_invia(const char *riga);   /* comando all'altra scheda via UART (riga senza \n) */
+void logger02_sync_stato(char *json, size_t n);
+
+/* registrazione */
+esp_err_t logger02_rec_start(void);
+void logger02_rec_stop(void);                 /* chiude i file (prima del deep sleep) */
+uint32_t logger02_rec_frame(void);            /* indice dell'ultimo fotogramma */
+void logger02_rec_stato(char *json, size_t n);
+size_t logger02_rec_jpeg(uint8_t *out, size_t max);   /* ultimo fotogramma in JPEG per lo streaming (0 = niente) */
+void logger02_rec_ultimi(char *json, size_t n);       /* ultimi tempi dei fotogrammi, già in tempo A */
+
+/* A: IMU, batteria, autospegnimento */
+esp_err_t logger02_imu_start(void);
+void logger02_imu_stato(char *json, size_t n);
+float logger02_batteria_v(void);              /* <0 se non collegata */
+void logger02_dormi(const char *motivo);      /* chiude tutto e va in deep sleep (A sveglia con IMU, B con WAKE) */
+
+esp_err_t logger02_web_start(void);
