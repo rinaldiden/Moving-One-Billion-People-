@@ -33,6 +33,39 @@ static const char *TAG = "rec";
 #define N_ULTIMI    32
 
 static int s_cap = -1, s_enc = -1;
+static uint8_t s_hdr[128];                 /* SPS+PPS H.264: in testa a ogni pezzo, così ogni file si apre da solo */
+static size_t s_hdr_len;
+
+/* tipi di NAL presenti nel fotogramma codificato: bit 1<<tipo (5 = IDR, 7 = SPS, 8 = PPS) */
+static uint32_t nal_tipi(const uint8_t *b, size_t n)
+{
+    uint32_t m = 0;
+    for (size_t i = 0; i + 4 < n; i++) {
+        if (b[i] == 0 && b[i + 1] == 0 && b[i + 2] == 1) {
+            m |= 1u << (b[i + 3] & 0x1f);
+            i += 3;
+        }
+    }
+    return m;
+}
+
+static void salva_header(const uint8_t *b, size_t n)
+{
+    size_t start = SIZE_MAX, end = n;
+    for (size_t i = 0; i + 4 < n; i++) {
+        if (b[i] == 0 && b[i + 1] == 0 && b[i + 2] == 1) {
+            int t = b[i + 3] & 0x1f;
+            size_t p = (i > 0 && b[i - 1] == 0) ? i - 1 : i;
+            if ((t == 7 || t == 8) && start == SIZE_MAX) start = p;
+            if (t != 7 && t != 8 && start != SIZE_MAX) { end = p; break; }
+            i += 3;
+        }
+    }
+    if (start != SIZE_MAX && end - start <= sizeof(s_hdr)) {
+        memcpy(s_hdr, b + start, end - start);
+        s_hdr_len = end - start;
+    }
+}
 static uint8_t *s_buf[NBUF];
 static uint8_t *s_enc_out;
 static volatile bool s_rec, s_stop;
@@ -210,9 +243,13 @@ static void rec_task(void *arg)
             ec.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
             ec.memory = V4L2_MEMORY_MMAP;
             if (ioctl(s_enc, VIDIOC_QBUF, &eo) == 0 && ioctl(s_enc, VIDIOC_DQBUF, &ec) == 0) {
-                if (!s_vid || esp_timer_get_time() - s_seg_t0 > SEG_S * 1000000LL) {
+                uint32_t tipi = nal_tipi(s_enc_out, ec.bytesused);
+                if (tipi & (1u << 7)) salva_header(s_enc_out, ec.bytesused);
+                /* nuovo pezzo solo su un fotogramma IDR, con SPS/PPS in testa: ogni file si decodifica da solo */
+                if (!s_vid || (esp_timer_get_time() - s_seg_t0 > SEG_S * 1000000LL && (tipi & (1u << 5)))) {
                     if (s_vid) chiudi_segmento();
                     apri_segmento();
+                    if (s_vid && s_hdr_len && !(tipi & (1u << 7))) fwrite(s_hdr, 1, s_hdr_len, s_vid);
                 }
                 if (s_vid) fwrite(s_enc_out, 1, ec.bytesused, s_vid);
                 if (s_csv) fprintf(s_csv, "%lu,%lld,%lld,%lu\n", (unsigned long)f, (long long)t,

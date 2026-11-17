@@ -23,6 +23,7 @@ static EventGroupHandle_t s_ev;
 /* wifi in background: riprova all'infinito (CONFIG_EXAMPLE_WIFI_CONN_MAX_RETRY=-1), la registrazione non lo aspetta */
 static void rete_task(void *arg)
 {
+    vTaskDelay(pdMS_TO_TICKS(300));                   /* la C6 appena sbloccata ha bisogno di un attimo */
     if (example_connect() == ESP_OK) {
         logger02_ip_fisso();
         mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);
