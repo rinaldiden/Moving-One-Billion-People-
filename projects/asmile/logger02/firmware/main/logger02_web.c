@@ -154,7 +154,10 @@ static esp_err_t h_ota(httpd_req_t *req)
 {
     const esp_partition_t *part = esp_ota_get_next_update_partition(NULL);
     esp_ota_handle_t h;
-    if (!part || esp_ota_begin(part, OTA_SIZE_UNKNOWN, &h) != ESP_OK) {
+    /* prima ferma la registrazione: cancellare la flash blocca la cache e con camera+SD attive la scheda va in
+     * crash (17/11). Poi cancella solo quanto serve (dimensione del file), non tutti i 4 MB. */
+    logger02_rec_stop();
+    if (!part || esp_ota_begin(part, req->content_len > 0 ? req->content_len : OTA_SIZE_UNKNOWN, &h) != ESP_OK) {
         return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "ota begin");
     }
     char *buf = malloc(8192);
@@ -175,7 +178,6 @@ static esp_err_t h_ota(httpd_req_t *req)
     }
     httpd_resp_sendstr(req, "ok, riavvio");
     ESP_LOGW(TAG, "nuovo firmware in %s: riavvio", part->label);
-    logger02_rec_stop();
     vTaskDelay(pdMS_TO_TICKS(500));
     esp_restart();
     return ESP_OK;
@@ -233,7 +235,7 @@ static esp_err_t proxy_b(httpd_req_t *req, const char *porta)
     if (r != ESP_OK || esp_http_client_fetch_headers(c) < 0) {
         free(buf);
         esp_http_client_cleanup(c);
-        s_b_giu_fino = esp_timer_get_time() + 30000000;
+        s_b_giu_fino = esp_timer_get_time() + 8000000;
         httpd_resp_set_status(req, "503 Service Unavailable");
         return httpd_resp_sendstr(req, "{\"errore\":\"B non raggiungibile\"}");
     }

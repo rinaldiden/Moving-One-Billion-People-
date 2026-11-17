@@ -114,7 +114,7 @@ static uint8_t sens_r(uint16_t reg)
 /* --- esposizione automatica (il driver OV9281 non ne ha: esposizione fissa ~0,5 ms = immagine scura) ---
  * La A misura la luminosità e decide; manda gli stessi valori alla B (stereo: due camere identiche). */
 #define AE_TARGET       105          /* luminosità media voluta (0-255), come rpicam su #001 */
-#define AE_EXP_MAX_US   19000        /* come #001 (rpicam non limita l'otturatore): fino a quasi tutto il fotogramma */
+#define AE_EXP_MAX_US   16500        /* come #001 ma lasciando ~3 ms: la B deve poter accorciare il fotogramma per agganciarsi */
 #define AE_GAIN_MAX     0xF0         /* 15× (0x10 = 1×) */
 static volatile uint32_t s_exp16 = 0x2a9;    /* esposizione in 1/16 di riga */
 static volatile uint32_t s_gain = 0x18;
