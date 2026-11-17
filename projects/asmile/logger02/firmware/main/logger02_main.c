@@ -8,6 +8,7 @@
 #include "esp_netif.h"
 #include "esp_sleep.h"
 #include "esp_ota_ops.h"
+#include "driver/gpio.h"
 #include "nvs_flash.h"
 #include "mdns.h"
 #include "lwip/apps/netbiosns.h"
@@ -39,6 +40,15 @@ void app_main(void)
         ESP_ERROR_CHECK(nvs_flash_erase());
         ESP_ERROR_CHECK(nvs_flash_init());
     }
+    /* al risveglio: sblocca i pin tenuti fermi durante il deep sleep; Ethernet non serve → PHY in reset sempre */
+    const int sblocca[] = {L02_PIN_C6_EN, L02_PIN_SD_PWR, L02_PIN_PA, L02_PIN_WAKE};
+    for (size_t i = 0; i < sizeof(sblocca) / sizeof(sblocca[0]); i++) gpio_hold_dis(sblocca[i]);
+    gpio_hold_dis(L02_PIN_ETH_RST);
+    gpio_set_direction(L02_PIN_ETH_RST, GPIO_MODE_OUTPUT);
+    gpio_set_level(L02_PIN_ETH_RST, 0);
+    gpio_hold_en(L02_PIN_ETH_RST);
+    gpio_set_direction(L02_PIN_C6_EN, GPIO_MODE_OUTPUT);
+    gpio_set_level(L02_PIN_C6_EN, 1);                 /* la C6 riparte (esp_hosted la gestisce poi da sé) */
     ESP_ERROR_CHECK(example_video_init());
     logger02_saluto();
     const logger02_ruolo_t *ru = logger02_ruolo();

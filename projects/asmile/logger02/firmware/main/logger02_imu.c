@@ -183,9 +183,19 @@ void logger02_dormi(const char *motivo)
     logger02_rec_stop();
     if (s_csv) { fclose(s_csv); s_csv = NULL; }
 
-    gpio_set_direction(L02_PIN_C6_EN, GPIO_MODE_OUTPUT);
-    gpio_set_level(L02_PIN_C6_EN, 0);                /* spegne la C6 (wifi) */
-    gpio_hold_en(L02_PIN_C6_EN);
+    logger02_rec_standby();                          /* camera in standby */
+    /* tutto quello che non serve per svegliarsi: spento e tenuto spento durante il deep sleep */
+    const struct { int pin, livello; } off[] = {
+        {L02_PIN_C6_EN, 0},      /* wifi C6 in reset */
+        {L02_PIN_SD_PWR, 1},     /* SD senza alimentazione */
+        {L02_PIN_ETH_RST, 0},    /* PHY Ethernet in reset */
+        {L02_PIN_PA, 0},         /* amplificatore audio spento */
+    };
+    for (size_t i = 0; i < sizeof(off) / sizeof(off[0]); i++) {
+        gpio_set_direction(off[i].pin, GPIO_MODE_OUTPUT);
+        gpio_set_level(off[i].pin, off[i].livello);
+        gpio_hold_en(off[i].pin);
+    }
 
     if (a) {
         if (!arma_imu()) {

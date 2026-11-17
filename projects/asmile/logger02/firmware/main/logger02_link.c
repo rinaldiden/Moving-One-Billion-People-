@@ -87,6 +87,19 @@ void logger02_link_invia(const char *riga)
 {
     uart_write_bytes(UARTN, riga, strlen(riga));
     uart_write_bytes(UARTN, "\n", 1);
+    uart_wait_tx_done(UARTN, pdMS_TO_TICKS(100));    /* esce davvero dal filo (prima del deep sleep) */
+}
+
+/* B: se la A abbassa WAKE (si è addormentata) anche senza il comando "Z", dopo 3 s si addormenta pure la B */
+static void wake_task(void *arg)
+{
+    int basso = 0;
+    vTaskDelay(pdMS_TO_TICKS(20000));                /* all'avvio la A deve avere il tempo di alzarlo */
+    while (1) {
+        vTaskDelay(pdMS_TO_TICKS(500));
+        basso = gpio_get_level(L02_PIN_WAKE) ? 0 : basso + 1;
+        if (basso >= 6) logger02_dormi("la A ha abbassato WAKE");
+    }
 }
 
 static void comando(const char *riga)
@@ -199,6 +212,7 @@ esp_err_t logger02_link_init(void)
         gpio_config(&i);
         gpio_install_isr_service(ESP_INTR_FLAG_IRAM | ESP_INTR_FLAG_LEVEL3);
         gpio_isr_handler_add(L02_PIN_SYNC_B, sync_isr, NULL);
+        xTaskCreate(wake_task, "wake", 3072, NULL, 4, NULL);
     }
     ESP_LOGI(TAG, "link A↔B pronto (%s)", logger02_ruolo()->is_a ? "master" : "slave");
     return ESP_OK;

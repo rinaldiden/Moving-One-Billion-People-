@@ -405,3 +405,8 @@ uint32_t logger02_rec_correzioni(void)
 {
     return s_correzioni;
 }
+
+void logger02_rec_standby(void)
+{
+    if (s_sens) sens_w(0x0100, 0x00);       /* OV9281: streaming off = standby */
+}

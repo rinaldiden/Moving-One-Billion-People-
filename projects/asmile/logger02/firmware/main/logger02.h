@@ -19,6 +19,8 @@
 #define L02_PIN_BATT_ADC    20      /* A: partitore 100k/33k */
 #define L02_PIN_C6_EN       54      /* reset della C6 (wifi): basso prima del deep sleep */
 #define L02_PIN_SD_PWR      45
+#define L02_PIN_ETH_RST     51      /* PHY Ethernet (non usato): tenuto in reset = consuma meno */
+#define L02_PIN_PA          53      /* amplificatore audio */
 
 typedef struct {
     bool is_a;            /* A = master: IMU, batteria, BLE, faccia verso l'esterno; B = slave */
@@ -54,6 +56,7 @@ void logger02_rec_fase(int64_t *t_ultimo_locale, uint32_t *frame, double *period
 void logger02_rec_riferimento(int64_t t_rif_a, uint32_t f_rif, double p_us);   /* B: numerazione comune */
 void logger02_rec_ritarda(int64_t us);                          /* B: sposta la fase della camera */
 uint32_t logger02_rec_correzioni(void);
+void logger02_rec_standby(void);              /* camera in standby software (prima del deep sleep) */
 double logger02_rec_riga_us(void);
 
 /* A: IMU, batteria, autospegnimento */
