@@ -16,10 +16,9 @@ PWR_MGMT_1, PWR_MGMT_2 = 0x6B, 0x6C
 ACCEL_CONFIG, MOT_THR, MOT_DUR, MOT_DETECT_CTRL = 0x1C, 0x1F, 0x20, 0x69
 INT_PIN_CFG, INT_ENABLE, INT_STATUS = 0x37, 0x38, 0x3A
 
-MOT_THR_LSB = 1    # soglia al minimo (0 = scatta sul rumore). Daniele 17/11: "col più piccolo movimento"
-MOT_DUR_MS = 1     # basta 1 campione sopra soglia (era 40)
-LP_WAKE = 3        # basso consumo a 40 Hz (era 5 Hz: perdeva i colpetti brevi); ~140 µA, trascurabile
-DHPF = 0x04        # passa-alto 0.63 Hz (era 5 Hz): prende anche le spinte lente, senza la deriva del modo "hold"
+MOT_THR_LSB = 1    # soglia al minimo (16/11: scatta già a ~200 mg di scossone) — da tarare sulla bici
+MOT_DUR_MS = 40    # durata minima sopra soglia
+LP_WAKE = 1        # basso consumo: 0=1.25 Hz 1=5 Hz 2=20 Hz 3=40 Hz
 
 
 def w(b, reg, val):
@@ -28,7 +27,7 @@ def w(b, reg, val):
 
 def motion(b):
     w(b, PWR_MGMT_1, 0x00)
-    w(b, ACCEL_CONFIG, DHPF)            # ±2 g + passa-alto (toglie la gravità per il motion)
+    w(b, ACCEL_CONFIG, 0x01)            # ±2 g, filtro passa-alto 5 Hz (toglie la gravità per il motion)
     w(b, MOT_THR, MOT_THR_LSB)
     w(b, MOT_DUR, MOT_DUR_MS)
     w(b, MOT_DETECT_CTRL, 0x15)

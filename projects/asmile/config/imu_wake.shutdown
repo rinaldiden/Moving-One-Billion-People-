@@ -10,10 +10,3 @@ fi
 # HOLD a 0 V qui, senza aspettare gpio-poweroff (sul Pi 5 lo spegnimento lo fa il firmware e GPIO26 può restare alto).
 # I dischi sono già smontati/sola lettura: staccare la corrente adesso è sicuro.
 /usr/bin/pinctrl set 26 op dl
-# Con HOLD a 0 V la corrente deve cadere SUBITO. Se siamo ancora vivi, provo a pulire il latch INT dell'IMU ogni
-# secondo (se era lui a tenere WAKE alto, la corrente cade). MAI riavviare da qui: il Pi si accende solo col movimento
-# (Daniele 17/11: "si deve accendere quando Imu legge movimento minimo, non dopo 30sec").
-while true; do
-    sleep 1
-    /usr/bin/python3 /home/asmile-logger/imu_wake.py stato > /dev/null 2>&1   # leggere INT_STATUS pulisce il latch
-done
