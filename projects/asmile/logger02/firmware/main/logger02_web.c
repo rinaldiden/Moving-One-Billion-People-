@@ -79,8 +79,9 @@ static esp_err_t h_stato(httpd_req_t *req)
     if (logger02_ruolo()->is_a) logger02_imu_stato(imu, sizeof(imu));
     else snprintf(imu, sizeof(imu), "null");
     logger02_tailscale_stato(ts, sizeof(ts));
-    snprintf(out, sizeof(out), "{\"scheda\":\"%s\",\"uptime_s\":%lld,\"t_us\":%lld,\"t_a_us\":%lld,\"rec\":%s,\"sync\":%s,\"imu\":%s,\"tailscale\":%s}",
-             logger02_ruolo()->nome, esp_timer_get_time() / 1000000, esp_timer_get_time(),
+    snprintf(out, sizeof(out), "{\"scheda\":\"%s\",\"ram_interna_libera\":%u,\"ram_interna_min\":%u,\"uptime_s\":%lld,\"t_us\":%lld,\"t_a_us\":%lld,\"rec\":%s,\"sync\":%s,\"imu\":%s,\"tailscale\":%s}",
+             logger02_ruolo()->nome, (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+             (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL), esp_timer_get_time() / 1000000, esp_timer_get_time(),
              logger02_t_a(esp_timer_get_time()), rec, sync, imu, ts);
     httpd_resp_set_type(req, "application/json");
     return httpd_resp_sendstr(req, out);
@@ -160,7 +161,7 @@ static esp_err_t h_ota(httpd_req_t *req)
     if (!part || esp_ota_begin(part, req->content_len > 0 ? req->content_len : OTA_SIZE_UNKNOWN, &h) != ESP_OK) {
         return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "ota begin");
     }
-    char *buf = malloc(8192);
+    char *buf = heap_caps_malloc(8192, MALLOC_CAP_SPIRAM);   /* RAM interna: serve al wifi (crash 17/11) */
     int resto = req->content_len, n;
     while (resto > 0) {
         n = httpd_req_recv(req, buf, resto < 8192 ? resto : 8192);
