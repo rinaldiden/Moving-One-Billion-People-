@@ -24,7 +24,8 @@
 #include "logger02.h"
 
 static const char *TAG = "web";
-#define IP_B "192.168.1.124"
+/* IP della B: quello che lei manda sulla UART ("I <ip>"), perché su una rete diversa da casa non è .124 */
+char g_ip_b[16] = "192.168.1.124";
 
 static const char PAGINA[] =        /* stessa pagina dello streaming di asmile #001 (pi/camera/stream_server.py) */
     "<!DOCTYPE html><html><head><meta charset=utf-8><title>Asmile Cameras</title><style>"
@@ -205,11 +206,19 @@ static esp_err_t h_dormi(httpd_req_t *req)
 }
 
 /* A: /b/<x> → http://B/<x>, in streaming (anche POST /b/ota) */
+/* se la B non risponde, per 30 s rispondo subito "B giù" invece di aspettare: il server della A è uno solo
+ * e ogni attesa lo blocca per tutti (17/11: la pagina che chiedeva /b ogni 2 s rendeva la A "irraggiungibile") */
+static volatile int64_t s_b_giu_fino;
+
 static esp_err_t proxy_b(httpd_req_t *req, const char *porta)
 {
+    if (esp_timer_get_time() < s_b_giu_fino) {
+        httpd_resp_set_status(req, "503 Service Unavailable");
+        return httpd_resp_sendstr(req, "{\"errore\":\"B non raggiungibile\"}");
+    }
     char url[192];
-    snprintf(url, sizeof(url), "http://" IP_B "%s%s", porta, req->uri + 2);
-    esp_http_client_config_t cc = {.url = url, .timeout_ms = 15000, .buffer_size = 8192,
+    snprintf(url, sizeof(url), "http://%s%s%s", g_ip_b, porta, req->uri + 2);
+    esp_http_client_config_t cc = {.url = url, .timeout_ms = req->method == HTTP_POST ? 15000 : 2500, .buffer_size = 8192,
                                    .method = req->method == HTTP_POST ? HTTP_METHOD_POST : HTTP_METHOD_GET};
     esp_http_client_handle_t c = esp_http_client_init(&cc);
     esp_err_t r = esp_http_client_open(c, req->method == HTTP_POST ? req->content_len : 0);
@@ -224,7 +233,9 @@ static esp_err_t proxy_b(httpd_req_t *req, const char *porta)
     if (r != ESP_OK || esp_http_client_fetch_headers(c) < 0) {
         free(buf);
         esp_http_client_cleanup(c);
-        return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "B non raggiungibile");
+        s_b_giu_fino = esp_timer_get_time() + 30000000;
+        httpd_resp_set_status(req, "503 Service Unavailable");
+        return httpd_resp_sendstr(req, "{\"errore\":\"B non raggiungibile\"}");
     }
     char *ct = NULL;
     if (esp_http_client_get_header(c, "Content-Type", &ct) == ESP_OK && ct) httpd_resp_set_type(req, ct);

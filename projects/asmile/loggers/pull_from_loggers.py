@@ -246,6 +246,64 @@ def check_batteria(lg):
     json.dump(st, open(BATT_STATO, "w"))
 
 
+# --- logger02 (HW3, 2 × ESP32-P4): niente ssh, API HTTP sulla A (la B dietro /b/). Tailscale 100.117.207.99, LAN .122.
+LOGGER02_HOSTS = ["100.117.207.99", "192.168.1.122"]
+
+
+def pull_logger02():
+    import urllib.request
+    def get(url, t=10):
+        return urllib.request.urlopen(url, timeout=t)
+    host = None
+    for h in LOGGER02_HOSTS:
+        try:
+            get(f"http://{h}/api/stato", 5).read()
+            host = h
+            break
+        except Exception:
+            pass
+    if not host:
+        print("[logger02] non raggiungibile - skip")
+        return 0
+    dest = os.path.join(DEST_BASE, "logger02")
+    os.makedirs(dest, exist_ok=True)
+    n = 0
+    for pref in ("", "/b"):
+        try:
+            stato = json.loads(get(f"http://{host}{pref}/api/stato").read())
+            files = json.loads(get(f"http://{host}{pref}/api/files").read())
+        except Exception as e:
+            print(f"[logger02{pref or '/a'}] errore elenco: {e}")
+            continue
+        in_corso = stato.get("rec", {}).get("file", "")
+        base_corso = in_corso.replace(".h264", "")
+        sess = stato.get("rec", {}).get("sessione", "")
+        sens_corso = max([f["nome"] for f in files if f["nome"].startswith("sensors_") and sess and sess in f["nome"]],
+                         default="")                     # CSV IMU del minuto in corso (uno al minuto)
+        for f in sorted(files, key=lambda x: x["nome"]):
+            nome, size = f["nome"], f["byte"]
+            if base_corso and nome.startswith(base_corso):
+                continue                                  # pezzo ancora in scrittura (video + frames)
+            if nome == sens_corso:
+                continue                                  # CSV IMU ancora aperto
+            locale = os.path.join(dest, nome)
+            try:
+                with get(f"http://{host}{pref}/dl?f={nome}", 120) as r, open(locale + ".part", "wb") as out:
+                    shutil.copyfileobj(r, out, 1 << 20)
+                if os.path.getsize(locale + ".part") != size:
+                    print(f"  {nome}: dimensione diversa, riprovo al prossimo giro")
+                    os.remove(locale + ".part")
+                    continue
+                os.replace(locale + ".part", locale)
+                urllib.request.urlopen(urllib.request.Request(f"http://{host}{pref}/del?f={nome}", method="POST"),
+                                       timeout=10).read()
+                print(f"  {nome}: OK ({size} byte) -> cancellato dalla scheda {'B' if pref else 'A'}")
+                n += 1
+            except Exception as e:
+                print(f"  {nome}: errore {e}")
+    return n
+
+
 def main():
     os.makedirs(DEST_BASE, exist_ok=True)
     loggers = discover_loggers()
@@ -267,6 +325,10 @@ def main():
         n = pull_sessions(lg) if lg.get("layout") == "sessions" else pull_logger(lg)
         print(f"[{lg['name']}] scaricati+cancellati {n} segmenti")
         tot += n
+    n02 = pull_logger02()
+    if n02:
+        print(f"[logger02] scaricati+cancellati {n02} file")
+    tot += n02
     if tot:
         print(f"TOTALE {tot} nuovi segmenti in {DEST_BASE}")
         # Hook elaborazione: se esiste on_new_videos.sh, lancialo sui nuovi video

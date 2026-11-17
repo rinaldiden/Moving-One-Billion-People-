@@ -139,6 +139,13 @@ static void comando(const char *riga)
                 }
             }
         }
+    } else if (riga[0] == 'I' && logger02_ruolo()->is_a) {
+        extern char g_ip_b[16];
+        char ip[16];
+        if (sscanf(riga, "I %15s", ip) == 1 && strcmp(ip, g_ip_b)) {
+            strcpy(g_ip_b, ip);
+            ESP_LOGI(TAG, "la B è su %s", g_ip_b);
+        }
     } else if (riga[0] == 'E' && !logger02_ruolo()->is_a) {
         unsigned long e, g;
         if (sscanf(riga, "E %lu %lu", &e, &g) == 2) logger02_rec_esposizione(e, g);

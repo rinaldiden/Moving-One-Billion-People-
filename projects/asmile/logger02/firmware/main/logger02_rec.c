@@ -317,7 +317,7 @@ static void rec_task(void *arg)
                                    (long long)logger02_t_a(t), (unsigned long)ec.bytesused);
                 s_bytes += ec.bytesused;
                 s_scritti++;
-                if (s_scritti % 50 == 0) {           /* ogni ~3 s su SD: un taglio di corrente perde al massimo questo */
+                if (0 && s_scritti % 50 == 0) {   /* PROVA: fsync spento */           /* ogni ~3 s su SD: un taglio di corrente perde al massimo questo */
                     if (s_vid) { fflush(s_vid); fsync(fileno(s_vid)); }
                     if (s_csv) { fflush(s_csv); fsync(fileno(s_csv)); }
                 }

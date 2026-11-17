@@ -48,11 +48,17 @@ static esp_err_t r(uint8_t reg, uint8_t *out, size_t n)
     return i2c_master_transmit_receive(s_mpu, &reg, 1, out, n, 50);
 }
 
+static char s_sess[24];
+static uint32_t s_pezzo;
+static int64_t s_pezzo_t0;
+
+/* un file IMU al minuto (come i pezzi video): chiuderlo è l'unico modo sicuro di salvarlo senza fsync */
 static void apri_csv(void)
 {
-    char sess[24], p[96];
-    logger02_nome_sessione(sess, sizeof(sess));
-    snprintf(p, sizeof(p), L02_REC_DIR "/sensors_%s.csv", sess);
+    char p[112];
+    if (!s_sess[0]) logger02_nome_sessione(s_sess, sizeof(s_sess));
+    snprintf(p, sizeof(p), L02_REC_DIR "/sensors_%s_%05lu.csv", s_sess, (unsigned long)s_pezzo++);
+    s_pezzo_t0 = esp_timer_get_time();
     s_csv = fopen(p, "w");
     if (s_csv) {
         setvbuf(s_csv, NULL, _IOFBF, 16 * 1024);
@@ -77,7 +83,6 @@ static void imu_task(void *arg)
     uint8_t d[14];
     float pax = 0, pay = 0, paz = 0;
     TickType_t t0 = xTaskGetTickCount();
-    int64_t flush = esp_timer_get_time();
     while (1) {
         vTaskDelayUntil(&t0, pdMS_TO_TICKS(20));           /* 50 Hz */
         int64_t t = esp_timer_get_time();
@@ -101,7 +106,7 @@ static void imu_task(void *arg)
                     s_ax, s_ay, s_az, s_gx, s_gy, s_gz);
             if (s_campioni % 50 == 0 && s_batt > 0) fprintf(s_csv, "%.2f", s_batt);
             fputc('\n', s_csv);
-            if (t - flush > 2000000) { fflush(s_csv); fsync(fileno(s_csv)); flush = t; }   /* FAT: senza fsync la dimensione resta 0 */
+            if (t - s_pezzo_t0 > 60000000LL) { fclose(s_csv); s_csv = NULL; apri_csv(); }
         }
         if (t > MIN_ACCESO_MIN * 60000000LL && t - s_ultimo_moto > FERMO_MIN * 60000000LL) {
             logger02_dormi("bici ferma da 5 minuti");

@@ -43,6 +43,15 @@ static void rete_task(void *arg)
         xEventGroupSetBits(s_ev, 1);
         ESP_LOGI(TAG, "wifi connesso");
         esp_ota_mark_app_valid_cancel_rollback();   /* il firmware nuovo è buono SOLO se la rete funziona */
+        if (!logger02_ruolo()->is_a) {             /* la B dice alla A il suo IP (ogni 30 s: la A può riavviarsi) */
+            esp_netif_ip_info_t ip;
+            char m[32];
+            while (esp_netif_get_ip_info(get_example_netif(), &ip) == ESP_OK) {
+                snprintf(m, sizeof(m), "I " IPSTR, IP2STR(&ip.ip));
+                logger02_link_invia(m);
+                vTaskDelay(pdMS_TO_TICKS(30000));
+            }
+        }
         logger02_tailscale_start();         /* A: compare come "logger02" su Tailscale */
     }
     vTaskDelete(NULL);

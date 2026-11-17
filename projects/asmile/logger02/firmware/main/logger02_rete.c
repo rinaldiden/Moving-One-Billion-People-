@@ -1,6 +1,7 @@
 #include "esp_netif.h"
 #include "esp_log.h"
 #include "lwip/ip4_addr.h"
+#include "lwip/def.h"
 #include "protocol_examples_common.h"
 #include "logger02.h"
 
@@ -11,6 +12,13 @@ esp_err_t logger02_ip_fisso(void)
     esp_netif_t *netif = get_example_netif();
     if (!netif) {
         return ESP_FAIL;
+    }
+    /* Con lo stesso nome EOLO_378899 ci sono DUE reti: casa (192.168.1.x) e un'altra (10.16.156.x).
+     * L'IP fisso va messo SOLO sulla rete di casa: sull'altra si tiene quello del DHCP (17/11, idea di Daniele). */
+    esp_netif_ip_info_t dhcp;
+    if (esp_netif_get_ip_info(netif, &dhcp) == ESP_OK && (ntohl(dhcp.ip.addr) & 0xFFFFFF00) != 0xC0A80100) {
+        ESP_LOGW(TAG, "rete diversa da casa (" IPSTR "): tengo l'IP del DHCP, niente IP fisso", IP2STR(&dhcp.ip));
+        return ESP_OK;
     }
     esp_netif_ip_info_t ip = {0};
     ip.ip.addr = ipaddr_addr(logger02_ruolo()->ip);
