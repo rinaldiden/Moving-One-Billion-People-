@@ -66,3 +66,5 @@ Cosa ho previsto male. Le legge il capo-critico.
   rollback automatico. Rimessa la versione buona via USB (`idf.py -p /dev/cu.usbmodem1101 flash`).
 - Lezione: "rete OK" va confermato dopo minuti di traffico vero (es. 5 min con DNS/Tailscale ok), non al primo IP.
   E aprire la porta USB della A (usbmodem) la resetta: dirlo a Daniele prima.
+- 2026-11-18 GIUSTO: spostato subito tutto il riduttore da ekam al doppio con percorsi corretti e link temporaneo per non rompere gli agenti in corsa
+- 2026-11-18 SBAGLIATO: ho lasciato che i brief agli agenti usassero la cartella ekam ereditata senza chiedermi a quale progetto serviva; il progetto e i suoi commit sono stati su un repo estraneo senza remote
