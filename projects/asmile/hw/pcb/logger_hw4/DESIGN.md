@@ -19,7 +19,7 @@ R1 due camere global shutter mono, 1280×720 (o più), ≥15 fps, **stesso senso
 fra i dati del logger e la bici che guiderà · R2 sincronia fra le due ≤1 riga (oggi software via VTS; predisporre il
 trigger hardware) · R3 baseline 200 mm **rigida** (la scheda è la barra) · R4 H.264 ~2 Mbps × 2, SD ~0,5 MB/s ·
 R5 IMU con interrupt di risveglio · R6 1S Li-ion, carica da USB-C, misura batteria, protezione cella · R7 wifi
-(scarico, OTA, Tailscale), BLE per il sensore ruota CooSpo · R8 firmware HW3 riusabile · R9 compute e RAM liberi per
+(scarico, OTA, Tailscale), BLE per il sensore ruota CooSpo · R8 firmware HW3 riusabile (stessi GPIO) · R9 compute e RAM liberi per
 filtri a bordo futuri (frame fermi, gate di interesse) · R10 collaudabile (test point, UART, boot) e riparabile.
 
 ## 2. Compute (strato 1-2) — DECISO: 2 moduli Waveshare ESP32-P4-Module su una scheda
@@ -103,8 +103,9 @@ bozza di richiesta preventivo pronta (§9) ad Arducam, Inno-Maker, Sinoseen.
                                        USB-C 5 V → TP4056 1 A → cella   (DW01A + FS8205A)
 ```
 - **Stessi GPIO di HW3** (logger02.h): SD 39-44 + accensione GPIO45, I2C 7/8, IMU INT 4, SYNC A3→B21, UART 22/23,
-  WAKE 5, batteria GPIO20 con 100k/33k, buzzer sul pin del PA (GPIO53) → il firmware `hw3-def` gira senza modifiche
-  (il saluto vocale diventa un bip). Nuovi: TRIG camere GPIO2 della A, LED R/G su GPIO9/10, CHRG su GPIO26,
+  WAKE 5, batteria GPIO20 con 100k/33k, buzzer sul pin del PA (GPIO53) → il firmware `hw3-def` gira con **un solo
+  cambio: il driver IMU** (LSM6DS3TR-C al posto del MPU6050, che su LCSC costa 16 $ ed è a fine vita); il saluto vocale
+  diventa un bip. CAM_EN (GPIO12) ha un pull-up: camera accesa anche se il firmware non tocca il pin. Nuovi: TRIG camere GPIO2 della A, LED R/G su GPIO9/10, CHRG su GPIO26,
   VBUS su GPIO21 della A, reset e boot di B da A (GPIO33/49), SPI A↔B GPIO28-32.
 - **Alimentazione:** due buck TLV62569 (stesso pezzo, uno per modulo, 2 A, duty 100 % → 3,3 V finché la cella sta
   sopra ~3,4 V), ingresso diretto dalla cella dopo protezione e interruttore. Spariscono MT3608 (5 V) e MH-CD42.
@@ -143,13 +144,40 @@ bozza di richiesta preventivo pronta (§9) ad Arducam, Inno-Maker, Sinoseen.
 | P5 | (v2) SC132GS al posto di OV9281 | 1 modulo sulla dev-kit di banco | immagini e depth confrontabili |
 | P6 | autonomia: 2 moduli + 2 camere su 2 × 18650 | misura corrente di logger02 in registrazione | ≥ 4 h |
 
-## 7. Costi (dettaglio in `BOM.csv`, sezione aggiornata col BOM)
-Vedi §7 dopo il BOM (prossimo commit).
+## 7. Costi (USD → € a 1 € = 1,10 $; dettaglio `BOM.csv`, `kicad/costi_bom.json`, `PREVENTIVO_PCBWAY.md`)
+Voci per scheda: PCB PCBWay 4 strati ENIG + DHL (prezzo vero a 10/100, stima a 1000) · pezzi LCSC dal BOM (prezzo vero
+API JLC) · montaggio stimato con le tariffe JLC (NON VERIFICATO) · moduli Waveshare 9,99-10,99 $ · antenne IPEX (stima).
+| | a 10 | a 100 | a 1000 |
+|---|---|---|---|
+| PCB nudo + spedizione | 17,12 $ | 4,28 $ | 2,30 $ (stima) |
+| pezzi LCSC (116 montati) | 4,48 $ | 3,74 $ | 2,94 $ |
+| montaggio | 13,18 $ | 2,77 $ | 1,22 $ |
+| **carrier senza moduli** | 34,78 $ | **10,79 $ (9,8 €)** | 6,46 $ |
+| **K1 = carrier + 2 moduli + 2 antenne** | 58,76 $ (53,4 €) | **31,97 $ (29,1 €)** | 27,24 $ (24,8 €) |
+| K2 = 1 modulo, camera DX in DVP (piano B) | 45,97 $ (41,8 €) | 20,58 $ (18,7 €) | 16,05 $ (14,6 €) |
+
+**Lettura 1 — "25 € tutto compreso" (scheda + 2 camere):**
+| | a 100 | a 1000 |
+|---|---|---|
+| K1 + 2 × OV9281 modulo (prezzo in volume stimato 18 $ / 14 $) | 61,8 € | 50,2 € |
+| K1 + 2 × OV9281 modulo DFRobot (22 $ / 20 $) | 69,1 € | 61,1 € |
+| K2 + 2 × OV9281 nudo + M12 (oggi non comprabile) | 35,1 € | **27,3 €** |
+→ **25 € tutto compreso non si raggiunge** con OV9281 a 100 pz. Il minimo realistico è ~27 € a 1000 pz con un solo P4,
+camere a sensore saldato (via modulista) e DVP: tre rischi insieme. Con il P4 nudo, quando tornerà a stock, -3/4 € → ~24 €.
+
+**Lettura 2 — "25 € la scheda, camere a parte":**
+- **K1 (raccomandata) a 100 pz: 29,1 €** → sopra di 4 €. Il 63 % sono i due moduli Waveshare (18 €): è il prezzo di
+  avere firmware HW3 invariato, compute doppio e nessun progetto RF/alimentazione P4. A 1000 pz 24,8 € (dentro).
+- K2 a 100 pz: 18,7 € (dentro), ma solo dopo la prova P2 e con un modulo OV9281 DVP che oggi non si trova.
+
+Dove si limerebbe senza cambiare architettura: preventivo Waveshare a 100 pz (oggi prezzo da sito), 17 Extended → meno
+codici (es. un solo valore di LED e di condensatore), seconda SD non montata quando il video della B passerà via SPI (−0,5 $).
 
 ## 8. Layout (strato 4) — NON ancora fatto
-Meccanica prima: lunghezza ~250 × 45 mm, camere a 200 mm fra gli assi ottici, fori delle camere e del case da
+Meccanica prima: 250 × 50 mm (proposta), camere a 200 mm fra gli assi ottici, fori delle camere e del case da
 concordare col Doppio. Il generatore piazza i footprint per zone (camere agli estremi, moduli vicino alle camere,
 alimentazione al centro), lo sbroglio non è fatto: niente gerber di produzione finché il layout non regge.
 
 ## 9. Bozze ai fornitori (partono solo col tap di Daniele, `~/progetti/CONTATTI-ESTERNI.md`)
-Vedi `BOZZE_FORNITORI.md` (prossimo commit).
+In `BOZZE_FORNITORI.md`: Waveshare (prezzo moduli a 100/1000), Arducam + Inno-Maker (OV9281 M12 con trigger a 100 pz),
+Sinoseen (barra stereo COB 2 × OV9281 a 200 mm), OmniVision/distributore (datasheet completo OV9281 sotto NDA).
