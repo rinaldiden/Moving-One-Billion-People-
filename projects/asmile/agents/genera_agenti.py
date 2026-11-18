@@ -327,7 +327,14 @@ PRODUTTORI = [
              "KiCad 9 da riga di comando (kicad-cli: ERC, DRC, BOM, gerber, posizionamento) + script Python per schema/netlist.",
              "BOM con LCSC/JLCPCB (Basic vs Extended, stock, alternativa pin-compatibile per ogni pezzo critico), costo a 10/100/1000.",
              "Progetta per il collaudo (test point, header di debug, porta di flash) e per il futuro (GPIO liberi, footprint opzionali)."],
-         impara="Prima di ogni lavoro rilegge TUTTI i registri di cose fatte e sbagliate, sw e hw: "
+         impara="REGISTRO SEMPRE AGGIORNATO (Daniele 18/11): ogni volta che fa qualcosa (ricerca, scelta di un pezzo, "
+                f"schema, prezzo, prova, errore) aggiunge subito una riga in `{P}/hw/pcb/REGISTRO.md` (data-ora, cosa, "
+                "decisione + perché + scartato, fonte/datasheet, esito: GIUSTO / SBAGLIATO / DA VERIFICARE). Quando un "
+                "esito si chiarisce torna sulla riga e lo scrive. Da lì estrae i pattern (cosa ha funzionato, ripetibile) "
+                f"in `{P}/hw/pcb/PATTERN.md` e gli antipattern (errori, con la regola che li evita) in "
+                f"`{P}/hw/pcb/ANTIPATTERN.md`, ognuno con il rimando alle righe del registro. Le scelte non ovvie anche "
+                "con palla.py decido. "
+                "Prima di ogni lavoro rilegge REGISTRO, PATTERN, ANTIPATTERN e TUTTI i registri di cose fatte e sbagliate, sw e hw: "
                 f"`{P}/agents/lezioni/`, `{P}/agents/decisioni/`, `{P}/agents/prove/`, `{P}/logger02/DEPLOY_LOG.md`, "
                 f"`{P}/logger/hw3/PROVA_*.md`, i FLASH_LOG/registra_deploy della flotta e la memoria di Claude "
                 "(~/.claude/projects/*/memory/: feedback_* = errori corretti da Daniele). Cerca su forum e repo "
@@ -335,7 +342,8 @@ PRODUTTORI = [
                 "Hackaday) chi ha già sbattuto sullo stesso pezzo. Ogni errore (suo, del critico, del collaudo, di "
                 "Daniele) e ogni cosa che ha funzionato diventa una regola in hw/pcb/CONOSCENZA.md con la prova e la "
                 "fonte; ogni prezzo verificato aggiorna la tabella costi; bilancio con palla.py a fine lavoro.",
-         deliv=[f"`{P}/hw/pcb/<scheda>/` progetto KiCad + `DESIGN.md` (scelte, datasheet citati) + `BOM.csv` + costi",
+         deliv=[f"`{P}/hw/pcb/REGISTRO.md` (sempre), `PATTERN.md`, `ANTIPATTERN.md`",
+                f"`{P}/hw/pcb/<scheda>/` progetto KiCad + `DESIGN.md` (scelte, datasheet citati) + `BOM.csv` + costi",
                 "file di produzione JLCPCB (gerber, BOM, CPL) solo dopo il PASSA del critico"],
          gate="ERC/DRC puliti, ogni pezzo con datasheet incrociato e stock, costo a 100 pz sotto obiettivo o scarto spiegato, "
               "PASSA del critico. L'ordine (soldi) lo decide Daniele.",
