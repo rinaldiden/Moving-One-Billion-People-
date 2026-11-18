@@ -168,6 +168,18 @@ def tipi_pin_easyeda(b):
     return re.sub(r'\(pin unspecified .*?\(number "[^"]*"[^)]*\)\s*\)', tipo, b, flags=re.S)
 
 
+def rinumera_zeri(t, chiave):
+    """easyeda numera "0" tutte le linguette meccaniche (es. S3B-PH-SM4-TB): pin duplicati → ERC duplicate_pins.
+    Le rinumero 90, 91, … sia nel simbolo sia nel footprint (stesso ordine di comparsa)."""
+    n = [90]
+
+    def sub(m):
+        v = '%s%d"' % (chiave, n[0])
+        n[0] += 1
+        return v
+    return re.sub(re.escape(chiave) + '0"', sub, t)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--kicad", required=True)
@@ -188,7 +200,7 @@ def main():
         b = re.sub(r'\(id \d+\)', '', b)
         b = re.sub(r'\)\s*hide\)', ') (hide yes))', b)
         b = b.replace('"lcsc:', '"hw4:')
-        blocchi.append(tipi_pin_easyeda(b))
+        blocchi.append(rinumera_zeri(tipi_pin_easyeda(b), '(number "'))
     blocchi.append(simbolo_modulo())
     tmp = os.path.join(LIB, "_hw4_tmp.kicad_sym")
     with open(tmp, "w", encoding="utf-8") as f:
@@ -214,6 +226,9 @@ def main():
         # fori di centraggio senza rame (easyeda li scrive come PTH con pad = foro) → NPTH
         t = re.sub(r'\(pad "" thru_hole circle \(at ([-\d. ]+)\) \(size ([\d.]+) ([\d.]+)\) \(drill ([\d.]+)\)',
                    lambda m: m.group(0).replace("thru_hole", "np_thru_hole") if m.group(2) == m.group(4) else m.group(0), t)
+        t = rinumera_zeri(t, '(pad "')
+        n0 = [90]
+        t = re.sub(r'\(pad 0 ', lambda m: '(pad %d ' % (n0.append(n0[-1] + 1) or n0[-2]), t)   # formato vecchio senza virgolette
         open(os.path.join(fpdir, f), "w", encoding="utf-8").write(t)
     fp, num, pins = footprint_modulo(a.wspads)
     open(os.path.join(fpdir, "Waveshare_ESP32-P4-Module.kicad_mod"), "w").write(fp)

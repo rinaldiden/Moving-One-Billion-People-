@@ -21,15 +21,19 @@ Ogni riga rimanda al `REGISTRO.md` (quando/fonte) — qui sta solo la regola.
 - **Moduli Waveshare ESP32-P4-Module (~10 $) invece del chip nudo**: P4 + PSRAM 32 MB + flash + C6 + DCDC core + quarzo
   già fatti, stesso pinout di HW3 → firmware riusato. Il chip nudo costerebbe ~2-3 $ in meno a scheda e oggi non si compra.
 - **Stessi GPIO della versione precedente** = firmware riusato (HW4 tiene i pin di HW3: SD 39-45, I2C 7/8, IMU 4, SYNC 3→21,
-  UART 22/23, WAKE 5, batteria 20). Unico cambio sw: driver IMU (LSM6DS3TR-C al posto di MPU6050).
-- **Saluto vocale → buzzer attivo sul pin del PA (GPIO53)**: via ES8311 + amplificatore + altoparlante; il firmware che
-  accende il PA fa suonare il buzzer. 0,33 $ + transistor.
+  UART 22/23, WAKE 5, batteria 20) **e i pad che il firmware vecchio pilota senza servire restano liberi** (I2S del saluto
+  9/10/12/13, PA 53, ETH 51): prova con `logger_hw4/kicad/controlla_pin_fw.py` → `PIN_HW4.md`, 0 conflitti.
+  Cambi sw per HW4: driver IMU, flag saluto→buzzer, pin LED (`PROPOSTA_FIRMWARE_HW4.md`).
+- **Saluto vocale → buzzer attivo su GPIO27** (via ES8311 + amplificatore + altoparlante). ERRORE del 1° giro: avevo messo
+  il buzzer sul pin del PA (53) "così suona da solo": il codec assente lascia il PA in uno stato non provato → pin del PA
+  lasciato libero, bip dal firmware HW4. 0,33 $ + transistor.
 - **Step-up 5 V + modulo carica + regolatori delle dev-kit → caricatore 1S + 2 buck 3,3 V a duty 100 %** (TLV62569, 0,05 $,
   stock 548k, stesso pezzo per entrambi i moduli = un solo codice in BOM).
 - **Protezione cella DW01A + FS8205A**: 0,09 $ per non avere una 18650 in corto in bici. Si spende poco, si salva tanto.
 - **Footprint non montati (DNP) per i piani B**: u.FL se il modulo arriva senza IPEX, header di debug, ponticello per
   spegnere la B da A, header espansione. Costano zero.
-- **Passivi tutti Basic JLC** tranne 1,2 kΩ (R_PROG): un Extended in più costa ~3 $ a ordine, non a scheda.
+- **Extended JLC**: ognuno costa 3,07 $ a ordine (non a scheda): 23 codici = 70 $ a ordine → 0,70 $ a scheda su 100.
+  Si limano unificando valori (LED, R) quando lo schema è fermo.
 
 ## Dove bisogna spendere (con prova)
 - **Sensore = quello del veicolo che userà i dati** (OV9281 mono global shutter come #001): cambiare sensore per
@@ -39,7 +43,14 @@ Ogni riga rimanda al `REGISTRO.md` (quando/fonte) — qui sta solo la regola.
 - **Finitura ENIG** (non HASL) con modulo a castello passo 1 mm, IMU LGA e USB-C a passo fine: planarità. DA CONFERMARE col
   preventivo (differenza di prezzo in PREVENTIVO_PCBWAY.md).
 - **Traccia/spazio 4/4 mil** solo perché il footprint USB-C del costruttore ha pad a 0,10 mm (regola limitata a J1 nel .kicad_dru).
-- **ESD sull'USB-C** (USBLC6) — unico connettore esposto all'utente.
+- **ESD sull'USB-C** (USBLC6) **+ TVS su VBUS** (SMF5.0A, 0,03 $) — unico connettore esposto all'utente.
+- **NTC sulla carica** (TP4056 TEMP con 10k B3950 + 6,8k → ~3-42 °C): TEMP a GND = carica a 1 A anche al gelo o al sole
+  (critico 18/11). 0,05 $.
+- **Power-path** (P-MOS + Schottky, 0,04 $) quando carica e carico stanno sulla stessa cella: senza, il TP4056 non vede
+  mai C/10 e non termina.
+- **Connettori di alimentazione non invertibili**: cella e interruttore con numero di poli diverso (J2 3 poli, J3 2 poli).
+- **Montaggio dei moduli castellati forniti da noi**: saldatura a mano JLC 0,0164 $/giunto → 2,89 $ a scheda per due moduli
+  da 88 pad. Va nel conto, sempre.
 
 ## Regole di metodo (provate oggi)
 - **Footprint dei pezzi LCSC con easyeda2kicad**: è il disegno che usa JLC per montare quel codice → niente footprint "simili".
@@ -49,8 +60,13 @@ Ogni riga rimanda al `REGISTRO.md` (quando/fonte) — qui sta solo la regola.
 - **Prima del datasheet, il codice che gira**: i pin veri di HW3 erano nel firmware (logger02.h), non nel brief
   (es. SYNC GPIO3 è un impulso 1 Hz, non il trigger delle camere; la sync è software via VTS).
 - **Prezzi e stock dall'API parti JLC** (`selectSmtComponentList`), con data; `componentLibraryType == base` = Basic.
-- **KiCad senza installazione**: il DMG già scaricato montato in sola lettura dà kicad-cli e il Python di pcbnew (10.0.8).
-  L'installazione con brew chiede la password del Mac → la fa Daniele.
+- **KiCad**: brew chiede la password (cartella /Library/Application Support/kicad); copiare l'app dal DMG in
+  /Applications/KiCad NON la chiede (/Applications è del gruppo admin). Installato così il 18/11 (10.0.8) senza i modelli
+  3D (3,2 GB) perché il disco del Mac era al 98 %. kicad-cli e Python di pcbnew in /Applications/KiCad/KiCad.app.
+- **Ogni MCU della scheda: come si flasha la prima volta, in serie e in campo** prima dello sbroglio (ROM P4: solo UART0
+  37/38 e USB-Serial/JTAG 24/25). (Antipattern A7, critico)
+- **Ogni GPIO riassegnato: grep del numero in TUTTO il firmware** (macro, numeri scritti a mano, sdkconfig) e tabella
+  generata da script, non a mano. (Antipattern A6, critico)
 
 ## Lezioni dai registri del progetto (sw e hw) che valgono per le schede
 - **Ritorno di corrente (ADS1115, 17/11)**: su un bus con un dispositivo sempre alimentato, i moduli alimentati da un'altra
@@ -70,13 +86,16 @@ Ogni riga rimanda al `REGISTRO.md` (quando/fonte) — qui sta solo la regola.
 | Waveshare ESP32-P4-Module | — | 9,99-10,99 | sì | waveshare.com |
 | ESP32-C6-MINI-1-N4 | C5736265 | 2,99 | 7098 | |
 | W25Q128JVSIQ | C97521 | 1,54 | 73783 | Basic |
-| TLV62569DBVR | C141836 | 0,053 | 548054 | |
+| TLV62569DBVR | C141836 | 0,053 | 548054 | datasheet TI SLVSDG1C (non "SLVSDB6") |
 | TP4056 | C725790 | 0,061 | 305434 | |
 | LSM6DS3TR-C | C967633 | 0,86 | 16153 | |
 | MPU-6050 | C24112 | 16,21 | 6150 | a fine vita: non usare |
 | OV09281-H64A | C5182169 | 10,75 | 0 | |
 | modulo OV9281 Pi | — | 24 (DFRobot a 10+) – 45 (dettaglio IT) | sì | |
 | modulo SC132GS Camemake | — | 77,84 a 10 · 8,80 a 1000 | 1000 (25 gg) | DigiKey |
+| PCB 4 strati 250×50 ENIG, JLCPCB | — | 2,97 (100 pz) · 6,00 (10 pz) | — | + UPS DDP 60,92 / 31,07 $ a ordine |
+| PCB idem, PCBWay | — | 3,51 · 13,09 | — | + DHL 77,25 / 40,28 $ |
+| FFC 15p 1 mm C7529394 | C7529394 | 0,093 | **935** | a 1000 schede non basta: C23397372/C23397383 (linguette diverse) |
 
 ## FONTI DEL MIO SAPERE (verificate, con data) — da copiare nella scheda agente dal capo
 - Espressif ESP32-P4 Schematic Checklist · docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32p4/schematic-checklist-esp32p4.html · alimentazione, DCDC, strapping, USB, SD, MIPI · 18/11
@@ -88,5 +107,8 @@ Ogni riga rimanda al `REGISTRO.md` (quando/fonte) — qui sta solo la regola.
 - API parti JLCPCB `selectSmtComponentList` + wmsc.lcsc.com product/detail · prezzi/stock · 18/11
 - easyeda2kicad 1.0.1 (pip) · simboli/footprint dei codici LCSC · 18/11
 - PCBWay preventivo online `orderonline.aspx` (senza login) · prezzo PCB · 18/11
+- JLCPCB preventivo `cart.jlcpcb.com/quote` (senza login) · prezzo PCB · 18/11
+- TI TLV62569 datasheet SLVSDG1C (ti.com/lit/ds/symlink/tlv62569.pdf) · RDS(on) §6.5 p.5, 100 % duty §7.3.2 p.6 · 18/11
+- JLCPCB FAQ assemblaggio (jlcpcb.com/help/article/98-pcb-assembly-faqs) · saldatura a mano, parti in conto lavoro · 18/11
 
 ## Errori fatti e regola che ne è nata → `ANTIPATTERN.md`

@@ -1,6 +1,7 @@
 # Logger HW4 — scheda dedicata (DESIGN)
 
-> **Maturità: L0 → verso L1.** Oggi: studio + schema KiCad generato. Niente è ancora stato acceso né ordinato.
+> **Maturità: L0 → verso L1.** Oggi: studio + schema KiCad generato e corretto dopo il VETO 1 del critico (18/11).
+> Niente è ancora stato acceso né ordinato.
 > Salto dopo: L1 = 10 schede montate, rail e bus verificati a banco con il firmware `hw3-def-20261118`.
 
 ## CONTESTO PROGETTO CORRENTE (18/11/2026)
@@ -97,26 +98,53 @@ bozza di richiesta preventivo pronta (§9) ad Arducam, Inno-Maker, Sinoseen.
              │ CSI 2 lane, I2C, EN                                                  │
    ┌─────────┴──────────┐   SYNC 1Hz, UART, WAKE, SPI (dati futuri), EN/BOOT di B  ┌┴───────────────────┐
    │ modulo A (P4+C6)   │══════════════════════ piste sulla scheda ════════════════│ modulo B (P4+C6)   │
-   │ SD-A, IMU, USB-C   │                                                          │ SD-B (opz.)        │
+   │ SD-A, IMU, USB-C   │                                                          │ SD-B, pad PROG B   │
    └─────────┬──────────┘                                                          └─────────┬──────────┘
-          3V3_A (buck TLV62569)            VSYS ← interruttore esterno ← cella 1S protetta      3V3_B (buck TLV62569)
-                                       USB-C 5 V → TP4056 1 A → cella   (DW01A + FS8205A)
+          3V3_A (buck TLV62569) ← VSYS ← interruttore J3 ← OR(cella via P-MOS, VBUS via SS14) → 3V3_B (buck TLV62569)
+             USB-C 5 V (TVS + USBLC6) → TP4056 1 A con NTC → cella 1S su J2 (3 poli) protetta DW01A + FS8205A
 ```
-- **Stessi GPIO di HW3** (logger02.h): SD 39-44 + accensione GPIO45, I2C 7/8, IMU INT 4, SYNC A3→B21, UART 22/23,
-  WAKE 5, batteria GPIO20 con 100k/33k, buzzer sul pin del PA (GPIO53) → il firmware `hw3-def` gira con **un solo
-  cambio: il driver IMU** (LSM6DS3TR-C al posto del MPU6050, che su LCSC costa 16 $ ed è a fine vita); il saluto vocale
-  diventa un bip. CAM_EN (GPIO12) ha un pull-up: camera accesa anche se il firmware non tocca il pin. Nuovi: TRIG camere GPIO2 della A, LED R/G su GPIO9/10, CHRG su GPIO26,
-  VBUS su GPIO21 della A, reset e boot di B da A (GPIO33/49), SPI A↔B GPIO28-32.
-- **Alimentazione:** due buck TLV62569 (stesso pezzo, uno per modulo, 2 A, duty 100 % → 3,3 V finché la cella sta
-  sopra ~3,4 V), ingresso diretto dalla cella dopo protezione e interruttore. Spariscono MT3608 (5 V) e MH-CD42.
-  Datasheet TLV62569: Vin 2,5-5,5 V, 2 A, 100 % duty cycle (TI SLVSDB6, §7.4). DA VERIFICARE pagina esatta.
-- **Carica:** TP4056 1 A lineare (R_PROG 1,2 kΩ → 1000 mA, tabella del datasheet). Lento (~6 h per 6000 mAh) ma
-  semplice; IP2312 (switching 3 A) è l'alternativa se Daniele vuole la ricarica in 3 h (stock basso al 18/11).
-- **Protezione cella:** DW01A + FS8205A (schema di riferimento del datasheet DW01A). Spesa: 0,09 $.
+- **GPIO (VETO 1, corretto 18/11):** tabella completa hw↔fw in **`PIN_HW4.md`**, generata da `kicad/controlla_pin_fw.py`
+  che cerca ogni GPIO in tutto il firmware hw3-def (macro L02_PIN_*, numeri scritti a mano come l'I2S del saluto,
+  CONFIG_*PIN di sdkconfig) → **0 conflitti**. Regola applicata: su HW4 i pad che il firmware pilota senza servire
+  (I2S del saluto 9/10/12/13, PA 53, reset Ethernet 51, C6 54) restano **liberi**: il firmware hw3-def può pilotarli
+  senza danni. Errore di prima: avevo messo LED R/G su 9/10 e CAM_EN su 12, che il saluto apre in I2S
+  (`logger02_saluto.c:36`) e lascia acceso se il codec non risponde.
+  - Restano come HW3: SD 39-44 + accensione 45, I2C 7/8, IMU INT 4, SYNC A3→B21, UART 22/23, WAKE 5, batteria 20.
+  - Nuovi (pad liberi per il firmware): CAM_EN **GPIO11** (pull-up 10k: camera accesa di default), LED R/G **GPIO50/52**
+    sulla A, LED B **GPIO50** sulla B, buzzer **GPIO27**, TRIG camere GPIO2, CHRG GPIO26, VBUS GPIO21 (solo A: il
+    firmware usa il 21 solo sulla B, `logger02_link.c:216-225`), reset/boot di B da A GPIO33/49, SPI A↔B 28-32.
+  - Il saluto vocale non c'è più: col firmware hw3-def il task del saluto apre l'I2S su pad liberi, non trova il codec
+    ed esce; il bip lo fa il firmware HW4 (proposta in `PROPOSTA_FIRMWARE_HW4.md`, flag `CONFIG_LOGGER02_HW4`).
+    Cambi firmware per HW4: driver IMU, flag saluto→buzzer, pin LED. Nessuna modifica a logger02.
+- **Alimentazione (corretta 18/11):** cella 1S → protezione DW01A+FS8205A → **power-path** (P-MOS AO3401A dalla cella,
+  Schottky SS14 da VBUS) → **interruttore esterno su J3** → VSYS → due buck TLV62569 (uno per modulo).
+  Con USB collegato la scheda va da VBUS e la cella si carica da sola, così il TP4056 termina davvero a C/10 (prima, col
+  carico sulla cella, la terminazione non scattava). Interruttore dopo l'OR: spento = spento anche in carica.
+  **Tensione minima di cella (datasheet TI SLVSDG1C §7.3.2 pag. 6: VIN(MIN) = VOUT + IOUT·(RDS(ON) + RL); RDS(ON) FET
+  alto 100 mΩ tip. a VIN 5 V, §6.5 pag. 5)** con 0,8 A di picco per buck, L 58 mΩ, RDS(ON) stimato 130 mΩ a 3,5 V:
+  VSYS ≥ 3,30 + 0,8·0,19 = **3,45 V**. A monte cadono FS8205A (~0,08 V a 1,6 A), P-MOS (~0,11 V), cavo+interruttore
+  (~0,05 V) → **cella ≥ ~3,7 V per 3,30 V pieni al picco**; fra 3,7 e ~3,4 V la 3V3 scende ma resta ≥ 3,0 V (minimo P4,
+  checklist §Power); **spegnimento firmware a 3,45 V di cella a riposo**. Correzione: prima avevo scritto "sopra ~3,4 V"
+  e citato "SLVSDB6": era sbagliato (critico, REGISTRO 16:58).
+- **Carica:** TP4056 1 A lineare (R_PROG 1,2 kΩ → 1000 mA, tabella del datasheet) **con NTC sul TEMP** (VETO 1):
+  6,8 kΩ da VBUS + NTC 10 kΩ B3950 (C51597) sulla scheda accanto al portabatteria → carica fra ~3 °C e ~42 °C
+  (TEMP fra 45 % e 80 % di VCC, datasheet TP4056). J2 ha un 3° polo per l'NTC del pacco (piano B, 0 Ω da spostare).
+- **Protezione cella:** DW01A + FS8205A (circuito tipico del datasheet DW01A): sovraccarica 4,30 V, sovrascarica
+  2,5 V con rilascio 2,9 V (valori riletti dal critico sul datasheet PUOLOP).
+- **USB:** USBLC6 sulle linee dati + **TVS SMF5.0A su VBUS** (VETO 1).
+- **Connettori batteria e interruttore non invertibili:** J2 cella = JST PH **3 poli** (+, NTC, −) S3B-PH-SM4-TB
+  originale (C265101, stock 21k); J3 interruttore = PH **2 poli** (C2763693, stock 36k).
+- **Programmazione (VETO 1):** il ROM del P4 scarica solo da UART0 (GPIO37/38) o USB-Serial/JTAG (24/25).
+  A: USB-C. B: **J22 = pad PROG a 2,54 mm** (GND, U0TXD, U0RXD, EN, BOOT, 3V3) per pogo in collaudo o header saldato al
+  banco + TP30/TP31 (USB-Serial/JTAG della B) per pogo; in campo la B si aggiorna via OTA wifi (ha la sua C6, come HW3).
+  La A può resettare la B e metterla in download (GPIO33/49) ma non le parla sull'UART0: il recupero della B a firmware
+  morto passa da J22 (case da aprire). Dettaglio passo per passo in `COLLAUDO.md` §7.
+- **Partitore batteria** spostato sulla cella (in carica VSYS vale VBUS): 1 MΩ/330 kΩ, stesso rapporto 0,248 di
+  HW3 (100k/33k) → stessa costante nel firmware; 3 µA sempre.
 - **Antenne:** si usa la versione del modulo con connettore IPEX (antenna adesiva fuori dal case); footprint u.FL +
   0 Ω non montati sulla scheda come piano B per la versione a castello senza IPEX.
-- **SD:** due slot (una per modulo, come HW3: firmware invariato). Piano: quando il firmware manderà il video della B
-  alla A via SPI, lo slot B resta non montato.
+- **SD:** due slot (una per modulo, come HW3). Piano: quando il firmware manderà il video della B alla A via SPI, lo
+  slot B resta non montato.
 - **Rischio back-feed:** se un giorno la B verrà spenta (buck B con EN da A, ponticello non montato), le linee A→B
   devono essere basse/alte impedenza: resistenze serie 1 kΩ su UART/EN/BOOT, 33 Ω su SPI (lezione ADS1115 del 17/11).
 
@@ -132,7 +160,10 @@ bozza di richiesta preventivo pronta (§9) ad Arducam, Inno-Maker, Sinoseen.
 | Modulo Waveshare: 88 pad, GPIO14-19 interni (C6 SDIO), C6 reset GPIO54 | wiki Waveshare + logger02.h | pad 82 lasciato libero |
 | OV9281: MIPI 2 lane + DVP, FSIN, SID, XVCLK 6-27 MHz, 2,8/1,8/1,2 V | OVT PB v1.4 | sul modulo Pi le tensioni le fa il modulo: alla scheda servono solo 3,3 V |
 | LSM6DS3TR-C: INT1 programmabile wake-up, I2C 0x6A (SA0 a GND), aux non usati | ST DS LSM6DS3TR-C §4 pin description | INT1 → GPIO4 (come MPU6050 di HW3) |
-| TP4056: PROG 1,2 kΩ = 1 A, CHRG open-drain | datasheet TP4056 (NanJing Top Power) tab. R_PROG | CHRG con pull-up a 3V3_A → GPIO26 |
+| TP4056: PROG 1,2 kΩ = 1 A, CHRG open-drain; TEMP fra 45 % e 80 % di VCC, a GND = funzione disabilitata | datasheet TP4056 (NanJing Top Power) tab. R_PROG, pin TEMP | CHRG con pull-up a 3V3_A → GPIO26; NTC 10k B3950 + 6,8k (finestra ~3-42 °C) |
+| TLV62569DBV: RDS(on) 100/60 mΩ, ILIM 3 A, 100 % duty: VIN(MIN) = VOUT + IOUT·(RDS(ON)+RL) | TI **SLVSDG1C** §6.5 pag. 5, §7.3.2 pag. 6 | cella ≥ ~3,7 V per 3,30 V pieni a 0,8 A; ≥ 3,0 V fino a ~3,4 V di cella |
+| P4: ROM download solo da UART0 37/38 e USB-Serial/JTAG | checklist P4 §Strapping (Joint Download Mode) e §UART | A da USB-C; B da pad J22 (UART0+EN+BOOT) o TP30/31 (USB) |
+| DW01A/FS8205A: piedinatura e soglie | datasheet PUOLOP DW01A Rev B, FS8205A TECH PUBLIC (riletti dal critico) | 4,30 V / 2,5 V (rilascio 2,9 V) |
 
 ## 6. Rischi e prove PRIMA di ordinare
 | # | Rischio | Prova (su hardware di banco, MAI su logger02) | Passa se |
@@ -143,40 +174,58 @@ bozza di richiesta preventivo pronta (§9) ad Arducam, Inno-Maker, Sinoseen.
 | P4 | luce della sera con OV9281 | giro serale con logger02 (già fatto dal firmware) | luminosità media ≥ 60 a 50 lux |
 | P5 | (v2) SC132GS al posto di OV9281 | 1 modulo sulla dev-kit di banco | immagini e depth confrontabili |
 | P6 | autonomia: 2 moduli + 2 camere su 2 × 18650 | misura corrente di logger02 in registrazione | ≥ 4 h |
+| P7 | flash della B in collaudo | adattatore USB-UART 3,3 V con DTR/RTS su pad J22 di una scheda (o pogo su TP30/31) | `esptool --chip esp32p4 chip_id` sulla B |
+| P8 | 3V3 sotto carico a cella bassa | alimentatore al posto della cella, 3,6 → 3,3 V, B e A in registrazione + wifi | 3V3 ≥ 3,0 V fino a 3,4 V; firmware si spegne a 3,45 V |
 
-## 7. Costi (USD → € a 1 € = 1,10 $; dettaglio `BOM.csv`, `kicad/costi_bom.json`, `PREVENTIVO_PCBWAY.md`)
-Voci per scheda: PCB PCBWay 4 strati ENIG + DHL (prezzo vero a 10/100, stima a 1000) · pezzi LCSC dal BOM (prezzo vero
-API JLC) · montaggio stimato con le tariffe JLC (NON VERIFICATO) · moduli Waveshare 9,99-10,99 $ · antenne IPEX (stima).
-| | a 10 | a 100 | a 1000 |
+## 7. Costi (rifatti dopo il VETO 1: PCB e montaggio dallo **stesso fornitore, JLCPCB**; `kicad/costi.py`)
+Fonti: PCB nudo = preventivo JLCPCB vero (4 strati 250×50 ENIG, 18/11, `preventivo/jlcpcb_*.jpg`; PCBWay per confronto
+in `PREVENTIVO_PCBWAY.md`) · pezzi = API JLC (`kicad/prezzi_jlc.json`, 123 montati, 23 Extended) · montaggio = tariffe
+JLCPCB standard pubblicate (setup 25,56 $, stencil 15,72 $, 3,07 $/Extended, 0,0016 $/giunto) **+ saldatura a mano dei 2
+moduli castellati forniti da noi** (176 giunti × 0,0164 $ + 3,58 $/ordine, FAQ JLC) · moduli 9,99-10,99 $ (sito
+Waveshare) · cambio 1 € = 1,10 $. Il montaggio resta **NON VERIFICATO** (serve il preventivo coi file veri).
+
+| per scheda | 10 pz | 100 pz | 1000 pz |
 |---|---|---|---|
-| PCB nudo + spedizione | 17,12 $ | 4,28 $ | 2,30 $ (stima) |
-| pezzi LCSC (116 montati) | 4,48 $ | 3,74 $ | 2,94 $ |
-| montaggio | 13,18 $ | 2,77 $ | 1,22 $ |
-| **carrier senza moduli** | 34,78 $ | **10,79 $ (9,8 €)** | 6,46 $ |
-| **K1 = carrier + 2 moduli + 2 antenne** | 58,76 $ (53,4 €) | **31,97 $ (29,1 €)** | 27,24 $ (24,8 €) |
-| K2 = 1 modulo, camera DX in DVP (piano B) | 45,97 $ (41,8 €) | 20,58 $ (18,7 €) | 16,05 $ (14,6 €) |
+| PCB nudo + spedizione (JLC) | 9.11 $ | 3.58 $ | 2.30 $ |
+| pezzi LCSC | 4.89 $ | 4.08 $ | 3.20 $ |
+| montaggio JLC (macchina + moduli a mano) | 15.01 $ | 4.61 $ | 3.57 $ |
+| 2 moduli Waveshare + 2 antenne | 23.98 $ | 21.18 $ | 20.78 $ |
+| **netto (senza IVA)** | **52.99 $ = 48.2 €** | **33.45 $ = 30.4 €** | **29.85 $ = 27.1 €** |
+| con dazio 3,5 % + IVA 22 % (IVA non recuperata) | 60.0 € | 37.6 € | 33.5 € |
 
-**Lettura 1 — "25 € tutto compreso" (scheda + 2 camere):**
-| | a 100 | a 1000 |
+IVA recuperabile se l'acquisto è fatto con la P.IVA della ditta individuale di Daniele: allora conta la riga netta. Spedizione JLC in DDP = dazi già pagati alla consegna; altrimenti +25-75 € di sdoganamento a spedizione (≈ +0,5 € a scheda su 100).
+
+
+| Scenario completo (€, netto IVA) | 100 pz | 1000 pz |
 |---|---|---|
-| K1 + 2 × OV9281 modulo (prezzo in volume stimato 18 $ / 14 $) | 61,8 € | 50,2 € |
-| K1 + 2 × OV9281 modulo DFRobot (22 $ / 20 $) | 69,1 € | 61,1 € |
-| K2 + 2 × OV9281 nudo + M12 (oggi non comprabile) | 35,1 € | **27,3 €** |
-→ **25 € tutto compreso non si raggiunge** con OV9281 a 100 pz. Il minimo realistico è ~27 € a 1000 pz con un solo P4,
-camere a sensore saldato (via modulista) e DVP: tre rischi insieme. Con il P4 nudo, quando tornerà a stock, -3/4 € → ~24 €.
+| K1 + 2 OV9281 modulo (volume stimato 18 $ / 14 $) | 63,1 € | 52,6 € |
+| K1 + 2 OV9281 DFRobot (22 $ / 20 $) | 70,4 € | 63,5 € |
+| K2 (1 modulo + DVP) senza camere | 19,2 € | 16,1 € |
+| K2 + 2 OV9281 nudi (oggi non comprabili) | 35,6 € | 28,8 € |
 
-**Lettura 2 — "25 € la scheda, camere a parte":**
-- **K1 (raccomandata) a 100 pz: 29,1 €** → sopra di 4 €. Il 63 % sono i due moduli Waveshare (18 €): è il prezzo di
-  avere firmware HW3 invariato, compute doppio e nessun progetto RF/alimentazione P4. A 1000 pz 24,8 € (dentro).
-- K2 a 100 pz: 18,7 € (dentro), ma solo dopo la prova P2 e con un modulo OV9281 DVP che oggi non si trova.
+**Lettura 1 — "25 € tutto compreso":** non raggiungibile con OV9281 (minimo ~29 € a 1000 pz con un solo P4, sensori
+saldati e DVP: tre rischi insieme). **Lettura 2 — "25 € la scheda":** K1 a 100 pz = 30,4 € netti (5 € sopra; i moduli
+sono 19 €), a 1000 pz 27,1 €; K2 19,2 € ma con driver DVP da scrivere e modulo DVP da trovare.
 
-Dove si limerebbe senza cambiare architettura: preventivo Waveshare a 100 pz (oggi prezzo da sito), 17 Extended → meno
-codici (es. un solo valore di LED e di condensatore), seconda SD non montata quando il video della B passerà via SPI (−0,5 $).
+**Scorte a 1000 schede (VETO 1):** FFC 15p C7529394 stock **935** (ne servono 2000): alternative FC-10A15P11H20
+C23397372 (1655) e C23397383 (1512) — pad di segnale uguali (±0,07 mm) ma linguette a 9,2 vs 8,75 mm → **footprint
+combinato da fare allo sbroglio**, oppure ordine in pre-ordine. Connettori batteria: tolto il clone C54582899
+(2723); ora J2 = S3B-PH-SM4-TB JST (21 731) e J3 = PH-2AWT (36 152): coprono 1000 schede. Tutti gli altri codici
+hanno ≥ 7000 pezzi tranne LSM6DS3TR-C (16 153, ok) e ESP32-C6/P4 non usati.
 
-## 8. Layout (strato 4) — NON ancora fatto
-Meccanica prima: 250 × 50 mm (proposta), camere a 200 mm fra gli assi ottici, fori delle camere e del case da
-concordare col Doppio. Il generatore piazza i footprint per zone (camere agli estremi, moduli vicino alle camere,
-alimentazione al centro), lo sbroglio non è fatto: niente gerber di produzione finché il layout non regge.
+**IVA e dogana:** la tabella mostra anche il caso peggiore (dazio 3,5 % sul montato + IVA 22 % non recuperata).
+JLC spedisce in DDP (dazi pagati); con la P.IVA della ditta di Daniele l'IVA si recupera e conta la riga netta. I due
+moduli Waveshare arrivano a parte: stessa IVA, spedizione da aggiungere al loro preventivo.
+
+## 8. Verifiche KiCad e layout (strato 3-4)
+KiCad 10.0.8 installato in `/Applications/KiCad` (senza modelli 3D, disco al 98 %). Dopo l'ultima netlist (18/11/2026):
+- **ERC: 0 violazioni** — `kicad/ERC.rpt` del **2026-11-18T17:06:38**.
+- **Netlist esportata da KiCad = `netlist_hw4.py` pin per pin: 507 pin, 0 differenze** (`kicad/verifica_netlist.py`).
+- **Tabella pin hw↔fw: 0 conflitti** (`PIN_HW4.md`, `kicad/controlla_pin_fw.py`).
+- **DRC del piazzamento: 0 errori di rame/sovrapposizione**; restano 375 collegamenti da sbrogliare + 161 avvisi di
+  serigrafia — `kicad/DRC.rpt` del **2026-11-18T17:06:40**.
+Layout: 250 × 50 mm (proposta), camere a 200 mm fra gli assi ottici. Fori camere e case da concordare col Doppio;
+lo sbroglio non è fatto → niente gerber di produzione finché il layout non regge.
 
 ## 9. Bozze ai fornitori (partono solo col tap di Daniele, `~/progetti/CONTATTI-ESTERNI.md`)
 In `BOZZE_FORNITORI.md`: Waveshare (prezzo moduli a 100/1000), Arducam + Inno-Maker (OV9281 M12 con trigger a 100 pz),

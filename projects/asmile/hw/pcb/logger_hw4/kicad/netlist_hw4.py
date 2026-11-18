@@ -5,6 +5,7 @@ Ogni parte: ref, simbolo (lib hw4), valore, footprint (lib hw4), LCSC, dnp, {num
 I pin non elencati diventano "non connesso" (X nello schema). Nomi net parlanti, suffisso _A / _B per modulo.
 """
 
+R0805_NTC = "R0805"
 R0402, C0402, C0603, C0805, LED0603 = ("R_0402_1005Metric", "C_0402_1005Metric", "C_0603_1608Metric",
                                        "C_0805_2012Metric", "LED_0603_1608Metric")
 PARTS = []
@@ -42,13 +43,24 @@ R("R4", "22", "USB_DP_C", "USB_DP_A", RES["22"], blocco=B)
 C("C1", "10u", "VBUS", fp=C0805, lcsc="C15850", blocco=B)
 # caricatore TP4056 1 A
 P("U2", "TP4056_C725790", "TP4056", "ESOP-8_L4.9-W3.9-P1.27-LS6.0-BL-EP", "C725790",
-  {"1": "GND", "2": "PROG", "3": "GND", "4": "VBUS", "5": "BATP", "7": "CHRG_N", "8": "VBUS",
+  {"1": "TEMP", "2": "PROG", "3": "GND", "4": "VBUS", "5": "BATP", "7": "CHRG_N", "8": "VBUS",
    "9": "GND"}, blocco=B)
 R("R5", "1.2k", "PROG", "GND", RES["1.2k"], blocco=B, nota="R_PROG 1,2 kΩ = 1000 mA (tabella TP4056)")
 R("R6", "10k", "CHRG_N", "3V3_A", RES["10k"], blocco=B)
+# NTC: TEMP carica solo fra 45 % e 80 % di VCC (datasheet TP4056). 6,8k da VBUS + NTC 10k B3950 a GND
+# → carica permessa fra ~3 °C e ~42 °C. NTC sulla scheda vicino a J2; piano B: NTC del pacco su J2 pin 2.
+R("R7", "6.8k", "VBUS", "TEMP", "C25917", blocco=B, nota="TEMP alto: 6,8k → finestra ~3-42 °C con NTC 10k B3950")
+P("RT1", "CMFB103F3950FANT", "NTC 10k B3950", "R0805", "C51597", {"1": "TEMP_NTC", "2": "GND"}, blocco=B,
+  nota="NTC sulla scheda accanto al portabatteria (temperatura cella/case)")
+R("R33", "0", "TEMP", "TEMP_NTC", RES["0"], blocco=B, nota="montata: NTC sulla scheda")
+R("R34", "0", "TEMP", "NTC_EXT", RES["0"], dnp=True, blocco=B, nota="piano B: NTC del pacco su J2 pin 2 (togliere R33)")
+# TVS su VBUS (oltre all'USBLC6): SMF5.0A 200 W
+P("D6", "SMF5.0A_C193402", "SMF5.0A", "SOD-123FL_L2.7-W1.8-LS3.8-RD", "C193402", {"1": "VBUS", "2": "GND"}, blocco=B,
+  nota="TVS 5 V su VBUS: picchi da caricatori/cavi lunghi")
 C("C2", "10u", "BATP", fp=C0805, lcsc="C15850", blocco=B)
-P("J2", "XY-S2B-PH-SM4-TB", "BATT 1S (2x18650 2P)", "CONN-SMD_P2.00_S2B-PH-SM4-TB-LF-SN", "C54582899",
-  {"1": "BATP", "2": "BAT_N", "3": "BAT_N", "4": "BAT_N"}, blocco=B, nota="pin 3/4 = linguette meccaniche")
+P("J2", "S3B-PH-SM4-TB", "BATT 1S 3 poli (+, NTC, -)", "CONN-SMD_S3B-PH-SM4-TB-LF-SN", "C265101",
+  {"1": "BATP", "2": "NTC_EXT", "3": "BAT_N"}, blocco=B,
+  nota="3 poli: NON si inserisce nel J3 (2 poli). JST originale (stock 21k)")
 # protezione cella DW01A + FS8205A (schema tipico datasheet DW01A)
 P("U3", "DW01A_C351410", "DW01A", "SOT-23-6_L2.9-W1.6-P0.95-LS2.8-BR", "C351410",
   {"1": "PROT_OD", "2": "PROT_VM", "3": "PROT_OC", "5": "PROT_VCC", "6": "BAT_N"}, blocco=B)
@@ -58,13 +70,21 @@ R("R9", "1k", "PROT_VM", "GND", RES["1k"], blocco=B, nota="VM verso P- (= GND de
 P("Q1", "FS8205A_C2830320", "FS8205A", "SOT-23-6_L2.9-W1.6-P0.95-LS2.8-BL", "C2830320",
   {"1": "BAT_N", "2": "PROT_D", "5": "PROT_D", "3": "GND", "6": "PROT_OD", "4": "PROT_OC"}, blocco=B)
 # interruttore esterno (quello di HW3) sul cavo: JST 2 pin, BATP → VSYS
-P("J3", "XY-S2B-PH-SM4-TB", "INTERRUTTORE est.", "CONN-SMD_P2.00_S2B-PH-SM4-TB-LF-SN", "C54582899",
-  {"1": "BATP", "2": "VSYS", "3": "GND", "4": "GND"}, blocco=B, nota="senza interruttore: ponticello sul connettore")
+# power-path (carico e carica separati): con USB la scheda va da VBUS via D5, la cella si carica da sola e il TP4056
+# termina davvero a C/10; senza USB Q3 (P-MOS) conduce dalla cella. Interruttore DOPO l'OR: spento = spento anche in carica.
+P("Q3", "AO3401A", "AO3401A", "SOT-23-3_L3.0-W1.7-P0.95-LS2.9-BR", "C15127",
+  {"1": "VBUS", "3": "BATP", "2": "VSYS_IN"}, blocco=B, nota="power-path: G=VBUS, D=cella, S=VSYS_IN (diodo di body cella→VSYS)")
+R("R35", "100k", "VBUS", "GND", RES["100k"], blocco=B, nota="tira giù il gate di Q3 senza USB")
+P("D5", "SS14", "SS14", "SMA_L4.2-W2.6-LS5.0-RD_1", "C2480", {"2": "VBUS", "1": "VSYS_IN"}, blocco=B,
+  nota="power-path: VBUS → VSYS_IN (0,55 V a 1 A)")
+P("J3", "PH-2AWT", "INTERRUTTORE est. (2 poli)", "CONN-SMD_PH-2AWT", "C2763693",
+  {"1": "VSYS_IN", "2": "VSYS", "3": "GND", "4": "GND"}, blocco=B,
+  nota="2 poli ≠ J2 (3 poli): non invertibili. Senza interruttore: ponticello sul connettore")
 # partitore batteria (HW3: 100k/33k su GPIO20)
-R("R10", "100k", "VSYS", "BATT_ADC", RES["100k"], blocco=B)
-R("R11", "33k", "BATT_ADC", "GND", RES["33k"], blocco=B)
+R("R10", "1M", "BATP", "BATT_ADC", "C26083", blocco=B, nota="sulla cella (VSYS in carica vale VBUS): 1M/330k = stesso rapporto 100k/33k di HW3, 3 µA")
+R("R11", "330k", "BATT_ADC", "GND", "C25778", blocco=B)
 C("C4", "100n", "BATT_ADC", blocco=B)
-R("R12", "100k", "VBUS", "VBUS_SENSE", RES["100k"], blocco=B)
+R("R12", "68k", "VBUS", "VBUS_SENSE", "C36871", blocco=B, nota="5 V → 2,98 V: leggibile come ADC e come livello alto (VIH 0,75×3,3 = 2,48 V)")
 R("R13", "100k", "VBUS_SENSE", "GND", RES["100k"], blocco=B)
 # due buck TLV62569 (uno per modulo), 3,3 V: Vout = 0,6 × (1 + 100k/22k) = 3,33 V
 for s, en in (("A", "VSYS"), ("B", "EN_BUCK_B")):
@@ -92,7 +112,7 @@ def modulo(ref, s):
     p = dict(COMUNE)
     p.update({"84": "3V3_" + s, "85": "3V3_" + s, "86": "3V3_" + s, "87": "EN_" + s, "62": "BOOT_" + s,
               "2": "ANT_" + s, "4": "C6_RXD_" + s, "5": "C6_TXD_" + s, "9": "C6_BOOT_" + s,
-              "22": "I2C_SDA_" + s, "23": "I2C_SCL_" + s, "27": "CAM_EN_" + s,
+              "22": "I2C_SDA_" + s, "23": "I2C_SCL_" + s, "26": "CAM_EN_" + s,
               "41": "CSI_D0N_" + s, "42": "CSI_D0P_" + s, "43": "CSI_CKP_" + s, "44": "CSI_CKN_" + s,
               "45": "CSI_D1N_" + s, "46": "CSI_D1P_" + s,
               "64": "U0TXD_" + s, "65": "U0RXD_" + s, "66": "VDD_SDIO_" + s,
@@ -102,13 +122,13 @@ def modulo(ref, s):
               "59": "SPI_HS_" + s})
     if s == "A":
         p.update({"17": "TRIG_M", "18": "SYNC_M", "19": "IMU_INT", "20": "WAKE_M", "21": "B_PWR_EN",
-                  "24": "LED_R", "25": "LED_G", "29": "BATT_ADC", "30": "VBUS_SENSE",
+                  "78": "LED_R", "80": "LED_G", "29": "BATT_ADC", "30": "VBUS_SENSE",
                   "31": "UART_AB", "32": "UART_BA", "50": "USB_DM_A", "51": "USB_DP_A", "53": "CHRG_N",
-                  "60": "B_EN_CTL", "77": "B_BOOT_CTL", "81": "BUZZER",
-                  "16": "EXP_IO1", "26": "EXP_IO11", "54": "EXP_IO27", "75": "EXP_IO47", "76": "EXP_IO48"})
+                  "60": "B_EN_CTL", "77": "B_BOOT_CTL", "54": "BUZZER",
+                  "16": "EXP_IO1", "75": "EXP_IO47", "76": "EXP_IO48"})
     else:
         p.update({"30": "SYNC_B", "20": "WAKE_B", "31": "UART_BA_B", "32": "UART_AB_B",
-                  "24": "LED_B", "50": "USB_DM_B", "51": "USB_DP_B"})
+                  "78": "LED_B", "50": "USB_DM_B", "51": "USB_DP_B"})
     P(ref, "WS_ESP32-P4-Module", "Waveshare ESP32-P4-Module (IPEX)", "Waveshare_ESP32-P4-Module", "",
       p, blocco="modulo " + s, nota="fornito a parte (non in libreria JLC); versione con connettore IPEX")
 
@@ -128,9 +148,10 @@ for s, n in (("A", 10), ("B", 20)):
     P("J%d" % (n + 1), "U.FL-R-SMT-1", "u.FL (piano B)", "RF-SMD_FRF05002-JSS103M", "C88374",
       {"1": "ANT_UFL_" + s, "2": "GND", "3": "GND"}, dnp=True, blocco=b)
     # header di debug/collaudo (non montato: pogo o saldato al bisogno)
-    P("J%d" % (n + 2), "Conn_01x06", "DEBUG " + s, "PinHeader_1x06_P2.54mm_Vertical", "",
+    P("J%d" % (n + 2), "Conn_01x06", ("DEBUG " if s == "A" else "PROG ") + s + " (UART0 37/38 + EN + BOOT, pogo)",
+      "PinHeader_1x06_P2.54mm_Vertical", "",
       {"1": "GND", "2": "U0TXD_" + s, "3": "U0RXD_" + s, "4": "EN_" + s, "5": "BOOT_" + s, "6": "3V3_" + s},
-      dnp=True, blocco=b)
+      dnp=True, blocco=b, nota="non montato: pad a 2,54 mm per pogo (collaudo) o header saldato al banco. Il ROM del P4 scarica solo da UART0 37/38 o USB-Serial/JTAG")
     # test point C6 (flash della C6 in fabbrica se servisse)
     P("TP%d" % (n + 1), "TestPoint", "C6_RXD_" + s, "TestPoint_Pad_D1.5mm", "", {"1": "C6_RXD_" + s}, blocco=b)
     P("TP%d" % (n + 2), "TestPoint", "C6_TXD_" + s, "TestPoint_Pad_D1.5mm", "", {"1": "C6_TXD_" + s}, blocco=b)
@@ -210,10 +231,10 @@ for i, (net, col, lc, ref3v) in enumerate((("LED_R", "rosso", "C2286", "A"), ("L
                                           ("LED_B", "blu (B)", "C2288", "B"))):
     P("D%d" % (2 + i), "LED", col, LED0603, lc, {"2": net + "_R", "1": "GND"}, blocco=B)
     R("R%d" % (102 + i), "1k", net, net + "_R", RES["1k"], blocco=B)
-P("J100", "Conn_01x08", "ESPANSIONE A", "PinHeader_1x08_P2.54mm_Vertical", "",
-  {"1": "3V3_A", "2": "EXP_IO1", "3": "EXP_IO11", "4": "EXP_IO27", "5": "EXP_IO47", "6": "EXP_IO48",
-   "7": "VSYS", "8": "GND"}, dnp=True, blocco=B, nota="GPIO liberi della A per sviluppi futuri")
-for i, net in enumerate(("VBUS", "BATP", "VSYS", "3V3_A", "3V3_B", "GND")):
+P("J100", "Conn_01x06", "ESPANSIONE A", "PinHeader_1x06_P2.54mm_Vertical", "",
+  {"1": "3V3_A", "2": "EXP_IO1", "3": "EXP_IO47", "4": "EXP_IO48", "5": "VSYS", "6": "GND"}, dnp=True, blocco=B,
+  nota="GPIO liberi della A. GPIO1 = XTAL_32K_P, GPIO47/48 nel dominio VDD_IO_5 (tensione della SD): verificare prima di usarli")
+for i, net in enumerate(("VBUS", "BATP", "VSYS", "3V3_A", "3V3_B", "GND", "VSYS_IN")):
     P("TP%d" % (1 + i), "TestPoint", net, "TestPoint_Pad_D1.5mm", "", {"1": net}, blocco=B)
 for i in range(4):
     P("H%d" % (1 + i), "MountingHole", "M2.5", "MountingHole_2.7mm_M2.5", "", {}, blocco="meccanica")
@@ -222,4 +243,4 @@ for i in range(8):
       nota="fori camera: posizione DA VERIFICARE sul modulo camera scelto")
 
 # net di alimentazione su cui serve PWR_FLAG (pin power_in senza un power_out che le pilota)
-PWR_FLAGS = ["VBUS", "BATP", "BAT_N", "VSYS", "GND", "3V3_A", "3V3_B", "PROT_VCC"]
+PWR_FLAGS = ["VBUS", "BATP", "BAT_N", "VSYS", "GND", "3V3_A", "3V3_B", "PROT_VCC", "VSYS_IN"]

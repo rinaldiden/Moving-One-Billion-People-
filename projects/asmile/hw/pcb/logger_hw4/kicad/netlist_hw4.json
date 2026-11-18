@@ -127,7 +127,7 @@
   "fp": "ESOP-8_L4.9-W3.9-P1.27-LS6.0-BL-EP",
   "lcsc": "C725790",
   "pins": {
-   "1": "GND",
+   "1": "TEMP",
    "2": "PROG",
    "3": "GND",
    "4": "VBUS",
@@ -172,6 +172,81 @@
   "uuid": "71d85f52-db2a-5412-9c6f-fa18ede1cf08"
  },
  {
+  "ref": "R7",
+  "sym": "R",
+  "value": "6.8k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25917",
+  "pins": {
+   "1": "VBUS",
+   "2": "TEMP"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "TEMP alto: 6,8k → finestra ~3-42 °C con NTC 10k B3950",
+  "uuid": "91a5e61f-06e5-5697-8cb2-d487755b755d"
+ },
+ {
+  "ref": "RT1",
+  "sym": "CMFB103F3950FANT",
+  "value": "NTC 10k B3950",
+  "fp": "R0805",
+  "lcsc": "C51597",
+  "pins": {
+   "1": "TEMP_NTC",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "NTC sulla scheda accanto al portabatteria (temperatura cella/case)",
+  "uuid": "3526d623-d5d7-58cc-961b-0151a00d485d"
+ },
+ {
+  "ref": "R33",
+  "sym": "R",
+  "value": "0",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C17168",
+  "pins": {
+   "1": "TEMP",
+   "2": "TEMP_NTC"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "montata: NTC sulla scheda",
+  "uuid": "9790a44a-3de6-5245-acc1-b4569cc541b3"
+ },
+ {
+  "ref": "R34",
+  "sym": "R",
+  "value": "0",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C17168",
+  "pins": {
+   "1": "TEMP",
+   "2": "NTC_EXT"
+  },
+  "dnp": true,
+  "blocco": "alimentazione",
+  "nota": "piano B: NTC del pacco su J2 pin 2 (togliere R33)",
+  "uuid": "68c26d19-533f-5d6b-bc9a-381bd3778197"
+ },
+ {
+  "ref": "D6",
+  "sym": "SMF5.0A_C193402",
+  "value": "SMF5.0A",
+  "fp": "SOD-123FL_L2.7-W1.8-LS3.8-RD",
+  "lcsc": "C193402",
+  "pins": {
+   "1": "VBUS",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "TVS 5 V su VBUS: picchi da caricatori/cavi lunghi",
+  "uuid": "d8a008f9-0c2e-5454-8565-e0619d8b970d"
+ },
+ {
   "ref": "C2",
   "sym": "C",
   "value": "10u",
@@ -188,19 +263,18 @@
  },
  {
   "ref": "J2",
-  "sym": "XY-S2B-PH-SM4-TB",
-  "value": "BATT 1S (2x18650 2P)",
-  "fp": "CONN-SMD_P2.00_S2B-PH-SM4-TB-LF-SN",
-  "lcsc": "C54582899",
+  "sym": "S3B-PH-SM4-TB",
+  "value": "BATT 1S 3 poli (+, NTC, -)",
+  "fp": "CONN-SMD_S3B-PH-SM4-TB-LF-SN",
+  "lcsc": "C265101",
   "pins": {
    "1": "BATP",
-   "2": "BAT_N",
-   "3": "BAT_N",
-   "4": "BAT_N"
+   "2": "NTC_EXT",
+   "3": "BAT_N"
   },
   "dnp": false,
   "blocco": "alimentazione",
-  "nota": "pin 3/4 = linguette meccaniche",
+  "nota": "3 poli: NON si inserisce nel J3 (2 poli). JST originale (stock 21k)",
   "uuid": "960e6a54-ec3a-51e7-859e-7c5d59bfa2eb"
  },
  {
@@ -286,43 +360,89 @@
   "uuid": "07263f76-8155-50df-a176-d8378ee244db"
  },
  {
-  "ref": "J3",
-  "sym": "XY-S2B-PH-SM4-TB",
-  "value": "INTERRUTTORE est.",
-  "fp": "CONN-SMD_P2.00_S2B-PH-SM4-TB-LF-SN",
-  "lcsc": "C54582899",
+  "ref": "Q3",
+  "sym": "AO3401A",
+  "value": "AO3401A",
+  "fp": "SOT-23-3_L3.0-W1.7-P0.95-LS2.9-BR",
+  "lcsc": "C15127",
   "pins": {
-   "1": "BATP",
+   "1": "VBUS",
+   "3": "BATP",
+   "2": "VSYS_IN"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "power-path: G=VBUS, D=cella, S=VSYS_IN (diodo di body cella→VSYS)",
+  "uuid": "e92e3fd7-e334-514a-9e08-53163cc512a0"
+ },
+ {
+  "ref": "R35",
+  "sym": "R",
+  "value": "100k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25741",
+  "pins": {
+   "1": "VBUS",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "tira giù il gate di Q3 senza USB",
+  "uuid": "78468ad6-dcaf-5cf7-88e1-5c428d30b88b"
+ },
+ {
+  "ref": "D5",
+  "sym": "SS14",
+  "value": "SS14",
+  "fp": "SMA_L4.2-W2.6-LS5.0-RD_1",
+  "lcsc": "C2480",
+  "pins": {
+   "2": "VBUS",
+   "1": "VSYS_IN"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "power-path: VBUS → VSYS_IN (0,55 V a 1 A)",
+  "uuid": "da925843-7574-50cf-bc27-d919f18572a6"
+ },
+ {
+  "ref": "J3",
+  "sym": "PH-2AWT",
+  "value": "INTERRUTTORE est. (2 poli)",
+  "fp": "CONN-SMD_PH-2AWT",
+  "lcsc": "C2763693",
+  "pins": {
+   "1": "VSYS_IN",
    "2": "VSYS",
    "3": "GND",
    "4": "GND"
   },
   "dnp": false,
   "blocco": "alimentazione",
-  "nota": "senza interruttore: ponticello sul connettore",
+  "nota": "2 poli ≠ J2 (3 poli): non invertibili. Senza interruttore: ponticello sul connettore",
   "uuid": "b01ab8c9-592b-528e-ab5b-f75c644a129d"
  },
  {
   "ref": "R10",
   "sym": "R",
-  "value": "100k",
+  "value": "1M",
   "fp": "R_0402_1005Metric",
-  "lcsc": "C25741",
+  "lcsc": "C26083",
   "pins": {
-   "1": "VSYS",
+   "1": "BATP",
    "2": "BATT_ADC"
   },
   "dnp": false,
   "blocco": "alimentazione",
-  "nota": "",
+  "nota": "sulla cella (VSYS in carica vale VBUS): 1M/330k = stesso rapporto 100k/33k di HW3, 3 µA",
   "uuid": "f9c6dcd6-2ce2-5e8d-b706-9fb10791a5d8"
  },
  {
   "ref": "R11",
   "sym": "R",
-  "value": "33k",
+  "value": "330k",
   "fp": "R_0402_1005Metric",
-  "lcsc": "C25779",
+  "lcsc": "C25778",
   "pins": {
    "1": "BATT_ADC",
    "2": "GND"
@@ -350,16 +470,16 @@
  {
   "ref": "R12",
   "sym": "R",
-  "value": "100k",
+  "value": "68k",
   "fp": "R_0402_1005Metric",
-  "lcsc": "C25741",
+  "lcsc": "C36871",
   "pins": {
    "1": "VBUS",
    "2": "VBUS_SENSE"
   },
   "dnp": false,
   "blocco": "alimentazione",
-  "nota": "",
+  "nota": "5 V → 2,98 V: leggibile come ADC e come livello alto (VIH 0,75×3,3 = 2,48 V)",
   "uuid": "c79e31c5-a3c3-5669-98f2-a93cbf3f5dae"
  },
  {
@@ -664,7 +784,7 @@
    "9": "C6_BOOT_A",
    "22": "I2C_SDA_A",
    "23": "I2C_SCL_A",
-   "27": "CAM_EN_A",
+   "26": "CAM_EN_A",
    "41": "CSI_D0N_A",
    "42": "CSI_D0P_A",
    "43": "CSI_CKP_A",
@@ -691,8 +811,8 @@
    "19": "IMU_INT",
    "20": "WAKE_M",
    "21": "B_PWR_EN",
-   "24": "LED_R",
-   "25": "LED_G",
+   "78": "LED_R",
+   "80": "LED_G",
    "29": "BATT_ADC",
    "30": "VBUS_SENSE",
    "31": "UART_AB",
@@ -702,10 +822,8 @@
    "53": "CHRG_N",
    "60": "B_EN_CTL",
    "77": "B_BOOT_CTL",
-   "81": "BUZZER",
+   "54": "BUZZER",
    "16": "EXP_IO1",
-   "26": "EXP_IO11",
-   "54": "EXP_IO27",
    "75": "EXP_IO47",
    "76": "EXP_IO48"
   },
@@ -740,7 +858,7 @@
    "9": "C6_BOOT_B",
    "22": "I2C_SDA_B",
    "23": "I2C_SCL_B",
-   "27": "CAM_EN_B",
+   "26": "CAM_EN_B",
    "41": "CSI_D0N_B",
    "42": "CSI_D0P_B",
    "43": "CSI_CKP_B",
@@ -766,7 +884,7 @@
    "20": "WAKE_B",
    "31": "UART_BA_B",
    "32": "UART_AB_B",
-   "24": "LED_B",
+   "78": "LED_B",
    "50": "USB_DM_B",
    "51": "USB_DP_B"
   },
@@ -884,7 +1002,7 @@
  {
   "ref": "J12",
   "sym": "Conn_01x06",
-  "value": "DEBUG A",
+  "value": "DEBUG A (UART0 37/38 + EN + BOOT, pogo)",
   "fp": "PinHeader_1x06_P2.54mm_Vertical",
   "lcsc": "",
   "pins": {
@@ -897,7 +1015,7 @@
   },
   "dnp": true,
   "blocco": "modulo A",
-  "nota": "",
+  "nota": "non montato: pad a 2,54 mm per pogo (collaudo) o header saldato al banco. Il ROM del P4 scarica solo da UART0 37/38 o USB-Serial/JTAG",
   "uuid": "ed31eafb-42ba-5751-8684-5a64d002d27b"
  },
  {
@@ -1051,7 +1169,7 @@
  {
   "ref": "J22",
   "sym": "Conn_01x06",
-  "value": "DEBUG B",
+  "value": "PROG B (UART0 37/38 + EN + BOOT, pogo)",
   "fp": "PinHeader_1x06_P2.54mm_Vertical",
   "lcsc": "",
   "pins": {
@@ -1064,7 +1182,7 @@
   },
   "dnp": true,
   "blocco": "modulo B",
-  "nota": "",
+  "nota": "non montato: pad a 2,54 mm per pogo (collaudo) o header saldato al banco. Il ROM del P4 scarica solo da UART0 37/38 o USB-Serial/JTAG",
   "uuid": "3c4567bf-42f3-5f4b-86b1-49ee515a02c2"
  },
  {
@@ -2210,23 +2328,21 @@
  },
  {
   "ref": "J100",
-  "sym": "Conn_01x08",
+  "sym": "Conn_01x06",
   "value": "ESPANSIONE A",
-  "fp": "PinHeader_1x08_P2.54mm_Vertical",
+  "fp": "PinHeader_1x06_P2.54mm_Vertical",
   "lcsc": "",
   "pins": {
    "1": "3V3_A",
    "2": "EXP_IO1",
-   "3": "EXP_IO11",
-   "4": "EXP_IO27",
-   "5": "EXP_IO47",
-   "6": "EXP_IO48",
-   "7": "VSYS",
-   "8": "GND"
+   "3": "EXP_IO47",
+   "4": "EXP_IO48",
+   "5": "VSYS",
+   "6": "GND"
   },
   "dnp": true,
   "blocco": "sensori e segnali",
-  "nota": "GPIO liberi della A per sviluppi futuri",
+  "nota": "GPIO liberi della A. GPIO1 = XTAL_32K_P, GPIO47/48 nel dominio VDD_IO_5 (tensione della SD): verificare prima di usarli",
   "uuid": "fdf69215-5320-5365-b1e9-61152212de42"
  },
  {
@@ -2312,6 +2428,20 @@
   "blocco": "sensori e segnali",
   "nota": "",
   "uuid": "deafe2c7-35fc-55f3-b6d1-be69c9ffdf20"
+ },
+ {
+  "ref": "TP7",
+  "sym": "TestPoint",
+  "value": "VSYS_IN",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "VSYS_IN"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "8de507bb-f702-5d03-b5f4-8d2e6be63f1c"
  },
  {
   "ref": "H1",

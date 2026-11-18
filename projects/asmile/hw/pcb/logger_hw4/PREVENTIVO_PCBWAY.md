@@ -1,10 +1,10 @@
-# Preventivo PCBWay (e confronto JLCPCB) — logger HW4, 18/11/2026
+# Preventivo PCBWay e JLCPCB — logger HW4, 18/11/2026
 
 **NON ordinato, NON pagato, nessuna carta inserita, nessun account creato** (il preventivo PCB istantaneo di PCBWay non
 chiede il login). L'ordine è di Daniele.
 
 ## Cosa ho caricato e cosa no (onesto)
-- **Gerber/BOM/CPL veri NON caricati**: il layout non è sbrogliato (364 collegamenti aperti, `kicad/DRC.rpt`), quindi
+- **Gerber/BOM/CPL veri NON caricati**: il layout non è sbrogliato (375 collegamenti aperti, `kicad/DRC.rpt`), quindi
   niente file di produzione. Il preventivo PCB è **per parametri**, che è esattamente quello che PCBWay usa per il prezzo
   della scheda nuda; cambierà solo se lo sbroglio richiede vie più piccole o più strati.
 - **Assemblaggio PCBWay: prezzo NON ottenuto.** Il loro preventivo PCBA si chiude solo dopo la revisione dei file
@@ -27,7 +27,7 @@ chiede il login). L'ordine è di Daniele.
 
 Screenshot: `preventivo/pcbway_10_ENIG_4L.jpg`, `preventivo/pcbway_100_ENIG_4L.jpg`.
 
-## Assemblaggio — stima con le tariffe JLCPCB (standard PCBA, pagina "PCB assembly price", 09/2026)
+## Assemblaggio — stima del 1° giro (SUPERATA dopo il VETO 1: conto aggiornato in `kicad/costi.py` e sotto)
 Dati dal PCB generato: **116 pezzi montati, 44 codici diversi (17 Extended), 518 pad SMD (176 sono dei due moduli),
 4 fori (gusci USB-C)**.
 | Voce | Tariffa | a 10 | a 100 |
@@ -41,7 +41,20 @@ Dati dal PCB generato: **116 pezzi montati, 44 codici diversi (17 Extended), 518
 Fonte tariffe: jlcpcb.com/help/article/pcb-assembly-price e jlcpcb.com/solutions/pcb-prototype-assembly (letti 18/11,
 le cifre differiscono un po' fra pagine: fa fede il carrello). **NON VERIFICATO col preventivo vero.**
 
-## JLCPCB per la scheda nuda
-Non ho ottenuto il prezzo istantaneo JLC da script (il loro preventivo è un'app JS). Da rifare a mano o coi gerber veri.
+## JLCPCB per la scheda nuda (ottenuto dopo il VETO 1, 18/11 sera) — stesso fornitore del montaggio
+cart.jlcpcb.com/quote da script (senza login): 4 strati, 250 × 50 mm, FR-4 TG135, 1,6 mm, ENIG 1 µ", rame 1 oz / 0,5 oz
+interno, pezzi singoli. Screenshot: `preventivo/jlcpcb_10_ENIG_4L.jpg`, `preventivo/jlcpcb_100_ENIG_4L.jpg`.
+| Quantità | PCB JLCPCB (prezzo web) | per scheda | Spedizione UPS Express Saver **DDP** | Totale |
+|---|---|---|---|---|
+| 10 | **60,00 $** | 6,00 $ | 31,07 $ | 91,07 $ |
+| 100 | **297,00 $** (con consegna 3-4 gg, +86,50 $ inclusi; con 4-5 gg costa meno se si ordina anche il PCBA) | 2,97 $ | 60,92 $ | 357,92 $ |
+JLC costa meno di PCBWay (60 vs 131 $ a 10 pz, 297 vs 351 $ a 100) e monta anche: **scelgo JLC come fornitore unico** per
+il conto (DESIGN §7, `kicad/costi.py`). Il paese della spedizione resta quello proposto dalla pagina (DDP = dazi
+inclusi): DA VERIFICARE verso l'Italia nel carrello.
+
+## Assemblaggio dallo stesso fornitore: perché manca ancora il numero vero
+JLC e PCBWay danno il prezzo di montaggio solo caricando gerber + BOM + CPL; i gerber veri arrivano dopo lo sbroglio.
+Fino ad allora vale la stima con le tariffe JLC pubblicate, comprese **la saldatura a mano dei 2 moduli castellati
+forniti da noi** (176 giunti × 0,0164 $ = 2,89 $ a scheda, più 3,58 $ a ordine) e 23 Extended × 3,07 $.
 
 ## Costo per scheda e per scenario → `DESIGN.md §7`

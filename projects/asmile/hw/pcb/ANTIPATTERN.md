@@ -20,3 +20,12 @@
 - **A7 — percorso di programmazione non disegnato.** Un modulo senza USB né header montato non si flasha in produzione;
   ricordare che il ROM del P4 scarica solo da UART0 (GPIO37/38) e USB-Serial/JTAG. Regola: per ogni MCU della scheda
   scrivere "come si flasha la prima volta e in serie" prima dello sbroglio. (Critico, 18/11)
+- **A8 — fidarsi della numerazione dei pin di easyeda2kicad.** Le linguette meccaniche hanno tutte il numero "0" (pin
+  duplicati → ERC) e il formato vecchio scrive `(pad 0 …)` senza virgolette. Regola: dopo l'import contare i numeri
+  duplicati in simbolo E footprint e rinumerarli insieme. (Registro 17:32)
+- **A9 — "il pezzo fa da solo" su un pin che il firmware vecchio pilota (buzzer sul PA).** Mettere un pezzo nuovo su un pin
+  che il firmware vecchio usa per altro, contando su un effetto collaterale, è un comportamento non provato. Regola: pin
+  usati dal firmware vecchio per funzioni che non esistono più → pad libero. (Registro 17:16)
+- **A10 — costi con fornitori misti e voci mancanti.** PCB da PCBWay + montaggio a tariffa JLC, senza saldatura dei moduli
+  forniti da noi né IVA/dazio: numero più basso del vero. Regola: un fornitore per PCB+montaggio nel conto, ogni pezzo
+  fornito da noi ha la sua voce di posa, e una riga "caso peggiore" con dazio + IVA. (Critico 17:05)
