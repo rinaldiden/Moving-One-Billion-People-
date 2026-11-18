@@ -4,6 +4,7 @@
  *   frame,t_us,t_a_us,bytes     (t_us = orologio della scheda, t_a_us = orologio della A: confrontabile fra A e B)
  * Lo streaming prende lo stesso fotogramma e lo comprime in JPEG solo se qualcuno guarda. */
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <string.h>
 #include <fcntl.h>
@@ -123,11 +124,20 @@ static volatile int s_ae_luma = -1;
 static void sens_w(uint16_t reg, uint8_t v);
 static void applica_esposizione(uint32_t exp16, uint32_t gain)
 {
-    if (!s_sens) return;
+    /* 18/11: fotogrammi bianchi isolati (A ~1 su 10, B ~1 su 150, al buio con esposizione al massimo): l'AE riscriveva
+     * i registri ogni 10 fotogrammi anche senza cambiare nulla, sul bus I2C condiviso con IMU e codec.
+     * Ora: si scrive solo se cambia, e in "group hold" (0x3208) così il sensore prende i 4 valori insieme al fotogramma dopo. */
+    static uint32_t ultimo_exp = UINT32_MAX, ultimo_gain = UINT32_MAX;
+    if (!s_sens || (exp16 == ultimo_exp && gain == ultimo_gain)) return;
+    ultimo_exp = exp16;
+    ultimo_gain = gain;
+    sens_w(0x3208, 0x00);                   /* inizio gruppo 0 */
     sens_w(0x3500, (exp16 >> 16) & 0x0f);
     sens_w(0x3501, (exp16 >> 8) & 0xff);
     sens_w(0x3502, exp16 & 0xff);
     sens_w(0x3509, gain & 0xff);
+    sens_w(0x3208, 0x10);                   /* fine gruppo 0 */
+    sens_w(0x3208, 0xA0);                   /* lancio: applicato al prossimo fotogramma */
 }
 
 static int luma_media(const uint8_t *yuv, uint32_t len)
@@ -157,6 +167,8 @@ static void ae_passo(const uint8_t *yuv, uint32_t len)
     if (e > exp_max16) { e = exp_max16; g = prodotto / e; }
     if (e < 16) e = 16;
     if (g > AE_GAIN_MAX) g = AE_GAIN_MAX;
+    /* già al limite (buio pieno o luce piena): niente scritture né messaggi alla B */
+    if (abs((int)e - (int)s_exp16) <= 16 && (uint32_t)g == s_gain) return;
     s_exp16 = (uint32_t)e;
     s_gain = (uint32_t)g;
     applica_esposizione(s_exp16, s_gain);

@@ -23,6 +23,7 @@
 #include "nvs.h"
 #include <time.h>
 #include "esp_timer.h"
+#include "esp_system.h"
 #include "esp_heap_caps.h"
 #include "esp_log.h"
 #include "logger02.h"
@@ -85,8 +86,8 @@ static esp_err_t h_stato(httpd_req_t *req)
     else snprintf(imu, sizeof(imu), "null");
     logger02_tailscale_stato(ts, sizeof(ts));
     const esp_app_desc_t *app = esp_app_get_description();
-    snprintf(out, sizeof(out), "{\"scheda\":\"%s\",\"versione\":\"%s %s %s\",\"partizione\":\"%s\",\"ram_interna_libera\":%u,\"ram_interna_min\":%u,\"uptime_s\":%lld,\"t_us\":%lld,\"t_a_us\":%lld,\"rec\":%s,\"sync\":%s,\"imu\":%s,\"tailscale\":%s}",
-             logger02_ruolo()->nome, app->version, app->date, app->time, esp_ota_get_running_partition()->label,
+    snprintf(out, sizeof(out), "{\"scheda\":\"%s\",\"riavvio\":%d,\"versione\":\"%s %s %s\",\"partizione\":\"%s\",\"ram_interna_libera\":%u,\"ram_interna_min\":%u,\"uptime_s\":%lld,\"t_us\":%lld,\"t_a_us\":%lld,\"rec\":%s,\"sync\":%s,\"imu\":%s,\"tailscale\":%s}",
+             logger02_ruolo()->nome, (int)esp_reset_reason(), app->version, app->date, app->time, esp_ota_get_running_partition()->label,
              (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
              (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL), esp_timer_get_time() / 1000000, esp_timer_get_time(),
              logger02_t_a(esp_timer_get_time()), rec, sync, imu, ts);

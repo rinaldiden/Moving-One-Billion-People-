@@ -70,7 +70,18 @@ static void apri_csv(void)
 static float leggi_batteria(void)
 {
     int raw, mv;
-    if (!s_adc || adc_oneshot_read(s_adc, ADC_CHANNEL_4, &raw) != ESP_OK) return -1;
+    if (!s_adc) return -1;
+    /* Pin scollegato = galleggia e legge numeri a caso (18/11: "10,56 V" senza partitore né batteria, Daniele).
+     * Prova: col pull-down interno (~45 kΩ) un pin libero va a ~0 V; col partitore 100k/33k collegato resta
+     * sopra (12 V → ~1,9 V). Poi tolgo il pull-down e leggo il valore vero. */
+    gpio_pulldown_en(L02_PIN_BATT_ADC);
+    vTaskDelay(pdMS_TO_TICKS(2));
+    bool libero = adc_oneshot_read(s_adc, ADC_CHANNEL_4, &raw) != ESP_OK ||
+                  (s_cali && adc_cali_raw_to_voltage(s_cali, raw, &mv) == ESP_OK && mv < 150);
+    gpio_pulldown_dis(L02_PIN_BATT_ADC);
+    if (libero) return -1;
+    vTaskDelay(pdMS_TO_TICKS(2));
+    if (adc_oneshot_read(s_adc, ADC_CHANNEL_4, &raw) != ESP_OK) return -1;
     if (s_cali && adc_cali_raw_to_voltage(s_cali, raw, &mv) == ESP_OK) {
         float v = mv / 1000.0f * (100.0f + 33.0f) / 33.0f;
         return v < 2.0f ? -1 : v;                  /* sotto 2 V = partitore non collegato */
@@ -155,10 +166,13 @@ float logger02_batteria_v(void)
 void logger02_imu_stato(char *json, size_t n)
 {
     int64_t fermo = (esp_timer_get_time() - s_ultimo_moto) / 1000000;
+    char bv[24];
+    if (s_batt > 0) snprintf(bv, sizeof(bv), "%.2f", s_batt);
+    else snprintf(bv, sizeof(bv), "\"non collegata\"");
     snprintf(json, n, "{\"campioni\":%lu,\"errori\":%lu,\"acc_g\":[%.3f,%.3f,%.3f],\"gyro_dps\":[%.2f,%.2f,%.2f],"
-             "\"fermo_s\":%lld,\"spegne_dopo_s\":%d,\"batteria_v\":%.2f}",
+             "\"fermo_s\":%lld,\"spegne_dopo_s\":%d,\"batteria_v\":%s}",
              (unsigned long)s_campioni, (unsigned long)s_errori, s_ax, s_ay, s_az, s_gx, s_gy, s_gz,
-             (long long)fermo, FERMO_MIN * 60, s_batt);
+             (long long)fermo, FERMO_MIN * 60, bv);
 }
 
 /* arma il motion interrupt come imu_wake.py "arma" (taratura di stamattina) */
