@@ -148,3 +148,9 @@ Dettaglio e domande in `agents/sicurezza/ARCHITETTURA_SICUREZZA.md` §8. Ordine:
 - 07:45 FUOCO: A e B a fuoco (nitidezza centro A 72, B 78; prima A 17). Luminosità giusta dopo aver spento la pipeline ISP Espressif (A 102, B 67, stessa esposizione). Camere ancora ruotate fra loro (~35°): al montaggio parallele + baseline col metro, poi registrazione ChArUco → `logger02/accoppia_stereo.py` → `calib_charuco.py --size 1280x720 --no-flip`.
 - Crash A: log seriale della A attivo dal cavo USB (usbmodem1101; aprire la porta resetta la A). Crash visti solo con streaming/download dalla A.
 - 07:45 CRASH A = esp_hosted SDIO streaming: buffer RX da 23 KB non allocabile (RAM interna frammentata) durante streaming/download dalla A. RX_MAX_SIZE rompe il wifi dopo ~60 s (provato, tornato indietro via USB). DA FARE: preallocare/riservare RAM interna DMA all'avvio o ridurre le allocazioni interne (JPEG, httpd, H.264) + guardia OTA che conferma solo dopo 5 min di rete con traffico vero.
+
+## 2026-11-19 — CALIBRAZIONE CAMERE (con Daniele, con calma)
+- Ripresa ChArUco col PDF che c'è già (logger/depth/board_charuco_A2_11x8_50mm.pdf o A3 10x7 38mm), logger001 che registra, 2 min: vicino/lontano, inclinato, tutti gli angoli.
+- Poi: calib_charuco_dual.py → banco fisso → asmile-calib-critico. Partenza: candidato self 18/11 (dy fuori campione 1.14 px; calib 8/11 = 3.61 px, le camere si sono mosse).
+- Daniele: «così l'abbiamo per hw3» → la calib di logger001 fa da base per logger02/HW3 col mock (stesse camere), baseline diversa dalle misure.
+- Firmware HW3 definitivo: tag hw3-def-20261118 (rilasci/HW3_DEF_20261118, flasha_nuovo lo usa).
