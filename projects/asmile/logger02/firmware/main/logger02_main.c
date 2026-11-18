@@ -15,6 +15,7 @@
 #include "protocol_examples_common.h"
 #include "example_video_common.h"
 #include "freertos/event_groups.h"
+#include "lwip/netdb.h"
 #include "logger02.h"
 
 static const char *TAG = "logger02";
@@ -22,6 +23,21 @@ static EventGroupHandle_t s_ev;
 
 /* wifi in background: riprova all'infinito (CONFIG_EXAMPLE_WIFI_CONN_MAX_RETRY=-1), la registrazione non lo aspetta */
 /* firmware appena arrivato via OTA: se in 2 minuti la rete non va, riavvio → il bootloader torna alla versione buona */
+/* Firmware nuovo (OTA): si conferma SOLO dopo 3 minuti di rete che funziona davvero (DNS risolto), se no si torna al
+ * precedente. 18/11: un firmware col wifi che moriva dopo ~60 s era stato confermato al primo IP → niente rollback. */
+static bool rete_vera(void)
+{
+    for (int i = 0; i < 3; i++) {
+        struct addrinfo *res = NULL, hint = {.ai_family = AF_INET};
+        if (getaddrinfo("controlplane.tailscale.com", NULL, &hint, &res) == 0 && res) {
+            freeaddrinfo(res);
+            return true;
+        }
+        vTaskDelay(pdMS_TO_TICKS(5000));
+    }
+    return false;
+}
+
 static void guardia_ota(void *arg)
 {
     esp_ota_img_states_t st;
@@ -30,6 +46,13 @@ static void guardia_ota(void *arg)
             ESP_LOGE(TAG, "firmware nuovo senza rete: torno al precedente");
             esp_ota_mark_app_invalid_rollback_and_reboot();
         }
+        vTaskDelay(pdMS_TO_TICKS(180000));
+        if (!rete_vera()) {
+            ESP_LOGE(TAG, "firmware nuovo: dopo 3 minuti la rete non passa dati, torno al precedente");
+            esp_ota_mark_app_invalid_rollback_and_reboot();
+        }
+        esp_ota_mark_app_valid_cancel_rollback();
+        ESP_LOGI(TAG, "firmware nuovo confermato (3 min di rete vera)");
     }
     vTaskDelete(NULL);
 }
@@ -42,7 +65,6 @@ static void rete_task(void *arg)
         mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);
         xEventGroupSetBits(s_ev, 1);
         ESP_LOGI(TAG, "wifi connesso");
-        esp_ota_mark_app_valid_cancel_rollback();   /* il firmware nuovo è buono SOLO se la rete funziona */
         if (!logger02_ruolo()->is_a) {             /* la B dice alla A il suo IP (ogni 30 s: la A può riavviarsi) */
             esp_netif_ip_info_t ip;
             char m[32];
@@ -81,7 +103,7 @@ void app_main(void)
     logger02_link_init();                  /* prima del wifi: SYNC e WAKE subito attivi */
     s_ev = xEventGroupCreate();
     xTaskCreate(rete_task, "rete", 6144, NULL, 5, NULL);
-    xTaskCreate(guardia_ota, "guardia_ota", 3072, NULL, 5, NULL);
+    xTaskCreate(guardia_ota, "guardia_ota", 4096, NULL, 5, NULL);
     if (!(xEventGroupWaitBits(s_ev, 1, pdFALSE, pdTRUE, pdMS_TO_TICKS(15000)) & 1)) {
         ESP_LOGW(TAG, "wifi non ancora connesso: registro lo stesso, lui continua a riprovare");
     }

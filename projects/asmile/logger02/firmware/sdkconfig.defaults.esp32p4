@@ -37,3 +37,7 @@ CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
 # Spegnere solo l'AGC faceva crashare all'avvio: spengo tutto il controller della pipeline ISP (niente IPA).
 # CONFIG_ESP_VIDEO_ENABLE_ISP_PIPELINE_CONTROLLER is not set
 
+
+# 18/11: crash A "assert sdio_read_task: RX buffer alloc 23040 failed" (RAM interna frammentata): buffer del wifi in PSRAM
+# (opzione Espressif pensata per P4 + video). NB: RX_MAX_SIZE invece rompeva il wifi dopo 60 s.
+CONFIG_ESP_HOSTED_MEMPOOL_PREFER_SPIRAM=y
