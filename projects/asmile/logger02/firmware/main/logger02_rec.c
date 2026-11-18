@@ -151,8 +151,19 @@ static int luma_media(const uint8_t *yuv, uint32_t len)
     return y < 0 ? 0 : y > 255 ? 255 : y;
 }
 
+static void ae_invia_b(void)
+{
+    char m[40];
+    snprintf(m, sizeof(m), "E %lu %lu", (unsigned long)s_exp16, (unsigned long)s_gain);
+    logger02_link_invia(m);                            /* la B usa gli stessi valori (e non riscrive se uguali) */
+}
+
 static void ae_passo(const uint8_t *yuv, uint32_t len)
 {
+    static uint32_t n;
+    /* ogni 2 s ripeto i valori alla B anche se non cambiano: una B riavviata (OTA, crash) li riprende subito.
+     * È solo UART: la B scrive il sensore solo se i valori sono diversi dai suoi (applica_esposizione). */
+    if (++n % 10 == 0) ae_invia_b();
     int y = luma_media(yuv, len);
     s_ae_luma = y;
     if (y < 1) y = 1;
@@ -172,9 +183,7 @@ static void ae_passo(const uint8_t *yuv, uint32_t len)
     s_exp16 = (uint32_t)e;
     s_gain = (uint32_t)g;
     applica_esposizione(s_exp16, s_gain);
-    char m[40];
-    snprintf(m, sizeof(m), "E %lu %lu", (unsigned long)s_exp16, (unsigned long)s_gain);
-    logger02_link_invia(m);                            /* la B usa gli stessi valori */
+    ae_invia_b();
 }
 
 void logger02_rec_esposizione(uint32_t exp16, uint32_t gain)
