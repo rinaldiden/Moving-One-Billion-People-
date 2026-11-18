@@ -11,3 +11,5 @@
 | 2026-11-18 07:05 | logger02 A |  | c54f5d89-dirty Nov 18 2026 06:46:49 | FALSO OK: crash all'avvio, tornato a c54f5d89 (AGC Espressif spento) |
 | 2026-11-18 07:12 | logger02 A | c54f5d89-dirty Nov 18 2026 06:46:49 | 8f2f4731-dirty Nov 18 2026 07:11:33 | ok (2e7b44b5) |
 | 2026-11-18 07:13 | logger02 B | c54f5d89-dirty Nov 18 2026 06:46:49 | 8f2f4731-dirty Nov 18 2026 07:11:33 | ok (2e7b44b5) |
+| 2026-11-18 08:19 | logger02 A | fa5f2ee8 | 87dd0423 | ok, prova 10 min 272 MB senza crash |
+| 2026-11-18 08:19 | logger02 B | 8f2f4731-dirty Nov 18 2026 07:11:33 | 87dd0423-dirty Nov 18 2026 08:06:46 | ok (diretto) |
