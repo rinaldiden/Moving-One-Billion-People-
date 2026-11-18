@@ -19,6 +19,15 @@ registrazione H.264 su SD a segmenti + CSV frame · trigger camere + misura late
 batteria ADC + avviso Telegram · deep sleep + risveglio da INT IMU + autospegnimento 5 min · download dal Mac
 (pull_from_loggers) · OTA via wifi · Tailscale (MicroLink) · BLE CooSpo · LED di stato
 
+## FIRMWARE DEFINITIVO HW3 (Daniele 18/11/2026: «quello che abbiamo finito stamattina consideralo def per hw3»)
+- È il firmware che gira su logger02 A e B dalle 08:19 del 18/11: `87dd0423-dirty Nov 18 2026 08:06:46`, codice = commit
+  `fa457fc0` (tag git **`hw3-def-20261118`**): buffer wifi in PSRAM (crash risolto), guardia OTA 3 min + DNS, AE A→B,
+  pipeline ISP Espressif spenta, deep sleep + risveglio IMU (provato da Daniele), batteria "non collegata".
+- Set di flash congelato in `rilasci/HW3_DEF_20261118/` (bootloader, partizioni, ota_data, app + flash_args; SOLO sul Mac,
+  dentro c'è la password del wifi), impronte in `HW3_DEF_20261118.sha256` (su git).
+- `flasha_nuovo.sh` flasha QUESTO set (controlla le impronte); `REBUILD=1` ricompila solo per un firmware nuovo, che va
+  prima provato sul logger di prova (regola ferrea, sotto).
+
 ## Flotta HW3: logger nuovo e aggiornamenti (18/11/2026, regola di Daniele)
 - **Logger nuovo** (A e B attaccate al Mac col cavo, prima di montare): `bash logger02/flasha_nuovo.sh`
   → nome automatico (logger03, 04...), IP fisso crescente della sola A (la B prende il DHCP e lo dice alla A),

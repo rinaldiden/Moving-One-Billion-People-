@@ -40,16 +40,26 @@ fi
 echo "== $NOME · IP fisso della A: $IP · la B prende il DHCP"
 
 # --- 2. firmware ---------------------------------------------------------------------------------------
+# Daniele 18/11: "quello che abbiamo finito stamattina consideralo definitivo per hw3" → si flasha il set CONGELATO
+# rilasci/HW3_DEF_20261118 (= 87dd0423-dirty 08:06:46, codice di fa457fc0, tag hw3-def-20261118, sha256 in
+# HW3_DEF_20261118.sha256). Ricompilare solo con REBUILD=1 (firmware nuovo provato prima sul logger di prova).
 . "$IDF/export.sh" >/dev/null
-cd "$FW"
-if [ ! -f sdkconfig.defaults.local ]; then
-    PW=$(security find-generic-password -D 'AirPort network password' -a EOLO_378899 -w)
-    printf 'CONFIG_EXAMPLE_WIFI_SSID="EOLO_378899"\nCONFIG_EXAMPLE_WIFI_PASSWORD="%s"\n' "$PW" > sdkconfig.defaults.local
-    chmod 600 sdkconfig.defaults.local
+DEF="${DEF:-$QUI/rilasci/HW3_DEF_20261118}"
+if [ -n "${REBUILD:-}" ]; then
+    cd "$FW"
+    if [ ! -f sdkconfig.defaults.local ]; then
+        PW=$(security find-generic-password -D 'AirPort network password' -a EOLO_378899 -w)
+        printf 'CONFIG_EXAMPLE_WIFI_SSID="EOLO_378899"\nCONFIG_EXAMPLE_WIFI_PASSWORD="%s"\n' "$PW" > sdkconfig.defaults.local
+        chmod 600 sdkconfig.defaults.local
+    fi
+    [ -f sdkconfig ] || idf.py -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.esp32p4;sdkconfig.defaults.local" set-target esp32p4 >/dev/null
+    idf.py build >/dev/null || { echo "compilazione fallita: idf.py build per vedere l'errore"; exit 1; }
+    DEF="$FW/build"
+else
+    [ -f "$DEF/flash_args" ] || { echo "manca $DEF (set definitivo HW3, solo sul Mac di Daniele): REBUILD=1 per ricompilare"; exit 1; }
+    (cd "$DEF" && shasum -a 256 -c "$QUI/HW3_DEF_20261118.sha256" >/dev/null) || { echo "STOP: $DEF non coincide con HW3_DEF_20261118.sha256"; exit 1; }
 fi
-[ -f sdkconfig ] || idf.py -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.esp32p4;sdkconfig.defaults.local" set-target esp32p4 >/dev/null
-idf.py build >/dev/null || { echo "compilazione fallita: idf.py build per vedere l'errore"; exit 1; }
-bash "$QUI/controlla_segreti.sh" build/logger02.bin
+bash "$QUI/controlla_segreti.sh" "$DEF/logger02.bin"
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 
 porte() { ls /dev/cu.usbmodem* /dev/cu.wchusbserial* 2>/dev/null | sort; }
@@ -85,8 +95,8 @@ flasha() {   # $1 = A|B
       fi; } > "$csv"
     chmod 600 "$csv"
     python "$IDF/components/nvs_flash/nvs_partition_generator/nvs_partition_gen.py" generate "$csv" "$TMP/nvs_$R.bin" $NVS_DIM >/dev/null
-    idf.py -p "$P" erase-flash >/dev/null
-    idf.py -p "$P" flash >/dev/null
+    esptool.py --chip esp32p4 -p "$P" erase_flash >/dev/null
+    (cd "$DEF" && esptool.py --chip esp32p4 -p "$P" -b 460800 write_flash $(tr '\n' ' ' < flash_args)) >/dev/null
     esptool.py --chip esp32p4 -p "$P" write_flash $NVS_OFF "$TMP/nvs_$R.bin" >/dev/null
     esptool.py --chip esp32p4 -p "$P" run >/dev/null 2>&1 || true
     rm -f "$csv"
@@ -98,7 +108,7 @@ MAC_A=""; MAC_B=""
 for R in A B; do [ -z "${SOLO:-}" ] || [ "$SOLO" = "$R" ] && flasha "$R"; done
 
 # --- 5. registro ---------------------------------------------------------------------------------------
-GIT=$(git -C "$QUI" describe --always --dirty 2>/dev/null)
+GIT=$([ -n "${REBUILD:-}" ] && git -C "$QUI" describe --always --dirty 2>/dev/null || echo hw3-def-20261118)
 if [ -z "$riga" ]; then echo "$NOME,$IP,,$MAC_A,$MAC_B,$(date +%F),$GIT," >> "$FLOTTA"
 else
     python3 - "$FLOTTA" "$NOME" "$MAC_A" "$MAC_B" <<'EOF'
