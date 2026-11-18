@@ -29,3 +29,13 @@
 - **A10 — costi con fornitori misti e voci mancanti.** PCB da PCBWay + montaggio a tariffa JLC, senza saldatura dei moduli
   forniti da noi né IVA/dazio: numero più basso del vero. Regola: un fornitore per PCB+montaggio nel conto, ogni pezzo
   fornito da noi ha la sua voce di posa, e una riga "caso peggiore" con dazio + IVA. (Critico 17:05)
+- **A11 — "stesso rapporto, quindi stesso firmware" sul partitore ADC.** Il firmware ha una sequenza temporale (pull-down
+  interno 2 ms + attesa 2 ms) tarata sull'impedenza di HW3; un condensatore da 100 nF su 248 kΩ la rende troppo lenta e la
+  lettura sbaglia del 31 %. Regola: ogni modifica a un nodo che il firmware legge o forza va simulata con la sua sequenza
+  (RC con i tempi del codice), non solo con il rapporto. (Critico, 18/11)
+- **A12 — power-path: guardare solo il caso "USB presente" e "USB assente a regime".** La transizione (stacco del cavo)
+  dipende dalla costante di scarica del gate del P-MOS e dal diodo di body. Regola: per ogni OR di alimentazione scrivere i
+  tre casi (collegare, regime, scollegare) con tensione di VSYS e tempo; il gate si scarica con ≤ 10 kΩ. (Critico, 18/11)
+- **A13 — TVS "da 5 V" accanto a pezzi con massimo 6-6,5 V.** SMF5.0A limita a 9,2 V a 21,7 A e conduce da 6,4 V: non basta
+  a proteggere TP4056 (6,5 V) e TLV62569 (6 V) su un hot-plug. Regola: confrontare VC del TVS con il VIN massimo di ogni
+  pezzo sulla linea; se supera, prevedere un elemento serie (perla/0 Ω) e la prova con sonda. (Critico, 18/11)
