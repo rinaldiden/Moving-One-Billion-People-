@@ -180,6 +180,24 @@ def rinumera_zeri(t, chiave):
     return re.sub(re.escape(chiave) + '0"', sub, t)
 
 
+AW_VECCHIO = "BGA-12_L1.8-W1.3-R3-C4-P0.40-TL"
+AW_NUOVO = "FCQFN-12_1.3x1.8mm_P0.4mm_AW32901"
+
+
+def fix_aw32901(fpdir):
+    """AW32901 (Awinic, datasheet V1.0 pag. 19): il package è FCQFN-12 (non BGA); land pattern NSMD con pad in rame
+    Ø0,230 mm e apertura del solder mask Ø0,330 mm (easyeda dava 0,20 mm). Rinomino file e footprint."""
+    src = os.path.join(fpdir, AW_VECCHIO + ".kicad_mod")
+    if not os.path.exists(src):
+        return
+    t = open(src, encoding="utf-8").read()
+    t = t.replace('"%s"' % AW_VECCHIO, '"%s"' % AW_NUOVO).replace(AW_VECCHIO, AW_NUOVO)
+    t = re.sub(r'\(size 0\.2 0\.2\)', '(size 0.23 0.23)', t)
+    t = re.sub(r'(\(pad "[A-C][1-4]" smd circle)', r'\1 (solder_mask_margin 0.05)', t)
+    open(os.path.join(fpdir, AW_NUOVO + ".kicad_mod"), "w", encoding="utf-8").write(t)
+    os.remove(src)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--kicad", required=True)
@@ -235,6 +253,7 @@ def main():
     subprocess.run([cli, "fp", "upgrade", "--force", fpdir, "-o", fpdir + "_up"], check=True)
     shutil.rmtree(fpdir)
     os.rename(fpdir + "_up", fpdir)
+    fix_aw32901(fpdir)
     print("ok:", dst, len(os.listdir(fpdir)), "footprint")
 
 

@@ -100,7 +100,7 @@ bozza di richiesta preventivo pronta (§9) ad Arducam, Inno-Maker, Sinoseen.
    │ modulo A (P4+C6)   │══════════════════════ piste sulla scheda ════════════════│ modulo B (P4+C6)   │
    │ SD-A, IMU, USB-C   │                                                          │ SD-B, pad PROG B   │
    └─────────┬──────────┘                                                          └─────────┬──────────┘
-          3V3_A (buck TLV62569) ← VSYS ← interruttore J3 ← OR(cella via P-MOS, VBUS via SS14) → 3V3_B (buck TLV62569)
+          3V3_A (buck TLV62569) ← VSYS ← interruttore J3 ← OR(cella via P-MOS, VBUS via SS34) → 3V3_B (buck TLV62569)
      USB-C 5 V → R36 → TVS + USBLC6 → OVP AW32901 (5,95 V) → TP4056 1 A con NTC → cella 1S su J2 (3 poli) protetta DW01A + FS8205A
 ```
 - **GPIO (VETO 1, corretto 18/11):** tabella completa hw↔fw in **`PIN_HW4.md`**, generata da `kicad/controlla_pin_fw.py`
@@ -117,11 +117,11 @@ bozza di richiesta preventivo pronta (§9) ad Arducam, Inno-Maker, Sinoseen.
     ed esce; il bip lo fa il firmware HW4 (proposta in `PROPOSTA_FIRMWARE_HW4.md`, flag `CONFIG_LOGGER02_HW4`).
     Cambi firmware per HW4: driver IMU, flag saluto→buzzer, pin LED. Nessuna modifica a logger02.
 - **Alimentazione (corretta 18/11):** cella 1S → protezione DW01A+FS8205A → **power-path** (P-MOS AO3401A dalla cella,
-  Schottky SS14 da VBUS) → **interruttore esterno su J3** → VSYS → due buck TLV62569 (uno per modulo).
+  Schottky **SS34** da VBUS — 3 A, al posto di SS14 da 1 A che portava ~1,2 A, critico giro 3) → **interruttore esterno su J3** → VSYS → due buck TLV62569 (uno per modulo).
   **Stacco del cavo in registrazione (VETO 2, A12):** prima il gate di Q3 era la net VBUS, con 10 µF sopra: allo stacco
   la scheda restava sul diodo di body di Q3 (cella − 0,8 V) per 130-170 ms con R35 100k e **ancora 60-80 ms con R35 10k**,
   con la 3V3 a 2,5-3,0 V (`kicad/modello_power_path.py`). Abbassare R35 da solo non basta: ho messo R35 a 10k **e**
-  alimentato il gate da VBUS attraverso **D8 (SS14, stesso pezzo di D5)**. Allo stacco D8 si interdice, il gate si scarica
+  alimentato il gate da VBUS attraverso **D8 (SS14: porta solo la corrente del gate, ~0,5 mA)**. Allo stacco D8 si interdice, il gate si scarica
   solo con la sua Ciss (645 pF + diodo) su 10k: **τ ≈ 7 µs**, mentre VBUS + VSYS impiegano 35-48 µs a scendere fino al
   diodo di body → Q3 conduce prima e la 3V3 resta a 3,30 V (3,14 V a cella 3,5 V). Con USB presente il gate sta a
   VBUS − 0,2 V e la sorgente a VBUS − 0,45 V: Q3 resta spento (Vgs ≈ +0,25 V, soglia −0,5…−1,3 V). Prova al COLLAUDO passo 4.
@@ -146,7 +146,7 @@ bozza di richiesta preventivo pronta (§9) ad Arducam, Inno-Maker, Sinoseen.
   regge 120 V di surge, 27 mΩ, 5 A** (datasheet Awinic V1.0, tab. elettrica pag. 7, applicazione pag. 4: CIN 0,1 µF ≥ clamp
   del TVS, COUT 1 µF, OVLO a GND = soglia di default, EN attivo basso a GND, ACOK libero). Scartati: TVS a basso clamp
   (PESD5V0S1UL, TPD1E10B06 = ESD da 60-90 W, clamp 9-14 V: proteggono dalle scariche, non da un caricatore a 9 V) e la
-  sola perla in serie (rallenta il picco ma non limita una sovratensione continua). Rischio: CSP 3×4 passo 0,4 mm →
+  sola perla in serie (rallenta il picco ma non limita una sovratensione continua). Footprint secondo il land pattern del datasheet (pag. 19): **pad NSMD Ø0,23 mm, apertura solder mask Ø0,33 mm**, rinominato `FCQFN-12_1.3x1.8mm_P0.4mm_AW32901` (prima "BGA" con pad 0,20, critico giro 3). Rischio: CSP 3×4 passo 0,4 mm →
   fuga dei pad sul top unendo i pad della stessa net (IN/OUT/GND); da controllare allo sbroglio con le regole JLC.
   R36 è 0805 e non 0603 come chiedeva il critico: ci passano fino a 2 A (carica 1 A + scheda via D5) e lo 0 Ω 0603 è da
   1 A; lo 0 Ω 0805 (C17477) è da 2 A (valore tipico UniOhm, DA VERIFICARE sul datasheet).
@@ -218,7 +218,7 @@ bozza di richiesta preventivo pronta (§9) ad Arducam, Inno-Maker, Sinoseen.
 
 ## 7. Costi (rifatti dopo il VETO 1: PCB e montaggio dallo **stesso fornitore, JLCPCB**; `kicad/costi.py`)
 Fonti: PCB nudo = preventivo JLCPCB vero (4 strati 250×50 ENIG, 18/11, `preventivo/jlcpcb_*.jpg`; PCBWay per confronto
-in `PREVENTIVO_PCBWAY.md`) · pezzi = API JLC (`kicad/prezzi_jlc.json`, 127 montati, 23 Extended) · montaggio = tariffe
+in `PREVENTIVO_PCBWAY.md`) · pezzi = API JLC (`kicad/prezzi_jlc.json`, 127 montati; **24 codici Extended nel BOM = 23 montati + l'u.FL C88374 solo non montato**: la tassa JLC da 3,07 $ si paga sui 23 montati) · montaggio = tariffe
 JLCPCB standard pubblicate (setup 25,56 $, stencil 15,72 $, 3,07 $/Extended, 0,0016 $/giunto) **+ saldatura a mano dei 2
 moduli castellati forniti da noi** (176 giunti × 0,0164 $ + 3,58 $/ordine, FAQ JLC) · moduli 9,99-10,99 $ (sito
 Waveshare) · cambio 1 € = 1,10 $. Il montaggio resta **NON VERIFICATO** (serve il preventivo coi file veri).

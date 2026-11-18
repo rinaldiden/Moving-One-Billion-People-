@@ -94,7 +94,7 @@
   "ref": "U7",
   "sym": "AW32901FCR",
   "value": "AW32901 OVP 5,95 V",
-  "fp": "BGA-12_L1.8-W1.3-R3-C4-P0.40-TL",
+  "fp": "FCQFN-12_1.3x1.8mm_P0.4mm_AW32901",
   "lcsc": "C407920",
   "pins": {
    "B3": "VBUS_RAW",
@@ -477,16 +477,16 @@
  {
   "ref": "D5",
   "sym": "SS14",
-  "value": "SS14",
+  "value": "SS34",
   "fp": "SMA_L4.2-W2.6-LS5.0-RD_1",
-  "lcsc": "C2480",
+  "lcsc": "C8678",
   "pins": {
    "2": "VBUS",
    "1": "VSYS_IN"
   },
   "dnp": false,
   "blocco": "alimentazione",
-  "nota": "power-path: VBUS → VSYS_IN (0,55 V a 1 A)",
+  "nota": "power-path: VBUS → VSYS_IN. SS34 (3 A, SMA, Basic, 0,55 V a 3 A) al posto di SS14 (1 A): ci passa ~1,2 A (critico giro 3). Simbolo/footprint SMA uguali a SS14, K=1 A=2",
   "uuid": "da925843-7574-50cf-bc27-d919f18572a6"
  },
  {

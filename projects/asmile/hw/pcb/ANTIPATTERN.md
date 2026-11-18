@@ -43,3 +43,6 @@
   da 130 a 60-80 ms, non lo toglieva: il problema era la capacità di VBUS sul gate, non la resistenza. Regola: per ogni
   correzione di valore rifare il modello e scrivere il risultato numerico; se non basta, dirlo e cambiare la topologia
   (qui: gate via diodo). (Registro 23:06)
+- **A15 — `git stash` + `git stash pop` "per sicurezza".** Se non ci sono modifiche locali lo stash non viene creato e il
+  pop ripesca il primo stash della lista, di qualcun altro (successo 19/11: vecchio stash su pi/braking). Regola: solo
+  `git pull --rebase --autostash`; mai `stash pop` senza aver visto `git stash list` subito prima. (Registro 00:20)

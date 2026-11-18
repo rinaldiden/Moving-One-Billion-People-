@@ -42,7 +42,7 @@ P("U1", "USBLC6-2SC6_C2827654", "USBLC6-2SC6", "SOT-23-6_L2.9-W1.6-P0.95-LS2.8-B
 # datasheet Awinic V1.0 pag. 4 e 7) → VBUS interna. Proteggono TP4056 (VCC max 6,5 V) e TLV62569 (VIN max 6 V via D5).
 P("R36", "R", "0 (PTC/perla)", "R_0805_2012Metric", "C17477", {"1": "VBUS_C", "2": "VBUS_RAW"}, blocco=B,
   nota="serie su VBUS dopo J1: 0 Ω montato; 0805 e non 0603 perché passa fino a 2 A (carica 1 A + scheda) e lo 0 Ω 0603 è da 1 A")
-P("U7", "AW32901FCR", "AW32901 OVP 5,95 V", "BGA-12_L1.8-W1.3-R3-C4-P0.40-TL", "C407920",
+P("U7", "AW32901FCR", "AW32901 OVP 5,95 V", "FCQFN-12_1.3x1.8mm_P0.4mm_AW32901", "C407920",
   {"B3": "VBUS_RAW", "C2": "VBUS_RAW", "C3": "VBUS_RAW", "A2": "VBUS", "A3": "VBUS", "B2": "VBUS",
    "A1": "GND", "C1": "GND", "A4": "GND", "B4": "GND", "C4": "GND"}, blocco=B,
   nota="EN attivo basso a GND, OVLO a GND = soglia di default 5,95 V; ACOK non usato (datasheet: può restare libero)")
@@ -89,8 +89,8 @@ P("Q3", "AO3401A", "AO3401A", "SOT-23-3_L3.0-W1.7-P0.95-LS2.9-BR", "C15127",
 P("D8", "SS14", "SS14", "SMA_L4.2-W2.6-LS5.0-RD_1", "C2480", {"2": "VBUS", "1": "GATE_Q3"}, blocco=B,
   nota="isola il gate di Q3 dalla capacità di VBUS (stesso pezzo di D5)")
 R("R35", "10k", "GATE_Q3", "GND", RES["10k"], blocco=B, nota="scarica il gate di Q3: τ = 10k × ~0,7 nF ≈ 7 µs")
-P("D5", "SS14", "SS14", "SMA_L4.2-W2.6-LS5.0-RD_1", "C2480", {"2": "VBUS", "1": "VSYS_IN"}, blocco=B,
-  nota="power-path: VBUS → VSYS_IN (0,55 V a 1 A)")
+P("D5", "SS14", "SS34", "SMA_L4.2-W2.6-LS5.0-RD_1", "C8678", {"2": "VBUS", "1": "VSYS_IN"}, blocco=B,
+  nota="power-path: VBUS → VSYS_IN. SS34 (3 A, SMA, Basic, 0,55 V a 3 A) al posto di SS14 (1 A): ci passa ~1,2 A (critico giro 3). Simbolo/footprint SMA uguali a SS14, K=1 A=2")
 P("J3", "PH-2AWT", "INTERRUTTORE est. (2 poli)", "CONN-SMD_PH-2AWT", "C2763693",
   {"1": "VSYS_IN", "2": "VSYS", "3": "GND", "4": "GND"}, blocco=B,
   nota="2 poli ≠ J2 (3 poli): non invertibili. Senza interruttore: ponticello sul connettore")
