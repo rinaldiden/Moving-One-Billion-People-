@@ -145,3 +145,5 @@ Dettaglio e domande in `agents/sicurezza/ARCHITETTURA_SICUREZZA.md` §8. Ordine:
 - **Crash A (panic, riavvio 4)** due volte mentre scaricavo file della B attraverso il proxy /b della A → riprodurre con la A sul cavo USB e leggere il backtrace.
 - **Sync camere** dopo l'aggancio: mediana 37 µs, p95 92, max ~140 (obiettivo ≤45 come #001) + 20% coppie con numero di fotogramma sfasato fra A e B → da sistemare.
 - Fotogrammi bianchi (A 99/1020) RISOLTI: AE scrive solo se cambia + group hold 0x3208.
+- 07:45 FUOCO: A e B a fuoco (nitidezza centro A 72, B 78; prima A 17). Luminosità giusta dopo aver spento la pipeline ISP Espressif (A 102, B 67, stessa esposizione). Camere ancora ruotate fra loro (~35°): al montaggio parallele + baseline col metro, poi registrazione ChArUco → `logger02/accoppia_stereo.py` → `calib_charuco.py --size 1280x720 --no-flip`.
+- Crash A: log seriale della A attivo dal cavo USB (usbmodem1101; aprire la porta resetta la A). Crash visti solo con streaming/download dalla A.
