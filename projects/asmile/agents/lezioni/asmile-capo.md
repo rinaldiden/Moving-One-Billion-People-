@@ -57,3 +57,12 @@ Cosa ho previsto male. Le legge il capo-critico.
 - 2026-11-17 SBAGLIATO: Ho cambiato lo spegnimento (riavvio dopo 10 s) senza misure e ho dato la colpa all'IMU contro le prove prima/dopo di Daniele; la soluzione (condensatore + 1 kΩ in serie) l'ha trovata lui
 - 2026-11-17 SBAGLIATO (logger02): mandato via OTA a TUTTE E DUE le schede insieme un firmware con modifiche ai pin di avvio (C6 reset/hold, PHY Ethernet) mai provato prima → wifi "connesso" ma senza dati, schede irraggiungibili, serve il cavo. E il rollback OTA era annullato subito all'avvio. Regole: (1) il firmware nuovo si conferma (mark_app_valid) SOLO dopo che la rete passa dati, altrimenti rollback automatico entro 2 min; (2) ogni modifica a avvio/alimentazione/rete prima su UNA scheda col cavo collegato, poi sull'altra; (3) prima di spegnere periferiche in deep sleep, provare il ciclo dormi→sveglia→rete almeno 3 volte.
 - 2026-11-17 logger02 wifi "connesso ma muto" a caso: NON era il firmware (né fsync né pin C6) ma l'IP FISSO. Con lo stesso SSID EOLO_378899 ci sono due reti (192.168.1.x casa, 10.16.156.x altra): sulla seconda imponevo 192.168.1.122. Daniele lo aveva detto ("sei sicuro di aver messo ip statico?"). Regola: prima di dare la colpa al codice, leggere il log COMPLETO dell'avvio (DHCP, rete agganciata); IP fisso solo se la sottorete è quella di casa; raggiungibilità via Tailscale.
+
+## 2026-11-18 — logger02: SDIO RX a pacchetti fissi ha rotto il wifi, e il rollback non l'ha visto
+- Crash della A letto dal seriale: `assert sdio_read_task sdio_drv.c:1326`, "RX buffer alloc of len 23040 failed" (esp_hosted
+  streaming mode, RAM interna frammentata durante streaming/download).
+- Provato `ESP_HOSTED_SDIO_OPTIMIZATION_RX_MAX_SIZE` sulla sola A col cavo (regola rispettata): la rete andava per ~60 s
+  poi niente più dati (DNS falliti, errno 113). La guardia OTA aveva già confermato l'immagine a "wifi connesso" → NIENTE
+  rollback automatico. Rimessa la versione buona via USB (`idf.py -p /dev/cu.usbmodem1101 flash`).
+- Lezione: "rete OK" va confermato dopo minuti di traffico vero (es. 5 min con DNS/Tailscale ok), non al primo IP.
+  E aprire la porta USB della A (usbmodem) la resetta: dirlo a Daniele prima.
