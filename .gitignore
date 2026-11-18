@@ -80,3 +80,4 @@ projects/asmile/logger/depth/*.maps.npz
 projects/asmile/mobileclip2_b.ts
 projects/asmile/agents/prove/**/*.npz
 projects/asmile/agents/prove/**/*.pkl
+projects/asmile/hw/pcb/logger_hw4/.log/
