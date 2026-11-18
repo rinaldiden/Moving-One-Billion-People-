@@ -1,0 +1,2460 @@
+[
+ {
+  "ref": "J1",
+  "sym": "TYPE-C-31-M-12",
+  "value": "USB-C (carica + flash A)",
+  "fp": "USB-C_SMD-TYPE-C-31-M-12_1",
+  "lcsc": "C165948",
+  "pins": {
+   "A1B12": "GND",
+   "B1A12": "GND",
+   "A4B9": "VBUS",
+   "B4A9": "VBUS",
+   "A5": "CC1",
+   "B5": "CC2",
+   "A6": "USB_DP_C",
+   "B6": "USB_DP_C",
+   "A7": "USB_DM_C",
+   "B7": "USB_DM_C",
+   "1": "GND",
+   "2": "GND",
+   "3": "GND",
+   "4": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "ce81ac23-9115-5a06-a236-2b3320f3d742"
+ },
+ {
+  "ref": "R1",
+  "sym": "R",
+  "value": "5.1k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25905",
+  "pins": {
+   "1": "CC1",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "CC pull-down: sink 5 V/USB default",
+  "uuid": "a5950d23-517c-5df9-a2f8-97397d27b618"
+ },
+ {
+  "ref": "R2",
+  "sym": "R",
+  "value": "5.1k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25905",
+  "pins": {
+   "1": "CC2",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "be6fe924-2c1d-58a2-8c08-3699e02a821d"
+ },
+ {
+  "ref": "U1",
+  "sym": "USBLC6-2SC6_C2827654",
+  "value": "USBLC6-2SC6",
+  "fp": "SOT-23-6_L2.9-W1.6-P0.95-LS2.8-BL",
+  "lcsc": "C2827654",
+  "pins": {
+   "1": "USB_DM_C",
+   "6": "USB_DM_C",
+   "3": "USB_DP_C",
+   "4": "USB_DP_C",
+   "2": "GND",
+   "5": "VBUS"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "5a8105f4-2b55-504d-aa0d-c27d2c8c4c74"
+ },
+ {
+  "ref": "R3",
+  "sym": "R",
+  "value": "22",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25092",
+  "pins": {
+   "1": "USB_DM_C",
+   "2": "USB_DM_A"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "serie FS USB (checklist P4 §USB)",
+  "uuid": "b6a75163-2f6f-51c5-b655-8d130a8dd354"
+ },
+ {
+  "ref": "R4",
+  "sym": "R",
+  "value": "22",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25092",
+  "pins": {
+   "1": "USB_DP_C",
+   "2": "USB_DP_A"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "b3a40e9d-8fd6-5ea2-ab85-978039db47c2"
+ },
+ {
+  "ref": "C1",
+  "sym": "C",
+  "value": "10u",
+  "fp": "C_0805_2012Metric",
+  "lcsc": "C15850",
+  "pins": {
+   "1": "VBUS",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "84a60af8-e0b7-52a8-813f-bbb2df96a32d"
+ },
+ {
+  "ref": "U2",
+  "sym": "TP4056_C725790",
+  "value": "TP4056",
+  "fp": "ESOP-8_L4.9-W3.9-P1.27-LS6.0-BL-EP",
+  "lcsc": "C725790",
+  "pins": {
+   "1": "GND",
+   "2": "PROG",
+   "3": "GND",
+   "4": "VBUS",
+   "5": "BATP",
+   "7": "CHRG_N",
+   "8": "VBUS",
+   "9": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "6ee70f89-b484-53d1-b0ce-122be21055be"
+ },
+ {
+  "ref": "R5",
+  "sym": "R",
+  "value": "1.2k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25862",
+  "pins": {
+   "1": "PROG",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "R_PROG 1,2 kΩ = 1000 mA (tabella TP4056)",
+  "uuid": "a68c655f-b586-5794-b6c8-caf65853c8c9"
+ },
+ {
+  "ref": "R6",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "CHRG_N",
+   "2": "3V3_A"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "71d85f52-db2a-5412-9c6f-fa18ede1cf08"
+ },
+ {
+  "ref": "C2",
+  "sym": "C",
+  "value": "10u",
+  "fp": "C_0805_2012Metric",
+  "lcsc": "C15850",
+  "pins": {
+   "1": "BATP",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "09d3067d-88fb-5018-b4f2-b640e2b13d31"
+ },
+ {
+  "ref": "J2",
+  "sym": "XY-S2B-PH-SM4-TB",
+  "value": "BATT 1S (2x18650 2P)",
+  "fp": "CONN-SMD_P2.00_S2B-PH-SM4-TB-LF-SN",
+  "lcsc": "C54582899",
+  "pins": {
+   "1": "BATP",
+   "2": "BAT_N",
+   "3": "BAT_N",
+   "4": "BAT_N"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "pin 3/4 = linguette meccaniche",
+  "uuid": "960e6a54-ec3a-51e7-859e-7c5d59bfa2eb"
+ },
+ {
+  "ref": "U3",
+  "sym": "DW01A_C351410",
+  "value": "DW01A",
+  "fp": "SOT-23-6_L2.9-W1.6-P0.95-LS2.8-BR",
+  "lcsc": "C351410",
+  "pins": {
+   "1": "PROT_OD",
+   "2": "PROT_VM",
+   "3": "PROT_OC",
+   "5": "PROT_VCC",
+   "6": "BAT_N"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "e8336d6e-ca2e-5cb4-bfe6-8f739c117848"
+ },
+ {
+  "ref": "R8",
+  "sym": "R",
+  "value": "100",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25076",
+  "pins": {
+   "1": "BATP",
+   "2": "PROT_VCC"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "5c97237d-f2a0-5f90-9793-155f6617a08f"
+ },
+ {
+  "ref": "C3",
+  "sym": "C",
+  "value": "100n",
+  "fp": "C_0402_1005Metric",
+  "lcsc": "C1525",
+  "pins": {
+   "1": "PROT_VCC",
+   "2": "BAT_N"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "e6dfda79-3d0c-52ad-bc43-491a65b7fde7"
+ },
+ {
+  "ref": "R9",
+  "sym": "R",
+  "value": "1k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C11702",
+  "pins": {
+   "1": "PROT_VM",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "VM verso P- (= GND della scheda)",
+  "uuid": "556f48a6-8933-5f8c-b963-45f548cf2519"
+ },
+ {
+  "ref": "Q1",
+  "sym": "FS8205A_C2830320",
+  "value": "FS8205A",
+  "fp": "SOT-23-6_L2.9-W1.6-P0.95-LS2.8-BL",
+  "lcsc": "C2830320",
+  "pins": {
+   "1": "BAT_N",
+   "2": "PROT_D",
+   "5": "PROT_D",
+   "3": "GND",
+   "6": "PROT_OD",
+   "4": "PROT_OC"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "07263f76-8155-50df-a176-d8378ee244db"
+ },
+ {
+  "ref": "J3",
+  "sym": "XY-S2B-PH-SM4-TB",
+  "value": "INTERRUTTORE est.",
+  "fp": "CONN-SMD_P2.00_S2B-PH-SM4-TB-LF-SN",
+  "lcsc": "C54582899",
+  "pins": {
+   "1": "BATP",
+   "2": "VSYS",
+   "3": "GND",
+   "4": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "senza interruttore: ponticello sul connettore",
+  "uuid": "b01ab8c9-592b-528e-ab5b-f75c644a129d"
+ },
+ {
+  "ref": "R10",
+  "sym": "R",
+  "value": "100k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25741",
+  "pins": {
+   "1": "VSYS",
+   "2": "BATT_ADC"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "f9c6dcd6-2ce2-5e8d-b706-9fb10791a5d8"
+ },
+ {
+  "ref": "R11",
+  "sym": "R",
+  "value": "33k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25779",
+  "pins": {
+   "1": "BATT_ADC",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "a97440f3-d200-5f3a-8df2-0d21c2b1fec3"
+ },
+ {
+  "ref": "C4",
+  "sym": "C",
+  "value": "100n",
+  "fp": "C_0402_1005Metric",
+  "lcsc": "C1525",
+  "pins": {
+   "1": "BATT_ADC",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "42d94f35-1e21-5f8b-b991-752b3eead674"
+ },
+ {
+  "ref": "R12",
+  "sym": "R",
+  "value": "100k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25741",
+  "pins": {
+   "1": "VBUS",
+   "2": "VBUS_SENSE"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "c79e31c5-a3c3-5669-98f2-a93cbf3f5dae"
+ },
+ {
+  "ref": "R13",
+  "sym": "R",
+  "value": "100k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25741",
+  "pins": {
+   "1": "VBUS_SENSE",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "a8faffe8-8ab0-5b80-b20b-1b6d59efe013"
+ },
+ {
+  "ref": "U4",
+  "sym": "TLV62569DBVR",
+  "value": "TLV62569DBVR",
+  "fp": "SOT-23-5_L3.0-W1.7-P0.95-LS2.8-BR",
+  "lcsc": "C141836",
+  "pins": {
+   "1": "VSYS",
+   "2": "GND",
+   "3": "SW_A",
+   "4": "VSYS",
+   "5": "FB_A"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "eff01307-bff6-5e81-b2e2-6835e057d124"
+ },
+ {
+  "ref": "L1",
+  "sym": "MWSA0402S-2R2MT",
+  "value": "2.2u 4.5A",
+  "fp": "IND-SMD_L4.4-W4.2",
+  "lcsc": "C408335",
+  "pins": {
+   "1": "SW_A",
+   "2": "3V3_A"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "5e80f7c3-4be5-5eb9-8f76-8cf386dbc03e"
+ },
+ {
+  "ref": "R18",
+  "sym": "R",
+  "value": "100k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25741",
+  "pins": {
+   "1": "3V3_A",
+   "2": "FB_A"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "477e2fff-d9d4-5508-9ece-fd9f5745d8d0"
+ },
+ {
+  "ref": "R19",
+  "sym": "R",
+  "value": "22k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25768",
+  "pins": {
+   "1": "FB_A",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "ae54e2cb-340e-55ab-bcb4-4b16fc4a9409"
+ },
+ {
+  "ref": "C5",
+  "sym": "C",
+  "value": "10u",
+  "fp": "C_0805_2012Metric",
+  "lcsc": "C15850",
+  "pins": {
+   "1": "VSYS",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "d2a8f5f1-c1c0-56a1-9313-d23c66ef462b"
+ },
+ {
+  "ref": "C6",
+  "sym": "C",
+  "value": "22u",
+  "fp": "C_0805_2012Metric",
+  "lcsc": "C45783",
+  "pins": {
+   "1": "3V3_A",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "7c960b3c-900b-55c0-9975-767e637e777b"
+ },
+ {
+  "ref": "C7",
+  "sym": "C",
+  "value": "22u",
+  "fp": "C_0805_2012Metric",
+  "lcsc": "C45783",
+  "pins": {
+   "1": "3V3_A",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "17934858-1a2a-5464-920d-775477221621"
+ },
+ {
+  "ref": "U5",
+  "sym": "TLV62569DBVR",
+  "value": "TLV62569DBVR",
+  "fp": "SOT-23-5_L3.0-W1.7-P0.95-LS2.8-BR",
+  "lcsc": "C141836",
+  "pins": {
+   "1": "EN_BUCK_B",
+   "2": "GND",
+   "3": "SW_B",
+   "4": "VSYS",
+   "5": "FB_B"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "5a345bec-95e6-555a-87c7-484ef4ad1eb2"
+ },
+ {
+  "ref": "L2",
+  "sym": "MWSA0402S-2R2MT",
+  "value": "2.2u 4.5A",
+  "fp": "IND-SMD_L4.4-W4.2",
+  "lcsc": "C408335",
+  "pins": {
+   "1": "SW_B",
+   "2": "3V3_B"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "06097b4a-bce9-56bf-b0ed-55f546943eb4"
+ },
+ {
+  "ref": "R20",
+  "sym": "R",
+  "value": "100k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25741",
+  "pins": {
+   "1": "3V3_B",
+   "2": "FB_B"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "c43029ff-97e7-5863-93a7-62a2fc368089"
+ },
+ {
+  "ref": "R21",
+  "sym": "R",
+  "value": "22k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25768",
+  "pins": {
+   "1": "FB_B",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "b1bfc0c9-a7ce-5f4b-b19e-20f39f765600"
+ },
+ {
+  "ref": "C8",
+  "sym": "C",
+  "value": "10u",
+  "fp": "C_0805_2012Metric",
+  "lcsc": "C15850",
+  "pins": {
+   "1": "VSYS",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "e14b3889-fa4f-5049-90cb-cfc9cfd55d5f"
+ },
+ {
+  "ref": "C9",
+  "sym": "C",
+  "value": "22u",
+  "fp": "C_0805_2012Metric",
+  "lcsc": "C45783",
+  "pins": {
+   "1": "3V3_B",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "f4a8cb44-7ca1-5052-ab89-6e0e72e94de4"
+ },
+ {
+  "ref": "C13",
+  "sym": "C",
+  "value": "22u",
+  "fp": "C_0805_2012Metric",
+  "lcsc": "C45783",
+  "pins": {
+   "1": "3V3_B",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "54e2fec6-f63a-54e5-9f37-f9f15f02d1c7"
+ },
+ {
+  "ref": "R30",
+  "sym": "R",
+  "value": "0",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C17168",
+  "pins": {
+   "1": "VSYS",
+   "2": "EN_BUCK_B"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "montata: B accesa con A",
+  "uuid": "a5b5bd00-49c7-5078-b205-c41e784f1aa6"
+ },
+ {
+  "ref": "R31",
+  "sym": "R",
+  "value": "0",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C17168",
+  "pins": {
+   "1": "B_PWR_EN",
+   "2": "EN_BUCK_B"
+  },
+  "dnp": true,
+  "blocco": "alimentazione",
+  "nota": "piano B: A comanda l'alimentazione di B",
+  "uuid": "e0cb08dc-e3f3-5d27-bff1-5e91d8cd2f41"
+ },
+ {
+  "ref": "R32",
+  "sym": "R",
+  "value": "100k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25741",
+  "pins": {
+   "1": "EN_BUCK_B",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "361b9ed5-4388-5f2b-b9f9-3a99af5c07f3"
+ },
+ {
+  "ref": "U10",
+  "sym": "WS_ESP32-P4-Module",
+  "value": "Waveshare ESP32-P4-Module (IPEX)",
+  "fp": "Waveshare_ESP32-P4-Module",
+  "lcsc": "",
+  "pins": {
+   "1": "GND",
+   "3": "GND",
+   "15": "GND",
+   "33": "GND",
+   "40": "GND",
+   "47": "GND",
+   "52": "GND",
+   "83": "GND",
+   "84": "3V3_A",
+   "85": "3V3_A",
+   "86": "3V3_A",
+   "87": "EN_A",
+   "62": "BOOT_A",
+   "2": "ANT_A",
+   "4": "C6_RXD_A",
+   "5": "C6_TXD_A",
+   "9": "C6_BOOT_A",
+   "22": "I2C_SDA_A",
+   "23": "I2C_SCL_A",
+   "27": "CAM_EN_A",
+   "41": "CSI_D0N_A",
+   "42": "CSI_D0P_A",
+   "43": "CSI_CKP_A",
+   "44": "CSI_CKN_A",
+   "45": "CSI_D1N_A",
+   "46": "CSI_D1P_A",
+   "64": "U0TXD_A",
+   "65": "U0RXD_A",
+   "66": "VDD_SDIO_A",
+   "67": "SD_D0_A",
+   "68": "SD_D1_A",
+   "69": "SD_D2_A",
+   "70": "SD_D3_A",
+   "71": "SD_CLK_M_A",
+   "72": "SD_CMD_A",
+   "73": "SD_PWR_N_A",
+   "55": "SPI_SCLK_A",
+   "56": "SPI_MOSI_A",
+   "57": "SPI_MISO_A",
+   "58": "SPI_CS_A",
+   "59": "SPI_HS_A",
+   "17": "TRIG_M",
+   "18": "SYNC_M",
+   "19": "IMU_INT",
+   "20": "WAKE_M",
+   "21": "B_PWR_EN",
+   "24": "LED_R",
+   "25": "LED_G",
+   "29": "BATT_ADC",
+   "30": "VBUS_SENSE",
+   "31": "UART_AB",
+   "32": "UART_BA",
+   "50": "USB_DM_A",
+   "51": "USB_DP_A",
+   "53": "CHRG_N",
+   "60": "B_EN_CTL",
+   "77": "B_BOOT_CTL",
+   "81": "BUZZER",
+   "16": "EXP_IO1",
+   "26": "EXP_IO11",
+   "54": "EXP_IO27",
+   "75": "EXP_IO47",
+   "76": "EXP_IO48"
+  },
+  "dnp": false,
+  "blocco": "modulo A",
+  "nota": "fornito a parte (non in libreria JLC); versione con connettore IPEX",
+  "uuid": "1f093a6d-9911-5d08-b602-a189fd7fe881"
+ },
+ {
+  "ref": "U20",
+  "sym": "WS_ESP32-P4-Module",
+  "value": "Waveshare ESP32-P4-Module (IPEX)",
+  "fp": "Waveshare_ESP32-P4-Module",
+  "lcsc": "",
+  "pins": {
+   "1": "GND",
+   "3": "GND",
+   "15": "GND",
+   "33": "GND",
+   "40": "GND",
+   "47": "GND",
+   "52": "GND",
+   "83": "GND",
+   "84": "3V3_B",
+   "85": "3V3_B",
+   "86": "3V3_B",
+   "87": "EN_B",
+   "62": "BOOT_B",
+   "2": "ANT_B",
+   "4": "C6_RXD_B",
+   "5": "C6_TXD_B",
+   "9": "C6_BOOT_B",
+   "22": "I2C_SDA_B",
+   "23": "I2C_SCL_B",
+   "27": "CAM_EN_B",
+   "41": "CSI_D0N_B",
+   "42": "CSI_D0P_B",
+   "43": "CSI_CKP_B",
+   "44": "CSI_CKN_B",
+   "45": "CSI_D1N_B",
+   "46": "CSI_D1P_B",
+   "64": "U0TXD_B",
+   "65": "U0RXD_B",
+   "66": "VDD_SDIO_B",
+   "67": "SD_D0_B",
+   "68": "SD_D1_B",
+   "69": "SD_D2_B",
+   "70": "SD_D3_B",
+   "71": "SD_CLK_M_B",
+   "72": "SD_CMD_B",
+   "73": "SD_PWR_N_B",
+   "55": "SPI_SCLK_B",
+   "56": "SPI_MOSI_B",
+   "57": "SPI_MISO_B",
+   "58": "SPI_CS_B",
+   "59": "SPI_HS_B",
+   "30": "SYNC_B",
+   "20": "WAKE_B",
+   "31": "UART_BA_B",
+   "32": "UART_AB_B",
+   "24": "LED_B",
+   "50": "USB_DM_B",
+   "51": "USB_DP_B"
+  },
+  "dnp": false,
+  "blocco": "modulo B",
+  "nota": "fornito a parte (non in libreria JLC); versione con connettore IPEX",
+  "uuid": "bd9ffbdc-dd8f-5e9b-977d-aa9515eec5dc"
+ },
+ {
+  "ref": "C10",
+  "sym": "C",
+  "value": "22u",
+  "fp": "C_0805_2012Metric",
+  "lcsc": "C45783",
+  "pins": {
+   "1": "3V3_A",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "modulo A",
+  "nota": "",
+  "uuid": "f657ff5e-3c10-535e-8bad-5ad746e6b8ac"
+ },
+ {
+  "ref": "C11",
+  "sym": "C",
+  "value": "100n",
+  "fp": "C_0402_1005Metric",
+  "lcsc": "C1525",
+  "pins": {
+   "1": "3V3_A",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "modulo A",
+  "nota": "",
+  "uuid": "9769526a-3be9-5c6c-af00-af0414ca9775"
+ },
+ {
+  "ref": "C12",
+  "sym": "C",
+  "value": "1u",
+  "fp": "C_0603_1608Metric",
+  "lcsc": "C1592",
+  "pins": {
+   "1": "EN_A",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "modulo A",
+  "nota": "",
+  "uuid": "81839977-da77-5db4-8445-aa0a329e3831"
+ },
+ {
+  "ref": "R40",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "3V3_A",
+   "2": "EN_A"
+  },
+  "dnp": false,
+  "blocco": "modulo A",
+  "nota": "CHIP_PU RC 10k/1u (checklist P4 §Reset)",
+  "uuid": "baabc321-d947-562f-b334-a3683252e515"
+ },
+ {
+  "ref": "R41",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "3V3_A",
+   "2": "BOOT_A"
+  },
+  "dnp": false,
+  "blocco": "modulo A",
+  "nota": "GPIO35 pull-up (strapping)",
+  "uuid": "b71e6caf-fc29-5908-8090-47ee489a5fb3"
+ },
+ {
+  "ref": "R42",
+  "sym": "R",
+  "value": "0",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C17168",
+  "pins": {
+   "1": "ANT_A",
+   "2": "ANT_UFL_A"
+  },
+  "dnp": true,
+  "blocco": "modulo A",
+  "nota": "",
+  "uuid": "3d28e69a-093c-5f69-a1b9-f339e89378cf"
+ },
+ {
+  "ref": "J11",
+  "sym": "U.FL-R-SMT-1",
+  "value": "u.FL (piano B)",
+  "fp": "RF-SMD_FRF05002-JSS103M",
+  "lcsc": "C88374",
+  "pins": {
+   "1": "ANT_UFL_A",
+   "2": "GND",
+   "3": "GND"
+  },
+  "dnp": true,
+  "blocco": "modulo A",
+  "nota": "",
+  "uuid": "67e97b7e-5aa8-5ead-827d-cddb96d6e0e2"
+ },
+ {
+  "ref": "J12",
+  "sym": "Conn_01x06",
+  "value": "DEBUG A",
+  "fp": "PinHeader_1x06_P2.54mm_Vertical",
+  "lcsc": "",
+  "pins": {
+   "1": "GND",
+   "2": "U0TXD_A",
+   "3": "U0RXD_A",
+   "4": "EN_A",
+   "5": "BOOT_A",
+   "6": "3V3_A"
+  },
+  "dnp": true,
+  "blocco": "modulo A",
+  "nota": "",
+  "uuid": "ed31eafb-42ba-5751-8684-5a64d002d27b"
+ },
+ {
+  "ref": "TP11",
+  "sym": "TestPoint",
+  "value": "C6_RXD_A",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "C6_RXD_A"
+  },
+  "dnp": false,
+  "blocco": "modulo A",
+  "nota": "",
+  "uuid": "cbbe5bbe-df91-5daa-bba5-71e57c9330e4"
+ },
+ {
+  "ref": "TP12",
+  "sym": "TestPoint",
+  "value": "C6_TXD_A",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "C6_TXD_A"
+  },
+  "dnp": false,
+  "blocco": "modulo A",
+  "nota": "",
+  "uuid": "5f613605-be77-5287-942a-58ab9a54174b"
+ },
+ {
+  "ref": "TP13",
+  "sym": "TestPoint",
+  "value": "C6_BOOT_A",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "C6_BOOT_A"
+  },
+  "dnp": false,
+  "blocco": "modulo A",
+  "nota": "",
+  "uuid": "62e856fe-3459-5a29-9ae5-09d065777bd5"
+ },
+ {
+  "ref": "C20",
+  "sym": "C",
+  "value": "22u",
+  "fp": "C_0805_2012Metric",
+  "lcsc": "C45783",
+  "pins": {
+   "1": "3V3_B",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "modulo B",
+  "nota": "",
+  "uuid": "fe12f357-b8ee-5404-8d0e-dea834a87db5"
+ },
+ {
+  "ref": "C21",
+  "sym": "C",
+  "value": "100n",
+  "fp": "C_0402_1005Metric",
+  "lcsc": "C1525",
+  "pins": {
+   "1": "3V3_B",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "modulo B",
+  "nota": "",
+  "uuid": "678b0311-556d-5fc5-80eb-45fea70def49"
+ },
+ {
+  "ref": "C22",
+  "sym": "C",
+  "value": "1u",
+  "fp": "C_0603_1608Metric",
+  "lcsc": "C1592",
+  "pins": {
+   "1": "EN_B",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "modulo B",
+  "nota": "",
+  "uuid": "cfc3e5d0-5848-5256-aade-0c75d9ca5e3f"
+ },
+ {
+  "ref": "R43",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "3V3_B",
+   "2": "EN_B"
+  },
+  "dnp": false,
+  "blocco": "modulo B",
+  "nota": "CHIP_PU RC 10k/1u (checklist P4 §Reset)",
+  "uuid": "1559a68a-e430-53dd-afbf-98b348dc6141"
+ },
+ {
+  "ref": "R44",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "3V3_B",
+   "2": "BOOT_B"
+  },
+  "dnp": false,
+  "blocco": "modulo B",
+  "nota": "GPIO35 pull-up (strapping)",
+  "uuid": "28ee1887-4e7d-5720-b24a-5594c7a7b84c"
+ },
+ {
+  "ref": "R45",
+  "sym": "R",
+  "value": "0",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C17168",
+  "pins": {
+   "1": "ANT_B",
+   "2": "ANT_UFL_B"
+  },
+  "dnp": true,
+  "blocco": "modulo B",
+  "nota": "",
+  "uuid": "abc529a8-813c-56d4-aa48-c7da7d5b6621"
+ },
+ {
+  "ref": "J21",
+  "sym": "U.FL-R-SMT-1",
+  "value": "u.FL (piano B)",
+  "fp": "RF-SMD_FRF05002-JSS103M",
+  "lcsc": "C88374",
+  "pins": {
+   "1": "ANT_UFL_B",
+   "2": "GND",
+   "3": "GND"
+  },
+  "dnp": true,
+  "blocco": "modulo B",
+  "nota": "",
+  "uuid": "bf32b0f5-e519-5ee3-a958-96ef02e60d9b"
+ },
+ {
+  "ref": "J22",
+  "sym": "Conn_01x06",
+  "value": "DEBUG B",
+  "fp": "PinHeader_1x06_P2.54mm_Vertical",
+  "lcsc": "",
+  "pins": {
+   "1": "GND",
+   "2": "U0TXD_B",
+   "3": "U0RXD_B",
+   "4": "EN_B",
+   "5": "BOOT_B",
+   "6": "3V3_B"
+  },
+  "dnp": true,
+  "blocco": "modulo B",
+  "nota": "",
+  "uuid": "3c4567bf-42f3-5f4b-86b1-49ee515a02c2"
+ },
+ {
+  "ref": "TP21",
+  "sym": "TestPoint",
+  "value": "C6_RXD_B",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "C6_RXD_B"
+  },
+  "dnp": false,
+  "blocco": "modulo B",
+  "nota": "",
+  "uuid": "8fba7d52-ddc8-5a38-99a1-9d8069ce1672"
+ },
+ {
+  "ref": "TP22",
+  "sym": "TestPoint",
+  "value": "C6_TXD_B",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "C6_TXD_B"
+  },
+  "dnp": false,
+  "blocco": "modulo B",
+  "nota": "",
+  "uuid": "882406e3-c316-5526-8542-2b8c8b1cf5e1"
+ },
+ {
+  "ref": "TP23",
+  "sym": "TestPoint",
+  "value": "C6_BOOT_B",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "C6_BOOT_B"
+  },
+  "dnp": false,
+  "blocco": "modulo B",
+  "nota": "",
+  "uuid": "97a843a0-cad3-59d0-bc45-a638fe912e59"
+ },
+ {
+  "ref": "SW1",
+  "sym": "TS-1187A-B-A-B",
+  "value": "BOOT A",
+  "fp": "SW-SMD_4P-L5.1-W5.1-P3.70-LS6.5-TL_H1.5",
+  "lcsc": "C318884",
+  "pins": {
+   "1": "BOOT_A",
+   "2": "BOOT_A",
+   "3": "GND",
+   "4": "GND"
+  },
+  "dnp": false,
+  "blocco": "modulo A",
+  "nota": "",
+  "uuid": "a54f511e-3da4-55a6-beb1-8ac62009d1fb"
+ },
+ {
+  "ref": "SW2",
+  "sym": "TS-1187A-B-A-B",
+  "value": "RESET A",
+  "fp": "SW-SMD_4P-L5.1-W5.1-P3.70-LS6.5-TL_H1.5",
+  "lcsc": "C318884",
+  "pins": {
+   "1": "EN_A",
+   "2": "EN_A",
+   "3": "GND",
+   "4": "GND"
+  },
+  "dnp": false,
+  "blocco": "modulo A",
+  "nota": "",
+  "uuid": "7540efca-7cd3-545c-8a7e-307d70868489"
+ },
+ {
+  "ref": "TP30",
+  "sym": "TestPoint",
+  "value": "USB_DM_B",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "USB_DM_B"
+  },
+  "dnp": false,
+  "blocco": "modulo B",
+  "nota": "",
+  "uuid": "6e78fa5b-4a6c-55ad-9fda-cfeba2f0b0c8"
+ },
+ {
+  "ref": "TP31",
+  "sym": "TestPoint",
+  "value": "USB_DP_B",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "USB_DP_B"
+  },
+  "dnp": false,
+  "blocco": "modulo B",
+  "nota": "",
+  "uuid": "73c38325-d39c-550b-a230-dec9dddaaf02"
+ },
+ {
+  "ref": "R50",
+  "sym": "R",
+  "value": "1k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C11702",
+  "pins": {
+   "1": "SYNC_M",
+   "2": "SYNC_B"
+  },
+  "dnp": false,
+  "blocco": "A-B",
+  "nota": "SYNC 1 Hz A GPIO3 → B GPIO21 (HW3)",
+  "uuid": "ded2e6e0-919b-5343-a780-6f30673a932a"
+ },
+ {
+  "ref": "R51",
+  "sym": "R",
+  "value": "1k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C11702",
+  "pins": {
+   "1": "WAKE_M",
+   "2": "WAKE_B"
+  },
+  "dnp": false,
+  "blocco": "A-B",
+  "nota": "WAKE A GPIO5 → B GPIO5 (HW3)",
+  "uuid": "fbbe989a-0e47-5e98-9166-4699b98fbffc"
+ },
+ {
+  "ref": "R52",
+  "sym": "R",
+  "value": "1k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C11702",
+  "pins": {
+   "1": "UART_AB",
+   "2": "UART_AB_B"
+  },
+  "dnp": false,
+  "blocco": "A-B",
+  "nota": "A GPIO22 TX → B GPIO23 RX",
+  "uuid": "0fd531a8-ed4c-5a23-a82c-c4a35060fe85"
+ },
+ {
+  "ref": "R53",
+  "sym": "R",
+  "value": "1k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C11702",
+  "pins": {
+   "1": "UART_BA_B",
+   "2": "UART_BA"
+  },
+  "dnp": false,
+  "blocco": "A-B",
+  "nota": "B GPIO22 TX → A GPIO23 RX",
+  "uuid": "138c7438-e86a-5555-9d4b-68e850eb6769"
+ },
+ {
+  "ref": "R54",
+  "sym": "R",
+  "value": "1k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C11702",
+  "pins": {
+   "1": "B_EN_CTL",
+   "2": "EN_B"
+  },
+  "dnp": false,
+  "blocco": "A-B",
+  "nota": "A GPIO33 (open-drain) resetta B",
+  "uuid": "5652fc75-d0f1-549d-a8c5-38476d86b19e"
+ },
+ {
+  "ref": "R55",
+  "sym": "R",
+  "value": "1k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C11702",
+  "pins": {
+   "1": "B_BOOT_CTL",
+   "2": "BOOT_B"
+  },
+  "dnp": false,
+  "blocco": "A-B",
+  "nota": "A GPIO49 (open-drain) mette B in download",
+  "uuid": "f316060a-13b4-5ff0-89f2-ec7c19dba7de"
+ },
+ {
+  "ref": "R110",
+  "sym": "R",
+  "value": "33",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25105",
+  "pins": {
+   "1": "SPI_SCLK_A",
+   "2": "SPI_SCLK_B"
+  },
+  "dnp": false,
+  "blocco": "A-B",
+  "nota": "SPI A↔B per il video della B verso la SD della A (firmware futuro)",
+  "uuid": "3793cb1c-45ef-5cfe-b481-360bec6aab18"
+ },
+ {
+  "ref": "R111",
+  "sym": "R",
+  "value": "33",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25105",
+  "pins": {
+   "1": "SPI_MOSI_A",
+   "2": "SPI_MOSI_B"
+  },
+  "dnp": false,
+  "blocco": "A-B",
+  "nota": "SPI A↔B per il video della B verso la SD della A (firmware futuro)",
+  "uuid": "718ea6d9-42fb-5398-9d11-e8e33daa469c"
+ },
+ {
+  "ref": "R112",
+  "sym": "R",
+  "value": "33",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25105",
+  "pins": {
+   "1": "SPI_MISO_A",
+   "2": "SPI_MISO_B"
+  },
+  "dnp": false,
+  "blocco": "A-B",
+  "nota": "SPI A↔B per il video della B verso la SD della A (firmware futuro)",
+  "uuid": "2f0c35c5-e10f-51f3-b4f0-bef33bc48f0a"
+ },
+ {
+  "ref": "R113",
+  "sym": "R",
+  "value": "33",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25105",
+  "pins": {
+   "1": "SPI_CS_A",
+   "2": "SPI_CS_B"
+  },
+  "dnp": false,
+  "blocco": "A-B",
+  "nota": "SPI A↔B per il video della B verso la SD della A (firmware futuro)",
+  "uuid": "33f03e5e-7475-57c2-9705-e49844fe955a"
+ },
+ {
+  "ref": "R114",
+  "sym": "R",
+  "value": "33",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25105",
+  "pins": {
+   "1": "SPI_HS_A",
+   "2": "SPI_HS_B"
+  },
+  "dnp": false,
+  "blocco": "A-B",
+  "nota": "SPI A↔B per il video della B verso la SD della A (firmware futuro)",
+  "uuid": "b314fa1c-8977-56b7-a061-9016ba553c83"
+ },
+ {
+  "ref": "TP40",
+  "sym": "TestPoint",
+  "value": "SYNC",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "SYNC_M"
+  },
+  "dnp": false,
+  "blocco": "A-B",
+  "nota": "",
+  "uuid": "25c8f7c2-2431-56cd-aabe-f5cd7bff14ce"
+ },
+ {
+  "ref": "TP41",
+  "sym": "TestPoint",
+  "value": "TRIG",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "TRIG_M"
+  },
+  "dnp": false,
+  "blocco": "A-B",
+  "nota": "",
+  "uuid": "93a75af8-adc5-50de-8c84-9d5e0928ff49"
+ },
+ {
+  "ref": "J60",
+  "sym": "1.0MM-15PLT",
+  "value": "CAM SX FFC 15p 1mm",
+  "fp": "CONN-SMD_15P-P1.00_SHOU-HAN_1.0MM-15P-LT",
+  "lcsc": "C7529394",
+  "pins": {
+   "1": "GND",
+   "2": "CSI_D0N_A",
+   "3": "CSI_D0P_A",
+   "4": "GND",
+   "5": "CSI_D1N_A",
+   "6": "CSI_D1P_A",
+   "7": "GND",
+   "8": "CSI_CKN_A",
+   "9": "CSI_CKP_A",
+   "10": "GND",
+   "11": "CAM_EN_A",
+   "13": "I2C_SCL_A",
+   "14": "I2C_SDA_A",
+   "15": "3V3_A",
+   "16": "GND",
+   "17": "GND"
+  },
+  "dnp": false,
+  "blocco": "camera A",
+  "nota": "pinout camera Raspberry Pi 15 pin; pin 12 (CAM_IO1) libero",
+  "uuid": "d7bcd02e-c38e-55b4-a7bb-238562187270"
+ },
+ {
+  "ref": "J61",
+  "sym": "SM02B-SRSS-TB",
+  "value": "TRIG A",
+  "fp": "CONN-SMD_2P-P1.00_SM02B-SRSS-TB-LF-SN",
+  "lcsc": "C160402",
+  "pins": {
+   "1": "TRIG_A",
+   "2": "GND",
+   "3": "GND",
+   "4": "GND"
+  },
+  "dnp": false,
+  "blocco": "camera A",
+  "nota": "trigger/FSIN della camera (Inno-Maker J3)",
+  "uuid": "6348ce64-600b-5b37-831e-0e8eeee3254f"
+ },
+ {
+  "ref": "R60",
+  "sym": "R",
+  "value": "100",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25076",
+  "pins": {
+   "1": "TRIG_M",
+   "2": "TRIG_A"
+  },
+  "dnp": false,
+  "blocco": "camera A",
+  "nota": "",
+  "uuid": "2f95de3a-2525-5fb7-af73-ab3b4f136b67"
+ },
+ {
+  "ref": "R61",
+  "sym": "R",
+  "value": "4.7k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25900",
+  "pins": {
+   "1": "I2C_SDA_A",
+   "2": "3V3_A"
+  },
+  "dnp": false,
+  "blocco": "camera A",
+  "nota": "",
+  "uuid": "5b9f9b1a-f67c-5b84-a0cc-5ee84e8ab32b"
+ },
+ {
+  "ref": "R62",
+  "sym": "R",
+  "value": "4.7k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25900",
+  "pins": {
+   "1": "I2C_SCL_A",
+   "2": "3V3_A"
+  },
+  "dnp": false,
+  "blocco": "camera A",
+  "nota": "",
+  "uuid": "937ad169-7a07-581e-8ee6-34211db13181"
+ },
+ {
+  "ref": "R63",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "CAM_EN_A",
+   "2": "3V3_A"
+  },
+  "dnp": false,
+  "blocco": "camera A",
+  "nota": "camera accesa di default: il firmware HW3 non pilota GPIO12 (può tirarlo basso per spegnerla)",
+  "uuid": "5f773cca-4fc8-53e1-b10f-b9ebbd7da1f5"
+ },
+ {
+  "ref": "C60",
+  "sym": "C",
+  "value": "10u",
+  "fp": "C_0603_1608Metric",
+  "lcsc": "C19702",
+  "pins": {
+   "1": "3V3_A",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "camera A",
+  "nota": "",
+  "uuid": "0c89d87e-253a-55c8-8eff-7a7caa058679"
+ },
+ {
+  "ref": "J70",
+  "sym": "1.0MM-15PLT",
+  "value": "CAM DX FFC 15p 1mm",
+  "fp": "CONN-SMD_15P-P1.00_SHOU-HAN_1.0MM-15P-LT",
+  "lcsc": "C7529394",
+  "pins": {
+   "1": "GND",
+   "2": "CSI_D0N_B",
+   "3": "CSI_D0P_B",
+   "4": "GND",
+   "5": "CSI_D1N_B",
+   "6": "CSI_D1P_B",
+   "7": "GND",
+   "8": "CSI_CKN_B",
+   "9": "CSI_CKP_B",
+   "10": "GND",
+   "11": "CAM_EN_B",
+   "13": "I2C_SCL_B",
+   "14": "I2C_SDA_B",
+   "15": "3V3_B",
+   "16": "GND",
+   "17": "GND"
+  },
+  "dnp": false,
+  "blocco": "camera B",
+  "nota": "pinout camera Raspberry Pi 15 pin; pin 12 (CAM_IO1) libero",
+  "uuid": "dd00bd07-36cb-5dec-839c-4eb4a624b5aa"
+ },
+ {
+  "ref": "J71",
+  "sym": "SM02B-SRSS-TB",
+  "value": "TRIG B",
+  "fp": "CONN-SMD_2P-P1.00_SM02B-SRSS-TB-LF-SN",
+  "lcsc": "C160402",
+  "pins": {
+   "1": "TRIG_B",
+   "2": "GND",
+   "3": "GND",
+   "4": "GND"
+  },
+  "dnp": false,
+  "blocco": "camera B",
+  "nota": "trigger/FSIN della camera (Inno-Maker J3)",
+  "uuid": "b1622e3b-7d7e-59d2-8fcd-a51eebedc89f"
+ },
+ {
+  "ref": "R70",
+  "sym": "R",
+  "value": "100",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25076",
+  "pins": {
+   "1": "TRIG_M",
+   "2": "TRIG_B"
+  },
+  "dnp": false,
+  "blocco": "camera B",
+  "nota": "",
+  "uuid": "35f7e18c-27cc-5d59-80a4-69b6f61a3f3c"
+ },
+ {
+  "ref": "R71",
+  "sym": "R",
+  "value": "4.7k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25900",
+  "pins": {
+   "1": "I2C_SDA_B",
+   "2": "3V3_B"
+  },
+  "dnp": false,
+  "blocco": "camera B",
+  "nota": "",
+  "uuid": "edc045e9-970c-5a38-95a2-a7c1f2f6445a"
+ },
+ {
+  "ref": "R72",
+  "sym": "R",
+  "value": "4.7k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25900",
+  "pins": {
+   "1": "I2C_SCL_B",
+   "2": "3V3_B"
+  },
+  "dnp": false,
+  "blocco": "camera B",
+  "nota": "",
+  "uuid": "9371a5ca-e24b-5077-920b-bfa59c969ac9"
+ },
+ {
+  "ref": "R73",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "CAM_EN_B",
+   "2": "3V3_B"
+  },
+  "dnp": false,
+  "blocco": "camera B",
+  "nota": "camera accesa di default: il firmware HW3 non pilota GPIO12 (può tirarlo basso per spegnerla)",
+  "uuid": "af9eaa32-ff3c-522e-b05c-b3d4ad40912f"
+ },
+ {
+  "ref": "C70",
+  "sym": "C",
+  "value": "10u",
+  "fp": "C_0603_1608Metric",
+  "lcsc": "C19702",
+  "pins": {
+   "1": "3V3_B",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "camera B",
+  "nota": "",
+  "uuid": "96b02876-86f4-5857-976b-f7f9af808ac1"
+ },
+ {
+  "ref": "J80",
+  "sym": "TF-015",
+  "value": "microSD A",
+  "fp": "TF-SMD_TF-015",
+  "lcsc": "C113206",
+  "pins": {
+   "1": "SD_D2_A",
+   "2": "SD_D3_A",
+   "3": "SD_CMD_A",
+   "4": "SD_VCC_A",
+   "5": "SD_CLK_A",
+   "6": "GND",
+   "7": "SD_D0_A",
+   "8": "SD_D1_A",
+   "10": "GND",
+   "11": "GND",
+   "12": "GND",
+   "13": "GND"
+  },
+  "dnp": false,
+  "blocco": "SD A",
+  "nota": "",
+  "uuid": "adb795c3-af5e-5858-bd32-bdaa198768c9"
+ },
+ {
+  "ref": "Q8",
+  "sym": "AO3401A",
+  "value": "AO3401A",
+  "fp": "SOT-23-3_L3.0-W1.7-P0.95-LS2.9-BR",
+  "lcsc": "C15127",
+  "pins": {
+   "1": "SD_PWR_N_A",
+   "2": "3V3_A",
+   "3": "SD_VCC_A"
+  },
+  "dnp": false,
+  "blocco": "SD A",
+  "nota": "GPIO45 basso = SD accesa (come la dev-kit)",
+  "uuid": "8b091771-72dd-5160-ad0a-6c25e7f85457"
+ },
+ {
+  "ref": "R80",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "SD_PWR_N_A",
+   "2": "3V3_A"
+  },
+  "dnp": false,
+  "blocco": "SD A",
+  "nota": "",
+  "uuid": "69bb34c9-2fc6-5943-b3e2-e28c913021ee"
+ },
+ {
+  "ref": "R81",
+  "sym": "R",
+  "value": "22",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25092",
+  "pins": {
+   "1": "SD_CLK_M_A",
+   "2": "SD_CLK_A"
+  },
+  "dnp": false,
+  "blocco": "SD A",
+  "nota": "",
+  "uuid": "89e44e2c-6fa6-591a-8767-62bf3202d9f6"
+ },
+ {
+  "ref": "R82",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "SD_D0_A",
+   "2": "VDD_SDIO_A"
+  },
+  "dnp": false,
+  "blocco": "SD A",
+  "nota": "pull-up al dominio IO della SD (ESP_LDO_VO4, checklist P4 §SD)",
+  "uuid": "0a48d6ca-dbc8-52d7-99fe-18839ec9c4de"
+ },
+ {
+  "ref": "R83",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "SD_D1_A",
+   "2": "VDD_SDIO_A"
+  },
+  "dnp": false,
+  "blocco": "SD A",
+  "nota": "pull-up al dominio IO della SD (ESP_LDO_VO4, checklist P4 §SD)",
+  "uuid": "00484715-c712-5efc-9f7e-d8bf68963285"
+ },
+ {
+  "ref": "R84",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "SD_D2_A",
+   "2": "VDD_SDIO_A"
+  },
+  "dnp": false,
+  "blocco": "SD A",
+  "nota": "pull-up al dominio IO della SD (ESP_LDO_VO4, checklist P4 §SD)",
+  "uuid": "2d6004e7-f7e1-5401-a360-3085d48c084e"
+ },
+ {
+  "ref": "R85",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "SD_D3_A",
+   "2": "VDD_SDIO_A"
+  },
+  "dnp": false,
+  "blocco": "SD A",
+  "nota": "pull-up al dominio IO della SD (ESP_LDO_VO4, checklist P4 §SD)",
+  "uuid": "b714a981-9425-5a17-a3c1-66bee852a569"
+ },
+ {
+  "ref": "R86",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "SD_CMD_A",
+   "2": "VDD_SDIO_A"
+  },
+  "dnp": false,
+  "blocco": "SD A",
+  "nota": "pull-up al dominio IO della SD (ESP_LDO_VO4, checklist P4 §SD)",
+  "uuid": "11fafe50-0469-50b4-a37f-1db006399365"
+ },
+ {
+  "ref": "C80",
+  "sym": "C",
+  "value": "4.7u",
+  "fp": "C_0402_1005Metric",
+  "lcsc": "C23733",
+  "pins": {
+   "1": "SD_VCC_A",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "SD A",
+  "nota": "",
+  "uuid": "75c75c16-0b74-5025-bd0f-7c4db09a153e"
+ },
+ {
+  "ref": "C81",
+  "sym": "C",
+  "value": "100n",
+  "fp": "C_0402_1005Metric",
+  "lcsc": "C1525",
+  "pins": {
+   "1": "SD_VCC_A",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "SD A",
+  "nota": "",
+  "uuid": "a163295e-90dc-505b-96cd-266f29ab69bd"
+ },
+ {
+  "ref": "C82",
+  "sym": "C",
+  "value": "1u",
+  "fp": "C_0603_1608Metric",
+  "lcsc": "C1592",
+  "pins": {
+   "1": "VDD_SDIO_A",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "SD A",
+  "nota": "",
+  "uuid": "e6a8bef0-3930-5e04-a13c-ceeb8e485889"
+ },
+ {
+  "ref": "J90",
+  "sym": "TF-015",
+  "value": "microSD B",
+  "fp": "TF-SMD_TF-015",
+  "lcsc": "C113206",
+  "pins": {
+   "1": "SD_D2_B",
+   "2": "SD_D3_B",
+   "3": "SD_CMD_B",
+   "4": "SD_VCC_B",
+   "5": "SD_CLK_B",
+   "6": "GND",
+   "7": "SD_D0_B",
+   "8": "SD_D1_B",
+   "10": "GND",
+   "11": "GND",
+   "12": "GND",
+   "13": "GND"
+  },
+  "dnp": false,
+  "blocco": "SD B",
+  "nota": "",
+  "uuid": "53a8d005-efc5-5a40-a6bd-4cb8257cd4a7"
+ },
+ {
+  "ref": "Q9",
+  "sym": "AO3401A",
+  "value": "AO3401A",
+  "fp": "SOT-23-3_L3.0-W1.7-P0.95-LS2.9-BR",
+  "lcsc": "C15127",
+  "pins": {
+   "1": "SD_PWR_N_B",
+   "2": "3V3_B",
+   "3": "SD_VCC_B"
+  },
+  "dnp": false,
+  "blocco": "SD B",
+  "nota": "GPIO45 basso = SD accesa (come la dev-kit)",
+  "uuid": "3e90ec5e-7a57-552e-9e66-0e0a3553e7fc"
+ },
+ {
+  "ref": "R90",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "SD_PWR_N_B",
+   "2": "3V3_B"
+  },
+  "dnp": false,
+  "blocco": "SD B",
+  "nota": "",
+  "uuid": "dcf7a6c6-bc05-587d-ad02-89a82f3b2f57"
+ },
+ {
+  "ref": "R91",
+  "sym": "R",
+  "value": "22",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25092",
+  "pins": {
+   "1": "SD_CLK_M_B",
+   "2": "SD_CLK_B"
+  },
+  "dnp": false,
+  "blocco": "SD B",
+  "nota": "",
+  "uuid": "942c64f5-5cf1-57ca-91c7-cfd9c6be9727"
+ },
+ {
+  "ref": "R92",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "SD_D0_B",
+   "2": "VDD_SDIO_B"
+  },
+  "dnp": false,
+  "blocco": "SD B",
+  "nota": "pull-up al dominio IO della SD (ESP_LDO_VO4, checklist P4 §SD)",
+  "uuid": "bb262438-93f5-534e-a221-495cd9c701d0"
+ },
+ {
+  "ref": "R93",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "SD_D1_B",
+   "2": "VDD_SDIO_B"
+  },
+  "dnp": false,
+  "blocco": "SD B",
+  "nota": "pull-up al dominio IO della SD (ESP_LDO_VO4, checklist P4 §SD)",
+  "uuid": "aa5ddb22-3866-53cb-b23e-db8f955ebb0f"
+ },
+ {
+  "ref": "R94",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "SD_D2_B",
+   "2": "VDD_SDIO_B"
+  },
+  "dnp": false,
+  "blocco": "SD B",
+  "nota": "pull-up al dominio IO della SD (ESP_LDO_VO4, checklist P4 §SD)",
+  "uuid": "a3a15020-a921-5b54-80f8-6bcf599b449d"
+ },
+ {
+  "ref": "R95",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "SD_D3_B",
+   "2": "VDD_SDIO_B"
+  },
+  "dnp": false,
+  "blocco": "SD B",
+  "nota": "pull-up al dominio IO della SD (ESP_LDO_VO4, checklist P4 §SD)",
+  "uuid": "7c5955b9-36d0-5ad1-89ad-aa32f09f282d"
+ },
+ {
+  "ref": "R96",
+  "sym": "R",
+  "value": "10k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25744",
+  "pins": {
+   "1": "SD_CMD_B",
+   "2": "VDD_SDIO_B"
+  },
+  "dnp": false,
+  "blocco": "SD B",
+  "nota": "pull-up al dominio IO della SD (ESP_LDO_VO4, checklist P4 §SD)",
+  "uuid": "51ee7ac8-6a25-5a42-a1d2-46e69422d12d"
+ },
+ {
+  "ref": "C90",
+  "sym": "C",
+  "value": "4.7u",
+  "fp": "C_0402_1005Metric",
+  "lcsc": "C23733",
+  "pins": {
+   "1": "SD_VCC_B",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "SD B",
+  "nota": "",
+  "uuid": "5246f740-322f-519b-91f4-d3e6bc1f34a8"
+ },
+ {
+  "ref": "C91",
+  "sym": "C",
+  "value": "100n",
+  "fp": "C_0402_1005Metric",
+  "lcsc": "C1525",
+  "pins": {
+   "1": "SD_VCC_B",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "SD B",
+  "nota": "",
+  "uuid": "d52eaa4f-8417-52ca-8ee2-3c50763f413e"
+ },
+ {
+  "ref": "C92",
+  "sym": "C",
+  "value": "1u",
+  "fp": "C_0603_1608Metric",
+  "lcsc": "C1592",
+  "pins": {
+   "1": "VDD_SDIO_B",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "SD B",
+  "nota": "",
+  "uuid": "72a06f60-8054-590a-b2c6-df9a909e9b29"
+ },
+ {
+  "ref": "U6",
+  "sym": "LSM6DS3TR-C",
+  "value": "LSM6DS3TR-C",
+  "fp": "LGA-14_L3.0-W2.5-P0.50-TL",
+  "lcsc": "C967633",
+  "pins": {
+   "1": "GND",
+   "2": "GND",
+   "3": "GND",
+   "4": "IMU_INT",
+   "5": "3V3_A",
+   "6": "GND",
+   "7": "GND",
+   "8": "3V3_A",
+   "12": "3V3_A",
+   "13": "I2C_SCL_A",
+   "14": "I2C_SDA_A"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "I2C 0x6A (SA0 a GND), CS alto = I2C; SDx/SCx a GND (aux non usato), INT1 → GPIO4 risveglio. NON è un MPU6050: il driver IMU del firmware va portato (unico cambio sw)",
+  "uuid": "d351a52f-e7b8-5045-8d0f-9f08eb11b081"
+ },
+ {
+  "ref": "C100",
+  "sym": "C",
+  "value": "100n",
+  "fp": "C_0402_1005Metric",
+  "lcsc": "C1525",
+  "pins": {
+   "1": "3V3_A",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "e25eb1f7-f952-5409-a560-8cefcf0facea"
+ },
+ {
+  "ref": "C101",
+  "sym": "C",
+  "value": "100n",
+  "fp": "C_0402_1005Metric",
+  "lcsc": "C1525",
+  "pins": {
+   "1": "3V3_A",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "f6ac716e-93bc-5f17-99b2-fd2910e4aebd"
+ },
+ {
+  "ref": "BZ1",
+  "sym": "HND-9650B",
+  "value": "buzzer attivo 3-7V",
+  "fp": "BUZ-SMD_L9.6-W9.6-LS10.0-R",
+  "lcsc": "C96127",
+  "pins": {
+   "1": "VSYS",
+   "2": "BUZ_K"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "sul pin del PA di HW3 (GPIO53): il saluto diventa un bip",
+  "uuid": "a875d1fa-e645-5d84-98d0-fb17d0d27fd0"
+ },
+ {
+  "ref": "Q2",
+  "sym": "S8050_C2146",
+  "value": "S8050",
+  "fp": "SOT-23_L2.9-W1.3-P1.90-LS2.4-BR",
+  "lcsc": "C2146",
+  "pins": {
+   "1": "BUZ_BASE",
+   "2": "GND",
+   "3": "BUZ_K"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "546b40b4-5b1d-531c-b1c6-5b52c37c3df7"
+ },
+ {
+  "ref": "R100",
+  "sym": "R",
+  "value": "1k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C11702",
+  "pins": {
+   "1": "BUZZER",
+   "2": "BUZ_BASE"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "753df6c1-06a1-56f5-ac0b-200e48eaead7"
+ },
+ {
+  "ref": "R101",
+  "sym": "R",
+  "value": "100k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C25741",
+  "pins": {
+   "1": "BUZ_BASE",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "472d9b45-d5a9-5dda-b8ba-485187a507db"
+ },
+ {
+  "ref": "D1",
+  "sym": "1N4148W_C81598",
+  "value": "1N4148W",
+  "fp": "SOD-123F_L2.7-W1.6-LS3.8-RD",
+  "lcsc": "C81598",
+  "pins": {
+   "1": "VSYS",
+   "2": "BUZ_K"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "f4a4e2fe-4b97-5562-a1bc-2e36bdd8f46d"
+ },
+ {
+  "ref": "D2",
+  "sym": "LED",
+  "value": "rosso",
+  "fp": "LED_0603_1608Metric",
+  "lcsc": "C2286",
+  "pins": {
+   "2": "LED_R_R",
+   "1": "GND"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "9c93bebe-cd78-507d-9f4a-e9161abad742"
+ },
+ {
+  "ref": "R102",
+  "sym": "R",
+  "value": "1k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C11702",
+  "pins": {
+   "1": "LED_R",
+   "2": "LED_R_R"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "4106a72f-6f79-59d4-a3be-5c5628752bfb"
+ },
+ {
+  "ref": "D3",
+  "sym": "LED",
+  "value": "verde",
+  "fp": "LED_0603_1608Metric",
+  "lcsc": "C12624",
+  "pins": {
+   "2": "LED_G_R",
+   "1": "GND"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "de887c28-6772-5af7-a8e5-7bbd21396c3d"
+ },
+ {
+  "ref": "R103",
+  "sym": "R",
+  "value": "1k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C11702",
+  "pins": {
+   "1": "LED_G",
+   "2": "LED_G_R"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "8fb188bd-fa1d-57df-9029-76b3cecbb136"
+ },
+ {
+  "ref": "D4",
+  "sym": "LED",
+  "value": "blu (B)",
+  "fp": "LED_0603_1608Metric",
+  "lcsc": "C2288",
+  "pins": {
+   "2": "LED_B_R",
+   "1": "GND"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "39adb571-8480-5bc9-bcf4-31f103bd8acd"
+ },
+ {
+  "ref": "R104",
+  "sym": "R",
+  "value": "1k",
+  "fp": "R_0402_1005Metric",
+  "lcsc": "C11702",
+  "pins": {
+   "1": "LED_B",
+   "2": "LED_B_R"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "703effef-d1d2-5c12-b105-34a2754e98a9"
+ },
+ {
+  "ref": "J100",
+  "sym": "Conn_01x08",
+  "value": "ESPANSIONE A",
+  "fp": "PinHeader_1x08_P2.54mm_Vertical",
+  "lcsc": "",
+  "pins": {
+   "1": "3V3_A",
+   "2": "EXP_IO1",
+   "3": "EXP_IO11",
+   "4": "EXP_IO27",
+   "5": "EXP_IO47",
+   "6": "EXP_IO48",
+   "7": "VSYS",
+   "8": "GND"
+  },
+  "dnp": true,
+  "blocco": "sensori e segnali",
+  "nota": "GPIO liberi della A per sviluppi futuri",
+  "uuid": "fdf69215-5320-5365-b1e9-61152212de42"
+ },
+ {
+  "ref": "TP1",
+  "sym": "TestPoint",
+  "value": "VBUS",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "VBUS"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "fb36fd86-1c8e-533f-a6ad-6889cc6034f6"
+ },
+ {
+  "ref": "TP2",
+  "sym": "TestPoint",
+  "value": "BATP",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "BATP"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "30d66300-3144-559c-9c3a-71505c11094c"
+ },
+ {
+  "ref": "TP3",
+  "sym": "TestPoint",
+  "value": "VSYS",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "VSYS"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "d5ac020f-07b1-5124-bb3e-b2e9ae8f71d1"
+ },
+ {
+  "ref": "TP4",
+  "sym": "TestPoint",
+  "value": "3V3_A",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "3V3_A"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "22c470c6-8529-581e-a448-2261de615fe0"
+ },
+ {
+  "ref": "TP5",
+  "sym": "TestPoint",
+  "value": "3V3_B",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "3V3_B"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "cede164d-fa6a-5945-952e-74c53c45965a"
+ },
+ {
+  "ref": "TP6",
+  "sym": "TestPoint",
+  "value": "GND",
+  "fp": "TestPoint_Pad_D1.5mm",
+  "lcsc": "",
+  "pins": {
+   "1": "GND"
+  },
+  "dnp": false,
+  "blocco": "sensori e segnali",
+  "nota": "",
+  "uuid": "deafe2c7-35fc-55f3-b6d1-be69c9ffdf20"
+ },
+ {
+  "ref": "H1",
+  "sym": "MountingHole",
+  "value": "M2.5",
+  "fp": "MountingHole_2.7mm_M2.5",
+  "lcsc": "",
+  "pins": {},
+  "dnp": false,
+  "blocco": "meccanica",
+  "nota": "",
+  "uuid": "27e6fd1f-c848-5620-b1f4-5e41c88178ec"
+ },
+ {
+  "ref": "H2",
+  "sym": "MountingHole",
+  "value": "M2.5",
+  "fp": "MountingHole_2.7mm_M2.5",
+  "lcsc": "",
+  "pins": {},
+  "dnp": false,
+  "blocco": "meccanica",
+  "nota": "",
+  "uuid": "f8b61021-cdb7-5e54-bfbb-aff5fc15cf04"
+ },
+ {
+  "ref": "H3",
+  "sym": "MountingHole",
+  "value": "M2.5",
+  "fp": "MountingHole_2.7mm_M2.5",
+  "lcsc": "",
+  "pins": {},
+  "dnp": false,
+  "blocco": "meccanica",
+  "nota": "",
+  "uuid": "80e7e569-de71-523b-8ec4-a83b752c0f4e"
+ },
+ {
+  "ref": "H4",
+  "sym": "MountingHole",
+  "value": "M2.5",
+  "fp": "MountingHole_2.7mm_M2.5",
+  "lcsc": "",
+  "pins": {},
+  "dnp": false,
+  "blocco": "meccanica",
+  "nota": "",
+  "uuid": "1e08f4cd-56b9-5acb-ac06-9a5ecc08e28b"
+ },
+ {
+  "ref": "H11",
+  "sym": "MountingHole",
+  "value": "M2 camera",
+  "fp": "MountingHole_2.2mm_M2",
+  "lcsc": "",
+  "pins": {},
+  "dnp": false,
+  "blocco": "meccanica",
+  "nota": "fori camera: posizione DA VERIFICARE sul modulo camera scelto",
+  "uuid": "71baca14-4f72-5ab7-b3eb-bd658f579912"
+ },
+ {
+  "ref": "H12",
+  "sym": "MountingHole",
+  "value": "M2 camera",
+  "fp": "MountingHole_2.2mm_M2",
+  "lcsc": "",
+  "pins": {},
+  "dnp": false,
+  "blocco": "meccanica",
+  "nota": "fori camera: posizione DA VERIFICARE sul modulo camera scelto",
+  "uuid": "3d22b0d6-8180-50d6-8bec-3ca905de404c"
+ },
+ {
+  "ref": "H13",
+  "sym": "MountingHole",
+  "value": "M2 camera",
+  "fp": "MountingHole_2.2mm_M2",
+  "lcsc": "",
+  "pins": {},
+  "dnp": false,
+  "blocco": "meccanica",
+  "nota": "fori camera: posizione DA VERIFICARE sul modulo camera scelto",
+  "uuid": "a710a856-17a6-5153-a6b5-0e1155eda5b1"
+ },
+ {
+  "ref": "H14",
+  "sym": "MountingHole",
+  "value": "M2 camera",
+  "fp": "MountingHole_2.2mm_M2",
+  "lcsc": "",
+  "pins": {},
+  "dnp": false,
+  "blocco": "meccanica",
+  "nota": "fori camera: posizione DA VERIFICARE sul modulo camera scelto",
+  "uuid": "a5f3be02-98f6-50e8-a4f6-2fa1867b412d"
+ },
+ {
+  "ref": "H15",
+  "sym": "MountingHole",
+  "value": "M2 camera",
+  "fp": "MountingHole_2.2mm_M2",
+  "lcsc": "",
+  "pins": {},
+  "dnp": false,
+  "blocco": "meccanica",
+  "nota": "fori camera: posizione DA VERIFICARE sul modulo camera scelto",
+  "uuid": "336179f3-adbb-5fc9-84c2-dfdbcaa84fcb"
+ },
+ {
+  "ref": "H16",
+  "sym": "MountingHole",
+  "value": "M2 camera",
+  "fp": "MountingHole_2.2mm_M2",
+  "lcsc": "",
+  "pins": {},
+  "dnp": false,
+  "blocco": "meccanica",
+  "nota": "fori camera: posizione DA VERIFICARE sul modulo camera scelto",
+  "uuid": "216d1e10-c948-59f0-a826-d0b4a73e8aef"
+ },
+ {
+  "ref": "H17",
+  "sym": "MountingHole",
+  "value": "M2 camera",
+  "fp": "MountingHole_2.2mm_M2",
+  "lcsc": "",
+  "pins": {},
+  "dnp": false,
+  "blocco": "meccanica",
+  "nota": "fori camera: posizione DA VERIFICARE sul modulo camera scelto",
+  "uuid": "f0bf6021-a292-5aea-b77c-5a5d6cf107f6"
+ },
+ {
+  "ref": "H18",
+  "sym": "MountingHole",
+  "value": "M2 camera",
+  "fp": "MountingHole_2.2mm_M2",
+  "lcsc": "",
+  "pins": {},
+  "dnp": false,
+  "blocco": "meccanica",
+  "nota": "fori camera: posizione DA VERIFICARE sul modulo camera scelto",
+  "uuid": "7f9704be-f688-5e38-910d-f6d951faf854"
+ }
+]
