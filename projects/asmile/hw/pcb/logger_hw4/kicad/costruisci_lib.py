@@ -19,7 +19,7 @@ STD_SYM = [("Device", "R"), ("Device", "C"), ("Device", "LED"),
            ("Connector_Generic", "Conn_01x04"), ("Connector_Generic", "Conn_01x06"),
            ("Connector_Generic", "Conn_01x08"), ("Connector", "TestPoint"),
            ("Mechanical", "MountingHole"), ("power", "PWR_FLAG")]
-STD_FP = [("Resistor_SMD", "R_0402_1005Metric"), ("Capacitor_SMD", "C_0402_1005Metric"),
+STD_FP = [("Resistor_SMD", "R_0402_1005Metric"), ("Resistor_SMD", "R_0805_2012Metric"), ("Capacitor_SMD", "C_0402_1005Metric"),
           ("Capacitor_SMD", "C_0603_1608Metric"), ("Capacitor_SMD", "C_0805_2012Metric"),
           ("LED_SMD", "LED_0603_1608Metric"),
           ("Connector_PinHeader_2.54mm", "PinHeader_1x04_P2.54mm_Vertical"),

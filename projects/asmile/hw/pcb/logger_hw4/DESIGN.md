@@ -1,6 +1,6 @@
 # Logger HW4 — scheda dedicata (DESIGN)
 
-> **Maturità: L0 → verso L1.** Oggi: studio + schema KiCad generato e corretto dopo il VETO 1 del critico (18/11).
+> **Maturità: L0 → verso L1.** Oggi: studio + schema KiCad generato e corretto dopo il VETO 1 e il VETO 2 del critico (18/11).
 > Niente è ancora stato acceso né ordinato.
 > Salto dopo: L1 = 10 schede montate, rail e bus verificati a banco con il firmware `hw3-def-20261118`.
 
@@ -101,7 +101,7 @@ bozza di richiesta preventivo pronta (§9) ad Arducam, Inno-Maker, Sinoseen.
    │ SD-A, IMU, USB-C   │                                                          │ SD-B, pad PROG B   │
    └─────────┬──────────┘                                                          └─────────┬──────────┘
           3V3_A (buck TLV62569) ← VSYS ← interruttore J3 ← OR(cella via P-MOS, VBUS via SS14) → 3V3_B (buck TLV62569)
-             USB-C 5 V (TVS + USBLC6) → TP4056 1 A con NTC → cella 1S su J2 (3 poli) protetta DW01A + FS8205A
+     USB-C 5 V → R36 → TVS + USBLC6 → OVP AW32901 (5,95 V) → TP4056 1 A con NTC → cella 1S su J2 (3 poli) protetta DW01A + FS8205A
 ```
 - **GPIO (VETO 1, corretto 18/11):** tabella completa hw↔fw in **`PIN_HW4.md`**, generata da `kicad/controlla_pin_fw.py`
   che cerca ogni GPIO in tutto il firmware hw3-def (macro L02_PIN_*, numeri scritti a mano come l'I2S del saluto,
@@ -118,6 +118,13 @@ bozza di richiesta preventivo pronta (§9) ad Arducam, Inno-Maker, Sinoseen.
     Cambi firmware per HW4: driver IMU, flag saluto→buzzer, pin LED. Nessuna modifica a logger02.
 - **Alimentazione (corretta 18/11):** cella 1S → protezione DW01A+FS8205A → **power-path** (P-MOS AO3401A dalla cella,
   Schottky SS14 da VBUS) → **interruttore esterno su J3** → VSYS → due buck TLV62569 (uno per modulo).
+  **Stacco del cavo in registrazione (VETO 2, A12):** prima il gate di Q3 era la net VBUS, con 10 µF sopra: allo stacco
+  la scheda restava sul diodo di body di Q3 (cella − 0,8 V) per 130-170 ms con R35 100k e **ancora 60-80 ms con R35 10k**,
+  con la 3V3 a 2,5-3,0 V (`kicad/modello_power_path.py`). Abbassare R35 da solo non basta: ho messo R35 a 10k **e**
+  alimentato il gate da VBUS attraverso **D8 (SS14, stesso pezzo di D5)**. Allo stacco D8 si interdice, il gate si scarica
+  solo con la sua Ciss (645 pF + diodo) su 10k: **τ ≈ 7 µs**, mentre VBUS + VSYS impiegano 35-48 µs a scendere fino al
+  diodo di body → Q3 conduce prima e la 3V3 resta a 3,30 V (3,14 V a cella 3,5 V). Con USB presente il gate sta a
+  VBUS − 0,2 V e la sorgente a VBUS − 0,45 V: Q3 resta spento (Vgs ≈ +0,25 V, soglia −0,5…−1,3 V). Prova al COLLAUDO passo 4.
   Con USB collegato la scheda va da VBUS e la cella si carica da sola, così il TP4056 termina davvero a C/10 (prima, col
   carico sulla cella, la terminazione non scattava). Interruttore dopo l'OR: spento = spento anche in carica.
   **Tensione minima di cella (datasheet TI SLVSDG1C §7.3.2 pag. 6: VIN(MIN) = VOUT + IOUT·(RDS(ON) + RL); RDS(ON) FET
@@ -127,11 +134,22 @@ bozza di richiesta preventivo pronta (§9) ad Arducam, Inno-Maker, Sinoseen.
   checklist §Power); **spegnimento firmware a 3,45 V di cella a riposo**. Correzione: prima avevo scritto "sopra ~3,4 V"
   e citato "SLVSDB6": era sbagliato (critico, REGISTRO 16:58).
 - **Carica:** TP4056 1 A lineare (R_PROG 1,2 kΩ → 1000 mA, tabella del datasheet) **con NTC sul TEMP** (VETO 1):
-  6,8 kΩ da VBUS + NTC 10 kΩ B3950 (C51597) sulla scheda accanto al portabatteria → carica fra ~3 °C e ~42 °C
-  (TEMP fra 45 % e 80 % di VCC, datasheet TP4056). J2 ha un 3° polo per l'NTC del pacco (piano B, 0 Ω da spostare).
+  6,8 kΩ da VBUS + NTC 10 kΩ B3950 (C51597) sulla scheda accanto al portabatteria. **Finestra reale** con le soglie del
+  datasheet UMW (caldo 42-45 % di VCC, freddo 80-83 %), calcolo β del critico (REGISTRO 23:20): **sospende sopra 39-42 °C
+  e sotto 0-4 °C**. J2 ha un 3° polo per l'NTC del pacco (piano B, 0 Ω da spostare).
 - **Protezione cella:** DW01A + FS8205A (circuito tipico del datasheet DW01A): sovraccarica 4,30 V, sovrascarica
   2,5 V con rilascio 2,9 V (valori riletti dal critico sul datasheet PUOLOP).
-- **USB:** USBLC6 sulle linee dati + **TVS SMF5.0A su VBUS** (VETO 1).
+- **VBUS (VETO 2):** J1 → **R36 0805 serie (0 Ω montato, posto per PTC o perla)** → VBUS_RAW con **TVS SMF5.0A** + USBLC6
+  + 100 nF/50 V → **OVP AW32901** (Awinic, C407920, 0,24 $, stock 9526) → VBUS interna (C1 10 µF + 1 µF).
+  Perché: SMF5.0A conduce da 6,4 V e limita a **9,2 V** a 21,7 A, sopra il **VCC max 6,5 V del TP4056 UMW** e il **VIN max
+  6 V del TLV62569** (SLVSDG1C §6.1; arriva VBUS − D5). AW32901: soglia **5,83-6,07 V in salita, spegnimento in 50 ns,
+  regge 120 V di surge, 27 mΩ, 5 A** (datasheet Awinic V1.0, tab. elettrica pag. 7, applicazione pag. 4: CIN 0,1 µF ≥ clamp
+  del TVS, COUT 1 µF, OVLO a GND = soglia di default, EN attivo basso a GND, ACOK libero). Scartati: TVS a basso clamp
+  (PESD5V0S1UL, TPD1E10B06 = ESD da 60-90 W, clamp 9-14 V: proteggono dalle scariche, non da un caricatore a 9 V) e la
+  sola perla in serie (rallenta il picco ma non limita una sovratensione continua). Rischio: CSP 3×4 passo 0,4 mm →
+  fuga dei pad sul top unendo i pad della stessa net (IN/OUT/GND); da controllare allo sbroglio con le regole JLC.
+  R36 è 0805 e non 0603 come chiedeva il critico: ci passano fino a 2 A (carica 1 A + scheda via D5) e lo 0 Ω 0603 è da
+  1 A; lo 0 Ω 0805 (C17477) è da 2 A (valore tipico UniOhm, DA VERIFICARE sul datasheet).
 - **Connettori batteria e interruttore non invertibili:** J2 cella = JST PH **3 poli** (+, NTC, −) S3B-PH-SM4-TB
   originale (C265101, stock 21k); J3 interruttore = PH **2 poli** (C2763693, stock 36k).
 - **Programmazione (VETO 1):** il ROM del P4 scarica solo da UART0 (GPIO37/38) o USB-Serial/JTAG (24/25).
@@ -139,8 +157,23 @@ bozza di richiesta preventivo pronta (§9) ad Arducam, Inno-Maker, Sinoseen.
   banco + TP30/TP31 (USB-Serial/JTAG della B) per pogo; in campo la B si aggiorna via OTA wifi (ha la sua C6, come HW3).
   La A può resettare la B e metterla in download (GPIO33/49) ma non le parla sull'UART0: il recupero della B a firmware
   morto passa da J22 (case da aprire). Dettaglio passo per passo in `COLLAUDO.md` §7.
-- **Partitore batteria** spostato sulla cella (in carica VSYS vale VBUS): 1 MΩ/330 kΩ, stesso rapporto 0,248 di
-  HW3 (100k/33k) → stessa costante nel firmware; 3 µA sempre.
+  - **Joint Download Mode = GPIO35 a 0 e GPIO36 a 1** (checklist P4 §Strapping). Su HW4 GPIO36 non è collegato: dentro il
+    modulo c'è **R46 10 kΩ verso ESP_3V3** (schema Waveshare ESP32-P4-Module V1.1, letto dal critico a 400 dpi) → alto garantito.
+  - **Console:** il firmware ha la console primaria su **UART0** (`CONFIG_ESP_CONSOLE_UART_DEFAULT`, sdkconfig:1693) e la
+    secondaria su USB-Serial/JTAG. Sulla A i log completi escono solo da **J12** (DEBUG A, non montato): al bring-up si usa
+    un adattatore USB-UART su J12; sull'USB-C arriva la console secondaria. Sulla B: J22.
+  - **Identità A/B:** il ruolo lo dà la NVS "ident" scritta da `logger02/flasha_nuovo.sh` (logger02_ruolo.c), non un pin. Su
+    HW4 lo script va lanciato con A sull'USB-C e B via adattatore su J22 (oggi chiede "attacca la A, poi la B" sul cavo USB:
+    serve la porta seriale della B come argomento — da adattare in asmile-flotta, logger02 non si tocca).
+- **Partitore batteria (VETO 2, A11):** sulla cella (in carica VSYS vale VBUS), **100k/33k come HW3, C4 non montato**.
+  Il giro precedente (1M/330k + 100 nF) leggeva il **31,9 % in meno** perché `leggi_batteria()` (logger02_imu.c:77-84) mette il
+  pull-down interno per 2 ms e rilegge dopo 2 ms: con 100 nF su 248 kΩ la costante è 24,8 ms. Modello con quella sequenza
+  (`kicad/modello_partitore.py`): con 100k/33k e nodo da 20 pF (anche con 1 nF di sporco) **errore della RC 0,000 % fra
+  3,0 e 4,2 V**, controllo "collegato" sempre sì. Restano errori non di RC: resistenze 1 % → ±1,36 % (99 % delle schede);
+  ADC P4 con l'attenuazione del firmware (12 dB) **±15 mV = ±1,4-2,0 %** (datasheet P4 v0.7 Tab. 5-6 pag. 90). Per stare
+  sotto l'1 % complessivo serve una **calibrazione a un punto in collaudo** (alimentatore a 3,80 V su J2 → fattore nella NVS);
+  resistenze allo 0,1 % non bastano da sole perché domina l'ADC. Consumo: 32 µA sempre (≈ 23 mAh/mese, ~15 % in più
+  dell'autoscarica di 2 × 18650).
 - **Antenne:** si usa la versione del modulo con connettore IPEX (antenna adesiva fuori dal case); footprint u.FL +
   0 Ω non montati sulla scheda come piano B per la versione a castello senza IPEX.
 - **SD:** due slot (una per modulo, come HW3). Piano: quando il firmware manderà il video della B alla A via SPI, lo
@@ -160,9 +193,13 @@ bozza di richiesta preventivo pronta (§9) ad Arducam, Inno-Maker, Sinoseen.
 | Modulo Waveshare: 88 pad, GPIO14-19 interni (C6 SDIO), C6 reset GPIO54 | wiki Waveshare + logger02.h | pad 82 lasciato libero |
 | OV9281: MIPI 2 lane + DVP, FSIN, SID, XVCLK 6-27 MHz, 2,8/1,8/1,2 V | OVT PB v1.4 | sul modulo Pi le tensioni le fa il modulo: alla scheda servono solo 3,3 V |
 | LSM6DS3TR-C: INT1 programmabile wake-up, I2C 0x6A (SA0 a GND), aux non usati | ST DS LSM6DS3TR-C §4 pin description | INT1 → GPIO4 (come MPU6050 di HW3) |
-| TP4056: PROG 1,2 kΩ = 1 A, CHRG open-drain; TEMP fra 45 % e 80 % di VCC, a GND = funzione disabilitata | datasheet TP4056 (NanJing Top Power) tab. R_PROG, pin TEMP | CHRG con pull-up a 3V3_A → GPIO26; NTC 10k B3950 + 6,8k (finestra ~3-42 °C) |
+| TP4056: PROG 1,2 kΩ = 1 A, CHRG open-drain; TEMP fra 45 % e 80 % di VCC, a GND = funzione disabilitata | datasheet TP4056 (NanJing Top Power) tab. R_PROG, pin TEMP | CHRG con pull-up a 3V3_A → GPIO26; NTC 10k B3950 + 6,8k (finestra reale 0-4 °C … 39-42 °C) |
 | TLV62569DBV: RDS(on) 100/60 mΩ, ILIM 3 A, 100 % duty: VIN(MIN) = VOUT + IOUT·(RDS(ON)+RL) | TI **SLVSDG1C** §6.5 pag. 5, §7.3.2 pag. 6 | cella ≥ ~3,7 V per 3,30 V pieni a 0,8 A; ≥ 3,0 V fino a ~3,4 V di cella |
 | P4: ROM download solo da UART0 37/38 e USB-Serial/JTAG | checklist P4 §Strapping (Joint Download Mode) e §UART | A da USB-C; B da pad J22 (UART0+EN+BOOT) o TP30/31 (USB) |
+| TP4056 UMW (C725790): VCC max 6,5 V; TEMP caldo 42-45 %, freddo 80-83 % di VCC | datasheet UMW (riletto dal critico) | OVP a 5,95 V davanti; NTC 39-42 °C / 0-4 °C |
+| AW32901: OVP 5,83-6,07 V, tOFF 50 ns, surge 120 V, RON 27 mΩ, CIN 0,1 µF, COUT 1 µF, OVLO a GND | Awinic AW329xx V1.0, pag. 4 (applicazione) e 7 (protezioni) | U7 su VBUS |
+| ADC P4: errore totale ±15 mV con ATTEN3 (0-3300 mV), misurato con 100 nF sull'ingresso | datasheet P4 v0.7 Tab. 5-6 pag. 90 | partitore: calibrazione a un punto in collaudo per < 1 % |
+| AO3401A: Ciss 645 pF, Vgs(th) −0,5/−0,9/−1,3 V, Vsd ≤ 1 V a 1 A | datasheet AOS AO3401A | gate di Q3 via D8, R35 10k: τ 7 µs |
 | DW01A/FS8205A: piedinatura e soglie | datasheet PUOLOP DW01A Rev B, FS8205A TECH PUBLIC (riletti dal critico) | 4,30 V / 2,5 V (rilascio 2,9 V) |
 
 ## 6. Rischi e prove PRIMA di ordinare
@@ -175,11 +212,13 @@ bozza di richiesta preventivo pronta (§9) ad Arducam, Inno-Maker, Sinoseen.
 | P5 | (v2) SC132GS al posto di OV9281 | 1 modulo sulla dev-kit di banco | immagini e depth confrontabili |
 | P6 | autonomia: 2 moduli + 2 camere su 2 × 18650 | misura corrente di logger02 in registrazione | ≥ 4 h |
 | P7 | flash della B in collaudo | adattatore USB-UART 3,3 V con DTR/RTS su pad J22 di una scheda (o pogo su TP30/31) | `esptool --chip esp32p4 chip_id` sulla B |
+| P9 | hot-plug USB e sovratensione | caricatore da 5 V con cavo lungo inserito 20 volte con sonda (10×, 50 MHz) su VBUS_RAW e VBUS; poi alimentatore da banco a 9 V su J1 | picco su VBUS ≤ 6,0 V; con 9 V VBUS = 0 (OVP aperto) e nulla si scalda | 
+| P10 | stacco USB in registrazione | sonda su 3V3_A, trigger sul fronte di discesa di VBUS, cavo tolto 20 volte con le camere che registrano | 3V3_A ≥ 3,0 V sempre, nessun reset (log della A continuo) |
 | P8 | 3V3 sotto carico a cella bassa | alimentatore al posto della cella, 3,6 → 3,3 V, B e A in registrazione + wifi | 3V3 ≥ 3,0 V fino a 3,4 V; firmware si spegne a 3,45 V |
 
 ## 7. Costi (rifatti dopo il VETO 1: PCB e montaggio dallo **stesso fornitore, JLCPCB**; `kicad/costi.py`)
 Fonti: PCB nudo = preventivo JLCPCB vero (4 strati 250×50 ENIG, 18/11, `preventivo/jlcpcb_*.jpg`; PCBWay per confronto
-in `PREVENTIVO_PCBWAY.md`) · pezzi = API JLC (`kicad/prezzi_jlc.json`, 123 montati, 23 Extended) · montaggio = tariffe
+in `PREVENTIVO_PCBWAY.md`) · pezzi = API JLC (`kicad/prezzi_jlc.json`, 127 montati, 23 Extended) · montaggio = tariffe
 JLCPCB standard pubblicate (setup 25,56 $, stencil 15,72 $, 3,07 $/Extended, 0,0016 $/giunto) **+ saldatura a mano dei 2
 moduli castellati forniti da noi** (176 giunti × 0,0164 $ + 3,58 $/ordine, FAQ JLC) · moduli 9,99-10,99 $ (sito
 Waveshare) · cambio 1 € = 1,10 $. Il montaggio resta **NON VERIFICATO** (serve il preventivo coi file veri).
@@ -187,25 +226,25 @@ Waveshare) · cambio 1 € = 1,10 $. Il montaggio resta **NON VERIFICATO** (serv
 | per scheda | 10 pz | 100 pz | 1000 pz |
 |---|---|---|---|
 | PCB nudo + spedizione (JLC) | 9.11 $ | 3.58 $ | 2.30 $ |
-| pezzi LCSC | 4.89 $ | 4.08 $ | 3.20 $ |
-| montaggio JLC (macchina + moduli a mano) | 15.01 $ | 4.61 $ | 3.57 $ |
+| pezzi LCSC | 5.23 $ | 4.35 $ | 3.39 $ |
+| montaggio JLC (macchina + moduli a mano) | 15.04 $ | 4.64 $ | 3.60 $ |
 | 2 moduli Waveshare + 2 antenne | 23.98 $ | 21.18 $ | 20.78 $ |
-| **netto (senza IVA)** | **52.99 $ = 48.2 €** | **33.45 $ = 30.4 €** | **29.85 $ = 27.1 €** |
-| con dazio 3,5 % + IVA 22 % (IVA non recuperata) | 60.0 € | 37.6 € | 33.5 € |
+| **netto (senza IVA)** | **53.35 $ = 48.5 €** | **33.75 $ = 30.7 €** | **30.08 $ = 27.3 €** |
+| con dazio 3,5 % + IVA 22 % (IVA non recuperata) | 60.4 € | 38.0 € | 33.8 € |
 
 IVA recuperabile se l'acquisto è fatto con la P.IVA della ditta individuale di Daniele: allora conta la riga netta. Spedizione JLC in DDP = dazi già pagati alla consegna; altrimenti +25-75 € di sdoganamento a spedizione (≈ +0,5 € a scheda su 100).
 
 
 | Scenario completo (€, netto IVA) | 100 pz | 1000 pz |
 |---|---|---|
-| K1 + 2 OV9281 modulo (volume stimato 18 $ / 14 $) | 63,1 € | 52,6 € |
-| K1 + 2 OV9281 DFRobot (22 $ / 20 $) | 70,4 € | 63,5 € |
+| K1 + 2 OV9281 modulo (volume stimato 18 $ / 14 $) | 63,4 € | 52,8 € |
+| K1 + 2 OV9281 DFRobot (22 $ / 20 $) | 70,7 € | 63,7 € |
 | K2 (1 modulo + DVP) senza camere | 19,2 € | 16,1 € |
 | K2 + 2 OV9281 nudi (oggi non comprabili) | 35,6 € | 28,8 € |
 
 **Lettura 1 — "25 € tutto compreso":** non raggiungibile con OV9281 (minimo ~29 € a 1000 pz con un solo P4, sensori
-saldati e DVP: tre rischi insieme). **Lettura 2 — "25 € la scheda":** K1 a 100 pz = 30,4 € netti (5 € sopra; i moduli
-sono 19 €), a 1000 pz 27,1 €; K2 19,2 € ma con driver DVP da scrivere e modulo DVP da trovare.
+saldati e DVP: tre rischi insieme). **Lettura 2 — "25 € la scheda":** K1 a 100 pz = 30,7 € netti (6 € sopra; i moduli
+sono 19 €), a 1000 pz 27,3 €; K2 19,2 € ma con driver DVP da scrivere e modulo DVP da trovare.
 
 **Scorte a 1000 schede (VETO 1):** FFC 15p C7529394 stock **935** (ne servono 2000): alternative FC-10A15P11H20
 C23397372 (1655) e C23397383 (1512) — pad di segnale uguali (±0,07 mm) ma linguette a 9,2 vs 8,75 mm → **footprint
@@ -219,11 +258,12 @@ moduli Waveshare arrivano a parte: stessa IVA, spedizione da aggiungere al loro 
 
 ## 8. Verifiche KiCad e layout (strato 3-4)
 KiCad 10.0.8 installato in `/Applications/KiCad` (senza modelli 3D, disco al 98 %). Dopo l'ultima netlist (18/11/2026):
-- **ERC: 0 violazioni** — `kicad/ERC.rpt` del **2026-11-18T17:06:38**.
-- **Netlist esportata da KiCad = `netlist_hw4.py` pin per pin: 507 pin, 0 differenze** (`kicad/verifica_netlist.py`).
+- **ERC: 0 violazioni** — `kicad/ERC.rpt` del **2026-11-18T23:02:09**.
+- **Netlist esportata da KiCad = `netlist_hw4.py` pin per pin: 526 pin, 0 differenze** (`kicad/verifica_netlist.py`).
 - **Tabella pin hw↔fw: 0 conflitti** (`PIN_HW4.md`, `kicad/controlla_pin_fw.py`).
-- **DRC del piazzamento: 0 errori di rame/sovrapposizione**; restano 375 collegamenti da sbrogliare + 161 avvisi di
-  serigrafia — `kicad/DRC.rpt` del **2026-11-18T17:06:40**.
+- **DRC del piazzamento: 0 errori di rame/sovrapposizione**; restano 391 collegamenti da sbrogliare + 195 avvisi di
+  serigrafia — `kicad/DRC.rpt` del **2026-11-18T23:02:18**. Nota del critico: il DRC non controlla le sovrapposizioni dei
+  footprint senza courtyard; il piazzamento le evita per costruzione (ingombro = courtyard ∪ pad, `genera_pcb.py`).
 Layout: 250 × 50 mm (proposta), camere a 200 mm fra gli assi ottici. Fori camere e case da concordare col Doppio;
 lo sbroglio non è fatto → niente gerber di produzione finché il layout non regge.
 

@@ -44,10 +44,14 @@ Ogni riga rimanda al `REGISTRO.md` (quando/fonte) — qui sta solo la regola.
   preventivo (differenza di prezzo in PREVENTIVO_PCBWAY.md).
 - **Traccia/spazio 4/4 mil** solo perché il footprint USB-C del costruttore ha pad a 0,10 mm (regola limitata a J1 nel .kicad_dru).
 - **ESD sull'USB-C** (USBLC6) **+ TVS su VBUS** (SMF5.0A, 0,03 $) — unico connettore esposto all'utente.
-- **NTC sulla carica** (TP4056 TEMP con 10k B3950 + 6,8k → ~3-42 °C): TEMP a GND = carica a 1 A anche al gelo o al sole
+- **NTC sulla carica** (TP4056 TEMP con 10k B3950 + 6,8k → sospende sopra 39-42 °C e sotto 0-4 °C, soglie UMW): TEMP a GND = carica a 1 A anche al gelo o al sole
   (critico 18/11). 0,05 $.
 - **Power-path** (P-MOS + Schottky, 0,04 $) quando carica e carico stanno sulla stessa cella: senza, il TP4056 non vede
-  mai C/10 e non termina.
+  mai C/10 e non termina. **Gate del P-MOS da VBUS attraverso un diodo** (+0,02 $), non sulla net VBUS: con 10 µF sul gate
+  lo stacco del cavo lascia la scheda 60-170 ms sul diodo di body (3V3 a 2,5-3,0 V).
+- **OVP vera su VBUS** (AW32901, 0,24 $) quando sulla linea ci sono pezzi da 6-6,5 V massimi: un TVS "5 V" limita a 9 V.
+- **Partitore ADC: impedenza e condensatore tarati sulla sequenza del firmware**, non solo il rapporto; l'ADC P4 a 12 dB
+  sbaglia ±15 mV (Tab. 5-6): sotto l'1 % serve la calibrazione a un punto in collaudo.
 - **Connettori di alimentazione non invertibili**: cella e interruttore con numero di poli diverso (J2 3 poli, J3 2 poli).
 - **Montaggio dei moduli castellati forniti da noi**: saldatura a mano JLC 0,0164 $/giunto → 2,89 $ a scheda per due moduli
   da 88 pad. Va nel conto, sempre.
@@ -93,6 +97,7 @@ Ogni riga rimanda al `REGISTRO.md` (quando/fonte) — qui sta solo la regola.
 | OV09281-H64A | C5182169 | 10,75 | 0 | |
 | modulo OV9281 Pi | — | 24 (DFRobot a 10+) – 45 (dettaglio IT) | sì | |
 | modulo SC132GS Camemake | — | 77,84 a 10 · 8,80 a 1000 | 1000 (25 gg) | DigiKey |
+| AW32901FCR (OVP 5,95 V) | C407920 | 0,241 | 9526 | Extended, CSP 3×4 passo 0,4 mm |
 | PCB 4 strati 250×50 ENIG, JLCPCB | — | 2,97 (100 pz) · 6,00 (10 pz) | — | + UPS DDP 60,92 / 31,07 $ a ordine |
 | PCB idem, PCBWay | — | 3,51 · 13,09 | — | + DHL 77,25 / 40,28 $ |
 | FFC 15p 1 mm C7529394 | C7529394 | 0,093 | **935** | a 1000 schede non basta: C23397372/C23397383 (linguette diverse) |
@@ -109,6 +114,8 @@ Ogni riga rimanda al `REGISTRO.md` (quando/fonte) — qui sta solo la regola.
 - PCBWay preventivo online `orderonline.aspx` (senza login) · prezzo PCB · 18/11
 - JLCPCB preventivo `cart.jlcpcb.com/quote` (senza login) · prezzo PCB · 18/11
 - TI TLV62569 datasheet SLVSDG1C (ti.com/lit/ds/symlink/tlv62569.pdf) · RDS(on) §6.5 p.5, 100 % duty §7.3.2 p.6 · 18/11
+- Awinic AW329xx datasheet V1.0 (datasheet.lcsc.com, C407920) · OVP, applicazione pag. 4, protezioni pag. 7 · 18/11
+- ESP32-P4 datasheet v0.7 Tab. 5-6 pag. 90 · errore ADC calibrato ±12/15 mV · 18/11
 - JLCPCB FAQ assemblaggio (jlcpcb.com/help/article/98-pcb-assembly-faqs) · saldatura a mano, parti in conto lavoro · 18/11
 
 ## Errori fatti e regola che ne è nata → `ANTIPATTERN.md`

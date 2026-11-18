@@ -39,3 +39,7 @@
 - **A13 — TVS "da 5 V" accanto a pezzi con massimo 6-6,5 V.** SMF5.0A limita a 9,2 V a 21,7 A e conduce da 6,4 V: non basta
   a proteggere TP4056 (6,5 V) e TLV62569 (6 V) su un hot-plug. Regola: confrontare VC del TVS con il VIN massimo di ogni
   pezzo sulla linea; se supera, prevedere un elemento serie (perla/0 Ω) e la prova con sonda. (Critico, 18/11)
+- **A14 — correggere il valore che il critico indica senza rifare il conto.** "R35 → 10k" riduceva il buco allo stacco USB
+  da 130 a 60-80 ms, non lo toglieva: il problema era la capacità di VBUS sul gate, non la resistenza. Regola: per ogni
+  correzione di valore rifare il modello e scrivere il risultato numerico; se non basta, dirlo e cambiare la topologia
+  (qui: gate via diodo). (Registro 23:06)

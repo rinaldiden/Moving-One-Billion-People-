@@ -8,8 +8,8 @@
   "pins": {
    "A1B12": "GND",
    "B1A12": "GND",
-   "A4B9": "VBUS",
-   "B4A9": "VBUS",
+   "A4B9": "VBUS_C",
+   "B4A9": "VBUS_C",
    "A5": "CC1",
    "B5": "CC2",
    "A6": "USB_DP_C",
@@ -68,12 +68,81 @@
    "3": "USB_DP_C",
    "4": "USB_DP_C",
    "2": "GND",
-   "5": "VBUS"
+   "5": "VBUS_RAW"
   },
   "dnp": false,
   "blocco": "alimentazione",
   "nota": "",
   "uuid": "5a8105f4-2b55-504d-aa0d-c27d2c8c4c74"
+ },
+ {
+  "ref": "R36",
+  "sym": "R",
+  "value": "0 (PTC/perla)",
+  "fp": "R_0805_2012Metric",
+  "lcsc": "C17477",
+  "pins": {
+   "1": "VBUS_C",
+   "2": "VBUS_RAW"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "serie su VBUS dopo J1: 0 Ω montato; 0805 e non 0603 perché passa fino a 2 A (carica 1 A + scheda) e lo 0 Ω 0603 è da 1 A",
+  "uuid": "d5a431a0-dae5-5ff7-b0ff-4ff3cfd538e9"
+ },
+ {
+  "ref": "U7",
+  "sym": "AW32901FCR",
+  "value": "AW32901 OVP 5,95 V",
+  "fp": "BGA-12_L1.8-W1.3-R3-C4-P0.40-TL",
+  "lcsc": "C407920",
+  "pins": {
+   "B3": "VBUS_RAW",
+   "C2": "VBUS_RAW",
+   "C3": "VBUS_RAW",
+   "A2": "VBUS",
+   "A3": "VBUS",
+   "B2": "VBUS",
+   "A1": "GND",
+   "C1": "GND",
+   "A4": "GND",
+   "B4": "GND",
+   "C4": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "EN attivo basso a GND, OVLO a GND = soglia di default 5,95 V; ACOK non usato (datasheet: può restare libero)",
+  "uuid": "1d86d4b0-2912-5d62-a048-2286e7b18b3e"
+ },
+ {
+  "ref": "C36",
+  "sym": "C",
+  "value": "100n 50V",
+  "fp": "C_0603_1608Metric",
+  "lcsc": "C14663",
+  "pins": {
+   "1": "VBUS_RAW",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "3dfe342a-7b9e-5cc1-be63-9a298619614a"
+ },
+ {
+  "ref": "C37",
+  "sym": "C",
+  "value": "1u",
+  "fp": "C_0603_1608Metric",
+  "lcsc": "C1592",
+  "pins": {
+   "1": "VBUS",
+   "2": "GND"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "",
+  "uuid": "d0df1352-4168-59cc-8158-8bb8f665b47e"
  },
  {
   "ref": "R3",
@@ -238,7 +307,7 @@
   "fp": "SOD-123FL_L2.7-W1.8-LS3.8-RD",
   "lcsc": "C193402",
   "pins": {
-   "1": "VBUS",
+   "1": "VBUS_RAW",
    "2": "GND"
   },
   "dnp": false,
@@ -366,28 +435,43 @@
   "fp": "SOT-23-3_L3.0-W1.7-P0.95-LS2.9-BR",
   "lcsc": "C15127",
   "pins": {
-   "1": "VBUS",
+   "1": "GATE_Q3",
    "3": "BATP",
    "2": "VSYS_IN"
   },
   "dnp": false,
   "blocco": "alimentazione",
-  "nota": "power-path: G=VBUS, D=cella, S=VSYS_IN (diodo di body cella→VSYS)",
+  "nota": "power-path: G da VBUS via D8, D=cella, S=VSYS_IN",
   "uuid": "e92e3fd7-e334-514a-9e08-53163cc512a0"
+ },
+ {
+  "ref": "D8",
+  "sym": "SS14",
+  "value": "SS14",
+  "fp": "SMA_L4.2-W2.6-LS5.0-RD_1",
+  "lcsc": "C2480",
+  "pins": {
+   "2": "VBUS",
+   "1": "GATE_Q3"
+  },
+  "dnp": false,
+  "blocco": "alimentazione",
+  "nota": "isola il gate di Q3 dalla capacità di VBUS (stesso pezzo di D5)",
+  "uuid": "29fe9c74-76b1-5e1c-b2ce-1ec0710ec541"
  },
  {
   "ref": "R35",
   "sym": "R",
-  "value": "100k",
+  "value": "10k",
   "fp": "R_0402_1005Metric",
-  "lcsc": "C25741",
+  "lcsc": "C25744",
   "pins": {
-   "1": "VBUS",
+   "1": "GATE_Q3",
    "2": "GND"
   },
   "dnp": false,
   "blocco": "alimentazione",
-  "nota": "tira giù il gate di Q3 senza USB",
+  "nota": "scarica il gate di Q3: τ = 10k × ~0,7 nF ≈ 7 µs",
   "uuid": "78468ad6-dcaf-5cf7-88e1-5c428d30b88b"
  },
  {
@@ -425,24 +509,24 @@
  {
   "ref": "R10",
   "sym": "R",
-  "value": "1M",
+  "value": "100k",
   "fp": "R_0402_1005Metric",
-  "lcsc": "C26083",
+  "lcsc": "C25741",
   "pins": {
    "1": "BATP",
    "2": "BATT_ADC"
   },
   "dnp": false,
   "blocco": "alimentazione",
-  "nota": "sulla cella (VSYS in carica vale VBUS): 1M/330k = stesso rapporto 100k/33k di HW3, 3 µA",
+  "nota": "100k/33k come HW3: la sequenza di leggi_batteria() (pull-down 2 ms + 2 ms) è tarata su questa impedenza (modello_partitore.py)",
   "uuid": "f9c6dcd6-2ce2-5e8d-b706-9fb10791a5d8"
  },
  {
   "ref": "R11",
   "sym": "R",
-  "value": "330k",
+  "value": "33k",
   "fp": "R_0402_1005Metric",
-  "lcsc": "C25778",
+  "lcsc": "C25779",
   "pins": {
    "1": "BATT_ADC",
    "2": "GND"
@@ -462,9 +546,9 @@
    "1": "BATT_ADC",
    "2": "GND"
   },
-  "dnp": false,
+  "dnp": true,
   "blocco": "alimentazione",
-  "nota": "",
+  "nota": "NON montare con il firmware hw3-def: con 100 nF la lettura sbaglia (VETO 2, A11)",
   "uuid": "42d94f35-1e21-5f8b-b991-752b3eead674"
  },
  {

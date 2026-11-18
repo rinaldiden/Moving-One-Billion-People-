@@ -17,3 +17,6 @@ Ogni pattern: regola · prova (righe del registro) · quando si applica.
   l'IMU non compatibile col driver. Prova: 15:38. Quando: prima di ogni `palla.py passa`.
 - **P7 — Preventivo PCB senza account**: il preventivo istantaneo PCBWay si compila da script (Playwright headless,
   selettori `a.clsPlatingType[data=…]`, `a.clsLineWeight[data=…]`); l'account serve solo per l'assemblaggio. Prova: 16:10.
+- **P8 — Modello numerico dei transitori nel repo.** Partitore con la sequenza del firmware e stacco USB con le capacità vere
+  (`kicad/modello_partitore.py`, `modello_power_path.py`): il critico e il capo rifanno il conto con un comando, e il
+  modello ha mostrato che la correzione proposta (R35 10k) da sola non bastava. Prova: registro 23:02-23:08.

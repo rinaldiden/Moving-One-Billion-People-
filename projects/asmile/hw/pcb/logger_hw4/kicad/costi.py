@@ -16,7 +16,7 @@ SPED = {10: 31.07, 100: 60.92, 1000: None}          # UPS Express Saver DDP (pae
 # montaggio JLCPCB standard (jlcpcb.com/help/article/pcb-assembly-price e /98-pcb-assembly-faqs, letti 18/11)
 SETUP, STENCIL, EXT, GIUNTO = 25.56, 15.72, 3.07, 0.0016
 MANO_GIUNTO, MANO_ORDINE = 0.0164, 3.58             # saldatura a mano (moduli castellati forniti da noi, consegna)
-PAD_SMD, PAD_MODULI = 534, 176                      # da conta.py sul PCB generato (123 pezzi montati)
+PAD_SMD, PAD_MODULI = 552, 176                      # da conta.py sul PCB generato (127 pezzi montati, 18/11 23:02)
 MODULO = {10: 10.99, 100: 9.99, 1000: 9.99}         # waveshare.com, prezzo sito (variante IPEX senza prezzo proprio)
 ANTENNA = {10: 1.0, 100: 0.6, 1000: 0.4}            # stima
 IVA, DAZIO_PCBA = 0.22, 0.035                        # IVA import Italia; dazio PCBA 0-3,5 % (TARIC da verificare), PCB nudo 0 %

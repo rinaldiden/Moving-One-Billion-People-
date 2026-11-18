@@ -19,8 +19,8 @@ def R(ref, val, a, b, lcsc, dnp=False, blocco="", nota=""):
     P(ref, "R", val, R0402, lcsc, {"1": a, "2": b}, dnp, blocco, nota)
 
 
-def C(ref, val, a, b="GND", fp=C0402, lcsc="C1525", blocco=""):
-    P(ref, "C", val, fp, lcsc, {"1": a, "2": b}, blocco=blocco)
+def C(ref, val, a, b="GND", fp=C0402, lcsc="C1525", blocco="", dnp=False, nota=""):
+    P(ref, "C", val, fp, lcsc, {"1": a, "2": b}, dnp=dnp, blocco=blocco, nota=nota)
 
 
 RES = {"0": "C17168", "22": "C25092", "33": "C25105", "100": "C25076", "1k": "C11702", "1.2k": "C25862",
@@ -31,13 +31,23 @@ RES = {"0": "C17168", "22": "C25092", "33": "C25105", "100": "C25076", "1k": "C1
 # ---------------------------------------------------------------- alimentazione
 B = "alimentazione"
 P("J1", "TYPE-C-31-M-12", "USB-C (carica + flash A)", "USB-C_SMD-TYPE-C-31-M-12_1", "C165948",
-  {"A1B12": "GND", "B1A12": "GND", "A4B9": "VBUS", "B4A9": "VBUS", "A5": "CC1", "B5": "CC2",
+  {"A1B12": "GND", "B1A12": "GND", "A4B9": "VBUS_C", "B4A9": "VBUS_C", "A5": "CC1", "B5": "CC2",
    "A6": "USB_DP_C", "B6": "USB_DP_C", "A7": "USB_DM_C", "B7": "USB_DM_C",
    "1": "GND", "2": "GND", "3": "GND", "4": "GND"}, blocco=B)
 R("R1", "5.1k", "CC1", "GND", RES["5.1k"], blocco=B, nota="CC pull-down: sink 5 V/USB default")
 R("R2", "5.1k", "CC2", "GND", RES["5.1k"], blocco=B)
 P("U1", "USBLC6-2SC6_C2827654", "USBLC6-2SC6", "SOT-23-6_L2.9-W1.6-P0.95-LS2.8-BL", "C2827654",
-  {"1": "USB_DM_C", "6": "USB_DM_C", "3": "USB_DP_C", "4": "USB_DP_C", "2": "GND", "5": "VBUS"}, blocco=B)
+  {"1": "USB_DM_C", "6": "USB_DM_C", "3": "USB_DP_C", "4": "USB_DP_C", "2": "GND", "5": "VBUS_RAW"}, blocco=B)
+# VBUS: J1 → R36 (serie, 0 Ω montato; posto per PTC o perla) → TVS → OVP AW32901 (5,83-6,07 V, 50 ns, 120 V surge,
+# datasheet Awinic V1.0 pag. 4 e 7) → VBUS interna. Proteggono TP4056 (VCC max 6,5 V) e TLV62569 (VIN max 6 V via D5).
+P("R36", "R", "0 (PTC/perla)", "R_0805_2012Metric", "C17477", {"1": "VBUS_C", "2": "VBUS_RAW"}, blocco=B,
+  nota="serie su VBUS dopo J1: 0 Ω montato; 0805 e non 0603 perché passa fino a 2 A (carica 1 A + scheda) e lo 0 Ω 0603 è da 1 A")
+P("U7", "AW32901FCR", "AW32901 OVP 5,95 V", "BGA-12_L1.8-W1.3-R3-C4-P0.40-TL", "C407920",
+  {"B3": "VBUS_RAW", "C2": "VBUS_RAW", "C3": "VBUS_RAW", "A2": "VBUS", "A3": "VBUS", "B2": "VBUS",
+   "A1": "GND", "C1": "GND", "A4": "GND", "B4": "GND", "C4": "GND"}, blocco=B,
+  nota="EN attivo basso a GND, OVLO a GND = soglia di default 5,95 V; ACOK non usato (datasheet: può restare libero)")
+C("C36", "100n 50V", "VBUS_RAW", fp=C0603, lcsc="C14663", blocco=B)
+C("C37", "1u", "VBUS", fp=C0603, lcsc="C1592", blocco=B)
 R("R3", "22", "USB_DM_C", "USB_DM_A", RES["22"], blocco=B, nota="serie FS USB (checklist P4 §USB)")
 R("R4", "22", "USB_DP_C", "USB_DP_A", RES["22"], blocco=B)
 C("C1", "10u", "VBUS", fp=C0805, lcsc="C15850", blocco=B)
@@ -55,7 +65,7 @@ P("RT1", "CMFB103F3950FANT", "NTC 10k B3950", "R0805", "C51597", {"1": "TEMP_NTC
 R("R33", "0", "TEMP", "TEMP_NTC", RES["0"], blocco=B, nota="montata: NTC sulla scheda")
 R("R34", "0", "TEMP", "NTC_EXT", RES["0"], dnp=True, blocco=B, nota="piano B: NTC del pacco su J2 pin 2 (togliere R33)")
 # TVS su VBUS (oltre all'USBLC6): SMF5.0A 200 W
-P("D6", "SMF5.0A_C193402", "SMF5.0A", "SOD-123FL_L2.7-W1.8-LS3.8-RD", "C193402", {"1": "VBUS", "2": "GND"}, blocco=B,
+P("D6", "SMF5.0A_C193402", "SMF5.0A", "SOD-123FL_L2.7-W1.8-LS3.8-RD", "C193402", {"1": "VBUS_RAW", "2": "GND"}, blocco=B,
   nota="TVS 5 V su VBUS: picchi da caricatori/cavi lunghi")
 C("C2", "10u", "BATP", fp=C0805, lcsc="C15850", blocco=B)
 P("J2", "S3B-PH-SM4-TB", "BATT 1S 3 poli (+, NTC, -)", "CONN-SMD_S3B-PH-SM4-TB-LF-SN", "C265101",
@@ -73,17 +83,21 @@ P("Q1", "FS8205A_C2830320", "FS8205A", "SOT-23-6_L2.9-W1.6-P0.95-LS2.8-BL", "C28
 # power-path (carico e carica separati): con USB la scheda va da VBUS via D5, la cella si carica da sola e il TP4056
 # termina davvero a C/10; senza USB Q3 (P-MOS) conduce dalla cella. Interruttore DOPO l'OR: spento = spento anche in carica.
 P("Q3", "AO3401A", "AO3401A", "SOT-23-3_L3.0-W1.7-P0.95-LS2.9-BR", "C15127",
-  {"1": "VBUS", "3": "BATP", "2": "VSYS_IN"}, blocco=B, nota="power-path: G=VBUS, D=cella, S=VSYS_IN (diodo di body cella→VSYS)")
-R("R35", "100k", "VBUS", "GND", RES["100k"], blocco=B, nota="tira giù il gate di Q3 senza USB")
+  {"1": "GATE_Q3", "3": "BATP", "2": "VSYS_IN"}, blocco=B, nota="power-path: G da VBUS via D8, D=cella, S=VSYS_IN")
+# gate di Q3 alimentato da VBUS attraverso D8: allo stacco USB il gate non vede i 10 µF di VBUS e si scarica su R35
+# in ~7 µs (Ciss 645 pF) → Q3 prende il carico prima che VSYS cada sul diodo di body (modello_power_path.py)
+P("D8", "SS14", "SS14", "SMA_L4.2-W2.6-LS5.0-RD_1", "C2480", {"2": "VBUS", "1": "GATE_Q3"}, blocco=B,
+  nota="isola il gate di Q3 dalla capacità di VBUS (stesso pezzo di D5)")
+R("R35", "10k", "GATE_Q3", "GND", RES["10k"], blocco=B, nota="scarica il gate di Q3: τ = 10k × ~0,7 nF ≈ 7 µs")
 P("D5", "SS14", "SS14", "SMA_L4.2-W2.6-LS5.0-RD_1", "C2480", {"2": "VBUS", "1": "VSYS_IN"}, blocco=B,
   nota="power-path: VBUS → VSYS_IN (0,55 V a 1 A)")
 P("J3", "PH-2AWT", "INTERRUTTORE est. (2 poli)", "CONN-SMD_PH-2AWT", "C2763693",
   {"1": "VSYS_IN", "2": "VSYS", "3": "GND", "4": "GND"}, blocco=B,
   nota="2 poli ≠ J2 (3 poli): non invertibili. Senza interruttore: ponticello sul connettore")
 # partitore batteria (HW3: 100k/33k su GPIO20)
-R("R10", "1M", "BATP", "BATT_ADC", "C26083", blocco=B, nota="sulla cella (VSYS in carica vale VBUS): 1M/330k = stesso rapporto 100k/33k di HW3, 3 µA")
-R("R11", "330k", "BATT_ADC", "GND", "C25778", blocco=B)
-C("C4", "100n", "BATT_ADC", blocco=B)
+R("R10", "100k", "BATP", "BATT_ADC", RES["100k"], blocco=B, nota="100k/33k come HW3: la sequenza di leggi_batteria() (pull-down 2 ms + 2 ms) è tarata su questa impedenza (modello_partitore.py)")
+R("R11", "33k", "BATT_ADC", "GND", RES["33k"], blocco=B)
+C("C4", "100n", "BATT_ADC", blocco=B, dnp=True, nota="NON montare con il firmware hw3-def: con 100 nF la lettura sbaglia (VETO 2, A11)")
 R("R12", "68k", "VBUS", "VBUS_SENSE", "C36871", blocco=B, nota="5 V → 2,98 V: leggibile come ADC e come livello alto (VIH 0,75×3,3 = 2,48 V)")
 R("R13", "100k", "VBUS_SENSE", "GND", RES["100k"], blocco=B)
 # due buck TLV62569 (uno per modulo), 3,3 V: Vout = 0,6 × (1 + 100k/22k) = 3,33 V
@@ -243,4 +257,4 @@ for i in range(8):
       nota="fori camera: posizione DA VERIFICARE sul modulo camera scelto")
 
 # net di alimentazione su cui serve PWR_FLAG (pin power_in senza un power_out che le pilota)
-PWR_FLAGS = ["VBUS", "BATP", "BAT_N", "VSYS", "GND", "3V3_A", "3V3_B", "PROT_VCC", "VSYS_IN"]
+PWR_FLAGS = ["VBUS", "VBUS_RAW", "BATP", "BAT_N", "VSYS", "GND", "3V3_A", "3V3_B", "PROT_VCC", "VSYS_IN"]
