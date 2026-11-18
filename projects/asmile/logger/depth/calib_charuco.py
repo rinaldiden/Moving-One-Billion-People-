@@ -222,6 +222,7 @@ def main():
                     help="quanti frame campionare dal clip")
     ap.add_argument("--order", default="LR", choices=["LR", "RL"])
     ap.add_argument("--no-flip", action="store_true", help="camere NON capovolte")
+    ap.add_argument("--size", default=None, help="singola camera LxA, es. 1280x720 per logger02 (default %dx%d Camarray)" % (CAM_W, CAM_H))
     args = ap.parse_args()
 
     board, d = make_board(args.dict, args.squares_x, args.squares_y,
@@ -241,7 +242,7 @@ def main():
     if not args.video or not args.out:
         ap.error("servono --video e --out (oppure --make-board).")
 
-    size = (CAM_W, CAM_H)
+    size = tuple(int(x) for x in args.size.split("x")) if args.size else (CAM_W, CAM_H)
     flip = not args.no_flip
     print(f"[1] detect ChArUco su ~{args.frames} frame del clip...")
     monoL, monoR, stereo = collect_observations(
