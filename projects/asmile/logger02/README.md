@@ -27,9 +27,10 @@ batteria ADC + avviso Telegram · deep sleep + risveglio da INT IMU + autospegni
 - **Chiave Tailscale** del logger nuovo: generala dal pannello (monouso), `security add-generic-password -U -s
   claude-tailscale-loggerNN -a loggerNN -w`, prima del flash (entra nella NVS) o dopo con `chiave_tailscale.sh loggerNN`.
   Poi scrivi l'IP Tailscale nella colonna `tailscale` di `flotta.csv`.
-- **REGOLA:** ogni modifica al firmware di questa cartella → commit + push → `bash logger02/ota_flotta.sh` su TUTTI i
-  logger di `flotta.csv` (uno alla volta, A poi B, stop al primo errore; i logger spenti si segnano e si rifanno).
-  Un solo logger: `LOGGER=logger03 bash logger02/ota.sh`. Firmware che tocca avvio/rete/sonno: prima UNA scheda col cavo.
+- **REGOLA FERREA (Daniele 18/11, fino a nuovo ordine):** ogni modifica → commit + push → OTA **solo sul logger di
+  prova di Daniele** (oggi logger02): `bash logger02/ota.sh`. Il resto della flotta **mai di mia iniziativa**: solo
+  quando Daniele, dopo averlo provato e visto funzionare, lo ordina → `OK_DANIELE="..." bash logger02/ota_flotta.sh`
+  (rifiuta se il logger di prova non gira già quel .bin). Firmware che tocca avvio/rete/sonno: prima UNA scheda col cavo.
 - logger02 (montato prima della NVS "ident") resta riconosciuto dal MAC: niente da riflashare.
 
 ## Compilare
