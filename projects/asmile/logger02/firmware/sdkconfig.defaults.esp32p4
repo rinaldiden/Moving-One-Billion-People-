@@ -36,3 +36,7 @@ CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
 # 18/11: gli algoritmi Espressif (IPA: AGC con target luma 19/255) litigavano con la nostra AE (A decide, B copia).
 # Spegnere solo l'AGC faceva crashare all'avvio: spengo tutto il controller della pipeline ISP (niente IPA).
 # CONFIG_ESP_VIDEO_ENABLE_ISP_PIPELINE_CONTROLLER is not set
+
+# 18/11: crash della A "assert sdio_read_task sdio_drv.c:1326: RX buffer alloc of len 23040 failed" (streaming/download).
+# Lo streaming mode SDIO chiede blocchi grandi di RAM interna: lettura a pacchetti fissi (1536 B), niente blocchi grandi.
+CONFIG_ESP_HOSTED_SDIO_OPTIMIZATION_RX_MAX_SIZE=y

@@ -9,3 +9,5 @@
 | 2026-11-18 06:47 | logger02 A | db5f9463-dirty Nov 18 2026 06:44:30 | c54f5d89-dirty Nov 18 2026 06:46:49 | ok (75eaee47) |
 | 2026-11-18 06:48 | logger02 B | db5f9463-dirty Nov 18 2026 06:44:30 | c54f5d89-dirty Nov 18 2026 06:46:49 | ok (75eaee47) |
 | 2026-11-18 07:05 | logger02 A |  | c54f5d89-dirty Nov 18 2026 06:46:49 | FALSO OK: crash all'avvio, tornato a c54f5d89 (AGC Espressif spento) |
+| 2026-11-18 07:12 | logger02 A | c54f5d89-dirty Nov 18 2026 06:46:49 | 8f2f4731-dirty Nov 18 2026 07:11:33 | ok (2e7b44b5) |
+| 2026-11-18 07:13 | logger02 B | c54f5d89-dirty Nov 18 2026 06:46:49 | 8f2f4731-dirty Nov 18 2026 07:11:33 | ok (2e7b44b5) |
