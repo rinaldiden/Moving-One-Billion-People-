@@ -20,3 +20,9 @@ Scritte da palla.py (VETO dei critici + bilanci giusto/sbagliato). Leggile prima
 - 2026-11-18 SBAGLIATO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): 1° giro: nessun percorso di flash per la B e COLLAUDO che diceva UART 22/23 (A7)
 - 2026-11-18 SBAGLIATO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): 1° giro: TEMP del TP4056 a GND, niente TVS, J2 e J3 uguali, niente power-path; citato SLVSDB6 invece di SLVSDG1C
 - 2026-11-18 SBAGLIATO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): linguette easyeda numerate 0 (A8); costi con fornitori misti e senza saldatura moduli/IVA (A10)
+- 2026-11-18 GIUSTO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): modelli numerici nel repo (partitore con la sequenza del firmware, stacco USB con le capacità vere): riprodotto il -31,9 % del critico e dimostrato 0,000 % con 100k/33k
+- 2026-11-18 GIUSTO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): il modello ha mostrato che R35 10k da solo non bastava (60-80 ms sul diodo di body): gate via diodo, tau 7 us
+- 2026-11-18 GIUSTO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): OVP AW32901 scelta dal datasheet (soglia 5,83-6,07 V sotto i 6/6,5 V dei pezzi) invece di un TVS che limita a 9,2 V
+- 2026-11-18 SBAGLIATO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): nel giro precedente avevo cambiato il partitore guardando solo il rapporto, non la sequenza temporale del firmware (A11)
+- 2026-11-18 SBAGLIATO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): power-path progettato solo a regime, senza il transitorio di stacco (A12); TVS 5 V accanto a pezzi da 6 V (A13)
+- 2026-11-18 SBAGLIATO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): R36 messo 0805 invece del 0603 richiesto: scelta motivata (2 A) ma da far confermare al critico
