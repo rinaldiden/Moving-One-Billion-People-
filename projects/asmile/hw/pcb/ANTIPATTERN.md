@@ -13,3 +13,10 @@
 - **A4 — indovinare URL della documentazione.** 404 sulla checklist P4: prima l'indice della guida, poi la pagina. (14:48)
 - **A5 — "firmware invariato" detto troppo presto.** Cambiando l'IMU (MPU6050 → LSM6DS3TR-C) il driver va riscritto: ogni
   pezzo cambiato va incrociato col codice che lo usa prima di promettere zero software. (Registro 15:38)
+- **A6 — "stessi GPIO = firmware invariato" senza cercare chi usa quei pin.** HW3 usa GPIO9/10/12/13 per l'I2S del codec
+  (`logger02_saluto.c:36`) e il saluto apre il canale prima di provare il codec: in HW4 quei pin sono LED e CAM_EN.
+  Regola: per ogni GPIO riassegnato `grep` del numero in TUTTO il firmware (anche I2S/SPI/LEDC con numeri sparsi) e
+  tabella pin hw↔fw firmata prima dello sbroglio. (Critico, 18/11)
+- **A7 — percorso di programmazione non disegnato.** Un modulo senza USB né header montato non si flasha in produzione;
+  ricordare che il ROM del P4 scarica solo da UART0 (GPIO37/38) e USB-Serial/JTAG. Regola: per ogni MCU della scheda
+  scrivere "come si flasha la prima volta e in serie" prima dello sbroglio. (Critico, 18/11)
