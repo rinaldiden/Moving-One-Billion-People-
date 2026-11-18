@@ -137,3 +137,11 @@ Dettaglio e domande in `agents/sicurezza/ARCHITETTURA_SICUREZZA.md` §8. Ordine:
   torna a chiave vuota, la A resta su 192.168.1.122 → `LOGGER02_HOST=192.168.1.122 bash logger02/ota.sh rollback`).
 - Da firmare: `FIRMA=D015 bash logger02/purga_storia_bin.sh` (force push, solo commit 02e5b2a3) → poi rebase locale,
   avviso GitHub chiuso come «Revoked».
+
+## 2026-11-18 mattina — logger02 (decisioni di Daniele)
+- **Consumo misurato** (Daniele, banco 5 V): set completo in registrazione (A+B+2 cam+IMU) **0,45 A ≈ 2,3 W**. Deep sleep: DA MISURARE.
+- **Batteria:** una Samsung 35E diretta + step-up 5 V con protezione nello stesso modulo (niente 3s2p). ≈4,5-5 h di registrazione a 2,3 W. Step-up ≥2 A (picchi wifi). Partitore da rifare 100k/100k (cella max 4,2 V) + firmware: sotto ~3,3 V chiude i file e dorme.
+- **WIFI SOLO QUANDO SERVE (Daniele):** acceso solo a fine giornata per mandare i dati, oppure a bici ferma tornata alla base. In giro: wifi spento su A e B (C6 in reset) → meno consumo. DA FARE: come capire "base" (es. rete di casa visibile a bici ferma da X min) e "fine giornata"; streaming e OTA solo in quei momenti. Firmware: prima su logger02, flotta solo con ok di Daniele (regola ferrea).
+- **Crash A (panic, riavvio 4)** due volte mentre scaricavo file della B attraverso il proxy /b della A → riprodurre con la A sul cavo USB e leggere il backtrace.
+- **Sync camere** dopo l'aggancio: mediana 37 µs, p95 92, max ~140 (obiettivo ≤45 come #001) + 20% coppie con numero di fotogramma sfasato fra A e B → da sistemare.
+- Fotogrammi bianchi (A 99/1020) RISOLTI: AE scrive solo se cambia + group hold 0x3208.
