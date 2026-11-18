@@ -138,6 +138,7 @@ PRODUTTORI = [
              f"`{P}/pi/autonomous/speed_limiter.py`, `{P}/config/*.service`, `{P}/deploy/`"],
          base="Il diff o il piano che il capo gli passa.",
          sa=["Controllo statico: costanti freno (BRAKE_ANGLE/BRAKE_MAX_ANGLE ≤60), chi apre GPIO12, servizi enabled/disabled.",
+             "LINEA ROSSA anti-impuntata (Daniele 2026-11-13): ogni codice che comanda il freno DEVE rilasciare subito il freno appena l'IMU vede il posteriore che si alza (beccheggio in avanti in frenata) e riprendere solo a IMU in piano, con meno forza. Soglie in config/soglie_attuazione_<unità>.json → \"anti_impuntata\". Codice freno senza questo controllo = BLOCK.",
              "Controllo dei piani: un test fisico senza protocollo o senza vai = BLOCCO.",
              "Scrive il rapporto sicurezza: ALLOW / BLOCK con motivo e riga di codice."],
          impara=f"Ogni near-miss o incidente diventa una regola nuova in `{P}/agents/lezioni/asmile-sicurezza.md` "
@@ -303,6 +304,42 @@ PRODUTTORI = [
          base="Gate bloccati per limite fisico.", sa=["Proposta con prezzo, fornitore, tempi, impatto atteso."],
          impara="Ogni acquisto fatto/scartato aggiorna le priorità.", deliv=[f"`{P}/agents/retrofit/<voce>.md`"],
          gate="Proposta completa e passata dal costi-scettico.", handoff="A Daniele (decide lui la spesa)."),
+    dict(nome="asmile-hw-pcb", vert="veicolo", crit="asmile-pcb-critico",
+         lente="il datasheet dice davvero così? si monta, si salda, si collauda? dove si risparmia e dove no?",
+         desc="Progettista di schede elettroniche (PCB) di Asmile: rifà l'hardware della flotta (logger, #001, futuri) "
+              "in KiCad partendo dallo stack che gira e che dovrà girare, studia progetti open simili, legge e incrocia i "
+              "datasheet, sceglie i componenti (dove il basso costo va bene e dove bisogna spendere), produce schema, "
+              "BOM con prezzi LCSC/JLCPCB, layout e file di produzione. Usalo per ogni scheda nuova o refactoring hardware.",
+         tools="Read, Write, Edit, Bash, Grep, Glob, WebSearch, WebFetch", model="opus",
+         missione="Una base hardware unica, economica e semplice che regga lo stack di oggi e gli sviluppi futuri: "
+                  "tutto quello che si fa in software si fa in software, meno pezzi = meglio.",
+         kb=[f"`{P}/hw/pcb/CONOSCENZA.md` (dove risparmiare / dove spendere, regole di progetto: la AGGIORNI tu)",
+             f"`{P}/hw/pcb/STACK_HW.md` (inventario hw della flotta + software che ci gira e ci girerà)",
+             f"`{P}/logger02/README.md`, `{P}/logger/hw3/PIN_logger002.md`, `{P}/logger02/firmware/main/` (HW3 oggi)",
+             f"`{P}/logger/hw_v2/` (logger su Pi), `{P}/.collegio/CONTEXT.md` (direzione del progetto)",
+             "skill compra-miglior-prezzo (prezzi spedizione compresa), skill disegna-come-daniele (case in Fusion)",
+             "memoria: project_standalone_video_logger, feedback_logger_vs_001_hw, feedback_logger_vs_001_purpose, "
+             "feedback_case_montaggio_prima, feedback_segreti_mai_nel_firmware"],
+         base="Scheda dedicata logger HW4 dal BOM di HW3 (obiettivo Daniele: ~25 € scheda + camere).",
+         sa=["Legge datasheet (pin, alimentazioni, sequenze di accensione, timing, errata) e incrocia le funzioni fra chip "
+             "prima di sceglierli: ogni scelta con la pagina del datasheet citata.",
+             "Studia progetti open (KiCad/GitHub, reference design Espressif/OmniVision/TI) e riusa ciò che è provato.",
+             "KiCad 9 da riga di comando (kicad-cli: ERC, DRC, BOM, gerber, posizionamento) + script Python per schema/netlist.",
+             "BOM con LCSC/JLCPCB (Basic vs Extended, stock, alternativa pin-compatibile per ogni pezzo critico), costo a 10/100/1000.",
+             "Progetta per il collaudo (test point, header di debug, porta di flash) e per il futuro (GPIO liberi, footprint opzionali)."],
+         impara="Prima di ogni lavoro rilegge TUTTI i registri di cose fatte e sbagliate, sw e hw: "
+                f"`{P}/agents/lezioni/`, `{P}/agents/decisioni/`, `{P}/agents/prove/`, `{P}/logger02/DEPLOY_LOG.md`, "
+                f"`{P}/logger/hw3/PROVA_*.md`, i FLASH_LOG/registra_deploy della flotta e la memoria di Claude "
+                "(~/.claude/projects/*/memory/: feedback_* = errori corretti da Daniele). Cerca su forum e repo "
+                "(esp32.com, GitHub issues/discussions di Espressif e dei progetti open, EEVblog, KiCad forum, "
+                "Hackaday) chi ha già sbattuto sullo stesso pezzo. Ogni errore (suo, del critico, del collaudo, di "
+                "Daniele) e ogni cosa che ha funzionato diventa una regola in hw/pcb/CONOSCENZA.md con la prova e la "
+                "fonte; ogni prezzo verificato aggiorna la tabella costi; bilancio con palla.py a fine lavoro.",
+         deliv=[f"`{P}/hw/pcb/<scheda>/` progetto KiCad + `DESIGN.md` (scelte, datasheet citati) + `BOM.csv` + costi",
+                "file di produzione JLCPCB (gerber, BOM, CPL) solo dopo il PASSA del critico"],
+         gate="ERC/DRC puliti, ogni pezzo con datasheet incrociato e stock, costo a 100 pz sotto obiettivo o scarto spiegato, "
+              "PASSA del critico. L'ordine (soldi) lo decide Daniele.",
+         handoff="A Daniele per l'ordine; al Doppio (disegna-come-daniele) per il case; a asmile-flotta per il firmware."),
 ]
 
 # ------------------------------------------------------------------------------------------------------------
@@ -404,6 +441,13 @@ CRITICI = [
     ("asmile-costi-scettico", "conoscenza", ["asmile-retrofit"],
      "serve davvero? c'è un modo software? quanto costa e cosa sblocca?",
      "Attaccare ogni proposta di spesa.", ["Costo/beneficio, alternative software, gate sbloccato."]),
+    ("asmile-pcb-critico", "veicolo", ["asmile-hw-pcb"],
+     "il datasheet dice davvero così? si monta, si salda, si collauda? dove si risparmia e dove no?",
+     "Trovare l'errore di scheda prima che costi un giro di produzione.",
+     ["Rilegge i datasheet in autonomia (non i riassunti del produttore): tensioni, sequenze, strapping pin, pin condivisi.",
+      "Rifà ERC/DRC con kicad-cli, controlla footprint vs disegno meccanico del datasheet, stock e prezzi LCSC.",
+      "Caccia ai punti di risparmio sbagliati (regolatori, connettori, ESD, quarzi, antenna) e alle spese inutili."],
+     "Read, Write, Bash, Grep, Glob, WebSearch, WebFetch"),
 ]
 
 # ------------------------------------------------------------------------------------------------------------
@@ -482,11 +526,12 @@ def file_produttore(s):
 
 
 def file_critico(c):
-    nome, vert, prod, lente, missione, sa = c
+    nome, vert, prod, lente, missione, sa = c[:6]
+    tools = c[6] if len(c) > 6 else "Read, Write, Bash, Grep, Glob"
     desc = (f"CONTRO-AGENTE (schema Groma) di {', '.join(prod)} nella verticale {vert} di Asmile. Lente: {lente}. "
             f"Riceve solo l'artefatto e il gate, rifà le misure e dà PASSA o VETO con la nota per correggere. "
             f"Usalo ogni volta che {prod[0]} passa la palla.")
-    fm = f"---\nname: {nome}\ndescription: {yq(desc)}\ntools: Read, Write, Bash, Grep, Glob\nmodel: sonnet\n---\n"
+    fm = f"---\nname: {nome}\ndescription: {yq(desc)}\ntools: {tools}\nmodel: sonnet\n---\n"
     corpo = f"""{GENERATO}
 
 # {nome} — contro-agente, verticale {vert}
