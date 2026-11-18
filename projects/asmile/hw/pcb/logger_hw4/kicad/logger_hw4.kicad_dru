@@ -1,0 +1,5 @@
+(version 1)
+# Regole del progetto logger HW4 (oltre a quelle di default). Capacità JLCPCB 4 strati: traccia/spazio min 0,09 mm.
+(rule "USB-C passo fine (TYPE-C-31-M-12: pad a 0,1 mm, footprint del costruttore)"
+  (condition "A.Parent == 'J1' && B.Parent == 'J1'")
+  (constraint clearance (min 0.09mm)))

@@ -211,6 +211,9 @@ def main():
         m = re.search(r'\(model "', t)
         if m:
             t = t.replace(blocco(t, m.start()), "")
+        # fori di centraggio senza rame (easyeda li scrive come PTH con pad = foro) → NPTH
+        t = re.sub(r'\(pad "" thru_hole circle \(at ([-\d. ]+)\) \(size ([\d.]+) ([\d.]+)\) \(drill ([\d.]+)\)',
+                   lambda m: m.group(0).replace("thru_hole", "np_thru_hole") if m.group(2) == m.group(4) else m.group(0), t)
         open(os.path.join(fpdir, f), "w", encoding="utf-8").write(t)
     fp, num, pins = footprint_modulo(a.wspads)
     open(os.path.join(fpdir, "Waveshare_ESP32-P4-Module.kicad_mod"), "w").write(fp)
