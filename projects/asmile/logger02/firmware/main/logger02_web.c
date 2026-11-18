@@ -40,6 +40,7 @@ static const char PAGINA[] =        /* stessa pagina dello streaming di asmile #
     "<h1>ASMILE STEREO — logger02</h1><div class=cams><img id=a><img id=b></div><pre id=s></pre>"
     "<script>let h=location.hostname;a.src='http://'+h+':81/stream';b.src='http://'+h+':82/b/stream';"
     "async function t(){try{let A=await(await fetch('/api/stato')).json(),B=await(await fetch('/b/api/stato')).json();"
+    "document.querySelector('h1').textContent='ASMILE STEREO — '+A.scheda.slice(0,-1);"
     "s.textContent='A luce '+A.rec.luma+' esp '+A.rec.esposizione_us+'us g '+A.rec.guadagno+' | B luce '+B.rec.luma+"
     "' | sync camere '+(B.sync.fase_camere_us||'-')+' us | batteria '+(A.imu?A.imu.batteria_v:'-')+' V'}catch(e){}}"
     "setInterval(t,2000);t()</script></body></html>";

@@ -1,4 +1,4 @@
-/* logger02 (HW3): 2 × Waveshare ESP32-P4-Module-DEV-KIT. Stesso firmware su A e B, il ruolo lo dà il MAC.
+/* logger02 (HW3): 2 × Waveshare ESP32-P4-Module-DEV-KIT. Stesso firmware su A e B e su tutti i logger HW3: nome/ruolo/IP dalla NVS "ident" (flasha_nuovo.sh).
  * Orologio unico: esp_timer (µs dal boot) di ogni scheda; B converte i suoi tempi in quelli di A col filo SYNC. */
 #pragma once
 #include <stdbool.h>
@@ -24,8 +24,9 @@
 
 typedef struct {
     bool is_a;            /* A = master: IMU, batteria, BLE, faccia verso l'esterno; B = slave */
-    char nome[16];        /* hostname (NetBIOS: max 15 caratteri) */
-    const char *ip;       /* IP fisso su EOLO */
+    char base[12];        /* nome del logger: "logger02", "logger03"... (Tailscale) */
+    char nome[16];        /* hostname = base + a/b (NetBIOS: max 15 caratteri) */
+    const char *ip;       /* IP fisso su EOLO; NULL = DHCP (la B dei logger nuovi) */
 } logger02_ruolo_t;
 
 const logger02_ruolo_t *logger02_ruolo(void);

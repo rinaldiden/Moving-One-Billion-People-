@@ -15,7 +15,7 @@ RE='tskey-[a-z]+-[A-Za-z0-9]{6,}-[A-Za-z0-9]{12,}|gh[pousr]_[A-Za-z0-9]{36}|gith
 VALORI=$(mktemp); trap 'rm -f "$VALORI"' EXIT
 # valori dei file segreti locali (gitignorati), lunghi almeno 8 caratteri
 find . -path ./.git -prune -o \( -name 'sdkconfig.defaults.local' -o -name '.env' \) -type f -print 2>/dev/null | while read -r s; do
-    sed -nE 's/^[A-Za-z0-9_]+="?([^"]{8,})"?$/\1/p' "$s"
+    grep -v -E '^[A-Za-z0-9_]*SSID[A-Za-z0-9_]*=' "$s" | sed -nE 's/^[A-Za-z0-9_]+="?([^"]{8,})"?$/\1/p'   # il nome della rete non è segreto
 done | sort -u > "$VALORI"
 while IFS= read -r f; do
     case "$f" in *sdkconfig.defaults.local|*.env) echo "STOP segreti: $f è un file di segreti locali"; male=1; continue ;; esac

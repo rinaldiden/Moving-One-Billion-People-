@@ -1,0 +1,2 @@
+nome,ip_a,ip_b,mac_a,mac_b,primo_flash,firmware,tailscale
+logger02,192.168.1.122,192.168.1.124,e8:f6:0a:e8:cb:ae,,2026-11-17,38fd492f,100.117.207.99

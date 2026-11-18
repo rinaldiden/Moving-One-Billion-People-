@@ -6,11 +6,14 @@
 #    firmware/sdkconfig.defaults.local (password, chiavi), mi fermo
 #  - una riga per scheda in logger02/DEPLOY_LOG.md (su git)
 #  - la scheda tiene il suo storico in NVS: GET /api/storia ; torna indietro con POST /rollback
-# Uso:  bash logger02/ota.sh            (usa firmware/build/logger02.bin già compilato)
+# Uso:  bash logger02/ota.sh            (logger02; un altro: LOGGER=logger03 bash logger02/ota.sh)
 #       bash logger02/ota.sh rollback   (A e B tornano alla versione precedente)
 set -u
 QUI="$(cd "$(dirname "$0")" && pwd)"
-A="${LOGGER02_HOST:-100.117.207.99}"          # Tailscale; in casa va anche 192.168.1.122
+LOGGER="${LOGGER:-logger02}"                  # quale logger HW3 (flotta.csv); tutti insieme: ota_flotta.sh
+riga=$(grep "^$LOGGER," "$(cd "$(dirname "$0")" && pwd)/flotta.csv") || { echo "$LOGGER non è in flotta.csv"; exit 1; }
+TS=$(echo "$riga" | cut -d, -f8); LAN=$(echo "$riga" | cut -d, -f2)
+A="${LOGGER02_HOST:-${TS:-$LAN}}"            # Tailscale se c'è, se no l'IP di casa della A
 BIN="$QUI/firmware/build/logger02.bin"
 LOG="$QUI/DEPLOY_LOG.md"
 
@@ -25,7 +28,7 @@ aspetta() {   # aspetta che la scheda risponda con una versione diversa da $2 (m
     return 1
 }
 
-scrivi_log() { echo "| $(date '+%Y-%m-%d %H:%M') | $1 | $2 | $3 | $4 |" >> "$LOG"; }
+scrivi_log() { echo "| $(date '+%Y-%m-%d %H:%M') | $LOGGER $1 | $2 | $3 | $4 |" >> "$LOG"; }
 [ -f "$LOG" ] || printf "# logger02 — registro aggiornamenti (rollback: \`bash logger02/ota.sh rollback\`)\n\n| quando | scheda | da | a | esito |\n|---|---|---|---|---|\n" > "$LOG"
 
 if [ "${1:-}" = "rollback" ]; then

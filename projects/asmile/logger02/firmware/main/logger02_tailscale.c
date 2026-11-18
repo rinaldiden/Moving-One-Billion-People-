@@ -43,7 +43,7 @@ esp_err_t logger02_tailscale_start(void)
     }
     /* "" = nessuna chiave: va bene se la scheda è già registrata (logger02 lo è, scadenza disattivata) */
     ESP_LOGI(TAG, "%s", s_chiave[0] ? "chiave dalla NVS" : "nessuna chiave in NVS: mi ricollego con le chiavi macchina");
-    microlink_config_t cfg = {.auth_key = s_chiave, .device_name = CONFIG_L02_TS_NOME};
+    microlink_config_t cfg = {.auth_key = s_chiave, .device_name = logger02_ruolo()->base};
     s_ml = microlink_init(&cfg);
     if (!s_ml) return ESP_FAIL;
     microlink_set_state_callback(s_ml, stato_cb, NULL);

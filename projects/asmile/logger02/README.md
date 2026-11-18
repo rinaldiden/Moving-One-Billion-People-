@@ -19,6 +19,19 @@ registrazione H.264 su SD a segmenti + CSV frame · trigger camere + misura late
 batteria ADC + avviso Telegram · deep sleep + risveglio da INT IMU + autospegnimento 5 min · download dal Mac
 (pull_from_loggers) · OTA via wifi · Tailscale (MicroLink) · BLE CooSpo · LED di stato
 
+## Flotta HW3: logger nuovo e aggiornamenti (18/11/2026, regola di Daniele)
+- **Logger nuovo** (A e B attaccate al Mac col cavo, prima di montare): `bash logger02/flasha_nuovo.sh`
+  → nome automatico (logger03, 04...), IP fisso crescente della sola A (la B prende il DHCP e lo dice alla A),
+  identità scritta nella NVS "ident" (stesso firmware per tutti), MAC in `flotta.csv`, riga in `DEPLOY_LOG.md`.
+  Attacca prima la A (quella con IMU e partitore), poi la B quando lo chiede. Poi: test (stato, voce, camere) e si monta.
+- **Chiave Tailscale** del logger nuovo: generala dal pannello (monouso), `security add-generic-password -U -s
+  claude-tailscale-loggerNN -a loggerNN -w`, prima del flash (entra nella NVS) o dopo con `chiave_tailscale.sh loggerNN`.
+  Poi scrivi l'IP Tailscale nella colonna `tailscale` di `flotta.csv`.
+- **REGOLA:** ogni modifica al firmware di questa cartella → commit + push → `bash logger02/ota_flotta.sh` su TUTTI i
+  logger di `flotta.csv` (uno alla volta, A poi B, stop al primo errore; i logger spenti si segnano e si rifanno).
+  Un solo logger: `LOGGER=logger03 bash logger02/ota.sh`. Firmware che tocca avvio/rete/sonno: prima UNA scheda col cavo.
+- logger02 (montato prima della NVS "ident") resta riconosciuto dal MAC: niente da riflashare.
+
 ## Compilare
 ```
 . ~/esp/esp-idf-556/export.sh        # ESP-IDF v5.5.6 (serve per P4 rev v3.x)

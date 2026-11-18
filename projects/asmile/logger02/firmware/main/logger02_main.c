@@ -52,7 +52,7 @@ static void rete_task(void *arg)
                 vTaskDelay(pdMS_TO_TICKS(30000));
             }
         }
-        logger02_tailscale_start();         /* A: compare come "logger02" su Tailscale */
+        logger02_tailscale_start();         /* A: compare come "loggerNN" su Tailscale */
     }
     vTaskDelete(NULL);
 }

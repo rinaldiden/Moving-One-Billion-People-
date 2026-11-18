@@ -10,6 +10,7 @@ static const char *TAG = "rete";
 esp_err_t logger02_ip_fisso(void)
 {
     esp_netif_t *netif = get_example_netif();
+    if (!logger02_ruolo()->ip) return ESP_OK;      /* B dei logger nuovi: DHCP */
     if (!netif) {
         return ESP_FAIL;
     }
