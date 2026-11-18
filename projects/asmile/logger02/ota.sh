@@ -48,12 +48,23 @@ cp "$BIN" "$QUI/rilasci/logger02_$GIT.bin"
 
 for pref in "" "/b"; do                         # A prima: se qualcosa va storto la B resta com'era
     nome=$([ -z "$pref" ] && echo A || echo B)
-    prima=$(versione "$pref")
+    prima=""; for i in 1 2 3 4 5 6; do prima=$(versione "$pref"); [ -n "$prima" ] && break; sleep 5; done
+    [ -n "$prima" ] || { echo "$nome non risponde: mi fermo"; exit 1; }
+    # versione attesa = quella scritta nel .bin (esp_app_desc_t): "ok" solo se la scheda gira PROPRIO quella
+    # (18/11: la A era tornata indietro da sola dopo un crash e lo script aveva scritto "ok" lo stesso)
+    atteso=$(python3 -c "
+import sys;d=open('$BIN','rb').read()[0x20:0x120];g=lambda a,b:d[a:b].split(b'\\0')[0].decode()
+print(g(0x10,0x30),g(0x60,0x70),g(0x50,0x60))")
     ok=""
     for tentativo in 1 2 3; do
         r=$(curl -s -m 150 -X POST --data-binary @"$BIN" "http://$A$pref/ota")
         echo "$nome tentativo $tentativo: $r"
-        if dopo=$(aspetta "$pref" "$prima"); then ok=1; break; fi
+        if dopo=$(aspetta "$pref" "$prima"); then
+            sleep 20; dopo=$(versione "$pref")          # il ritorno automatico avviene nei primi secondi
+            [ "$dopo" = "$atteso" ] && { ok=1; break; }
+            echo "$nome gira «$dopo» invece di «$atteso»: il firmware nuovo è tornato indietro (crash all'avvio?)"
+            scrivi_log "$nome" "$prima" "$dopo" "TORNATO INDIETRO ($GIT)"; exit 1
+        fi
     done
     if [ -n "$ok" ]; then scrivi_log "$nome" "$prima" "$dopo" "ok ($GIT)"; echo "$nome: $prima -> $dopo"
     else scrivi_log "$nome" "$prima" "-" "FALLITO ($GIT)"; echo "$nome: aggiornamento NON riuscito, mi fermo"; exit 1; fi
