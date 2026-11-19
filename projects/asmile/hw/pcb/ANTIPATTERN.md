@@ -46,3 +46,11 @@
 - **A15 — `git stash` + `git stash pop` "per sicurezza".** Se non ci sono modifiche locali lo stash non viene creato e il
   pop ripesca il primo stash della lista, di qualcun altro (successo 19/11: vecchio stash su pi/braking). Regola: solo
   `git pull --rebase --autostash`; mai `stash pop` senza aver visto `git stash list` subito prima. (Registro 00:20)
+- **A16 — togliere rame con un criterio mio quando il DRC sa già cos'è pendente.** Ho tolto 12 vie "pendenti" e ne servivano
+  3. Regola: si tolgono solo gli oggetti che il DRC di KiCad segnala (coordinate dal JSON). (Registro 01:40)
+- **A17 — un solo processo Python di KiCad per tutta la catena.** In 10.0.8 dopo un Remove o un ImportSpecctraSES gli
+  oggetti SWIG non si iterano più. Regola: un passo = un processo, il file .kicad_pcb fa da passaggio. (Registro 00:55)
+- **A18 — piazzamento "vicino a chi ti collega" senza gruppi.** Nodo SW dei buck a 48 mm: l'induttore finiva dove c'era
+  posto. Regola: alimentatori a commutazione e loro L/C in un gruppo con un'area dedicata, prima di tutto il resto. (01:05)
+- **A19 — router fatto in casa senza aggiornare gli ostacoli.** Le piste appena messe devono diventare subito ostacoli, e il
+  foro-foro vale anche fra vie della stessa net. (Registro 01:20)

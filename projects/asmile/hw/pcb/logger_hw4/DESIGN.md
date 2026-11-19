@@ -1,6 +1,6 @@
 # Logger HW4 — scheda dedicata (DESIGN)
 
-> **Maturità: L0 → verso L1.** Oggi: studio + schema KiCad generato e corretto dopo il VETO 1 e il VETO 2 del critico (18/11).
+> **Maturità: L0 → verso L1.** Oggi: schema e PCB sbrogliato (DRC 0, 19/11), file di produzione pronti, PASSA del critico al giro 3.
 > Niente è ancora stato acceso né ordinato.
 > Salto dopo: L1 = 10 schede montate, rail e bus verificati a banco con il firmware `hw3-def-20261118`.
 
@@ -256,16 +256,40 @@ hanno ≥ 7000 pezzi tranne LSM6DS3TR-C (16 153, ok) e ESP32-C6/P4 non usati.
 JLC spedisce in DDP (dazi pagati); con la P.IVA della ditta di Daniele l'IVA si recupera e conta la riga netta. I due
 moduli Waveshare arrivano a parte: stessa IVA, spedizione da aggiungere al loro preventivo.
 
-## 8. Verifiche KiCad e layout (strato 3-4)
-KiCad 10.0.8 installato in `/Applications/KiCad` (senza modelli 3D, disco al 98 %). Dopo l'ultima netlist (18/11/2026):
-- **ERC: 0 violazioni** — `kicad/ERC.rpt` del **2026-11-18T23:02:09**.
-- **Netlist esportata da KiCad = `netlist_hw4.py` pin per pin: 526 pin, 0 differenze** (`kicad/verifica_netlist.py`).
-- **Tabella pin hw↔fw: 0 conflitti** (`PIN_HW4.md`, `kicad/controlla_pin_fw.py`).
-- **DRC del piazzamento: 0 errori di rame/sovrapposizione**; restano 391 collegamenti da sbrogliare + 195 avvisi di
-  serigrafia — `kicad/DRC.rpt` del **2026-11-18T23:02:18**. Nota del critico: il DRC non controlla le sovrapposizioni dei
-  footprint senza courtyard; il piazzamento le evita per costruzione (ingombro = courtyard ∪ pad, `genera_pcb.py`).
-Layout: 250 × 50 mm (proposta), camere a 200 mm fra gli assi ottici. Fori camere e case da concordare col Doppio;
-lo sbroglio non è fatto → niente gerber di produzione finché il layout non regge.
+## 8. Layout sbrogliato (strato 4) — 19/11/2026
+**Stato: sbrogliato, DRC 0 errori e 0 collegamenti aperti** (`kicad/DRC.rpt`, restano solo 41 avvisi di serigrafia),
+**ERC 0** (`kicad/ERC.rpt`), **schema = netlist voluta su 526 pin, PCB = netlist voluta su 526 pad**
+(`verifica_netlist.py`, `verifica_pcb.py`), tabella pin hw↔fw 0 conflitti. Si rifà tutto con un comando:
+`bash kicad/costruisci_pcb.sh freerouting.jar` (KiCad 10.0.8 in /Applications, Freerouting 2.5.0, OpenJDK 27).
+- **Stack-up 4 strati 1,6 mm:** F.Cu segnali + GND · In1.Cu GND pieno · In2.Cu diviso **3V3_A (sinistra) / 3V3_B
+  (destra)** · B.Cu segnali + GND. Da ordinare con lo stack-up **JLC04161H-3313** (prepreg 0,1 mm): una pista da 0,15 mm
+  sopra un piano a 0,1 mm vale ~50 Ω (formula microstriscia IPC-2141, εr 4,4) → coppia MIPI ~100 Ω. DA VERIFICARE col
+  calcolatore di impedenza del fornitore prima dell'ordine (l'opzione "impedenza controllata" costa poco o nulla).
+- **Regole** (JLC/PCBWay 4 strati, pagina capacità JLC 19/11): piste/spazi ≥ 0,1 mm (classe Default 0,15/0,12),
+  vie 0,6/0,3 mm, foro-foro ≥ 0,25 mm (JLC 0,2), rame-bordo ≥ 0,3 mm + fascia vietata di 0,6 mm lungo il bordo.
+  Classi: Power 0,4 mm, VBUS_CSP 0,3 mm (entra fra i pad da 0,23), MIPI 0,15/0,15, USB 0,2/0,15.
+- **Piazzamento:** FFC delle camere accanto ai pad CSI dei moduli (il cavo va dalla camera al connettore, ~60 mm:
+  cavo Pi da 100-150 mm); SD accanto ai pad SD; canale libero di 2,5 mm attorno ai moduli per i pad a castello; gruppi
+  vincolati: **ogni buck con induttore e condensatori in un'area sua** (nodo SW 5,4 / 6,7 mm), **catena USB → OVP →
+  caricatore → power-path attorno a J1**. Sotto i moduli camera (fori M2) niente componenti.
+- **Sbroglio in 4 fasi:** fanout verso i piani (156 vie, `fanout.py`) → **coppie MIPI instradate a coppie dal nostro
+  router A*** (`premipi.py`: 11-17 mm, **differenza P/N ≤ 1,6 mm ≈ 11 ps**, `SBROGLIO_MISURE.md`; Freerouting da solo le
+  lasciava a 7-24 mm di differenza) → Freerouting sul resto → collegamenti rimasti chiusi dal router A* (`completa.py`)
+  → vie doppie fuse, vie/piste pendenti tolte **solo dove le segnala il DRC di KiCad** → riempimenti GND F/B + ~670 vie
+  di cucitura → piste di potenza allargate dove c'è posto (`allarga.py`, DRC dopo).
+- **Antenna:** si usa il modulo con IPEX (antenna fuori dal case): sulla scheda non c'è antenna né zona da tenere libera;
+  il u.FL di riserva (J11/J21, non montati) sta accanto al pad LNA_OUT con una pista corta sopra il piano GND.
+- **USB:** FS (12 Mbit/s), coppia 0,2 mm, lunghezza non critica. **Test point** su tutti i rail (VBUS, BATP, VSYS, VSYS_IN,
+  3V3_A, 3V3_B, GND) + SYNC/TRIG + C6 + USB della B.
+- **Rischi che restano (da guardare a occhio in KiCad prima dell'ordine):**
+  1. **VBUS** fra J1, OVP e TP4056: 38,8 mm a 0,3 mm e 17,6 mm a 0,5 mm (attorno non c'è posto). Con 1 A di carica + scheda
+     accesa (fino a ~2,2 A) una pista da 0,3 mm su rame 1 oz si scalda di ~20-30 °C (IPC-2221). Rimedi: R5 2 kΩ (decisione
+     di Daniele, REPORT), rame esterno 2 oz, o allargare a mano.
+  2. **VSYS** in parte a 0,4 mm (153 mm) per ~1,2 A: ~10 °C, accettabile.
+  3. Le piste di Freerouting sono funzionali ma non belle (giri lunghi, es. LED_R e SYNC_M 40-80 mm): nessun problema
+     elettrico per segnali lenti; da ripulire se si fa una revisione.
+  4. CSP AW32901: pad 0,23 NSMD, apertura maschera 0,33 → ponte di maschera 0,07 mm < 0,10 mm minimo JLC: il fornitore
+     toglierà i ponti fra i pad del CSP (normale per passo 0,4 mm). DFM vero al preventivo.
 
 ## 9. Bozze ai fornitori (partono solo col tap di Daniele, `~/progetti/CONTATTI-ESTERNI.md`)
 In `BOZZE_FORNITORI.md`: Waveshare (prezzo moduli a 100/1000), Arducam + Inno-Maker (OV9281 M12 con trigger a 100 pz),
