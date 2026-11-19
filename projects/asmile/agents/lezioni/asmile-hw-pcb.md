@@ -26,3 +26,11 @@ Scritte da palla.py (VETO dei critici + bilanci giusto/sbagliato). Leggile prima
 - 2026-11-18 SBAGLIATO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): nel giro precedente avevo cambiato il partitore guardando solo il rapporto, non la sequenza temporale del firmware (A11)
 - 2026-11-18 SBAGLIATO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): power-path progettato solo a regime, senza il transitorio di stacco (A12); TVS 5 V accanto a pezzi da 6 V (A13)
 - 2026-11-18 SBAGLIATO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): R36 messo 0805 invece del 0603 richiesto: scelta motivata (2 A) ma da far confermare al critico
+- 2026-11-19 GIUSTO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): sbroglio 4 strati con DRC 0 errori e 0 aperti, ERC 0, schema e PCB = netlist (526 pin/pad), catena riproducibile con un comando
+- 2026-11-19 GIUSTO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): coppie MIPI instradate a coppie dal router nostro prima di Freerouting: differenza P/N da 7-24 mm a <= 1,6 mm
+- 2026-11-19 GIUSTO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): nodo SW dei buck da 48 mm a 6,7 mm con gruppi vincolati nel piazzamento
+- 2026-11-19 GIUSTO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): preventivo con i gerber veri su JLC e PCBWay (file letti senza errori); fermo davanti al reCAPTCHA invece di aggirarlo
+- 2026-11-19 SBAGLIATO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): git stash pop senza modifiche locali ha ripescato uno stash di altri: ripristinato subito, nessun file altrui committato (A15)
+- 2026-11-19 SBAGLIATO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): criterio mio per le vie pendenti ha rotto 3 collegamenti (A16); router A* prima versione senza aggiornare gli ostacoli: 16 corti (A19)
+- 2026-11-19 SBAGLIATO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): piazzamento senza gruppi: nodo SW a 48 mm (A18); VBUS resta a 0,3 mm per 39 mm
+- 2026-11-19 SBAGLIATO (`projects/asmile/hw/pcb/logger_hw4/DESIGN.md`): montaggio e DFM del CSP non verificati coi file (bloccato dal captcha)
