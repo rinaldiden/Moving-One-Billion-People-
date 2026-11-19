@@ -20,3 +20,8 @@ Ogni pattern: regola · prova (righe del registro) · quando si applica.
 - **P8 — Modello numerico dei transitori nel repo.** Partitore con la sequenza del firmware e stacco USB con le capacità vere
   (`kicad/modello_partitore.py`, `modello_power_path.py`): il critico e il capo rifanno il conto con un comando, e il
   modello ha mostrato che la correzione proposta (R35 10k) da sola non bastava. Prova: registro 23:02-23:08.
+- **P9 — Catena di sbroglio a passi separati con metrica scritta.** genera → fanout → coppie critiche col router nostro →
+  Freerouting → completa → pulizia guidata dal DRC → riempimenti → allarga; ogni passo un processo, DRC di KiCad come
+  giudice, misure (MIPI, SW, larghezze) in un file. Prova: registro 00:40-01:55 (DRC 0 / 0 aperti riproducibile).
+- **P10 — Preventivo coi file prima di chiedere il login.** JLC e PCBWay leggono i gerber e danno il prezzo PCB senza
+  account: si verifica subito che i file siano accettati (strati, misure). Prova: registro 02:10-02:15.

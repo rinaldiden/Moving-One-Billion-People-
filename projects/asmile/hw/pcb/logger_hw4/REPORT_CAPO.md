@@ -1,33 +1,30 @@
-# Report al capo — logger HW4 (asmile-hw-pcb, 18/11/2026 notte, dopo il VETO 2) · maturità L0 → L1
+# Report al capo — logger HW4 (asmile-hw-pcb, 19/11/2026 notte, dopo il PASSA del giro 3) · maturità L0 → L1
 
-**Scelta (invariata).** Scheda unica 250 × 50 mm, 4 strati, 2 moduli Waveshare ESP32-P4-Module + 2 OV9281 mono global
-shutter su FFC 15 pin + trigger, baseline 200 mm. VETO 1 chiuso e rifatto dal critico. Cosa ho cambiato per il VETO 2
-(una riga per voce in `../REGISTRO.md`, 23:00-23:20):
-1. **Partitore batteria 100k/33k come HW3, C4 non montato.** `kicad/modello_partitore.py` simula la sequenza di
-   `logger02_imu.c:77-84`: errore della RC **0,000 %** fra 3,0 e 4,2 V (riprodotto anche il −31,9 % del giro prima).
-   Non dipendono dalla RC: resistenze 1 % (±1,36 %) e ADC P4 a 12 dB (±15 mV, Tab. 5-6 pag. 90). Per stare sotto l'1 %
-   complessivo c'è la calibrazione a un punto in collaudo (passo 8b).
-2. **R35 a 10k, e non basta da sola** (`kicad/modello_power_path.py`): con il gate su VBUS (10 µF) la scheda resta 60-80 ms
-   sul diodo di body, con la 3V3 a 2,5-3,0 V. Ho alimentato il gate da VBUS tramite **D8 (SS14, stesso codice di D5)**:
-   τ del gate ≈ 7 µs contro 35-48 µs di discesa di VBUS/VSYS → nessun buco. Prova sonda su 3V3_A al passo 4 di COLLAUDO.
-3. **VBUS:** R36 in serie dopo J1 (0805 0 Ω montato, posto per PTC o perla; 0805 e non 0603 perché passano 2 A) + TVS +
-   **OVP AW32901** (5,83-6,07 V, 50 ns, 120 V di surge, 0,24 $; datasheet pag. 4 e 7) davanti a TP4056 (6,5 V max) e
-   TLV62569 (6 V max). Prova hot-plug e 9 V al passo 5b. Rischio: CSP passo 0,4 mm da sbrogliare.
-4. Documentati: GPIO36 alto grazie a R46 dentro il modulo; console UART0 della A solo su J12 (adattatore al bring-up);
-   NVS "ident" scritta su A (USB-C) e B (J22); passo 3 con limite 1 A; finestra NTC reale 39-42 °C / 0-4 °C.
-5. **ERC 0 (23:02:09), netlist KiCad = netlist voluta su 526 pin, DRC 0 errori rame (23:02:18)**, tabella pin 0 conflitti.
+**Fatto (un commit per passo):** 7e36f248 condizioni del critico · bd64a179 sbroglio · 7882f052 produzione · 8ad02238 preventivi.
+1. **4 condizioni:** AW32901 col land pattern del datasheet (pad 0,23 NSMD, maschera 0,33, nome FCQFN-12); D5 → SS34 C8678
+   (Basic, 3 A); COLLAUDO 5b a 9 V con banco a 0,1 A (il TVS conduce e scalda); 24 Extended nel BOM = 23 montati + u.FL DNP.
+2. **PCB 4 strati sbrogliato: DRC 0 errori, 0 collegamenti aperti** (solo 41 avvisi di serigrafia), **ERC 0**; schema e PCB =
+   netlist voluta su 526 pin/pad. Si rifà con `bash kicad/costruisci_pcb.sh freerouting.jar`. Stack-up F/B segnali+GND,
+   In1 GND, In2 3V3_A | 3V3_B (JLC04161H-3313: pista 0,15 ≈ 50 Ω). Coppie MIPI instradate dal nostro router A*:
+   11-17 mm, **differenza P/N ≤ 1,6 mm**. Nodo SW dei buck 5,4 / 6,7 mm. Dettaglio e rischi in DESIGN §8.
+3. **Produzione** in `produzione/`: gerber + fori (zip), BOM_JLC (52 righe, 125 pezzi), CPL (125, tutti top, rotazioni 0
+   controllate sui LED e su D5), moduli Waveshare elencati a parte.
+4. **Preventivi coi gerber veri** (letti senza errori da entrambi): **JLCPCB 60,00 $ (10 pz) · 279,05 $ (100 pz)**,
+   PCBWay 130,89 $ · 350,89 $. Costo scheda K1 senza camere: **30,7 € a 100 pz** (netto IVA), 27,4 € a 1000.
 
-**Costo scheda K1 senza camere** (`kicad/costi.py`, JLC unico fornitore): 48,5 € a 10 pz · **30,7 € a 100** · 27,3 € a 1000
-(netto IVA; caso peggiore con dazio e IVA: 60,4 / 38,0 / 33,8 €). OVP + D8 + R36 aggiungono ~0,3 € a scheda.
+**BLOCCO (fermo, come da istruzioni):** il preventivo di **assemblaggio** coi file (BOM + CPL → montaggio e DFM del CSP)
+chiede l'account. Registrazione JLCPCB compilata (password generata nel Portachiavi `claude-jlcpcb.com`, email
+daniele@movingonebillionpeople.org, Personal, Italia, solo i termini) → **reCAPTCHA «I'm not a robot»**: non lo aggiro.
+PCBWay ha due captcha nella registrazione. **Serve Daniele per 2 minuti**: risolvere il captcha su jlcpcb.com (o entrare con
+Google) con quella email; poi faccio io upload BOM/CPL, montaggio e DFM, senza ordinare né pagare.
 
-**NON verificato:** tutto ciò che è transitorio (stacco USB, hot-plug) è calcolo, non misura · pin 1 del modulo (P1) · flat
-(P3) · flash della B (P7) · montaggio vero (servono i gerber) · portata dello 0 Ω 0805 (2 A tipico).
+**NON verificato:** prezzo di montaggio (stima: 4,64 $/scheda a 100 pz) e DFM del CSP 0,4 mm (sulle capacità pubblicate
+JLC è accettabile: pad ≥ 0,2 mm con ENIG) · VBUS a 0,3 mm per 39 mm (fino a ~2,2 A: +20-30 °C) · impedenza dello stack-up
+(col calcolatore del fornitore) · pin 1 del modulo (P1), flat (P3), flash della B (P7), stacco USB (P10): tutto a banco.
 
-**Decisioni per Daniele (le ha sollevate il critico, non le decido io):**
-1. **Corrente di carica (R5):** oggi 1,2 kΩ = 1 A. Il TP4056 dissipa fino a ~1,75 W (sopra 1,5 W va in foldback termico)
-   e 1 A più la scheda accesa sono troppi per una porta USB "normale" (500-900 mA). **R5 = 2 kΩ (~600 mA) o 2,4 kΩ (~500 mA)**:
-   più fresco e compatibile con ogni porta, ma 2 × 18650 (5-6 Ah) si caricano in **8-10 h** invece di ~6.
-2. **Cella inserita al contrario:** nessuna protezione (FS8205A e P-MOS conducono dai diodi di body). Basta serigrafia "+"
-   su J2 e colori fissi nei fili + tester sul pacco prima della prima spina (già nel passo 4)? Oppure si aggiunge un
-   P-MOS di protezione (~0,05 $, un po' di caduta in più → soglia di cella più alta)?
-3. (dalle volte prima) scheda con 2 moduli a ~31 € o piano B a ~19 €; lente uguale a #001; una o due SD; bozze ai fornitori.
+**Note di strumenti:** OpenJDK 27 via brew (nessuna password) + Freerouting 2.5.0 in /tmp; profilo browser dedicato
+`~/.claude_pw_pcb`. Errore mio corretto subito: un `git stash pop` ha ripescato un vecchio stash di altri (pi/braking):
+file ripristinati, stash lasciato intatto, niente committato (antipattern A15).
+
+**Decisioni per Daniele:** 1) **captcha JLCPCB** (sblocca il preventivo di montaggio); 2) R5 2 kΩ / 2,4 kΩ (carica più fresca,
+aiuta anche il punto VBUS); 3) cella invertita; 4) K1 ~31 € o K2 ~19 €; lente; SD; bozze fornitori (aperte da prima).
