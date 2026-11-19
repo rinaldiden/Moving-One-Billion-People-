@@ -1,7 +1,31 @@
 # Preventivo PCBWay e JLCPCB — logger HW4, 18/11/2026
 
-**NON ordinato, NON pagato, nessuna carta inserita, nessun account creato** (il preventivo PCB istantaneo di PCBWay non
-chiede il login). L'ordine è di Daniele.
+**NON ordinato, NON pagato, nessuna carta inserita, nessun account creato.** L'ordine è di Daniele.
+
+## 19/11/2026 — preventivo CON I FILE VERI (`produzione/gerber_logger_hw4.zip`)
+Entrambi i fornitori hanno letto i gerber senza errori: JLCPCB «Detected 4 layer board of 50×250mm», PCBWay «Detected 4
+layers board of 250 x 50mm». Parametri: 4 strati, 1,6 mm, ENIG 1 µ", 1 oz, maschera verde (PCBWay anche 4/4 mil).
+| | 10 pz | 100 pz | spedizione | screenshot |
+|---|---|---|---|---|
+| **JLCPCB** PCB nudo coi gerber | **60,00 $** (3-4 gg) | **279,05 $** (5-6 gg; 388,15 $ a 3-4 gg) | UPS DDP 31,07 / 81,30 $ | `preventivo/jlcpcb_file_10_*.jpg`, `jlcpcb_file_100_*.jpg` |
+| **PCBWay** PCB nudo coi gerber | **130,89 $** | **350,89 $** | DHL 40,28 / 77,25 $ | `preventivo/pcbway_file_10.jpg`, `pcbway_file_100.jpg` |
+Voci JLC a 100 pz: progettazione 25,00 · ENIG 57,10 · test elettrico 14,50 · pellicole 6,40 · scheda 175,00 · conferma
+file 1,05 $. → **JLC resta il fornitore più economico** (279 contro 351 $ a 100 pz).
+
+**Assemblaggio coi file (BOM + CPL): BLOCCATO.** Su JLCPCB la sezione PCBA si apre (Economic/Standard, lato top, 10/100
+pz) ma «NEXT», dove si caricano BOM e CPL e compare il prezzo dei componenti e del montaggio, porta al login. Per l'account:
+password generata e salvata nel Portachiavi (`claude-jlcpcb.com`, utente daniele@movingonebillionpeople.org), modulo
+compilato (Personal, Italia, solo i termini, niente newsletter), poi **"Security Verification" con reCAPTCHA «I'm not a
+robot»** → mi sono fermato (non si aggira un captcha). PCBWay: la registrazione ha **due iframe captcha** → non tentata.
+Serve Daniele per 2 minuti: risolvere il captcha (o accedere con Google) su jlcpcb.com con quella email; poi carico io BOM e
+CPL e leggo il prezzo di montaggio e il DFM. Fino ad allora il montaggio resta la stima con le tariffe pubblicate
+(`kicad/costi.py`: 15,04 $ a scheda a 10 pz, 4,64 $ a 100 pz, moduli saldati a mano compresi).
+
+**CSP AW32901 passo 0,4 mm:** accettabile secondo le capacità pubblicate JLC (pad BGA minimo 0,2 mm, con ENIG fra 0,20 e
+0,25 mm: i nostri sono 0,23 NSMD su ENIG; pagina jlcpcb.com/capabilities/pcb-capabilities, 19/11). Il ponte di maschera
+fra i pad (0,07 mm) è sotto il minimo di 0,10 mm: JLC lo toglierà fra i pad del CSP. **Conferma DFM vera: solo dopo il
+login** (stesso blocco di sopra).
+
 
 ## Cosa ho caricato e cosa no (onesto)
 - **Gerber/BOM/CPL veri NON caricati**: il layout non è sbrogliato (375 collegamenti aperti, `kicad/DRC.rpt`), quindi

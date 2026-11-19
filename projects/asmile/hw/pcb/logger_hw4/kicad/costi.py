@@ -10,8 +10,10 @@ EUR = 1.10                                   # $ per €, da aggiornare
 Q = (10, 100, 1000)
 
 # PCB nudo JLCPCB 4 strati 250×50 ENIG 1u", 1,6 mm (cart.jlcpcb.com/quote, 18/11/2026, screenshot preventivo/jlcpcb_*.jpg)
-PCB = {10: 60.00, 100: 297.00, 1000: None}          # $ per ordine; 1000 non quotato → stima 2,0 $/scheda
-SPED = {10: 31.07, 100: 60.92, 1000: None}          # UPS Express Saver DDP (paese di default della pagina)
+# 19/11: preventivo CON I GERBER VERI caricati (cart.jlcpcb.com/quote, "Detected 4 layer board of 50x250mm"):
+#   10 pz 60,00 $ (3-4 gg, nessun sovrapprezzo); 100 pz 279,05 $ con consegna 5-6 gg (388,15 $ a 3-4 gg)
+PCB = {10: 60.00, 100: 279.05, 1000: None}          # $ per ordine; 1000 non quotato → stima 2,0 $/scheda
+SPED = {10: 31.07, 100: 81.30, 1000: None}          # UPS Express Saver DDP (paese di default della pagina)
 # PCBWay per confronto (orderonline.aspx 18/11): 130,89 $ / 350,89 $ + DHL 40,28 / 77,25 $
 # montaggio JLCPCB standard (jlcpcb.com/help/article/pcb-assembly-price e /98-pcb-assembly-faqs, letti 18/11)
 SETUP, STENCIL, EXT, GIUNTO = 25.56, 15.72, 3.07, 0.0016

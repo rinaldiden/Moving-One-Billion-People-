@@ -217,19 +217,19 @@ bozza di richiesta preventivo pronta (§9) ad Arducam, Inno-Maker, Sinoseen.
 | P8 | 3V3 sotto carico a cella bassa | alimentatore al posto della cella, 3,6 → 3,3 V, B e A in registrazione + wifi | 3V3 ≥ 3,0 V fino a 3,4 V; firmware si spegne a 3,45 V |
 
 ## 7. Costi (rifatti dopo il VETO 1: PCB e montaggio dallo **stesso fornitore, JLCPCB**; `kicad/costi.py`)
-Fonti: PCB nudo = preventivo JLCPCB vero (4 strati 250×50 ENIG, 18/11, `preventivo/jlcpcb_*.jpg`; PCBWay per confronto
-in `PREVENTIVO_PCBWAY.md`) · pezzi = API JLC (`kicad/prezzi_jlc.json`, 127 montati; **24 codici Extended nel BOM = 23 montati + l'u.FL C88374 solo non montato**: la tassa JLC da 3,07 $ si paga sui 23 montati) · montaggio = tariffe
+Fonti: PCB nudo = preventivo JLCPCB **coi gerber veri** (19/11: 60,00 $ a 10 pz, 279,05 $ a 100 pz in 5-6 gg; PCBWay
+per confronto in `PREVENTIVO_PCBWAY.md`) · pezzi = API JLC (`kicad/prezzi_jlc.json`, 127 montati; **24 codici Extended nel BOM = 23 montati + l'u.FL C88374 solo non montato**: la tassa JLC da 3,07 $ si paga sui 23 montati) · montaggio = tariffe
 JLCPCB standard pubblicate (setup 25,56 $, stencil 15,72 $, 3,07 $/Extended, 0,0016 $/giunto) **+ saldatura a mano dei 2
 moduli castellati forniti da noi** (176 giunti × 0,0164 $ + 3,58 $/ordine, FAQ JLC) · moduli 9,99-10,99 $ (sito
 Waveshare) · cambio 1 € = 1,10 $. Il montaggio resta **NON VERIFICATO** (serve il preventivo coi file veri).
 
 | per scheda | 10 pz | 100 pz | 1000 pz |
 |---|---|---|---|
-| PCB nudo + spedizione (JLC) | 9.11 $ | 3.58 $ | 2.30 $ |
-| pezzi LCSC | 5.23 $ | 4.35 $ | 3.39 $ |
+| PCB nudo + spedizione (JLC) | 9.11 $ | 3.60 $ | 2.30 $ |
+| pezzi LCSC | 5.25 $ | 4.37 $ | 3.40 $ |
 | montaggio JLC (macchina + moduli a mano) | 15.04 $ | 4.64 $ | 3.60 $ |
 | 2 moduli Waveshare + 2 antenne | 23.98 $ | 21.18 $ | 20.78 $ |
-| **netto (senza IVA)** | **53.35 $ = 48.5 €** | **33.75 $ = 30.7 €** | **30.08 $ = 27.3 €** |
+| **netto (senza IVA)** | **53.37 $ = 48.5 €** | **33.79 $ = 30.7 €** | **30.09 $ = 27.4 €** |
 | con dazio 3,5 % + IVA 22 % (IVA non recuperata) | 60.4 € | 38.0 € | 33.8 € |
 
 IVA recuperabile se l'acquisto è fatto con la P.IVA della ditta individuale di Daniele: allora conta la riga netta. Spedizione JLC in DDP = dazi già pagati alla consegna; altrimenti +25-75 € di sdoganamento a spedizione (≈ +0,5 € a scheda su 100).
