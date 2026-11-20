@@ -50,6 +50,7 @@ void logger02_sync_stato(char *json, size_t n);
 esp_err_t logger02_rec_start(void);
 void logger02_rec_stop(void);                 /* chiude i file (prima del deep sleep) */
 uint32_t logger02_rec_frame(void);            /* indice dell'ultimo fotogramma */
+uint32_t logger02_rec_scritti(void);          /* fotogrammi scritti su SD */
 void logger02_rec_stato(char *json, size_t n);
 size_t logger02_rec_jpeg(uint8_t *out, size_t max);   /* ultimo fotogramma in JPEG per lo streaming (0 = niente) */
 void logger02_rec_ultimi(char *json, size_t n);       /* ultimi tempi dei fotogrammi, già in tempo A */
@@ -66,6 +67,12 @@ esp_err_t logger02_imu_start(void);
 void logger02_imu_stato(char *json, size_t n);
 float logger02_batteria_v(void);              /* <0 se non collegata */
 void logger02_dormi(const char *motivo);      /* chiude tutto e va in deep sleep (A sveglia con IMU, B con WAKE) */
+
+/* salute (A e B): una riga al secondo + errori del log, come asmile_health.csv del logger001 */
+void logger02_salute_presto(void);            /* all'avvio, prima di tutto: aggancia il log, conta il riavvio */
+esp_err_t logger02_salute_start(void);        /* dopo la SD */
+void logger02_salute_chiudi(void);            /* prima del deep sleep */
+void logger02_salute_stato(char *json, size_t n);
 
 esp_err_t logger02_web_start(void);
 esp_err_t logger02_tailscale_start(void);       /* A: MicroLink, nome "logger02" */

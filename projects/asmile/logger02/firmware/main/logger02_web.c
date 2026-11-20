@@ -79,18 +79,19 @@ static esp_err_t h_stream(httpd_req_t *req)
 
 static esp_err_t h_stato(httpd_req_t *req)
 {
-    char rec[320], sync[480], imu[320], ts[96], out[1600];
+    char rec[320], sync[480], imu[320], ts[96], sal[200], out[1900];
     logger02_rec_stato(rec, sizeof(rec));
     logger02_sync_stato(sync, sizeof(sync));
     if (logger02_ruolo()->is_a) logger02_imu_stato(imu, sizeof(imu));
     else snprintf(imu, sizeof(imu), "null");
     logger02_tailscale_stato(ts, sizeof(ts));
+    logger02_salute_stato(sal, sizeof(sal));
     const esp_app_desc_t *app = esp_app_get_description();
-    snprintf(out, sizeof(out), "{\"scheda\":\"%s\",\"riavvio\":%d,\"versione\":\"%s %s %s\",\"partizione\":\"%s\",\"ram_interna_libera\":%u,\"ram_interna_min\":%u,\"uptime_s\":%lld,\"t_us\":%lld,\"t_a_us\":%lld,\"rec\":%s,\"sync\":%s,\"imu\":%s,\"tailscale\":%s}",
+    snprintf(out, sizeof(out), "{\"scheda\":\"%s\",\"riavvio\":%d,\"versione\":\"%s %s %s\",\"partizione\":\"%s\",\"ram_interna_libera\":%u,\"ram_interna_min\":%u,\"uptime_s\":%lld,\"t_us\":%lld,\"t_a_us\":%lld,\"rec\":%s,\"sync\":%s,\"imu\":%s,\"tailscale\":%s,\"salute\":%s}",
              logger02_ruolo()->nome, (int)esp_reset_reason(), app->version, app->date, app->time, esp_ota_get_running_partition()->label,
              (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
              (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL), esp_timer_get_time() / 1000000, esp_timer_get_time(),
-             logger02_t_a(esp_timer_get_time()), rec, sync, imu, ts);
+             logger02_t_a(esp_timer_get_time()), rec, sync, imu, ts, sal);
     httpd_resp_set_type(req, "application/json");
     return httpd_resp_sendstr(req, out);
 }

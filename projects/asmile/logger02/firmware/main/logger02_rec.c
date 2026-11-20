@@ -464,6 +464,11 @@ uint32_t logger02_rec_frame(void)
     return s_frame;
 }
 
+uint32_t logger02_rec_scritti(void)
+{
+    return s_scritti;
+}
+
 size_t logger02_rec_jpeg(uint8_t *out, size_t max)
 {
     s_jpg_chiesto = esp_timer_get_time();

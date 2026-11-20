@@ -86,6 +86,7 @@ void app_main(void)
         ESP_ERROR_CHECK(nvs_flash_erase());
         ESP_ERROR_CHECK(nvs_flash_init());
     }
+    logger02_salute_presto();
     /* al risveglio dal deep sleep: sblocca i pin tenuti fermi (la C6 poi la gestisce esp_hosted, come prima) */
     const int sblocca[] = {L02_PIN_C6_EN, L02_PIN_SD_PWR, L02_PIN_PA, L02_PIN_WAKE, L02_PIN_ETH_RST};
     for (size_t i = 0; i < sizeof(sblocca) / sizeof(sblocca[0]); i++) gpio_hold_dis(sblocca[i]);
@@ -110,6 +111,7 @@ void app_main(void)
     logger02_ora_init();
     if (logger02_sd_monta() == ESP_OK) {
         logger02_rec_start();
+        logger02_salute_start();
     }
     if (ru->is_a) {
         logger02_imu_start();

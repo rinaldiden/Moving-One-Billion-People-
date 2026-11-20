@@ -204,6 +204,7 @@ void logger02_dormi(const char *motivo)
     if (a) logger02_link_invia("Z");                 /* prima la B */
     logger02_rec_stop();
     if (s_csv) { fclose(s_csv); s_csv = NULL; }
+    logger02_salute_chiudi();
 
     logger02_rec_standby();                          /* camera in standby */
     /* tutto quello che non serve per svegliarsi: spento e tenuto spento durante il deep sleep */

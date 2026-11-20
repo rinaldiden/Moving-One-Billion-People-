@@ -280,12 +280,16 @@ def pull_logger02():
         sess = stato.get("rec", {}).get("sessione", "")
         sens_corso = max([f["nome"] for f in files if f["nome"].startswith("sensors_") and sess and sess in f["nome"]],
                          default="")                     # CSV IMU del minuto in corso (uno al minuto)
+        # salute/errori (firmware dal 20/11): il più recente di ogni tipo è ancora aperto
+        aperti = {max([f["nome"] for f in files if f["nome"].startswith(pr)], default="") for pr in ("salute_", "errori_")}
         for f in sorted(files, key=lambda x: x["nome"]):
             nome, size = f["nome"], f["byte"]
             if base_corso and nome.startswith(base_corso):
                 continue                                  # pezzo ancora in scrittura (video + frames)
             if nome == sens_corso:
                 continue                                  # CSV IMU ancora aperto
+            if nome in aperti:
+                continue                                  # salute/errori del minuto in corso
             locale = os.path.join(dest, nome)
             try:
                 with get(f"http://{host}{pref}/dl?f={nome}", 120) as r, open(locale + ".part", "wb") as out:
