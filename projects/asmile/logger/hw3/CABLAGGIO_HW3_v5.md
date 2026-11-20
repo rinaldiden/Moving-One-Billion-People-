@@ -64,7 +64,7 @@ GPIO22/23: stessi pin cablati da Daniele il 17/11 su logger02 — controlla la s
 ## Ordine di lavoro
 1. **MT3608 da solo** sul pacco (fusibile + interruttore già messi): gira il trimmer fino a **5,1 V** a vuoto col tester. Solo dopo lo colleghi alle schede.
 2. Partitore: prima di saldare il filo al pin 13 misura il nodo ADC: deve essere **≈ batteria × 0,25** (4,2 V → 1,04 V), mai sopra 3,3 V.
-3. USB-C → MH-CD42: attacca un caricatore e guarda il LED di carica dell'HW-775 (si vede dalla finestra LED carica).
+3. USB-C → HW-775: attacca un caricatore e guarda il LED di carica dell'HW-775 (si vede dalla finestra LED carica).
 4. IMU, fili A↔B, flat, altoparlante. Poi 5V SCHEDE.
 5. Prova: interruttore ON → saluto "Narmade Har!" → `stato` dal Mac (batteria letta ≈ tensione del pacco) → lascialo fermo 5 min → dorme → scossone → si risveglia.
 6. **Consumo da fermo**: tester in serie fra BAT+ e interruttore, in deep sleep. Scrivilo qui sotto: decide quanti giorni sta in garage.
