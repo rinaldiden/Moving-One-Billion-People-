@@ -3,8 +3,15 @@
 Case: `stl_v5/` (non `stl_v5_wifi/`). Firmware: quello DEFINITIVO HW3 del 18/11 (`logger02/README.md`), **non si tocca**.
 Pin del pettine: `PIN_logger002.md` (pin 1 = 3V3 in alto a sinistra, dispari a sinistra, pari a destra).
 Un solo step-up MT3608 a 5,1 V sempre acceso alimenta A e B. A dorme in deep sleep, la sveglia l'INT dell'IMU, A sveglia B
-col filo WAKE. Il MH-CD42 fa SOLO da caricatore: la sua uscita 5 V non si usa (si spegne da sola a basso carico, e in deep
-sleep spegnerebbe tutto).
+col filo WAKE. Caricatore: **HW-775 DollaTek** (1 cella, 4,2 V, fino a 2 A; solo carica) al posto del MH-CD42. Nessun
+pulsante "tieni vivo": serviva solo all'uscita 5 V del MH-CD42 (si spegneva sotto ~45 mA); l'MT3608 attaccato al pacco non
+si spegne mai da solo.
+Le due celle sono in **parallelo**: non serve bilanciarle, si tengono alla stessa tensione da sole. Unica regola: prima di
+saldarle insieme portale alla stessa tensione (differenza < 0,1 V), se no una scarica corrente forte nell'altra.
+**Protezione da scarica profonda**: l'MT3608 tira la batteria fino a ~2 V e rovina le celle. Serve UNO di questi:
+celle 18650 **protette** (col circuitino sul polo −), oppure una scheda protezione 1S (DW01A + 8205, 3 A) fra pacco e tutto
+il resto. Se sull'HW-775 ci sono i pad OUT+/OUT− e due chip a 6 piedini (DW01 e 8205), la protezione è già lì: allora
+l'MT3608 e il partitore vanno su OUT+/OUT− e non su B+/B−.
 
 ## Pezzi (tutti, prima di saldare)
 | # | pezzo | q.tà |
@@ -12,7 +19,8 @@ sleep spegnerebbe tutto).
 | 1 | Waveshare ESP32-P4-Module-DEV-KIT (A = con IMU e partitore, B) | 2 |
 | 2 | OV9281 Inno-Maker + flat MIPI | 2 |
 | 3 | 18650 in parallelo (2P) nella culla | 2 |
-| 4 | MH-CD42 (solo carica) | 1 |
+| 4 | HW-775 DollaTek (solo carica, 1 cella) | 1 |
+| 4b | protezione 1S DW01A+8205 3 A, se le celle non sono protette e l'HW-775 non ce l'ha | 1 |
 | 5 | MT3608 step-up con trimmer | 1 |
 | 6 | presa USB-C a pannello (2 fili: VBUS, GND) | 1 |
 | 7 | interruttore a levetta | 1 |
@@ -31,12 +39,12 @@ Saldi una volta sola: prima di accendere controlla ogni riga col tester (continu
 | nodo | cosa ci arriva (tutto) |
 |---|---|
 | **PACCO+** | + dei due 18650 · capo 1 del fusibile |
-| **BAT+** | capo 2 del fusibile · **B+ del MH-CD42** · capo 1 dell'interruttore |
+| **BAT+** | capo 2 del fusibile · **B+ dell'HW-775** · capo 1 dell'interruttore |
 | **BAT+ ACCESO** | capo 2 dell'interruttore · **IN+ dell'MT3608** · capo 1 della R 100 kΩ |
 | **ADC** | capo 2 della R 100 kΩ · capo 1 della R 33 kΩ · **pin 13 della A (GPIO20)** |
-| **USB 5V** | VBUS della presa USB-C · **IN+ (5V) del MH-CD42** |
+| **USB 5V** | VBUS della presa USB-C · **IN+ (5V) dell'HW-775** |
 | **5V SCHEDE** | **OUT+ dell'MT3608** · **pin 2 (5V) della A** · **pin 2 (5V) della B** |
-| **GND comune** | − dei due 18650 · B− del MH-CD42 · IN− del MH-CD42 · GND della presa USB-C · IN− e OUT− dell'MT3608 · capo 2 della R 33 kΩ · pin 6 e pin 25 (GND) della A · pin 6 (GND) della B · GND del MPU6050 |
+| **GND comune** | − dei due 18650 · B− e IN− dell'HW-775 · GND della presa USB-C · IN− e OUT− dell'MT3608 · capo 2 della R 33 kΩ · pin 6 e pin 25 (GND) della A · pin 6 (GND) della B · GND del MPU6050 |
 | 3V3 A | pin 1 della A · VCC del MPU6050 (niente altro: mai l'IMU su un altro 3,3 V, lezione 17/11) |
 | SDA | pin 3 della A (GPIO7) · SDA del MPU6050 |
 | SCL | pin 5 della A (GPIO8) · SCL del MPU6050 |
@@ -47,7 +55,7 @@ Saldi una volta sola: prima di accendere controlla ogni riga col tester (continu
 | UART B→A | GPIO22 della B (TX) · GPIO23 della A (RX) |
 | camere | flat camera SINISTRA → connettore CSI della A · flat camera DESTRA → CSI della B |
 | altoparlante | presa SPK della A (spina sua) |
-| VOUT e KEY del MH-CD42 | **niente** (isolali) |
+| (se c'è la protezione 1S) | pacco → B+/B− della protezione; il suo P+/P− (o OUT+/OUT−) diventa PACCO+ e GND comune |
 | USB-C della A e della B | **niente in scatola**: solo per flash/prove al banco. Mai cavo USB e MT3608 insieme sulla stessa scheda |
 
 Interruttore DOPO il caricatore: a interruttore spento il pacco si carica lo stesso, e partitore e step-up non consumano.
@@ -56,7 +64,7 @@ GPIO22/23: stessi pin cablati da Daniele il 17/11 su logger02 — controlla la s
 ## Ordine di lavoro
 1. **MT3608 da solo** sul pacco (fusibile + interruttore già messi): gira il trimmer fino a **5,1 V** a vuoto col tester. Solo dopo lo colleghi alle schede.
 2. Partitore: prima di saldare il filo al pin 13 misura il nodo ADC: deve essere **≈ batteria × 0,25** (4,2 V → 1,04 V), mai sopra 3,3 V.
-3. USB-C → MH-CD42: attacca un caricatore e guarda il LED di carica del MH-CD42 (si vede dalla finestra LED carica).
+3. USB-C → MH-CD42: attacca un caricatore e guarda il LED di carica dell'HW-775 (si vede dalla finestra LED carica).
 4. IMU, fili A↔B, flat, altoparlante. Poi 5V SCHEDE.
 5. Prova: interruttore ON → saluto "Narmade Har!" → `stato` dal Mac (batteria letta ≈ tensione del pacco) → lascialo fermo 5 min → dorme → scossone → si risveglia.
 6. **Consumo da fermo**: tester in serie fra BAT+ e interruttore, in deep sleep. Scrivilo qui sotto: decide quanti giorni sta in garage.
