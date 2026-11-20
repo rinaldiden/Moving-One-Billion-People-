@@ -8,6 +8,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include <unistd.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
@@ -30,31 +31,36 @@ static volatile uint32_t s_n_err, s_n_avv;
 static portMUX_TYPE s_mux = portMUX_INITIALIZER_UNLOCKED;
 static vprintf_like_t s_vprintf_orig;
 
+/* Il livello è già nella stringa di formato (log v1, senza colori: "W (%lu) %s: ..."): formatto SOLO avvisi ed
+ * errori, direttamente nella riga dell'anello, niente buffer sullo stack (gira nei task di chiunque scriva un log,
+ * anche quelli con lo stack piccolo). */
+static volatile uint32_t s_pronta[RIGHE];               /* = indice+1 quando la riga è scritta */
+
 static int log_copia(const char *fmt, va_list ap)
 {
-    va_list ap2;
-    va_copy(ap2, ap);
-    char b[LUNGA];
-    vsnprintf(b, sizeof(b), fmt, ap2);
-    va_end(ap2);
-    const char *p = b;
-    if (*p == '\033') {                                 /* salta il colore ESC[0;31m */
-        while (*p && *p != 'm') p++;
-        if (*p) p++;
+    const char *f = fmt;
+    if (*f == '\033') {                                 /* colori accesi: salta ESC[0;31m */
+        while (*f && *f != 'm') f++;
+        if (*f) f++;
     }
-    if (*p == 'E' || *p == 'W') {
+    if (*f == 'E' || *f == 'W') {
+        uint32_t i;
+        bool posto;
         taskENTER_CRITICAL(&s_mux);
-        if (*p == 'E') s_n_err++; else s_n_avv++;
-        if (s_testa - s_coda < RIGHE) {
-            char *d = s_anello[s_testa % RIGHE];
-            size_t i = 0;
-            for (; p[i] && p[i] != '\n' && p[i] != '\033' && i < LUNGA - 1; i++) d[i] = p[i];
-            d[i] = 0;
-            s_testa++;
-        } else {
-            s_persi++;
-        }
+        if (*f == 'E') s_n_err++; else s_n_avv++;
+        posto = s_testa - s_coda < RIGHE;
+        i = s_testa;
+        if (posto) s_testa++; else s_persi++;
         taskEXIT_CRITICAL(&s_mux);
+        if (posto) {
+            char *d = s_anello[i % RIGHE];
+            va_list ap2;
+            va_copy(ap2, ap);
+            vsnprintf(d, LUNGA, fmt, ap2);
+            va_end(ap2);
+            for (char *c = d; *c; c++) if (*c == '\n' || *c == '\033') { *c = 0; break; }
+            s_pronta[i % RIGHE] = i + 1;
+        }
     }
     return s_vprintf_orig(fmt, ap);
 }
@@ -142,10 +148,10 @@ static void ora_iso(char *out, size_t n)
 
 static void scrivi_errori(const char *ora)
 {
-    while (s_coda != s_testa) {
+    while (s_coda != s_testa && s_pronta[s_coda % RIGHE] == s_coda + 1) {
         char riga[LUNGA];
-        taskENTER_CRITICAL(&s_mux);
         memcpy(riga, s_anello[s_coda % RIGHE], LUNGA);
+        taskENTER_CRITICAL(&s_mux);
         s_coda++;
         taskEXIT_CRITICAL(&s_mux);
         if (!s_err) {
@@ -188,6 +194,10 @@ static void salute_task(void *arg)
         }
         scrivi_errori(ora);
         if (t - s_pezzo_t0 > 60000000LL) { chiudi_file(); apri_file(); }
+        else if ((t / 1000000) % 10 == 0) {           /* se la scheda muore restano i dati fino a 10 s prima */
+            if (s_csv) { fflush(s_csv); fsync(fileno(s_csv)); }
+            if (s_err) { fflush(s_err); fsync(fileno(s_err)); }
+        }
         xSemaphoreGive(s_lock);
     }
 }
