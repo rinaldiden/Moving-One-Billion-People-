@@ -51,15 +51,15 @@ Saldi una volta sola: prima di accendere controlla ogni riga col tester (continu
 | INT IMU | pin 18 della A (GPIO4) · INT del MPU6050 |
 | WAKE | pin 16 della A (GPIO5) · pin 16 della B (GPIO5) |
 | SYNC | pin 19 della A (GPIO3) · pin 11 della B (GPIO21) |
-| UART A→B | GPIO22 della A (TX) · GPIO23 della B (RX) |
-| UART B→A | GPIO22 della B (TX) · GPIO23 della A (RX) |
+| UART A→B | **pin 10** della A (GPIO22, TX) · **pin 7** della B (GPIO23, RX) |
+| UART B→A | **pin 10** della B (GPIO22, TX) · **pin 7** della A (GPIO23, RX) |
 | camere | flat camera SINISTRA → connettore CSI della A · flat camera DESTRA → CSI della B |
 | altoparlante | presa SPK della A (spina sua) |
 | (se c'è la protezione 1S) | pacco → B+/B− della protezione; il suo P+/P− (o OUT+/OUT−) diventa PACCO+ e GND comune |
 | USB-C della A e della B | **niente in scatola**: solo per flash/prove al banco. Mai cavo USB e MT3608 insieme sulla stessa scheda |
 
 Interruttore DOPO il caricatore: a interruttore spento il pacco si carica lo stesso, e partitore e step-up non consumano.
-GPIO22/23: stessi pin cablati da Daniele il 17/11 su logger02 — controlla la serigrafia del pettine.
+Pin 7 = GPIO23 e pin 10 = GPIO22: letti dallo schema Waveshare (P6) il 20/11, con la stessa numerazione di questo file (pin 1 = 3V3; nello schema Waveshare la numerazione è a specchio: loro 1 = 5V).
 
 ## Ordine di lavoro
 1. **MT3608 da solo** sul pacco (fusibile + interruttore già messi): gira il trimmer fino a **5,1 V** a vuoto col tester. Solo dopo lo colleghi alle schede.

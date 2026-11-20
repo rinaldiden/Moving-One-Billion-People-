@@ -17,7 +17,8 @@ Prima di collegare pin13: nodo ≈ batteria/4, mai > 3,3 V. Satura sopra ~12,4 V
 
 ## A ↔ B (come cablato da Daniele 17/11, per GPIO)
 GND↔GND · SYNC A GPIO3 (pin 19) → B GPIO21 (pin 11) · WAKE A GPIO5 → B GPIO5 (pin 16, LP su B) ·
-UART incrociata: A GPIO22 (TX) → B GPIO23 (RX), B GPIO22 (TX) → A GPIO23 (RX).
+UART incrociata: A GPIO22 (TX, pin 10) → B GPIO23 (RX, pin 7), B GPIO22 (TX, pin 10) → A GPIO23 (RX, pin 7).
+(Schema Waveshare P6, letto 20/11: loro numerano a specchio, loro pin 1 = 5V, 2 = 3V3; qui pin 1 = 3V3. Pin 17 = secondo 3V3.)
 
 ## Dopo (prova 4)
 TRIG camere: A pin19 (GPIO3) → J3 TRIG camera SX + DX; J3 GND → GND.
