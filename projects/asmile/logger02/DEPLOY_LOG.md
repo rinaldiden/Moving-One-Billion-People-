@@ -14,3 +14,5 @@
 | 2026-11-18 08:19 | logger02 A | fa5f2ee8 | 87dd0423 | ok, prova 10 min 272 MB senza crash |
 | 2026-11-18 08:19 | logger02 B | 8f2f4731-dirty Nov 18 2026 07:11:33 | 87dd0423-dirty Nov 18 2026 08:06:46 | ok (diretto) |
 | 2026-11-18 12:16 | flotta HW3 | — | hw3-def-20261118 (87dd0423-dirty 08:06:46, codice fa457fc0) | DEFINITIVO per HW3 (Daniele); nessun OTA fatto |
+| 2026-11-20 23:33 | logger02 A | 87dd0423-dirty Nov 18 2026 08:06:46 | hw3-def-20261118-35-gdac05f26 Nov 20 2026 23:32:28 | ok (hw3-def-20261118-35-gdac05f26) |
+| 2026-11-20 23:34 | logger02 B | 87dd0423-dirty Nov 18 2026 08:06:46 | hw3-def-20261118-35-gdac05f26 Nov 20 2026 23:32:28 | ok (hw3-def-20261118-35-gdac05f26) |
