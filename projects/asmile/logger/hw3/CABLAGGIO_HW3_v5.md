@@ -23,7 +23,6 @@ l'MT3608 e il partitore vanno su OUT+/OUT− e non su B+/B−.
 | 4b | protezione 1S DW01A+8205 3 A, se le celle non sono protette e l'HW-775 non ce l'ha | 1 |
 | 5 | MT3608 step-up con trimmer | 1 |
 | 6 | presa USB-C a pannello (2 fili: VBUS, GND) | 1 |
-| 7 | interruttore a levetta | 1 |
 | 8 | MPU6050 (GY-521) | 1 |
 | 9 | resistenze 100 kΩ e 33 kΩ 1/4 W (partitore) | 1 + 1 |
 | 10 | altoparlante 30×20 (spina nella presa SPK della A) | 1 |
@@ -39,8 +38,7 @@ Saldi una volta sola: prima di accendere controlla ogni riga col tester (continu
 | nodo | cosa ci arriva (tutto) |
 |---|---|
 | **PACCO+** | + dei due 18650 · capo 1 del fusibile |
-| **BAT+** | capo 2 del fusibile · **B+ dell'HW-775** · capo 1 dell'interruttore |
-| **BAT+ ACCESO** | capo 2 dell'interruttore · **IN+ dell'MT3608** · capo 1 della R 100 kΩ |
+| **BAT+** | capo 2 del fusibile · **B+ dell'HW-775** · **IN+ dell'MT3608** · capo 1 della R 100 kΩ |
 | **ADC** | capo 2 della R 100 kΩ · capo 1 della R 33 kΩ · **pin 13 della A (GPIO20)** |
 | **USB 5V** | VBUS della presa USB-C · **IN+ (5V) dell'HW-775** |
 | **5V SCHEDE** | **OUT+ dell'MT3608** · **pin 2 (5V) della A** · **pin 2 (5V) della B** |
@@ -58,16 +56,16 @@ Saldi una volta sola: prima di accendere controlla ogni riga col tester (continu
 | (se c'è la protezione 1S) | pacco → B+/B− della protezione; il suo P+/P− (o OUT+/OUT−) diventa PACCO+ e GND comune |
 | USB-C della A e della B | **niente in scatola**: solo per flash/prove al banco. Mai cavo USB e MT3608 insieme sulla stessa scheda |
 
-Interruttore DOPO il caricatore: a interruttore spento il pacco si carica lo stesso, e partitore e step-up non consumano.
+Niente interruttore (Daniele 21/11: "non serve, deve andare in automatico"): il logger dorme da solo dopo 2 minuti fermo e si sveglia col movimento (INT dell'IMU). Il partitore consuma ~30 µA sempre.
 Pin 7 = GPIO23 e pin 10 = GPIO22: letti dallo schema Waveshare (P6) il 20/11, con la stessa numerazione di questo file (pin 1 = 3V3; nello schema Waveshare la numerazione è a specchio: loro 1 = 5V).
 
 ## Ordine di lavoro
-1. **MT3608 da solo** sul pacco (fusibile + interruttore già messi): gira il trimmer fino a **5,1 V** a vuoto col tester. Solo dopo lo colleghi alle schede.
+1. **MT3608 da solo** sul pacco (fusibile già messo): gira il trimmer fino a **5,1 V** a vuoto col tester. Solo dopo lo colleghi alle schede.
 2. Partitore: prima di saldare il filo al pin 13 misura il nodo ADC: deve essere **≈ batteria × 0,25** (4,2 V → 1,04 V), mai sopra 3,3 V.
 3. USB-C → HW-775: attacca un caricatore e guarda il LED di carica dell'HW-775 (si vede dalla finestra LED carica).
 4. IMU, fili A↔B, flat, altoparlante. Poi 5V SCHEDE.
-5. Prova: interruttore ON → saluto "Narmade Har!" → `stato` dal Mac (batteria letta ≈ tensione del pacco) → lascialo fermo 5 min → dorme → scossone → si risveglia.
-6. **Consumo da fermo**: tester in serie fra BAT+ e interruttore, in deep sleep. Scrivilo qui sotto: decide quanti giorni sta in garage.
+5. Prova: colleghi il pacco → saluto "Narmade Har!" → `stato` dal Mac (batteria letta ≈ tensione del pacco) → lascialo fermo 2 min (col wifi: finito lo scarico) → dorme → scossone → si risveglia.
+6. **Consumo da fermo**: tester in serie fra fusibile e BAT+, in deep sleep. Scrivilo qui sotto: decide quanti giorni sta in garage.
 
 ## Limiti (onesti)
 - MT3608 da 3,0-4,2 V regge ~1-1,5 A continui a 5,1 V (stima): 2 P4 che registrano ci stanno, ma **misura** la corrente a registrazione piena; se l'MT3608 scalda troppo o le schede si riavviano, step-up più grosso.
