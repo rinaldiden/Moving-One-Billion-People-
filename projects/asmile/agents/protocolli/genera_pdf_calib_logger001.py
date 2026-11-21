@@ -39,7 +39,7 @@ with PdfPages(OUT) as pdf:
         "2. Misura e scrivimi: altezza da terra del CENTRO fra le due lenti (oggi in archivio 0,77 m).",
         "3. Misura e scrivimi: quanto guardano in giù le camere (app livella del telefono sul corpo camera).",
         "4. Misura col metro la distanza centro-centro fra le due lenti (attesa ~200 mm).",
-        "5. Tabellone: lo stesso ChArUco A3 da 50 mm, INCOLLATO su pannello rigido, opaco, niente sole diretto.",
+        "5. Tabellone: lo stesso ChArUco A3 10x7 con quadretti da 38 mm (board_charuco_A3_10x7_38mm.pdf), INCOLLATO su pannello rigido, opaco, niente sole diretto.",
         "6. Filo a piombo (anche un peso su uno spago) + metro a nastro + nastro adesivo per i segni a terra.",
         "## Come si misurano le distanze (lezione #001: errore di 11 cm per lo zero sbagliato)",
         "- ZERO del metro: filo a piombo calato dal CENTRO fra le due lenti -> segno a terra.",
