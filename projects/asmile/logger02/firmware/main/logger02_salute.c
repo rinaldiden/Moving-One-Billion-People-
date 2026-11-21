@@ -228,6 +228,9 @@ void logger02_salute_chiudi(void)
     if (!s_lock) return;                              /* SD mai montata: niente file */
     xSemaphoreTake(s_lock, portMAX_DELAY);
     s_fermo = true;
+    char ora[32];
+    ora_iso(ora, sizeof(ora));
+    scrivi_errori(ora);                               /* prima di chiudere: c'è dentro il motivo del deep sleep */
     chiudi_file();
     xSemaphoreGive(s_lock);
 }
