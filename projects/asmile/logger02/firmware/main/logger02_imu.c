@@ -1,6 +1,6 @@
 /* A: MPU6050 a 50 Hz (CSV con lo stesso orologio dei fotogrammi), batteria, autospegnimento e deep sleep.
  * Porta di logger_autospegni.py + imu_wake.py del logger001:
- *   fermo = gyro < 3 °/s e variazione accel < 30 mg; dopo FERMO_MIN minuti fermo (e almeno MIN_ACCESO_MIN acceso)
+ *   fermo = gyro < 3 °/s e variazione accel < 30 mg; dopo FERMO_S secondi fermo (e almeno MIN_ACCESO_S acceso; col wifi aspetta lo scarico del Mac)
  *   → chiude i file, addormenta la B, arma il motion interrupt dell'IMU (soglia di Daniele 17/11: al minimo)
  *   e va in deep sleep. Si sveglia quando l'INT (GPIO4) si alza. */
 #include <stdio.h>
@@ -19,13 +19,20 @@
 #include "esp_sleep.h"
 #include "esp_timer.h"
 #include "esp_log.h"
+#include "esp_netif.h"
+#include "protocol_examples_common.h"
 #include "logger02.h"
 
 static const char *TAG = "imu";
 
 #define MPU         0x68
-#define FERMO_MIN   5
-#define MIN_ACCESO_MIN 3
+#define FERMO_S     120         /* Daniele 21/11: deep sleep dopo 2 minuti fermo (era 5) */
+#define MIN_ACCESO_S 120
+#define MOTO_FILA   3           /* movimento vero = 3 campioni di fila (60 ms): un campione storto non tiene sveglio */
+/* a casa col wifi: resta sveglio finché il Mac scarica (Daniele 21/11) */
+#define ATTESA_SCARICO_S 150    /* il Mac passa ogni 2 minuti */
+#define DOPO_SCARICO_S   60     /* fine scarico = un minuto senza richieste */
+#define MAX_SCARICO_S    1800   /* tetto: mezz'ora di scarico, poi dorme comunque */
 #define GYRO_FERMO  3.0f
 #define ACC_FERMO_G 0.030f
 
@@ -37,6 +44,30 @@ static uint32_t s_campioni, s_errori;
 static adc_oneshot_unit_handle_t s_adc;
 static adc_cali_handle_t s_cali;
 static float s_batt = -1;
+static volatile int64_t s_ultimo_scarico;
+static int s_moto_fila;
+
+void logger02_scarico_visto(void)
+{
+    s_ultimo_scarico = esp_timer_get_time();
+}
+
+static bool rete_ok(void)
+{
+    esp_netif_t *n = get_example_netif();
+    esp_netif_ip_info_t ip;
+    return n && esp_netif_is_netif_up(n) && esp_netif_get_ip_info(n, &ip) == ESP_OK && ip.ip.addr != 0;
+}
+
+/* fermo da FERMO_S: dorme, salvo se col wifi il Mac sta per scaricare o sta scaricando */
+static bool resto_sveglio_per_scarico(int64_t t)
+{
+    if (!rete_ok()) return false;
+    int64_t fermo_da = s_ultimo_moto + FERMO_S * 1000000LL;
+    if (t - fermo_da > MAX_SCARICO_S * 1000000LL) return false;
+    if (s_ultimo_scarico <= s_ultimo_moto) return t - fermo_da < ATTESA_SCARICO_S * 1000000LL;
+    return t - s_ultimo_scarico < DOPO_SCARICO_S * 1000000LL;
+}
 
 static esp_err_t w(uint8_t reg, uint8_t v)
 {
@@ -120,7 +151,11 @@ static void imu_task(void *arg)
         s_campioni++;
         float dacc = fmaxf(fabsf(s_ax - pax), fmaxf(fabsf(s_ay - pay), fabsf(s_az - paz)));
         float g = fmaxf(fabsf(s_gx), fmaxf(fabsf(s_gy), fabsf(s_gz)));
-        if (g > GYRO_FERMO || dacc > ACC_FERMO_G) s_ultimo_moto = t;
+        if (g > GYRO_FERMO || dacc > ACC_FERMO_G) {
+            if (++s_moto_fila >= MOTO_FILA) s_ultimo_moto = t;
+        } else {
+            s_moto_fila = 0;
+        }
         pax = s_ax; pay = s_ay; paz = s_az;
         if (s_campioni % 50 == 0) s_batt = leggi_batteria();
         if (s_csv) {
@@ -130,8 +165,8 @@ static void imu_task(void *arg)
             fputc('\n', s_csv);
             if (t - s_pezzo_t0 > 60000000LL) { fclose(s_csv); s_csv = NULL; apri_csv(); }
         }
-        if (t > MIN_ACCESO_MIN * 60000000LL && t - s_ultimo_moto > FERMO_MIN * 60000000LL) {
-            logger02_dormi("bici ferma da 5 minuti");
+        if (t > MIN_ACCESO_S * 1000000LL && t - s_ultimo_moto > FERMO_S * 1000000LL && !resto_sveglio_per_scarico(t)) {
+            logger02_dormi("bici ferma da 2 minuti");
         }
     }
 }
@@ -165,7 +200,7 @@ esp_err_t logger02_imu_start(void)
     s_ultimo_moto = esp_timer_get_time();
     apri_csv();
     xTaskCreatePinnedToCore(imu_task, "imu", 4096, NULL, 9, NULL, 0);
-    ESP_LOGI(TAG, "MPU6050 ok, 50 Hz; spegnimento dopo %d min fermo", FERMO_MIN);
+    ESP_LOGI(TAG, "MPU6050 ok, 50 Hz; spegnimento dopo %d s fermo", FERMO_S);
     return ESP_OK;
 }
 
@@ -183,7 +218,7 @@ void logger02_imu_stato(char *json, size_t n)
     snprintf(json, n, "{\"campioni\":%lu,\"errori\":%lu,\"acc_g\":[%.3f,%.3f,%.3f],\"gyro_dps\":[%.2f,%.2f,%.2f],"
              "\"fermo_s\":%lld,\"spegne_dopo_s\":%d,\"batteria_v\":%s}",
              (unsigned long)s_campioni, (unsigned long)s_errori, s_ax, s_ay, s_az, s_gx, s_gy, s_gz,
-             (long long)fermo, FERMO_MIN * 60, bv);
+             (long long)fermo, FERMO_S, bv);
 }
 
 /* arma il motion interrupt come imu_wake.py "arma" (taratura di stamattina) */

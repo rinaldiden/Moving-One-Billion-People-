@@ -106,6 +106,7 @@ static esp_err_t h_frames(httpd_req_t *req)
 
 static esp_err_t h_files(httpd_req_t *req)
 {
+    logger02_scarico_visto();
     httpd_resp_set_type(req, "application/json");
     httpd_resp_sendstr_chunk(req, "[");
     DIR *d = opendir(L02_REC_DIR);
@@ -139,6 +140,7 @@ static bool nome_ok(httpd_req_t *req, char *path, size_t n)
 
 static esp_err_t h_dl(httpd_req_t *req)
 {
+    logger02_scarico_visto();
     char p[160];
     if (!nome_ok(req, p, sizeof(p))) return ESP_OK;
     FILE *f = fopen(p, "rb");
@@ -155,6 +157,7 @@ static esp_err_t h_dl(httpd_req_t *req)
 
 static esp_err_t h_del(httpd_req_t *req)
 {
+    logger02_scarico_visto();
     char p[160];
     if (!nome_ok(req, p, sizeof(p))) return ESP_OK;
     return httpd_resp_sendstr(req, remove(p) == 0 ? "ok" : "errore");
@@ -363,6 +366,7 @@ static httpd_handle_t server(uint16_t porta, uint16_t ctrl, int handlers)
 
 static esp_err_t h_b(httpd_req_t *req)
 {
+    logger02_scarico_visto();
     return proxy_b(req, "");
 }
 
