@@ -16,3 +16,6 @@
 | 2026-11-18 12:16 | flotta HW3 | — | hw3-def-20261118 (87dd0423-dirty 08:06:46, codice fa457fc0) | DEFINITIVO per HW3 (Daniele); nessun OTA fatto |
 | 2026-11-20 23:33 | logger02 A | 87dd0423-dirty Nov 18 2026 08:06:46 | hw3-def-20261118-35-gdac05f26 Nov 20 2026 23:32:28 | ok (hw3-def-20261118-35-gdac05f26) |
 | 2026-11-20 23:34 | logger02 B | 87dd0423-dirty Nov 18 2026 08:06:46 | hw3-def-20261118-35-gdac05f26 Nov 20 2026 23:32:28 | ok (hw3-def-20261118-35-gdac05f26) |
+| 2026-11-20 23:45 | logger02 A | 87dd0423-dirty Nov 18 2026 08:06:46 | hw3-def-20261118-35-gdac05f26 Nov 20 2026 23:32:28 | ok (hw3-def-20261118-36-g2187bc12) |
+| 2026-11-20 23:49 | logger02 B | 87dd0423-dirty Nov 18 2026 08:06:46 | hw3-def-20261118-35-gdac05f26 Nov 20 2026 23:32:28 | ok (hw3-def-20261118-36-g2187bc12) |
+| 2026-11-21 00:02 | logger02 A | 87dd0423-dirty Nov 18 2026 08:06:46 | - | FALLITO (hw3-def-20261118-37-g827c0136-dirty) |
