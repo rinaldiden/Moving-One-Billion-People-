@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """fuoco_live.py — nitidezza dal vivo delle due camere del logger001 (Camarray SBS) per la messa a fuoco (21/11/2026).
 Legge lo streaming MJPEG (stream_logger.py a risoluzione piena: W=2560 H=800) e stampa ogni secondo la nitidezza
-(varianza del Laplaciano) di sinistra e destra nella stessa zona centrale, il rapporto e un consiglio.
+(varianza del Laplaciano) di sinistra e destra nella stessa zona centrale, il rapporto e un consiglio,
+più quanti marker del tabellone riesce a leggere per lato (per sapere dal vivo se a quella distanza la posa è buona).
 Il tabellone deve stare fermo al centro, intero in tutte e due le camere: si confronta la stessa scena.
 Uso: fuoco_live.py [http://100.83.200.55:8080/stream] [--roi 0.5]
 """
@@ -21,6 +22,15 @@ def nitidezza(img, roi):
     return float(cv2.Laplacian(img[y0:y1, x0:x1], cv2.CV_64F).var())
 
 
+DET = cv2.aruco.ArucoDetector(cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_1000), cv2.aruco.DetectorParameters())
+
+
+def marker(img):
+    """marker del tabellone letti (immagine ingrandita 2x come il rilevatore della calibrazione)"""
+    _, ids, _ = DET.detectMarkers(cv2.resize(img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
+    return 0 if ids is None else len(ids)
+
+
 s = urllib.request.urlopen(a.url, timeout=10)
 buf, storia, t0, best = b"", [], time.time(), 0.0
 while True:
@@ -37,6 +47,7 @@ while True:
     if time.time() - t0 < 1.0:
         continue
     l, r = np.median(np.array(storia), axis=0)
+    ml, mr = marker(im[:, :w]), marker(im[:, w:])
     storia, t0 = [], time.time()
     best = max(best, l)
     rap = l / r if r > 0 else 0
@@ -46,4 +57,4 @@ while True:
         cons = "continua nello stesso verso"
     else:
         cons = "peggiora: torna indietro"
-    print(f"{time.strftime('%H:%M:%S')}  SX {l:7.1f}   DX {r:7.1f}   SX/DX {rap:4.2f}   migliore SX {best:7.1f}   -> {cons}", flush=True)
+    print(f"{time.strftime('%H:%M:%S')}  SX {l:7.1f}   DX {r:7.1f}   SX/DX {rap:4.2f}   migliore SX {best:7.1f}   marker letti SX {ml:2d} DX {mr:2d}   -> {cons}", flush=True)

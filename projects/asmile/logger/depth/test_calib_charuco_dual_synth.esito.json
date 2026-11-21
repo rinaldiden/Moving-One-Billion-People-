@@ -1136,6 +1136,6 @@
   }
  },
  "casi_falliti": [],
- "quando": "2026-11-10T22:00:01",
+ "quando": "2026-11-21T20:01:24",
  "criteri": "ogni caso ha esito atteso dichiarato; nessuna soglia modificata per far passare; verita' = punti 3D indipendenti 1-5 m (dy p95<1 px e depth p95<=2% in OGNI zona 3x3); exit code != 0 se un caso fallisce"
 }
