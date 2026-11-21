@@ -6,10 +6,11 @@ import os, sys, time, threading, http.server, socketserver
 
 HOME = os.path.expanduser("~")
 FIX = os.path.join(HOME, "streaming", "arducam_fix.so")
-W, H = 1280, 400        # modo binned: mostra entrambe le camere, leggero
-FPS = 15
-QUALITY = "80"
-PORT = 8080
+W = int(os.environ.get("W", 1280))        # modo binned: mostra entrambe le camere, leggero
+H = int(os.environ.get("H", 400))         # messa a fuoco: W=2560 H=800 QUALITY=92 (risoluzione piena, vedi depth/fuoco_live.py)
+FPS = int(os.environ.get("FPS", 15))
+QUALITY = os.environ.get("QUALITY", "80")
+PORT = int(os.environ.get("PORT", 8080))
 
 latest = [None]
 lock = threading.Lock()
@@ -21,6 +22,8 @@ def grabber():
     cmd = ["rpicam-vid", "--camera", "0", "--width", str(W), "--height", str(H),
            "--codec", "mjpeg", "--quality", QUALITY, "--framerate", str(FPS),
            "--timeout", "0", "--nopreview", "-o", "-"]
+    if os.environ.get("FLIP") == "1":       # come recorder.sh (camere capovolte): stesse metà sinistra/destra dei video
+        cmd[-1:-1] = ["--vflip", "--hflip"]
     while True:
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                              stderr=subprocess.DEVNULL, bufsize=0, env=env)
