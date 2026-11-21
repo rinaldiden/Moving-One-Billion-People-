@@ -73,6 +73,9 @@ void logger02_salute_presto(void);            /* all'avvio, prima di tutto: agga
 esp_err_t logger02_salute_start(void);        /* dopo la SD */
 void logger02_salute_chiudi(void);            /* prima del deep sleep */
 void logger02_salute_stato(char *json, size_t n);
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
+extern SemaphoreHandle_t logger02_analogico;  /* ADC batteria e sensore di temperatura: uno alla volta */
 
 esp_err_t logger02_web_start(void);
 esp_err_t logger02_tailscale_start(void);       /* A: MicroLink, nome "logger02" */

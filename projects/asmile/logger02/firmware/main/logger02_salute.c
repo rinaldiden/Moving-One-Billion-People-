@@ -106,6 +106,9 @@ static void conta_riavvio(void)
 
 /* --- file --- */
 static temperature_sensor_handle_t s_tsens;
+/* Sospetto 21/11: sulla A (unica con l'ADC della batteria) il firmware con la temperatura moriva dopo 20 s - 2 min,
+ * sulla B (senza ADC) girava. Sensore di temperatura e ADC usano la stessa parte analogica: mai insieme. */
+SemaphoreHandle_t logger02_analogico;
 static float s_temp = -99;
 static char s_sess[24];
 static uint32_t s_pezzo;
@@ -172,7 +175,14 @@ static void salute_task(void *arg)
     TickType_t t0 = xTaskGetTickCount();
     while (1) {
         vTaskDelayUntil(&t0, pdMS_TO_TICKS(1000));
-        if (s_tsens) temperature_sensor_get_celsius(s_tsens, &s_temp);
+        if (s_tsens) {                                /* acceso solo per la lettura, mai insieme all'ADC della batteria */
+            xSemaphoreTake(logger02_analogico, portMAX_DELAY);
+            if (temperature_sensor_enable(s_tsens) == ESP_OK) {
+                temperature_sensor_get_celsius(s_tsens, &s_temp);
+                temperature_sensor_disable(s_tsens);
+            }
+            xSemaphoreGive(logger02_analogico);
+        }
         xSemaphoreTake(s_lock, portMAX_DELAY);
         if (s_fermo) { xSemaphoreGive(s_lock); continue; }
         int64_t t = esp_timer_get_time();
@@ -208,7 +218,8 @@ void logger02_salute_presto(void)
     s_vprintf_orig = esp_log_set_vprintf(log_copia);
     conta_riavvio();
     temperature_sensor_config_t tc = TEMPERATURE_SENSOR_CONFIG_DEFAULT(-10, 80);
-    if (temperature_sensor_install(&tc, &s_tsens) != ESP_OK || temperature_sensor_enable(s_tsens) != ESP_OK) {
+    logger02_analogico = xSemaphoreCreateMutex();
+    if (temperature_sensor_install(&tc, &s_tsens) != ESP_OK) {
         s_tsens = NULL;
     }
 }

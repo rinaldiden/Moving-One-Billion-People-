@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 #include "driver/i2c_master.h"
 #include "driver/gpio.h"
 #include "driver/rtc_io.h"
@@ -67,7 +68,17 @@ static void apri_csv(void)
     }
 }
 
+static float leggi_batteria_adc(void);
+
 static float leggi_batteria(void)
+{
+    if (logger02_analogico) xSemaphoreTake(logger02_analogico, portMAX_DELAY);
+    float v = leggi_batteria_adc();
+    if (logger02_analogico) xSemaphoreGive(logger02_analogico);
+    return v;
+}
+
+static float leggi_batteria_adc(void)
 {
     int raw, mv;
     if (!s_adc) return -1;
