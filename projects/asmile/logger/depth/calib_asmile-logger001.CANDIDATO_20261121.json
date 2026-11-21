@@ -1,0 +1,87 @@
+{
+  "K_left": [
+    [
+      843.1559408812286,
+      0.0,
+      653.0391244237384
+    ],
+    [
+      0.0,
+      836.1903742433942,
+      457.80292202721466
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "dist_left": [
+    0.03538661815297537,
+    -0.017920859245546306,
+    0.0005110675895448016,
+    -0.0015689449300400218,
+    -0.019145896681365182
+  ],
+  "K_right": [
+    [
+      823.892426537465,
+      0.0,
+      658.7832554121532
+    ],
+    [
+      0.0,
+      816.3035127466113,
+      445.06712779885356
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "dist_right": [
+    0.02434311921591008,
+    0.013119685891081978,
+    0.0006530725213232443,
+    0.0035663407358558735,
+    -0.03265216437756715
+  ],
+  "R": [
+    [
+      0.9990691888252867,
+      0.03559475218181662,
+      -0.024367387161914892
+    ],
+    [
+      -0.03553966105783677,
+      0.9993646454443228,
+      0.0026903397252025125
+    ],
+    [
+      0.024447667207275103,
+      -0.0018218268463229533,
+      0.9996994510927093
+    ]
+  ],
+  "T": [
+    -0.21309516556204613,
+    0.00966964953280084,
+    -0.033154656622536895
+  ],
+  "size": [
+    1280,
+    800
+  ],
+  "baseline_mm": 215.8756191971696,
+  "order": "LR",
+  "flip180": false,
+  "d0_px": 0.0,
+  "focal_rect_px": 981.0634194198002,
+  "method": "calib_charuco_dual.py: ChArUco 11x8 DICT_5X5_1000 lato 50.0 mm, modello std5, stereo congiunta, T NON riscalata (|T| dal tabellone = 215.9 mm, controllo 200+-3%); modello e stereo scelti su blocco SCELTA (20 viste), gate su blocco mai usato (30 viste)",
+  "valid_for": "SOLO asmile-logger001 con QUESTO set di camere come montate al momento della sessione. Mai fallback su altre unit\u00e0.",
+  "camera_hw": "Arducam Camarray OV9281 SBS 2560x800, 1 CSI",
+  "stato": "CANDIDATO \u2014 non in uso finch\u00e9 asmile-calib-critico non d\u00e0 PASSA",
+  "gate_script": "ROSSO",
+  "timestamp": "2026-11-21T18:14:39"
+}

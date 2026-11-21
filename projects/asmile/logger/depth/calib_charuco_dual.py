@@ -840,12 +840,15 @@ def build_parser():
     ap.add_argument("--right-file", help="#001: file della camera FISICAMENTE destra (override)")
     ap.add_argument("--sbs", help="logger001: clip side-by-side 2560x800")
     ap.add_argument("--out")
+    ap.add_argument("--views-pkl", help="viste gia' rilevate da calib_detect_sbs_deep.py (rilevazione a fondo, ogni frame): "
+                                        "salta collect(); stesso metodo di calibrazione/gate")
     ap.add_argument("--dict", default=DEF_DICT)
     ap.add_argument("--squares", default=f"{DEF_SX}x{DEF_SY}")
     ap.add_argument("--square-len", type=float, default=DEF_SQ, help="lato quadretto MISURATO col metro, in m")
     ap.add_argument("--marker-len", type=float, default=None, help="default = 0.74 * square-len")
     ap.add_argument("--step", type=int, default=3, help="analizza 1 frame ogni N")
     ap.add_argument("--min-move-px", type=float, default=12.0)
+    ap.add_argument("--still-px", type=float, default=1.0, help="--views-pkl: spostamento max del centroide a +-2 frame per dire 'fermo'")
     ap.add_argument("--holdout-blocks", type=int, default=10, help="blocchi di tempo contigui (multiplo di 10): gate 30%%, scelta 20%%, fit 50%%")
     ap.add_argument("--holdout-guard", type=int, default=1, help="viste adiacenti al blocco tenuto fuori escluse dal fit")
     ap.add_argument("--max-views", type=int, default=90)
@@ -883,6 +886,75 @@ def load_views_npz(path):
                 v[k] = dict(ids=ids, obj=cc[ids], img=z[k + "_img"][o0:o1].astype(np.float32))
         views.append(v)
     return views, meta
+
+
+def views_from_pkl(path, board, min_move_px=12.0, still_px=1.0, min_corners=MIN_CORNERS):
+    """Viste da calib_detect_sbs_deep.py (rilevazione per OGNI frame). Si tengono SOLO frame con tabellone FERMO: il
+    centroide dei corner non si sposta piu' di `still_px` rispetto ai frame a +-2 (su ogni lato rilevato; se un vicino
+    non e' rilevato il frame e' scartato: sfocato/in moto). Un 'segmento' = frame fermi consecutivi entro min_move_px
+    dall'ANCORA (primo frame del segmento: niente deriva a catena); se ne tiene UNO, quello con piu' corner (L+R).
+    obj dagli id del `board` passato (puo' avere piu' righe di quello del rilevamento: gli id di corner coincidono).
+    Il lato con <min_corners resta (drop_degenerate lo scarta poi in tutti i blocchi). Ritorna (viste, info)."""
+    import pickle
+    z = pickle.load(open(path, "rb"))
+    cc = board.getChessboardCorners().reshape(-1, 3).astype(np.float32)
+
+    def mkside(d):
+        if d is None or len(d["ids"]) < 6:
+            return None
+        return dict(ids=d["ids"], obj=cc[d["ids"]], img=d["img"])
+
+    byf = {}
+    for (fr, L, R, nl, nr, clip, i) in z["rows"]:
+        L, R = mkside(L), mkside(R)
+        okL, okR = L is not None and len(L["ids"]) >= min_corners, R is not None and len(R["ids"]) >= min_corners
+        if okL or okR:
+            byf[fr] = (L if okL else None, R if okR else None, clip, i)
+
+    def cen(fr, k):
+        d = byf.get(fr)
+        return d[k]["img"].mean(0) if d is not None and d[k] is not None else None
+
+    still = []
+    n_moving = 0
+    for fr in sorted(byf):
+        L, R, clip, i = byf[fr]
+        ok = True
+        for k, d in ((0, L), (1, R)):
+            if d is None:
+                continue
+            c0 = d["img"].mean(0)
+            for nb in (fr - 2, fr + 2):
+                c1 = cen(nb, k)
+                if c1 is None or np.abs(c1 - c0).max() > still_px:
+                    ok = False
+        if ok:
+            still.append(fr)
+        else:
+            n_moving += 1
+    segs, cur, anchor, prev = [], [], None, None
+    for fr in still:
+        L, R, clip, i = byf[fr]
+        sig = np.array([*(L["img"].mean(0) if L else (np.nan, np.nan)), *(R["img"].mean(0) if R else (np.nan, np.nan))])
+        newseg = prev is None or fr - prev > 3
+        if not newseg:
+            m = np.isfinite(sig) & np.isfinite(anchor)
+            newseg = bool(m.any() and np.abs(sig[m] - anchor[m]).max() >= min_move_px)
+        if newseg and cur:
+            segs.append(cur); cur = []
+        if not cur:
+            anchor = sig
+        cur.append((fr, L, R, clip, i))
+        prev = fr
+    if cur:
+        segs.append(cur)
+    views = []
+    for sg in segs:
+        best = max(sg, key=lambda t: (len(t[1]["ids"]) if t[1] else 0) + (len(t[2]["ids"]) if t[2] else 0))
+        views.append(dict(frame=best[0], L=best[1], R=best[2], clip=best[3], clip_i=best[4]))
+    info = dict(frames_decoded=len(z["rows"]), pairs_discarded_sync=0, views_pkl=path, n_frames_con_tabellone=len(byf),
+                n_frames_in_moto_scartati=n_moving, n_frames_fermi=len(still), n_segmenti_fermi=len(segs), still_px=still_px)
+    return views, info
 
 
 def save_views_npz(path, views, meta):
@@ -924,11 +996,15 @@ def main():
     F0["v"] = a.f0 or prof.get("f0", F0_DEFAULT)
     if prof["mode"] == "dual" and not (a.session or (a.left_file and a.right_file)):
         ap.error(f"{a.unit}: servono --session (o --left-file e --right-file)")
-    if prof["mode"] == "sbs" and not a.sbs:
+    if prof["mode"] == "sbs" and not a.sbs and not a.views_pkl:
         ap.error(f"{a.unit}: serve --sbs")
 
-    print(f"[1] unità {a.unit} ({prof['hw']}): detect ChArUco 1 frame ogni {a.step}...")
-    views, info = collect(a, prof, board)
+    if a.views_pkl:
+        print(f"[1] unità {a.unit} ({prof['hw']}): viste da {a.views_pkl} (rilevazione a fondo)...")
+        views, info = views_from_pkl(a.views_pkl, board, a.min_move_px, a.still_px)
+    else:
+        print(f"[1] unità {a.unit} ({prof['hw']}): detect ChArUco 1 frame ogni {a.step}...")
+        views, info = collect(a, prof, board)
     rep, s, best, sel, hold = analyze(views, info, a, prof)
     hs = s["hold"]
     red, orange, marg = rep["gate_problemi"], rep["gate_avvisi"], rep["avvisi_margine"]
@@ -952,7 +1028,7 @@ def main():
     if prof["mode"] == "dual":
         hashes = {"video_phys_left": sha256_file(info["phys_left_file"]), "video_phys_right": sha256_file(info["phys_right_file"])}
     else:
-        hashes = {"video_sbs": sha256_file(info["sbs_file"])}
+        hashes = {"video_sbs": sha256_file(info["sbs_file"])} if "sbs_file" in info else {"views_pkl": sha256_file(a.views_pkl)}
     base = a.out[:-5] if a.out.endswith(".json") else a.out
     ypath, mpath = export_yaml_maps(base, cal, rep, hashes)
     rep["export"] = dict(yaml=ypath, maps=mpath, video_sha256=hashes)

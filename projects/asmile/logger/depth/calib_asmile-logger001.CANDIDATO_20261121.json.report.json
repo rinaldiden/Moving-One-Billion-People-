@@ -1,0 +1,553 @@
+{
+ "unit": "asmile-logger001",
+ "model": "std5",
+ "stereo_mode": "congiunta",
+ "input": {
+  "frames_decoded": 57283,
+  "pairs_discarded_sync": 0,
+  "views_pkl": "/private/tmp/claude-501/-Users-danielerinaldi-progetti-Moving-One-Billion-People-/1b32ebd7-24f0-43c1-a686-c4879d52bcb7/scratchpad/out/all3.pkl",
+  "n_frames_con_tabellone": 3590,
+  "n_frames_in_moto_scartati": 2779,
+  "n_frames_fermi": 811,
+  "n_segmenti_fermi": 95,
+  "still_px": 1.0
+ },
+ "n_views": 95,
+ "n_fit": {
+  "L": 25,
+  "R": 56,
+  "stereo": 25
+ },
+ "n_holdout": 30,
+ "n_holdout_stereo": 12,
+ "holdout": {
+  "n_blocks": 10,
+  "gate_blocks": [
+   1,
+   5,
+   9
+  ],
+  "select_blocks": [
+   3,
+   7
+  ],
+  "guard": 1,
+  "hold_view_ranges": [
+   [
+    9,
+    18
+   ],
+   [
+    47,
+    56
+   ],
+   [
+    85,
+    94
+   ]
+  ],
+  "select_view_ranges": [
+   [
+    28,
+    37
+   ],
+   [
+    66,
+    75
+   ]
+  ],
+  "guard_excluded": 9,
+  "n_views": {
+   "fit": 36,
+   "select": 20,
+   "gate": 30
+  }
+ },
+ "holdout_frames": [
+  36690,
+  36695,
+  36701,
+  36755,
+  36770,
+  36785,
+  36800,
+  36822,
+  36830,
+  36843,
+  38525,
+  38814,
+  38825,
+  38834,
+  38915,
+  38921,
+  38930,
+  38945,
+  38960,
+  39088,
+  40655,
+  40925,
+  40940,
+  41285,
+  41465,
+  41495,
+  41735,
+  42450,
+  42735,
+  43850
+ ],
+ "select_frames": [
+  37460,
+  37505,
+  37515,
+  37520,
+  37535,
+  37610,
+  37685,
+  37700,
+  37715,
+  37820,
+  39710,
+  39959,
+  39965,
+  40160,
+  40430,
+  40445,
+  40460,
+  40475,
+  40490,
+  40505
+ ],
+ "robustezza": {
+  "lati_scartati_meno_di_corner": 0,
+  "min_corners": 12,
+  "prune_pnp_px": 1.5,
+  "scartate_pnp_fit_finale": {
+   "L": 1,
+   "R": 0
+  },
+  "f0_px": 930.0,
+  "max_fit_rms_px": 2.0,
+  "nota": "scarto PnP SOLO in fit/scelta; il blocco GATE non e' mai filtrato per errore (solo regola geometrica)"
+ },
+ "modelli_scartati": {},
+ "coverage_fit": {
+  "L_corners": [
+   59,
+   26,
+   0,
+   269,
+   73,
+   40,
+   0,
+   0,
+   69
+  ],
+  "R_corners": [
+   91,
+   121,
+   192,
+   322,
+   141,
+   309,
+   23,
+   0,
+   157
+  ],
+  "L_views": [
+   3,
+   1,
+   0,
+   11,
+   3,
+   3,
+   0,
+   0,
+   4
+  ],
+  "R_views": [
+   5,
+   5,
+   14,
+   16,
+   6,
+   26,
+   1,
+   0,
+   8
+  ]
+ },
+ "models": {
+  "k1k2": {
+   "rms_fit": [
+    0.81278648583871,
+    0.6925829896743935
+   ],
+   "sel_score": 1.3844538763080936,
+   "select_rms": [
+    0.7238615155220032,
+    0.6595737934112549
+   ],
+   "select_zone_rms_L": [
+    null,
+    null,
+    null,
+    0.7238615155220032,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "select_zone_rms_R": [
+    0.7855015993118286,
+    0.7042014598846436,
+    0.6792203187942505,
+    0.6589338779449463,
+    0.5598767995834351,
+    0.48823070526123047,
+    null,
+    null,
+    null
+   ]
+  },
+  "k1k2k3": {
+   "rms_fit": [
+    0.803709488028912,
+    0.6911826373165407
+   ],
+   "sel_score": 1.394345252140294,
+   "select_rms": [
+    0.7356246113777161,
+    0.6571873426437378
+   ],
+   "select_zone_rms_L": [
+    null,
+    null,
+    null,
+    0.7356246113777161,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "select_zone_rms_R": [
+    0.7843758463859558,
+    0.7020472288131714,
+    0.6771187782287598,
+    0.655804455280304,
+    0.5611593723297119,
+    0.4898226857185364,
+    null,
+    null,
+    null
+   ]
+  },
+  "std5": {
+   "rms_fit": [
+    0.8011176016682052,
+    0.690505474737266
+   ],
+   "sel_score": 1.3822861087095841,
+   "select_rms": [
+    0.7266914248466492,
+    0.6539619565010071
+   ],
+   "select_zone_rms_L": [
+    null,
+    null,
+    null,
+    0.7266914248466492,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "select_zone_rms_R": [
+    0.7823173999786377,
+    0.7024341225624084,
+    0.6725839972496033,
+    0.6524311900138855,
+    0.5619997978210449,
+    0.4875810444355011,
+    null,
+    null,
+    null
+   ]
+  },
+  "rational": {
+   "rms_fit": [
+    0.7949229406552948,
+    0.6898928827528065
+   ],
+   "sel_score": 1.3872132521574545,
+   "select_rms": [
+    0.7272638082504272,
+    0.6586949825286865
+   ],
+   "select_zone_rms_L": [
+    null,
+    null,
+    null,
+    0.7272638082504272,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "select_zone_rms_R": [
+    0.7863096594810486,
+    0.7019086480140686,
+    0.6710047721862793,
+    0.6594263315200806,
+    0.5599970817565918,
+    0.4953675866127014,
+    null,
+    null,
+    null
+   ]
+  }
+ },
+ "stereo_select_rms": {
+  "fissi": 1.6663042797023837,
+  "congiunta": 0.6988543756050829
+ },
+ "rms_mono_holdout": [
+  1.1549397706985474,
+  0.6814130544662476
+ ],
+ "rms_stereo_holdout": {
+  "rms": 1.0298174976700878,
+  "rms_L": 1.2419040137425943,
+  "rms_R": 0.7607381794448056,
+  "n_points": 185
+ },
+ "tilt_deg_fit_L": [
+  7.6,
+  7.5,
+  8.6,
+  1.7,
+  3.8,
+  4.0,
+  9.2,
+  9.3,
+  6.0,
+  8.1,
+  9.8,
+  6.3
+ ],
+ "stereo_rms_fit": 0.7130478930419547,
+ "T_from_board_mm": 215.8756191971696,
+ "T_m": [
+  -0.21309516556204613,
+  0.00966964953280084,
+  -0.033154656622536895
+ ],
+ "stereo_holdout": {
+  "dy_median": [
+   -0.048942651237382506,
+   0.3744169661855352,
+   1.5052585702771921,
+   -0.0995757867064242,
+   0.0816049934892078,
+   -0.11937693386266801,
+   null,
+   null,
+   -0.5281145723158716
+  ],
+  "dy_abs_p50": [
+   0.3670732056486372,
+   0.5233715836691601,
+   1.5052585702771921,
+   0.601706809250004,
+   0.4124754496622529,
+   0.6479617383674849,
+   null,
+   null,
+   0.9730679866680134
+  ],
+  "dy_abs_p95": [
+   1.3653369646538691,
+   1.376708792599902,
+   3.6530794991705915,
+   0.6913250172857858,
+   1.5684229731313621,
+   2.667565095732322,
+   null,
+   null,
+   2.647037287509118
+  ],
+  "dy_n": [
+   15,
+   65,
+   35,
+   2,
+   11,
+   43,
+   0,
+   0,
+   14
+  ],
+  "dy_patch_n": [
+   1,
+   5,
+   2,
+   0,
+   0,
+   4,
+   0,
+   0,
+   1
+  ],
+  "dy_patch_abs_p95": [
+   0.10506745029914649,
+   0.4975666080204602,
+   1.392917835019433,
+   null,
+   null,
+   0.7664206838604464,
+   null,
+   null,
+   0.3067356833884917
+  ],
+  "dy_patch_abs_p95_boot_hi": [
+   null,
+   0.5096536955306505,
+   1.3940442839881448,
+   null,
+   null,
+   0.8044371341881174,
+   null,
+   null,
+   null
+  ],
+  "dy_noise_sigma_px": [
+   0.7183789077454549,
+   0.8397488171217319,
+   1.2758246443514492,
+   null,
+   null,
+   1.17538616973237,
+   null,
+   null,
+   1.765829328650271
+  ],
+  "scale_err_pct_median": [
+   0.4334671373810828,
+   1.2052938987208717,
+   0.47813278725957753,
+   3.3772479901551744,
+   1.406993973698878,
+   2.2176098781157894,
+   null,
+   null,
+   2.7531734290559884
+  ],
+  "scale_n": [
+   20,
+   80,
+   50,
+   3,
+   13,
+   55,
+   0,
+   0,
+   13
+  ],
+  "disp_bias_px_median": [
+   -1.0965010282701257,
+   -0.653747400573053,
+   0.5385495296808926,
+   -0.8644023589181842,
+   -1.8254237951102823,
+   0.981492302666112,
+   null,
+   null,
+   1.7992380952848492
+  ],
+  "depth_edge_informativo": {
+   "nota": "INFORMATIVO, non nel gate: bias di disparita' per zona vs posa PnP del tabellone (viste a ~0.65-1.6 m), estrapolato a Z fissa come bias costante in disparita'. NON e' una misura col metro.",
+   "err_pct_1m": [
+    0.5204304562386408,
+    0.30963635914351695,
+    -0.2536424954544647,
+    0.409818393068484,
+    0.8694057149868817,
+    -0.46129442705148405,
+    null,
+    null,
+    -0.8423915514709335
+   ],
+   "err_pct_10m": [
+    5.460046255113449,
+    3.185124318192556,
+    -2.479816146533864,
+    4.255128628603511,
+    9.432084917722715,
+    -4.429065000360588,
+    null,
+    null,
+    -7.8302623019059325
+   ]
+  },
+  "z_range_m": [
+   1.1941747428215765,
+   1.4417109407249955
+  ],
+  "focal_rect_px": 981.0634194198002
+ },
+ "zone_names": [
+  "alto-sx",
+  "alto-centro",
+  "alto-dx",
+  "mezzo-sx",
+  "centro",
+  "mezzo-dx",
+  "basso-sx",
+  "basso-centro",
+  "basso-dx"
+ ],
+ "baseline_dev_pct": 7.937809598584811,
+ "avvisi_margine": [
+  "RMS mono L 1.155 px = 231% della soglia 0.5: poco margine",
+  "RMS mono R 0.681 px = 136% della soglia 0.5: poco margine",
+  "dy p95 zona alto-dx 1.39 px = 139% della soglia 1.0 (media per vista)"
+ ],
+ "gate_problemi": [
+  "copertura L insufficiente (<150 corner) in: alto-sx, alto-centro, alto-dx, centro, mezzo-dx, basso-sx, basso-centro, basso-dx",
+  "copertura R insufficiente (<150 corner) in: alto-sx, alto-centro, centro, basso-sx, basso-centro",
+  "hold-out stereo: zona alto-sx INSUFFICIENTE: 15 punti / 1 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona alto-sx",
+  "scala zona alto-sx con 20 coppie (<30) -> non verificata",
+  "hold-out stereo: zona alto-centro INSUFFICIENTE: 65 punti / 5 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona alto-centro",
+  "hold-out stereo: zona alto-dx INSUFFICIENTE: 35 punti / 2 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona alto-dx",
+  "hold-out stereo: zona mezzo-sx INSUFFICIENTE: 2 punti / 0 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona mezzo-sx",
+  "scala zona mezzo-sx con 3 coppie (<30) -> non verificata",
+  "hold-out stereo: zona centro INSUFFICIENTE: 11 punti / 0 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona centro",
+  "scala zona centro con 13 coppie (<30) -> non verificata",
+  "hold-out stereo: zona mezzo-dx INSUFFICIENTE: 43 punti / 4 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona mezzo-dx",
+  "scala/depth zona mezzo-dx +2.22% (> 2.0%)",
+  "hold-out stereo: zona basso-sx VUOTA (dy non misurabile) -> non verificata",
+  "scala zona basso-sx VUOTA (nessuna coppia di corner triangolabile) -> non verificata",
+  "hold-out stereo: zona basso-centro VUOTA (dy non misurabile) -> non verificata",
+  "scala zona basso-centro VUOTA (nessuna coppia di corner triangolabile) -> non verificata",
+  "hold-out stereo: zona basso-dx INSUFFICIENTE: 14 punti / 1 viste con >=5 corner nel blocco del gate (servono >= 60 punti e >= 6 viste) -> non verificata: servono piu' viste in zona basso-dx",
+  "scala zona basso-dx con 13 coppie (<30) -> non verificata",
+  "RMS mono L (tenute fuori) 1.155 px (>= 0.5)",
+  "RMS mono R (tenute fuori) 0.681 px (>= 0.5)",
+  "RMS stereo (tenute fuori) 1.030 px (>= 1.0)",
+  "|T| dal tabellone 215.9 mm = +7.94% da 200 mm (> +-3.0%): misura col calibro la baseline e controlla --square-len (T NON viene riscalata)",
+  "sync L/R non verificabile (mancano i frames_*.csv con sensor_ts_ns)",
+  "tabellone quasi sempre frontale (tilt p75 < 15 deg): inclinalo 20-40 deg"
+ ],
+ "gate_avvisi": [],
+ "gate": "ROSSO",
+ "export": {
+  "yaml": "/private/tmp/claude-501/-Users-danielerinaldi-progetti-Moving-One-Billion-People-/1b32ebd7-24f0-43c1-a686-c4879d52bcb7/scratchpad/out/c50n_CANDIDATO.yaml",
+  "maps": "/private/tmp/claude-501/-Users-danielerinaldi-progetti-Moving-One-Billion-People-/1b32ebd7-24f0-43c1-a686-c4879d52bcb7/scratchpad/out/c50n_CANDIDATO.maps.npz",
+  "video_sha256": {
+   "views_pkl": "ed7db9126c26596eb82c6b170a1e7ce1e308b1ead5c2ed58c829e091ed156fb7"
+  }
+ }
+}
