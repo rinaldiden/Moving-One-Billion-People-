@@ -1,0 +1,98 @@
+{
+ "versione_case": "v5 (v6 = stessa rotazione, solo traslata Y+16.6 Z-6.3 mm, braccio 17.8 mm)",
+ "convenzione": "v_cam = R @ v_imu ; cam: x destra, y giu, z avanti; IMU MPU6050 sulla A (camera SINISTRA)",
+ "R_imu_to_cam_rettificata_sx": [
+  [
+   -0.0002582853817316786,
+   -0.9998877298155102,
+   -0.014982024330722285
+  ],
+  [
+   -0.9990844739175561,
+   0.0008989543078184556,
+   -0.04277155430929553
+  ],
+  [
+   0.042780220494314444,
+   0.014957260629447675,
+   -0.9989725387061051
+  ]
+ ],
+ "R_imu_to_cam_raw_A": [
+  [
+   0.022581594379763932,
+   -0.9995163793094063,
+   -0.021379408024601112
+  ],
+  [
+   -0.9982213164697545,
+   -0.02136181262693001,
+   -0.05565856903193146
+  ],
+  [
+   0.05517494848804276,
+   0.022598240053298548,
+   -0.998220939775276
+  ]
+ ],
+ "permutazione_ideale": [
+  [
+   0.0,
+   -1.0,
+   0.0
+  ],
+  [
+   -1.0,
+   0.0,
+   0.0
+  ],
+  [
+   0.0,
+   0.0,
+   -1.0
+  ]
+ ],
+ "scostamento_da_permutazione_deg": 2.5977237072262223,
+ "lettura": "cam_x=-imu_y, cam_y=-imu_x (IMU +x = SU, gravita' letta +1 g), cam_z=-imu_z",
+ "incertezza_bootstrap_deg": {
+  "mediana": 2.54,
+  "p95": 5.31,
+  "nota": "solo l'asse verticale IMU e' ben eccitato (yaw); gli altri due assi poco: +-5 gradi"
+ },
+ "gyro_bias_dps": [
+  -1.0,
+  0.85,
+  -0.94
+ ],
+ "gyro_bias_sd_dps": [
+  0.03,
+  0.05,
+  0.03
+ ],
+ "verifica_tenuta_fuori": {
+  "err_mediano_deg": 0.354,
+  "errore_su_set_alterni_deg": 0.44,
+  "rotazione_visiva_mediana_deg": 2.9,
+  "n_set": 138
+ },
+ "gravita_negli_stop": {
+  "elevazione_asse_ottico_deg": -1.86,
+  "p10_p90": [
+   -3.41,
+   -0.45
+  ],
+  "roll_deg": 7.11,
+  "roll_p10_p90": [
+   -0.76,
+   13.31
+  ],
+  "nota": "roll variabile = inclinazione della bici da ferma, non montaggio"
+ },
+ "direzione_avanzamento_rett": {
+  "yaw_deg": -1.42,
+  "pitch_deg": -2.22,
+  "nota": "asse ottico 2.2 gradi sopra la traiettoria (include pendenza strada)"
+ },
+ "stato": "ARANCIO: rotazione approssimata, pitch/roll assoluti NON verificati oltre +-5 gradi",
+ "giro": "logger02_giro_20261123"
+}

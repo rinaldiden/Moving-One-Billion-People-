@@ -1,0 +1,46 @@
+{
+ "unita": "logger02",
+ "giro": "20261123",
+ "punti_distanza_nota": [],
+ "stato": "NON VERIFICATO: nessuna sosta col metro, nessun oggetto misurato in questo giro",
+ "tabella_errore_per_distanza": "non disponibile in assoluto; sotto: coerenza RELATIVA della depth col moto rigido (rapporto scala locale, riferimento 4-7 m = 1)",
+ "coerenza_relativa": {
+  "(2, 4)": {
+   "rel": 1.002,
+   "n_set": 13
+  },
+  "(4, 7)": {
+   "rel": 1.0,
+   "n_set": 29
+  },
+  "(7, 10)": {
+   "rel": 1.007,
+   "n_set": 19
+  },
+  "(10, 15)": {
+   "rel": 0.995,
+   "n_set": 22
+  },
+  "(15, 25)": {
+   "rel": 0.977,
+   "n_set": 22
+  }
+ },
+ "zone_3x3_rel": {
+  "0": 0.998,
+  "1": 0.992,
+  "2": 0.972,
+  "3": 1.005,
+  "4": 1.003,
+  "5": 0.998,
+  "6": 0.999,
+  "7": 0.995,
+  "8": 0.993
+ },
+ "indizi_scala": {
+  "auto_larghezza_1_8m": "Renault parcheggiata ~10.9 m dalla larghezza in pixel vs 8.2-8.6 m dalla depth (stereo ~20% piu' vicino): dubbio di scala, larghezza auto non misurata",
+  "altezza_camera_implicita_da_suolo": "1.1-1.2 m se la depth e' giusta (da verificare col metro)"
+ },
+ "d0_px": -0.4,
+ "focale_rigidita": "f x1.0-1.1 del nominale: non risolta"
+}
