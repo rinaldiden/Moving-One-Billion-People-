@@ -68,3 +68,12 @@ Cosa ho previsto male. Le legge il capo-critico.
   E aprire la porta USB della A (usbmodem) la resetta: dirlo a Daniele prima.
 - 2026-11-18 GIUSTO: spostato subito tutto il riduttore da ekam al doppio con percorsi corretti e link temporaneo per non rompere gli agenti in corsa
 - 2026-11-18 SBAGLIATO: ho lasciato che i brief agli agenti usassero la cartella ekam ereditata senza chiedermi a quale progetto serviva; il progetto e i suoi commit sono stati su un repo estraneo senza remote
+- 2026-11-23 GIUSTO: 23/11: firmware logger02 allineato A=B su 5c429015 e controlli di versione; trovata causa vera dei sonni a metà scarico (sveglia rinnovata solo a inizio file); rollback A quando il 6 Mbps faceva perdere il wifi; spazio disco liberato senza perdere dati (zip verificati); calibrazione logger02 portata da ROSSO a ARANCIO con d0 dalle colline, focale da giroscopio, baseline da targhe; pipeline rieseguibile con un comando
+- 2026-11-23 SBAGLIATO: 23/11: 1) OTA a 6 Mbps senza provare lo scarico pesante: la A perdeva il wifi e andava in crash; 2) sveglia durante lo scarico rinnovata solo all'inizio del file: il logger dormiva a metà file; 3) conteggio pezzi con readdir a 50 Hz dal task IMU: crash della A dopo 2 minuti; 4) giro di calibrazione partito con A a 6 Mbps e B a 2 Mbps (A e B non allineate) -> regola: sempre stesso firmware; 5) ho detto 'riavvio colpa mia' alle 23:56 del 20/11 quando non lo era, e 'conflitto IP con lo Shelly' senza verificare il MAC; 6) ho riempito il disco con gli agenti (8 processi di decodifica); 7) protocollo calib: 'correzione' a 38 mm sbagliata (era 50); 8) non mi sono accorto da solo che Daniele era rientrato
+
+## 2026-11-23 — logger02: firmware e scarichi
+- Ogni cambio di firmware si prova PRIMA sullo scenario pesante (scarico di un giro intero via wifi, proxy della B), non solo "si accende e registra".
+- Niente lavoro sul filesystem (readdir, fopen) dentro task con stack piccolo o a frequenza alta: contatori aggiornati agli eventi.
+- A e B sempre sulla stessa versione (regola di Daniele): un OTA si fa su tutte e due o su nessuna; controllo versione prima di "vai".
+- Prima di dire una causa (IP in conflitto, "colpa mia/non mia") verificarla sui dati (MAC, registro salute).
+- Agenti pesanti: max 2 processi, controllo df prima, file intermedi piccoli e cancellati.
