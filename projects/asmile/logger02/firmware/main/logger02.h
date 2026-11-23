@@ -52,7 +52,8 @@ void logger02_rec_stop(void);                 /* chiude i file (prima del deep s
 uint32_t logger02_rec_frame(void);            /* indice dell'ultimo fotogramma */
 uint32_t logger02_rec_scritti(void);
 void logger02_rec_pausa(bool p);              /* bici ferma: chiude il pezzo e non ne apre altri finché p */
-int logger02_rec_da_scaricare(void);           /* pezzi video chiusi ancora sulla SD */
+int logger02_rec_da_scaricare(void);           /* pezzi video chiusi ancora sulla SD (contatore, niente scansioni) */
+void logger02_rec_pezzo_tolto(void);           /* lo scarico ha cancellato un pezzo */
 int logger02_b_da_scaricare(void);             /* A: pezzi della B (detti dalla B ogni 10 s), -1 se non noto */          /* fotogrammi scritti su SD */
 void logger02_rec_stato(char *json, size_t n);
 size_t logger02_rec_jpeg(uint8_t *out, size_t max);   /* ultimo fotogramma in JPEG per lo streaming (0 = niente) */

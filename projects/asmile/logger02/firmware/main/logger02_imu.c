@@ -181,7 +181,7 @@ static void imu_task(void *arg)
             logger02_rec_pausa(ferma);
             logger02_link_invia(ferma ? "P" : "R");
         }
-        if (ferma && !resto_sveglio_per_scarico(t)) {
+        if (ferma && s_campioni % 50 == 0 && !resto_sveglio_per_scarico(t)) {     /* una volta al secondo basta */
             logger02_dormi("bici ferma da 2 minuti, niente da scaricare");
         }
     }

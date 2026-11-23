@@ -163,7 +163,10 @@ static esp_err_t h_del(httpd_req_t *req)
     logger02_scarico_visto();
     char p[160];
     if (!nome_ok(req, p, sizeof(p))) return ESP_OK;
-    return httpd_resp_sendstr(req, remove(p) == 0 ? "ok" : "errore");
+    bool ok = remove(p) == 0;
+    size_t l = strlen(p);
+    if (ok && l > 5 && !strcmp(p + l - 5, ".h264")) logger02_rec_pezzo_tolto();
+    return httpd_resp_sendstr(req, ok ? "ok" : "errore");
 }
 
 /* storico aggiornamenti nella NVS della scheda: ultime 8 righe "data ora | da versione → partizione" */

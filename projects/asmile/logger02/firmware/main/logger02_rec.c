@@ -238,9 +238,11 @@ static void apri_segmento(void)
     ESP_LOGI(TAG, "nuovo pezzo %s", s_file);
 }
 
+static volatile int s_da_scaricare = -1;
+static void conta_pezzi_sd(void);
 static void chiudi_segmento(void)
 {
-    if (s_vid) { fclose(s_vid); s_vid = NULL; }
+    if (s_vid) { fclose(s_vid); s_vid = NULL; if (s_da_scaricare >= 0) s_da_scaricare++; }
     if (s_csv) { fclose(s_csv); s_csv = NULL; }
     s_seg++;
 }
@@ -373,6 +375,7 @@ static void rec_task(void *arg)
 
 esp_err_t logger02_rec_start(void)
 {
+    conta_pezzi_sd();                               /* pezzi rimasti dalle sessioni prima (dal task principale, stack grande) */
     struct v4l2_format fmt = {0};
     struct v4l2_requestbuffers req = {0};
     struct v4l2_buffer b;
@@ -492,17 +495,30 @@ void logger02_rec_pausa(bool p)
     s_pausa = p;
 }
 
-int logger02_rec_da_scaricare(void)
+/* Pezzi chiusi ancora sulla SD: contati UNA volta all'avvio, poi +1 a ogni pezzo chiuso e -1 a ogni pezzo cancellato
+ * dallo scarico (web /del). 23/11: contarli con opendir/readdir 50 volte al secondo dal task IMU mandava in crash la A. */
+
+static void conta_pezzi_sd(void)
 {
     int n = 0;
     DIR *d = opendir(L02_REC_DIR);
     struct dirent *e;
     while (d && (e = readdir(d))) {
         size_t l = strlen(e->d_name);
-        if (l > 5 && !strcmp(e->d_name + l - 5, ".h264") && !(s_vid && !strcmp(e->d_name, s_file))) n++;
+        if (l > 5 && !strcmp(e->d_name + l - 5, ".h264")) n++;
     }
     if (d) closedir(d);
-    return n;
+    s_da_scaricare = n;
+}
+
+int logger02_rec_da_scaricare(void)
+{
+    return s_da_scaricare < 0 ? 0 : s_da_scaricare;
+}
+
+void logger02_rec_pezzo_tolto(void)
+{
+    if (s_da_scaricare > 0) s_da_scaricare--;
 }
 
 uint32_t logger02_rec_scritti(void)
