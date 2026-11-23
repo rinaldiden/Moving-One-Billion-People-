@@ -77,3 +77,4 @@ Cosa ho previsto male. Le legge il capo-critico.
 - A e B sempre sulla stessa versione (regola di Daniele): un OTA si fa su tutte e due o su nessuna; controllo versione prima di "vai".
 - Prima di dire una causa (IP in conflitto, "colpa mia/non mia") verificarla sui dati (MAC, registro salute).
 - Agenti pesanti: max 2 processi, controllo df prima, file intermedi piccoli e cancellati.
+- 23/11: prima di analizzare "frenate del servo" chiedere/verificare se il servo era COLLEGATO al freno: nei giri 13-23/11 non lo era, tutte le frenate erano di Daniele (il comando nel log non vuol dire azione).

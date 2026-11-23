@@ -32,3 +32,10 @@ Non in tabella: incrocio con strisce 0,36 (1), auto+pedone in controluce 0,57 (1
 ## Limiti / da fare
 - Nessun dato #001 dal 14 al 23/11 sul Mac: serve il pull delle sessioni (leggere sul Pi spetta a chi ha il via). logger001 (39 eventi BLE, v0 med 20 km/h, a_media 0,09-0,66, tutti rallentamenti lievi, intent:unknown non esaminati, hw diverso) e' solo controllo di ordine di grandezza, non per la taratura. IMU logger: segno non verificabile (ax medio >0 sempre = offset).
 - Contesti e labels da fotogrammi a 240 px, controluce in 4 eventi: confidenza media. 6/30 non chiari.
+
+## CORREZIONE di Daniele (23/11, dopo il verdetto del critico)
+«in tutti i giri che hai nessuna frenata è stata automatica. il servo non era collegato al freno, tutte le frenate le ho fatte io».
+→ Le 30 frenate sono TUTTE umane, a leva; `brake_out_deg` nel log è solo il comando a un servo non collegato e va ignorato.
+→ Le soglie proposte (normale 0,5-0,6, forte 0,9-1,2, max 1,3 media / 2,0 picco, mai >2,5 m/s², jerk ≤4 m/s³) sono "come frena
+Daniele", provvisorie (un giorno, n=30). Cadono le osservazioni "il servo non produce decelerazione" e "7 su 30 di sola leva":
+il servo non c'entrava. Il ritardo comando→frenata del servo resta da misurare a banco col freno collegato.
