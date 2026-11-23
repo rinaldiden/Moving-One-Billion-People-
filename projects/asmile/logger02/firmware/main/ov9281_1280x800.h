@@ -1,4 +1,4 @@
-/* OV9281 1280×800 RAW8, MIPI 2 lane, ingresso 24 MHz, 50 fps — risoluzione piena del sensore, come asmile #001 (rpicam).
+/* OV9281 1280×800 RAW8, MIPI 2 lane, ingresso 24 MHz, 16,67 fps (VTS ×3; era 50) — risoluzione piena del sensore, come asmile #001 (rpicam).
  *
  * Perché qui e non in managed_components: il component manager riscrive quella cartella a ogni aggiornamento.
  * Il formato si passa al driver con VIDIOC_S_SENSOR_FMT (esp_video lo accetta come "formato personalizzato").
@@ -98,8 +98,8 @@ static const l02_ov9281_reg_t l02_ov9281_1280x800_regs[] = {
     {0x380b, 0x20}, /* era 0xd0. Linux mode_1280x800_regs: altezza uscita 0x0320 = 800 */
     {0x380c, 0x03}, /* 0x05b0: 30fps, 0x0369: 50fps */
     {0x380d, 0x69},
-    {0x380e, 0x07}, /* ; 03 */
-    {0x380f, 0x1c}, /* ; 8e */
+    {0x380e, 0x15}, /* VTS 0x1554 = 5460 righe = 3 × 1820: 16,67 fps (23/11: a 50 fps piena altezza la P4 perdeva il wifi) */
+    {0x380f, 0x54},
     {0x3810, 0x00},
     {0x3811, 0x08},
     {0x3812, 0x00},

@@ -35,7 +35,11 @@ static const char *TAG = "rec";
 #define H           720
 #endif
 #define NBUF        4
+#if CONFIG_L02_REC_1280X800
+#define REC_DIV     1           /* 1280×800: il sensore va già a 16,67 fps (VTS ×3), si registra ogni fotogramma */
+#else
 #define REC_DIV     3
+#endif
 #define SEG_S       60
 #define H264_BITRATE 2000000     /* 23/11: provati 6 Mbps → la A perdeva il wifi e andava in crash durante gli scarichi (file da 25 MB, proxy della B): tornati a 2 */
 #define N_ULTIMI    32
