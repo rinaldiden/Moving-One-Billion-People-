@@ -2,8 +2,8 @@
 Rigenerazione: idx.py + imu.py + dec.py sono in ../selfcal_senza_encoder.py (sezioni '# ===== file:'); qui sotto una copia compatta."""
 import os,glob,csv,pickle,subprocess,functools,numpy as np,cv2
 W=os.environ.get('L02W','.')
-D=os.path.expanduser('~/progetti/Moving-One-Billion-People-/projects/asmile/asmile-loggers/logger02_giro_20261123')
-CALIB=os.path.expanduser('~/progetti/Moving-One-Billion-People-/projects/asmile/logger/depth/calib_logger02.CANDIDATO_20261123.json')
+D=os.path.abspath(os.path.expanduser(os.environ.get('L02_GIRO','~/progetti/Moving-One-Billion-People-/projects/asmile/asmile-loggers/logger02_giro_20261123')))
+CALIB=os.environ.get('L02_CALIB') or os.path.expanduser('~/progetti/Moving-One-Billion-People-/projects/asmile/logger/depth/calib_logger02.CANDIDATO_20261123.json')
 IMUJ=os.path.expanduser('~/progetti/Moving-One-Billion-People-/projects/asmile/logger/depth/imu_montaggio_case_v5.json')
 def make_pairs():
     def load(side,col):

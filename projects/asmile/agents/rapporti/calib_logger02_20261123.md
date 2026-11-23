@@ -16,3 +16,22 @@ Dati: giro 23/11, A+B accoppiate per contatore frame (22929 coppie, scarto tempo
 9. **Limiti**: bordi = lente di #001 estrapolata (dominio invertibile r<=0.64, scartati punti oltre); alto-dx peggiore; un solo giro, vicoli stretti; nessuna verita' metrica; yaw/d0 e focale poco vincolati.
 10. **Per passare a VERDE**: 1 sosta con oggetto misurato col metro a 2-4-8 m (+ altezza centro lenti) e rifare il giro con piu' strada aperta; corpo piu' grande in alto-dx.
 Immagine per Daniele: `asmile-loggers/logger02_giro_20261123/controllo_distanze.jpg` (3 fotogrammi, distanze scritte, orizzonte da IMU +-5 gradi). Codice: `logger/depth/calib_rock/selfcal_senza_encoder.py`.
+
+---
+# SEGUITO 23/11 pomeriggio - chiudere focale, scala, lente SOLO dai dati del giro (candidato v2)
+Codice: `logger/depth/calib_rock/logger02_v2/` (moduli rieseguibili; `python3 -m logger02_v2.run <cartella_giro>` da calib_rock). JSON: `logger/depth/calib_logger02.CANDIDATO_v2_20261123.json` (il v1 non e' toccato). **Verdetto: ARANCIO** (nessun metro nel giro).
+
+**CORREZIONE GROSSA al v1: d0.** La "rigidita' del moto" dava d0 = -0.4 +-0.5 px: SBAGLIATO. Le colline lontane (km: disparita' vera ~0) danno d_misurata = **-2.55 px** (picco, n=1136 punti, 52 fotogrammi: mediana per fotogramma -2.58, p10-p90 -2.84/-1.96); uniforme in x (-2.67 / -2.56 / -2.43), mild in y (-2.72 -> -2.03 vicino al fondo). L'intercetta della regressione targhe da' -4.0 (compatibile se il bordo-targa ha ~2-4 px di offset). v1 sovrastimava la distanza di ~5% a 5 m e ~9% a 10 m. Nel v2: `d0_px = -2.55`.
+
+| Strada | Risultato | Limite |
+|---|---|---|
+| 1 Giroscopio (785 coppie, 0.1-0.3 s, rotazioni 1.5-20 gradi) | visione/giro con f v1: sf = 1.045 +-0.007 (bootstrap), stabile per scena (1.04-1.05; porta 1.11 poco affidabile); per asse: beccheggio 1.02 +-0.016, imbardata 1.025 +-0.01, **rollio 1.068 +-0.011** (il rollio non dipende dalla focale = scala del giro su quell'asse). Scala giro dalla gravita' (asse IMU y): 0.985 +-0.036 (solo 11 transizioni; asse z 1.27 +-0.14 inutilizzabile). => f/f_v1 = 1.03 +-0.03 (**f_rett = 1273 px**, v1 1236) | tolleranza sensibilita' MPU6050 (+-3% per asse, assi diversi ~4% fra loro): senza turntable non si scende sotto ~3%. Offset temporale IMU-video 0 (+-10 ms) |
+| 2 Punti di fuga | q = 1.2 +-0.14 (21 fotogrammi, vicoli non Manhattan; con due VP orizzontali ben condizionati solo 1 fotogramma: 0.81) | NON VINCOLANTE (+-15-20%): camera quasi dritta, VP verticale mal condizionato. Non usato |
+| 3 Lente (plumb-line, 2843/2543 pezzi A/B, test su blocchi di 60 s tenuti fuori) | lente v1: rettilineita' mediana 0.86 px (A) / 0.96 (B); liberare k1k2 + centro, k3, tangenziali+aspetto NON migliora i test (0.86/0.98) -> lente v1 mantenuta | BA completo non fatto: f non osservabile da epipolare/rigidita' senza moto metrico (spiegato) |
+| 4 Baseline dalle targhe (auto: bordi a valle scura sub-pixel L e R, larghezza 3D, targa Renault, 49 viste buone, w 155-385 px) | regressione d = (B/520) w - d0: **B = 201.5 +-1.3 mm** (stat.), meta' alterne 202.5 / 200.6; per vista a d0=0: 192.7 sd 3.2 | sistematico +-3.5 mm: bordo/portatarga scuro, bande blu; una sola targa leggibile (camion: non misurata). |T|=200 confermato, non riscalato |
+| 5a Altezza camera (v2: f 1273, d0 -2.55, 50 fotogrammi) | **0.79 m** (IQR 0.79-0.85, p10-p90 0.78-0.87); pitch +2.7, roll -1.7 gradi | +-0.04 m (f 3%, B 2%); v1 0.84 (f e d0 vecchi). Fiducia media |
+| 5c Rigidita'/dy | in moto 690-870 s: mediana 0.54, p95 2.64 (zone 0.47-0.76 / 2.1-3.2); con rotazione >15 dps: 0.60 / 2.74; officina 150-450: 0.51 / 2.36 | gate dy < 1 px: **mediana OK, p95 NO** (match SIFT grezzi, gate 6 px). Tratto davvero indipendente 875-1415 s (porta a ~1.2 m, piana, d~200 px): mediana 1.36, p95 5.8 = vicinanza estrema, poco informativo |
+
+**Accordo focale:** giroscopio 1.03 +-0.03; VP non vincolante; targhe/colline non misurano f (si elimina / zero). Indipendenti davvero: una sola (giroscopio). Confermato: **VERDE impossibile senza metro**.
+**Gate previsti (con f +-3%, B +-2%, d0 +-0.5):** errore profondita' atteso <5 m ~ +-4%, 5-10 m ~ +-5-6%, 10-20 m ~ +-8-10%: il gate +-2% <5 m NON dimostrato.
+**Impossibile senza metro:** focale assoluta (resta +-3%), scala metrica verificata, banco_fisso reale. Servono: un oggetto misurato a 2-4-8 m e l'altezza del centro lenti.
