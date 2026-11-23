@@ -56,7 +56,7 @@ if __name__=='__main__':
     print('tenuti',len(keep))
     g=collections.OrderedDict()
     for r in keep: g.setdefault(P[r[0]][0][1],[]).append(r)
-    with Pool(8) as p: out=p.map(work,list(g.items()))
+    with Pool(2) as p: out=p.map(work,list(g.items()))
     out=[x for o in out for x in o];out.sort(key=lambda r:r['k0'])
     print('coppie buone',len(out),'punti',sum(len(o['a']) for o in out))
     pickle.dump(out,open(os.path.join(W,'g1_matches.pkl'),'wb'))

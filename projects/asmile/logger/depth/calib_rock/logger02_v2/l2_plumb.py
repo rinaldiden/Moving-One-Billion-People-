@@ -6,7 +6,7 @@ import os,sys,json,pickle,numpy as np,cv2
 from scipy.optimize import least_squares
 sys.path.insert(0,os.path.dirname(__file__))
 from common import *
-c=json.load(open(CALIB))
+c=load_calib()
 F=1123.5266816247774
 def undist_np(u,v,K,dist,it=12):
     fx,fy,cx,cy=K;k1,k2,p1,p2,k3=dist

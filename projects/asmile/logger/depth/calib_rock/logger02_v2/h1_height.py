@@ -8,7 +8,7 @@ def run(calib,f_true,d0,B,ts):
     res=[]
     for t in ts:
         k=int(np.argmin(abs(T-t)));ra,rb=rectpair(S,P,k);disp=sg.compute(ra,rb).astype(np.float32)/16.0
-        yy,xx=np.mgrid[470:710:3,150:1130:3];d=disp[yy,xx];ok=d>3;dd=d[ok]-d0
+        yy,xx=np.mgrid[size()[1]-250:size()[1]-10:3,150:1130:3];d=disp[yy,xx];ok=d>3;dd=d[ok]-d0
         Z=f_true*B/dd;P3=np.c_[(xx[ok]-S['cx'])*B/dd,(yy[ok]-S['cy'])*B/dd,Z];P3=P3[(Z>1.2)&(Z<10)]
         if len(P3)<300: continue
         best=None;bn=0

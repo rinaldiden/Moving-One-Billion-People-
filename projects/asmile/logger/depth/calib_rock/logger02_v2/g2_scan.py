@@ -5,7 +5,7 @@ import os,sys,json,pickle,numpy as np,cv2
 sys.path.insert(0,os.path.dirname(__file__))
 from common import *
 from g1_extract import integ,BIAS
-c=json.load(open(CALIB));K=np.array(c['K_left']);dist=np.array(c['dist_left']);F0=c['focal_rect_px']
+c=load_calib();K=np.array(c['K_left']);dist=np.array(c['dist_left']);F0=c['focal_rect_px']
 Rc0=np.array(json.load(open(IMUJ))['R_imu_to_cam_raw_A'])
 M=pickle.load(open(os.path.join(W,'g1_matches.pkl'),'rb'));X=imu()
 def undist(p): return cv2.undistortPointsIter(p.reshape(-1,1,2).astype(np.float64),K,dist,None,None,(cv2.TERM_CRITERIA_COUNT|cv2.TERM_CRITERIA_EPS,40,1e-10)).reshape(-1,2)

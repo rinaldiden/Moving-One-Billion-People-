@@ -4,7 +4,9 @@ Statistiche per zona 3x3 (mediana |dy|, p95) e separando i fotogrammi con la bic
 import os,sys,json,pickle,numpy as np,cv2
 sys.path.insert(0,os.path.dirname(__file__))
 from rect import *
-def zone(a,W_=1280,H_=720): return np.clip((a[:,1]/H_*3).astype(int),0,2)*3+np.clip((a[:,0]/W_*3).astype(int),0,2)
+def zone(a,W_=None,H_=None):
+    W_,H_=W_ or size()[0],H_ or size()[1]
+    return np.clip((a[:,1]/H_*3).astype(int),0,2)*3+np.clip((a[:,0]/W_*3).astype(int),0,2)
 def run(calib,lo,hi,step,tag):
     S=load(calib);P=pairs();T=np.array([p[0][0]/1e6 for p in P]);X=imu();ti=X[:,0]/1e6
     sift=cv2.SIFT_create(nfeatures=3000,contrastThreshold=0.015);bf=cv2.BFMatcher();ks=[k for k in range(len(P)) if lo<=T[k]<hi][::step]
