@@ -68,10 +68,14 @@ static void rete_task(void *arg)
         if (!logger02_ruolo()->is_a) {             /* la B dice alla A il suo IP (ogni 30 s: la A può riavviarsi) */
             esp_netif_ip_info_t ip;
             char m[32];
-            while (esp_netif_get_ip_info(get_example_netif(), &ip) == ESP_OK) {
-                snprintf(m, sizeof(m), "I " IPSTR, IP2STR(&ip.ip));
+            for (int k = 0; esp_netif_get_ip_info(get_example_netif(), &ip) == ESP_OK; k++) {
+                if (k % 3 == 0) {
+                    snprintf(m, sizeof(m), "I " IPSTR, IP2STR(&ip.ip));
+                    logger02_link_invia(m);
+                }
+                snprintf(m, sizeof(m), "N %d", logger02_rec_da_scaricare());   /* pezzi ancora da scaricare */
                 logger02_link_invia(m);
-                vTaskDelay(pdMS_TO_TICKS(30000));
+                vTaskDelay(pdMS_TO_TICKS(10000));
             }
         }
         logger02_tailscale_start();         /* A: compare come "loggerNN" su Tailscale */

@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -70,6 +71,7 @@ static void salva_header(const uint8_t *b, size_t n)
 static uint8_t *s_buf[NBUF];
 static uint8_t *s_enc_out;
 static volatile bool s_rec, s_stop;
+static volatile bool s_pausa, s_attendi_idr;   /* 23/11: bici ferma col wifi → niente pezzi nuovi, si scaricano quelli fatti */
 static volatile uint32_t s_frame, s_scritti, s_seg;
 static FILE *s_vid, *s_csv;
 static char s_sess[24], s_file[64];
@@ -328,13 +330,19 @@ static void rec_task(void *arg)
                 uint32_t tipi = nal_tipi(s_enc_out, ec.bytesused);
                 if (tipi & (1u << 7)) salva_header(s_enc_out, ec.bytesused);
                 /* nuovo pezzo solo su un fotogramma IDR, con SPS/PPS in testa: ogni file si decodifica da solo */
-                if (!s_vid || (esp_timer_get_time() - s_seg_t0 > SEG_S * 1000000LL && (tipi & (1u << 5)))) {
+                if (s_pausa) {
+                    if (s_vid) chiudi_segmento();               /* pezzo chiuso = scaricabile subito */
+                    s_attendi_idr = true;
+                } else if (s_attendi_idr && !(tipi & (1u << 5))) {
+                    /* dopo la pausa si riparte solo da un IDR: ogni file si decodifica da solo */
+                } else if (!s_vid || (esp_timer_get_time() - s_seg_t0 > SEG_S * 1000000LL && (tipi & (1u << 5)))) {
+                    s_attendi_idr = false;
                     if (s_vid) chiudi_segmento();
                     apri_segmento();
                     if (s_vid && s_hdr_len && !(tipi & (1u << 7))) fwrite(s_hdr, 1, s_hdr_len, s_vid);
                 }
-                if (s_vid) fwrite(s_enc_out, 1, ec.bytesused, s_vid);
-                if (s_csv) fprintf(s_csv, "%lu,%lld,%lld,%lu\n", (unsigned long)f, (long long)t,
+                if (s_vid && !s_pausa) fwrite(s_enc_out, 1, ec.bytesused, s_vid);
+                if (s_csv && !s_pausa) fprintf(s_csv, "%lu,%lld,%lld,%lu\n", (unsigned long)f, (long long)t,
                                    (long long)logger02_t_a(t), (unsigned long)ec.bytesused);
                 s_bytes += ec.bytesused;
                 s_scritti++;
@@ -464,6 +472,26 @@ uint32_t logger02_rec_frame(void)
     return s_frame;
 }
 
+void logger02_rec_pausa(bool p)
+{
+    if (p && !s_pausa) ESP_LOGI(TAG, "pausa: bici ferma, chiudo il pezzo per lo scarico");
+    if (!p && s_pausa) ESP_LOGI(TAG, "riprendo a registrare");
+    s_pausa = p;
+}
+
+int logger02_rec_da_scaricare(void)
+{
+    int n = 0;
+    DIR *d = opendir(L02_REC_DIR);
+    struct dirent *e;
+    while (d && (e = readdir(d))) {
+        size_t l = strlen(e->d_name);
+        if (l > 5 && !strcmp(e->d_name + l - 5, ".h264") && !(s_vid && !strcmp(e->d_name, s_file))) n++;
+    }
+    if (d) closedir(d);
+    return n;
+}
+
 uint32_t logger02_rec_scritti(void)
 {
     return s_scritti;
@@ -489,7 +517,7 @@ void logger02_rec_stato(char *json, size_t n)
     snprintf(json, n, "{\"luma\":%d,\"esposizione_us\":%.0f,\"guadagno\":%.2f,\"registra\":%s,\"sessione\":\"%s\",\"file\":\"%s\",\"fotogrammi\":%lu,\"scritti\":%lu,"
              "\"pezzi\":%lu,\"mb\":%.1f,\"sd_libero_mb\":%llu}",
              s_ae_luma, s_vts0 ? s_exp16 / 16.0 * s_periodo_us / s_vts0 : 0, s_gain / 16.0,
-             s_rec ? "true" : "false", s_sess, s_file, (unsigned long)s_frame, (unsigned long)s_scritti,
+             s_rec && !s_pausa ? "true" : "false", s_sess, s_vid ? s_file : "", (unsigned long)s_frame, (unsigned long)s_scritti,
              (unsigned long)s_seg, s_bytes / 1e6, logger02_sd_libero_mb());
 }
 

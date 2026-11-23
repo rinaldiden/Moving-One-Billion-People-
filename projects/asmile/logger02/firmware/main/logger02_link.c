@@ -102,6 +102,14 @@ static void wake_task(void *arg)
     }
 }
 
+static volatile int s_b_pend = -1;
+static volatile int64_t s_b_pend_t;
+
+int logger02_b_da_scaricare(void)
+{
+    return esp_timer_get_time() - s_b_pend_t < 30000000LL ? s_b_pend : -1;
+}
+
 static void comando(const char *riga)
 {
     if (riga[0] == 'S' && !logger02_ruolo()->is_a) {
@@ -149,6 +157,13 @@ static void comando(const char *riga)
     } else if (riga[0] == 'E' && !logger02_ruolo()->is_a) {
         unsigned long e, g;
         if (sscanf(riga, "E %lu %lu", &e, &g) == 2) logger02_rec_esposizione(e, g);
+    } else if (!strcmp(riga, "P") && !logger02_ruolo()->is_a) {
+        logger02_rec_pausa(true);
+    } else if (!strcmp(riga, "R") && !logger02_ruolo()->is_a) {
+        logger02_rec_pausa(false);
+    } else if (riga[0] == 'N' && logger02_ruolo()->is_a) {
+        int n;
+        if (sscanf(riga, "N %d", &n) == 1) { s_b_pend = n; s_b_pend_t = esp_timer_get_time(); }
     } else if (!strcmp(riga, "Z")) {
         logger02_dormi("comando dalla A");
     } else if (!strncmp(riga, "L ", 2)) {

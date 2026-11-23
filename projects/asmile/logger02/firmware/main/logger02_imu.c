@@ -30,9 +30,12 @@ static const char *TAG = "imu";
 #define MIN_ACCESO_S 120
 #define MOTO_FILA   3           /* movimento vero = 3 campioni di fila (60 ms): un campione storto non tiene sveglio */
 /* a casa col wifi: resta sveglio finché il Mac scarica (Daniele 21/11) */
-#define ATTESA_SCARICO_S 150    /* il Mac passa ogni 2 minuti */
-#define DOPO_SCARICO_S   60     /* fine scarico = un minuto senza richieste */
-#define MAX_SCARICO_S    1800   /* tetto: mezz'ora di scarico, poi dorme comunque */
+/* 23/11 (Daniele: «deve essere così sempre»): ferma col wifi → registrazione in pausa (pezzi chiusi) e resta sveglia
+ * finché sulla SD di A e B ci sono pezzi da scaricare e il Mac li sta prendendo; poi dorme. */
+#define ATTESA_SCARICO_S 600    /* pezzi da scaricare ma il Mac non è ancora passato: lo aspetto 10 minuti (passa ogni 2) */
+#define SENZA_RICHIESTE_S 300   /* il Mac ha smesso di chiedere da 5 minuti con pezzi ancora lì: dormo, riprende al risveglio */
+#define DOPO_SCARICO_S   60     /* niente più da scaricare: un minuto e dormo */
+#define MAX_SCARICO_S    3600   /* tetto: un'ora di scarico, poi dorme comunque (batteria) */
 #define GYRO_FERMO  3.0f
 #define ACC_FERMO_G 0.030f
 
@@ -46,6 +49,7 @@ static adc_cali_handle_t s_cali;
 static float s_batt = -1;
 static volatile int64_t s_ultimo_scarico;
 static int s_moto_fila;
+static bool s_in_pausa;
 
 void logger02_scarico_visto(void)
 {
@@ -65,8 +69,14 @@ static bool resto_sveglio_per_scarico(int64_t t)
     if (!rete_ok()) return false;
     int64_t fermo_da = s_ultimo_moto + FERMO_S * 1000000LL;
     if (t - fermo_da > MAX_SCARICO_S * 1000000LL) return false;
-    if (s_ultimo_scarico <= s_ultimo_moto) return t - fermo_da < ATTESA_SCARICO_S * 1000000LL;
-    return t - s_ultimo_scarico < DOPO_SCARICO_S * 1000000LL;
+    int b = logger02_b_da_scaricare();
+    int pezzi = logger02_rec_da_scaricare() + (b > 0 ? b : 0);
+    bool visitato = s_ultimo_scarico > s_ultimo_moto;
+    if (pezzi > 0) {
+        if (!visitato) return t - fermo_da < ATTESA_SCARICO_S * 1000000LL;
+        return t - s_ultimo_scarico < SENZA_RICHIESTE_S * 1000000LL;
+    }
+    return visitato ? t - s_ultimo_scarico < DOPO_SCARICO_S * 1000000LL : t - fermo_da < DOPO_SCARICO_S * 1000000LL;
 }
 
 static esp_err_t w(uint8_t reg, uint8_t v)
@@ -165,8 +175,14 @@ static void imu_task(void *arg)
             fputc('\n', s_csv);
             if (t - s_pezzo_t0 > 60000000LL) { fclose(s_csv); s_csv = NULL; apri_csv(); }
         }
-        if (t > MIN_ACCESO_S * 1000000LL && t - s_ultimo_moto > FERMO_S * 1000000LL && !resto_sveglio_per_scarico(t)) {
-            logger02_dormi("bici ferma da 2 minuti");
+        bool ferma = t > MIN_ACCESO_S * 1000000LL && t - s_ultimo_moto > FERMO_S * 1000000LL;
+        if (ferma != s_in_pausa && s_campioni % 25 == 0) {     /* pausa/ripresa su A e B (ogni 0,5 s al massimo) */
+            s_in_pausa = ferma;
+            logger02_rec_pausa(ferma);
+            logger02_link_invia(ferma ? "P" : "R");
+        }
+        if (ferma && !resto_sveglio_per_scarico(t)) {
+            logger02_dormi("bici ferma da 2 minuti, niente da scaricare");
         }
     }
 }
