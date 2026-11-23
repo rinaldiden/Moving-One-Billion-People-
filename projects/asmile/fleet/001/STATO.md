@@ -1,4 +1,4 @@
-# 001 — stato fotografato 2026-11-23 16:49 dopo: speed_limiter v3 in shadow mode avviato dal master (il vecchio limiter non parte più)
+# 001 — stato fotografato 2026-11-23 16:56 dopo: limiter v3 attivo all'1; stazionamento 50° con guardia INA a 0
 kernel: 6.12.75+rpt-rpi-2712
 git sul Pi: 1967cbf 2026-05-13 fix: separate boot config for asmile (ov9281 dual cam, no arducam HAT)
 overlay: si
