@@ -7,6 +7,8 @@ from .fonti import Arbitro, Encoder, Fusione, ImuLong, Campione, sanifica_veloci
 from .freno import (TETTO_ASSOLUTO, AntiImpuntata, GuardiaIna, ImpulsoServo, Rampa, Regolatore)
 from .validazione import SogliaError, leggi
 
+TETTO_FALLBACK_MAX = 15.0       # gradi: con GPS/BLE come fonte (encoder non usabile) mai oltre
+LOOP_LENTO_S = 0.06             # ciclo oltre 60 ms (deve essere 20): niente aumenti del freno
 CONFIG_DEFAULT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..",
                               "config", "soglie_speed_limiter_v3.json")
 
@@ -40,7 +42,8 @@ class Controllo:
         t = c.t
         if self.t_inizio is None:
             self.t_inizio = t
-        dt = 0.02 if self.t_prec is None else max(1e-3, min(0.2, t - self.t_prec))
+        dt_vero = 0.02 if self.t_prec is None else t - self.t_prec
+        dt = max(1e-3, min(0.2, dt_vero))
         self.t_prec = t
         cfg = self.cfg
 
@@ -97,7 +100,13 @@ class Controllo:
         if c.emergenza:
             avvisi.append("emergenza")
         elif fonte in ("GPS_IMU", "BLE_IMU", "IMU_SOLO"):
-            tetto = min(tetto, cfg["fallback"]["tetto_deg"])
+            # redteam 23/11: una fonte di riserva che mente non deve poter fermare la bici: al massimo 15 gradi
+            tetto = min(tetto, cfg["fallback"]["tetto_deg"], TETTO_FALLBACK_MAX)
+        if dt_vero > LOOP_LENTO_S:
+            # loop lento (CPU piena, I2C bloccato): l'anti-impuntata vede peggio -> niente aumenti, avviso visibile
+            tetto = min(tetto, self.rampa.angolo)
+            motivi.append("loop_lento")
+            avvisi.append("loop lento: %.0f ms" % (dt_vero * 1000))
         if not imu_ok:
             # DECISIONE PER DANIELE: IMU morta = anti-impuntata cieca -> fuori emergenza tetto 0 (rilascio); in emergenza 25
             tetto = min(tetto, fr["tetto_imu_morta_emergenza_deg"] if c.emergenza else fr["tetto_imu_morta_deg"])

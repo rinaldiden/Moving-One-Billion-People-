@@ -203,7 +203,8 @@ class ImuLong:
             self.ay_riposo = max(self.ay0 - self.dev_ay, min(self.ay0 + self.dev_ay, self.ay_riposo))
             self.gx_bias = max(self.gx0 - self.dev_gx, min(self.gx0 + self.dev_gx, self.gx_bias))
             self.riposo_calibrato = True
-        dt = min(dt, 0.05)                                # dopo un buco di dati non gonfiare EMA e integrale di beccheggio
+        dt = min(dt, 0.12)                                # tempo VERO fino a 120 ms (redteam 23/11: col tetto a 50 ms un loop a 10 Hz
+                                                          # non vedeva un'impuntata debole); oltre e' un buco di dati: non gonfiare
         al = min(1.0, dt / self.tau_ema)
         self.dec += al * ((ay - self.ay_riposo) * G - self.dec)
         a_raw = -(ay - self.ay_riposo) * G / self.scala     # in scala ENCODER (la dec per l'anti-impuntata resta in scala IMU)

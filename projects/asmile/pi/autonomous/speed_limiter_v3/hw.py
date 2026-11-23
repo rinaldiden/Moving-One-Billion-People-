@@ -101,7 +101,8 @@ class RegistroOmbra:
     def __init__(self, cartella="/data/logging/limiter_v3"):
         import csv
         os.makedirs(cartella, exist_ok=True)
-        self.f = open(os.path.join(cartella, time.strftime("ombra_%Y%m%d_%H%M%S.csv")), "w", newline="")
+        self.f = open(os.path.join(cartella, time.strftime(("ombra" if "--ombra" in sys.argv else "attivo") + "_%Y%m%d_%H%M%S.csv")),
+                      "w", newline="")
         self.w = csv.writer(self.f)
         self.w.writerow(self.CAMPI)
         self.n = 0
@@ -214,10 +215,33 @@ def main():
             return 3
         servo = ServoLgpio()
     ctl = Controllo(cfg, servo, log_eventi=lambda t, da, a, m: print(f"[FONTE] {da} -> {a}: {m}", flush=True))
-    if ombra:
-        reg = RegistroOmbra()
-        passo0 = ctl.passo
-        ctl.passo = lambda c: (lambda r: (reg.scrivi(r), r)[1])(passo0(c))
+    reg = RegistroOmbra()                           # registro di ogni ciclo, in ombra e da attivo (confronto con Daniele)
+    battito = [time.monotonic()]
+    passo0 = ctl.passo
+
+    def passo_registrato(c):
+        r = passo0(c)
+        battito[0] = time.monotonic()
+        reg.scrivi(r)
+        return r
+    ctl.passo = passo_registrato
+    if not ombra:
+        import threading
+
+        def cane_da_guardia():
+            """redteam 23/11: se il loop si blocca col freno tirato, il pulse-and-free lascia il freno dov'e'. Battito fermo
+            da 0,5 s -> freno a 0 tenuto 0,6 s, pin libero, uscita (il master/systemd vede il processo morto)."""
+            while True:
+                time.sleep(0.1)
+                if time.monotonic() - battito[0] > 0.5:
+                    print("[LIMITER] CANE DA GUARDIA: loop fermo da >0,5 s -> freno a 0 ed esco", flush=True)
+                    try:
+                        servo.pwm(0.0)
+                        time.sleep(0.6)
+                        servo.libera()
+                    finally:
+                        os._exit(4)
+        threading.Thread(target=cane_da_guardia, daemon=True).start()
     sens = LettoreSensori()
     run = [True]
     signal.signal(signal.SIGTERM, lambda *_: run.__setitem__(0, False))
@@ -231,8 +255,7 @@ def main():
         scrivi_stato(STATO_DEFAULT, {"t": time.time(), "stato": "FERMATO", "codice": codice})
         if lock is not None:
             lock.close()
-        if ombra:
-            reg.f.close()
+        reg.f.close()
     return codice
 
 

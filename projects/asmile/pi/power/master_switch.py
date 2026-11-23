@@ -64,10 +64,32 @@ PULSE_MAX_US = 2500
 PERIOD_US = 1_000_000 / SERVO_FREQ
 BRAKE_ANGLE = 50       # massimo freno (23/11: 50°, non più 60); all'OFF si usa OFF_ANGLE = 0
 RELEASE_ANGLE = 0      # released when ON (gradi "logici" = raw 180°)
-OFF_ANGLE = RELEASE_ANGLE   # 23/11: all'OFF il freno torna a 0 (non più il blocco a BRAKE_ANGLE)
+OFF_ANGLE = BRAKE_ANGLE     # 23/11 sera (Daniele): su 0 il freno va a 50° e il pin si libera: la bici resta ferma
 
 # Buzzer (shared con safe_shutdown — GPIO 4 via 2N2222 driver)
 BUZZER_PIN = 4
+
+
+PARK_MAX_HOLD_A = 0.4      # stazionamento: corrente massima a pin libero (servo che non forza)
+PARK_MIN_ANGLE = 30        # stazionamento: mai sotto questo angolo arretrando
+
+
+def _corrente_servo_a():
+    """INA219 0x40 (shunt 0,1 ohm): corrente dal registro shunt, 3 letture mediate. None se non risponde."""
+    try:
+        import smbus2
+        b = smbus2.SMBus(1)
+        tot = 0.0
+        for _ in range(3):
+            v = b.read_word_data(0x40, 0x01)
+            v = ((v & 0xFF) << 8) | (v >> 8)
+            v = v - 65536 if v > 32767 else v
+            tot += v * 1e-5 / 0.1
+            time.sleep(0.05)
+        b.close()
+        return abs(tot / 3)
+    except Exception:
+        return None
 
 
 def buzzer_sweep(start_freq: int, end_freq: int, step: int = 50, step_time: float = 0.025):
@@ -207,16 +229,16 @@ class MasterSwitch:
         self.servo_handle = None
         print("[SWITCH] PWM stopped, pin freed (hi-Z) — servo libero")
 
-        # 23/11 (Daniele): speed_limiter v3 in SHADOW MODE — calcola e registra dove frenerebbe (/data/logging/limiter_v3/),
-        # NON tocca il freno (niente GPIO12). Il vecchio speed_limiter.py NON parte più: frenano solo le mani di Daniele.
+        # 23/11 sera (Daniele): speed_limiter v3 ATTIVO (comanda il freno, max 50°, anti-impuntata) e registra ogni ciclo in
+        # /data/logging/limiter_v3/attivo_*.csv. Il vecchio speed_limiter.py NON parte più.
         sl_dir = f"{HOME_DIR}/wip/Moving-One-Billion-People-/projects/asmile/pi/autonomous"
         self.speed_limiter_proc = subprocess.Popen(
-            ["python3", "-u", "-m", "speed_limiter_v3.hw", "--ombra"],
+            ["python3", "-u", "-m", "speed_limiter_v3.hw"],
             cwd=sl_dir,
             stdout=open("/tmp/speed_limiter_v3.log", "w"),
             stderr=subprocess.STDOUT,
         )
-        print(f"[SWITCH] speed_limiter v3 OMBRA started PID={self.speed_limiter_proc.pid}")
+        print(f"[SWITCH] speed_limiter v3 ATTIVO started PID={self.speed_limiter_proc.pid}")
 
         # Clean up any zombie camera processes
         self._kill_camera_zombies()
@@ -267,9 +289,8 @@ class MasterSwitch:
             self.speed_limiter_proc = None
             print("[SWITCH] speed_limiter stopped")
 
-        # Switch OFF: freno a 0° = posizione di partenza (Daniele 23/11: «anche se è su 0 il master mandami a 0 il freno
-        # come in posizione di partenza»; il blocco a 60° all'OFF andava molto oltre i 60° meccanici). Pulse 1.5s,
-        # poi STOP TUTTO → tx_pwm(0) + gpio_free → pin hi-Z (niente LOW continuo che il SER0062 odia).
+        # Switch OFF: freno a 50° (OFF_ANGLE) per tenere ferma la bici, pulse 1.5s, poi pin libero (hi-Z). A 50° il servo
+        # tiene 0,03-0,16 A a pin libero (misura INA 23/11); a 60 andava in stallo >3,2 A. Niente LOW continuo.
         h2 = lgpio.gpiochip_open(GPIO_CHIP)
         try:
             lgpio.gpio_free(h2, PIN_SERVO)
@@ -277,13 +298,31 @@ class MasterSwitch:
             pass
         lgpio.gpio_claim_output(h2, PIN_SERVO)
         lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, angle_to_duty(OFF_ANGLE))
-        log_cmd("brake", "pwm", OFF_ANGLE, "master_switch OFF: freno a 0 (partenza)")
-        print(f"[SWITCH] Freno → {OFF_ANGLE}° (posizione di partenza, 1.5s di pulse @ {SERVO_FREQ}Hz)")
+        log_cmd("brake", "pwm", OFF_ANGLE, "master_switch OFF: freno di stazionamento")
+        print(f"[SWITCH] Freno → {OFF_ANGLE}° (stazionamento, 1.5s di pulse @ {SERVO_FREQ}Hz), poi pin libero")
         time.sleep(1.5)
         lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, 0)
         time.sleep(0.05)
         lgpio.gpio_free(h2, PIN_SERVO)
         log_cmd("brake", "free", OFF_ANGLE, "master_switch OFF")
+        # 23/11: a pin libero il SER0062 tiene la posizione da solo; se spinge contro l'olio resta in stallo per ore
+        # (misura INA: a 50° a volte 0,03 A, a volte 1,3 A). Guardia: finché la corrente a pin libero è sopra 0,4 A,
+        # arretra di 2° (mai sotto PARK_MIN_ANGLE). Senza INA si resta a OFF_ANGLE.
+        ang = OFF_ANGLE
+        for _ in range(12):
+            i_a = _corrente_servo_a()
+            if i_a is None or i_a < PARK_MAX_HOLD_A or ang - 2 < PARK_MIN_ANGLE:
+                break
+            ang -= 2
+            lgpio.gpio_claim_output(h2, PIN_SERVO)
+            lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, angle_to_duty(ang))
+            time.sleep(0.5)
+            lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, 0)
+            time.sleep(0.05)
+            lgpio.gpio_free(h2, PIN_SERVO)
+            time.sleep(0.3)
+            log_cmd("brake", "free", ang, "master_switch OFF: arretro (corrente %.2f A)" % i_a)
+            print(f"[SWITCH] stazionamento: corrente {i_a:.2f} A a pin libero -> arretro a {ang}°")
         lgpio.gpiochip_close(h2)
         self.servo_handle = None
         print("[SWITCH] PWM stopped, pin freed (hi-Z) — servo libero, niente segnale")
@@ -311,7 +350,7 @@ def main():
     print(f"GPIO {SWITCH_PIN} (Pin 11) — pull-up, switch to GND (Pin 9)")
     print(f"ON         = brake released, logging active")
     print(f"ON-OFF-ON  = follow-me mode (within 1s)")
-    print(f"OFF        = freno a {OFF_ANGLE}° (partenza), all stopped")
+    print(f"OFF        = freno a {OFF_ANGLE}° (stazionamento) e pin libero, all stopped")
 
     # Switch state log
     SWITCH_LOG = "/tmp/asmile_switch.csv"
