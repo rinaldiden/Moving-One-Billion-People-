@@ -17,15 +17,29 @@
    "tol_v_gps_rel": 0.25,
    "tol_a_imu_ms2": 2.5,
    "tempo_s": 1.5,
-   "riammissione_s": 3.0
-  }
+   "riammissione_s": 3.0,
+   "vel_senza_vibrazione_ms": 1.5
+  },
+  "verso_avanti": 1
  },
  "imu": {
   "ay_riposo_g": 0.043,
   "gx_bias_dps": -2.64,
   "_segni": "avanti = -ay (frenata: ay sopra il riposo). gx > 0 = muso giu'. Bias/riposo ricalcolati a ogni avvio da fermo.",
   "ema_dec_s": 0.14,
-  "morta_dopo_s": 0.3
+  "morta_dopo_s": 0.3,
+  "vibr_moto_g": 0.025,
+  "vibr_fermo_g": 0.015,
+  "a_min_g": 0.7,
+  "a_max_g": 1.3,
+  "congelato_cicli": 5,
+  "recal_max_dev_ay_g": 0.05,
+  "recal_max_dev_gx_dps": 3.0,
+  "recal_max_dec_ms2": 0.5,
+  "recal_max_gx_dps": 5.0,
+  "_sicurezza": "Ricalibrazione riposo/bias SOLO con encoder fermo E IMU senza vibrazione E |dec|,|gx| piccoli, e mai oltre +-recal_max_dev dal valore scritto qui. IMU 'viva' = campioni che cambiano (non >=5 uguali di fila) e |a| fra 0.7 e 1.3 g. |a|: istantaneo solo 0.3-2.5 g (le impuntate vere vanno a 0.50-1.41 g: un filtro istantaneo 0.7-1.3 le cancellerebbe), MEDIA su 1 s fra a_min_g e a_max_g (0.7-1.3).",
+  "a_min_inst_g": 0.3,
+  "a_max_inst_g": 2.5
  },
  "fusione_gps_imu": {
   "r_gps_ms": 0.2,
@@ -36,7 +50,8 @@
   "gps_fresco_s": 2.0,
   "ble_fresco_s": 3.0,
   "imu_solo_max_s": 1.5,
-  "sigma_v_max_ms": 1.0
+  "sigma_v_max_ms": 1.0,
+  "v_max_valida_ms": 15.0
  },
  "decel_obiettivo_ms2": {
   "_fonte": "PROVVISORIE: come frena DANIELE a mano (n=30 frenate, 1 giorno 13/11, il servo NON era collegato al freno: le 30 frenate sono tutte sue). Scala ENCODER (parabola 0.3 s). NON confrontare con IMU (legge 1.4-2x). Ritardo comando->decelerazione del servo: nessun dato, vedi freno.ritardo_comando_decel_s.",
@@ -53,7 +68,8 @@
  "freno": {
   "tetto_deg": 50.0,
   "tetto_assoluto_codice_deg": 50.0,
-  "rampa_su_deg_s": 12.0, "rampa_su_sopra_vmax_deg_s": 25.0,
+  "rampa_su_deg_s": 12.0,
+  "rampa_su_sopra_vmax_deg_s": 25.0,
   "rampa_su_oltre_soglia_deg_s": 3.0,
   "soglia_lenta_deg": 35.0,
   "rampa_giu_deg_s": 25.0,
@@ -61,11 +77,16 @@
   "impulso_trigger_deg": 1.0,
   "impulso_tieni_s": 0.15,
   "libera_sotto_deg": 2.0,
-  "tetto_imu_morta_deg": 25.0,
+  "tetto_imu_morta_deg": 0.0,
   "_note": "il tetto 50 e' scritto anche nel codice: il file puo' solo ABBASSARLO. L'angolo non e' mappato su decel: anello chiuso sulla decel misurata.",
   "ritardo_comando_decel_s": 0.3,
   "_ritardo": "PARAMETRO da misurare a banco (nessun dato: il servo non frenava nei log). Usato solo per rilasciare in anticipo (v prevista fra ritardo secondi < v_rilascia).",
-  "_rampe": "salita 12 gradi/s (3 sopra 35), discesa 25 gradi/s: salto di angolo massimo per ciclo 0.5 gradi; con g=0.05 m/s2/grado il jerk del comando e' <=1.25 m/s3 (limite 4). Il rilascio anti-impuntata e' l'UNICA eccezione (immediato)."
+  "_rampe": "salita 12 gradi/s (3 sopra 35), discesa 25 gradi/s: salto di angolo massimo per ciclo 0.5 gradi; con g=0.05 m/s2/grado il jerk del comando e' <=1.25 m/s3 (limite 4). Il rilascio anti-impuntata e' l'UNICA eccezione (immediato).",
+  "tetto_imu_morta_emergenza_deg": 25.0,
+  "_imu_morta": "DECISIONE PER DANIELE: IMU morta/congelata = anti-impuntata cieca, quindi fuori emergenza tetto 0 (rilascio, proposta di asmile-sicurezza); in emergenza tetto 25. Prima era 25 sempre.",
+  "rampa_tetto_deg_s": 60.0,
+  "uscita_tieni_s": 0.6,
+  "_uscita": "all'uscita: 0 gradi tenuto >= uscita_tieni_s (0.6, da misurare a banco da 50 gradi) PRIMA di liberare il pin"
  },
  "anti_impuntata": {
   "dec_imu_min_ms2": 2.0,
@@ -93,7 +114,8 @@
   "ma_fermo_max": 1000.0,
   "tempo_s": 1.0,
   "arretra_deg": 3.0,
-  "servo_fermo_s": 0.5
+  "servo_fermo_s": 0.5,
+  "assente_dopo_s": 2.0
  },
  "log_hz": 10,
  "fallback": {

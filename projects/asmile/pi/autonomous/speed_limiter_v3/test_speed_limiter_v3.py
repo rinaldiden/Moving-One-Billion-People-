@@ -127,11 +127,12 @@ def test_gps_senza_fix_passa_a_ble_poi_nessuna_fonte_rilascia():
     assert all(e[3] for e in ctl.eventi_log)                                         # ogni cambio ha un motivo
 
 
-def test_imu_morta_tetto_prudente():
+def test_imu_morta_tetto_zero_fuori_emergenza():
     r, ctl, s = con_guasto(Guasti(imu_morta=(10, 30)), pend=1.0)
     tardi = [x for x in r if 12 < x["t"] < 30]
-    assert max(x["tetto"] for x in tardi) <= CFG["freno"]["tetto_imu_morta_deg"]
-    assert max(x["angolo"] for x in tardi) <= CFG["freno"]["tetto_imu_morta_deg"] + 1e-6
+    assert max(x["tetto"] for x in tardi) == 0.0
+    assert max(x["angolo"] for x in tardi) == 0.0
+    assert any("IMU morta" in a for x in tardi for a in x["avvisi"])
 
 
 def test_ina_stallo_arretra_di_qualche_grado():
@@ -146,8 +147,7 @@ def test_encoder_bloccato_a_zero_riconosciuto_dal_gps():
     assert any(e[1] == "ENC" and e[2] == "GPS_IMU" and "GPS" in e[3] for e in ctl.eventi_log)
 
 
-def test_emergenza_sale_al_tetto_con_la_rampa_e_anti_impuntata_vince():
-    cfg, s, ctl, b = (None,) * 4
+def test_emergenza_sale_al_tetto_con_la_rampa():
     from speed_limiter_v3.scenari import nuovo
     cfg, s, ctl, b = nuovo(v0_kmh=8.0, pendenza_ms2=0.0)
     ang = []
@@ -157,8 +157,11 @@ def test_emergenza_sale_al_tetto_con_la_rampa_e_anti_impuntata_vince():
         r = ctl.passo(c)
         ang.append(r["angolo"])
         b.passo(0.02, s.angolo)
-    d = np.diff(ang)
-    assert max(ang) <= 50.0 and d.max() / 0.02 <= CFG["freno"]["rampa_su_deg_s"] + 1e-6
+    d = np.diff(ang) / 0.02
+    assert max(ang) <= 50.0
+    fr = CFG["freno"]
+    sotto = np.array(ang[:-1]) < fr["soglia_lenta_deg"]
+    assert d[sotto].max() <= fr["rampa_su_sopra_vmax_deg_s"] + 1e-6 and d[~sotto].max() <= fr["rampa_su_oltre_soglia_deg_s"] + 1e-6
 
 
 def test_servo_impulso_e_pin_libero():

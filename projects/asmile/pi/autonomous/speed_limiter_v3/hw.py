@@ -1,5 +1,6 @@
-"""Hardware VERO (lgpio, smbus2, file di /tmp). L'UNICO file che importa lgpio. NON VERIFICATO: mai girato sul Pi
-(vietato da Daniele per questa fase). Il loop e' unico: leggi -> Controllo.passo() -> (il servo e' comandato li' dentro)."""
+"""Hardware VERO (lgpio, smbus2, file di /tmp). L'UNICO file che importa lgpio/smbus2 (dentro le funzioni, mai a livello di modulo).
+NON VERIFICATO: mai girato sul Pi (vietato da Daniele per questa fase). Avvio: soglie validate -> flock su GPIO12 -> servo -> loop."""
+import fcntl
 import json
 import os
 import signal
@@ -8,15 +9,53 @@ import sys
 import time
 
 from .controllo import Controllo, carica_soglie
-from .fonti import Campione
+from .fonti import Campione, sanifica_velocita
 from .freno import SERVO_HZ, angle_to_duty
+from .servizio import STATO_DEFAULT, chiudi_servo, esegui, scrivi_stato
+from .validazione import SogliaError
 
 ENC_CUM_FILE = "/tmp/encoder_wheel_cum"        # "<count srotolati> <t_monotonic>" ~880 Hz dal bridge
 BLE_FILE = "/tmp/bike_speed"
 EMERGENCY_FLAG = "/tmp/emergency_brake"
 GPS_JSON = "/tmp/gps_state.json"
+LOCK_GPIO12 = "/run/brake_gpio12.lock"
 GPIO_CHIP, SERVO_PIN = 0, 12
 IMU_ADDR, INA_ADDR = 0x68, 0x40
+VMAX_VALIDA = 15.0
+
+
+class LockError(Exception):
+    pass
+
+
+def acquisisci_lock(path=LOCK_GPIO12):
+    """flock esclusivo (non bloccante) su GPIO12: UN solo padrone. Va preso PRIMA di toccare il pin e tenuto fino all'uscita."""
+    f = open(path, "a+")
+    try:
+        fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        f.close()
+        raise LockError("GPIO12 ha gia' un padrone (lock %s occupato)" % path)
+    return f
+
+
+def parse_gps(testo_json, vmax=VMAX_VALIDA):
+    """-> (v, fix) oppure None. Mai eccezioni: dato sporco = nessun dato."""
+    try:
+        j = json.loads(testo_json)
+        v = sanifica_velocita(j.get("speed_ms"), vmax)
+        if v is None:
+            return None
+        return (v, bool(j.get("fix")))
+    except (ValueError, AttributeError, TypeError):
+        return None
+
+
+def parse_ble(testo, vmax=VMAX_VALIDA):
+    try:
+        return sanifica_velocita(testo.split()[0], vmax)
+    except (IndexError, AttributeError):
+        return None
 
 
 class ServoLgpio:
@@ -48,39 +87,52 @@ class ServoLgpio:
 
     def chiudi(self):
         try:
-            self.libera()
             self.lg.gpiochip_close(self.h)
         except Exception:
             pass
 
 
 class LettoreSensori:
-    def __init__(self):
-        import smbus2
-        self.bus = smbus2.SMBus(1)
-        self.bus.write_byte_data(IMU_ADDR, 0x6B, 0x00)
+    """Tutte le letture in try: un sensore che sbaglia = None, mai un'eccezione nel loop. Percorsi e bus iniettabili (test)."""
+
+    def __init__(self, bus=None, enc_file=ENC_CUM_FILE, ble_file=BLE_FILE, gps_json=GPS_JSON, emerg=EMERGENCY_FLAG):
+        if bus is None:
+            import smbus2
+            bus = smbus2.SMBus(1)
+            bus.write_byte_data(IMU_ADDR, 0x6B, 0x00)
+        self.bus = bus
+        self.enc_file, self.ble_file, self.gps_json, self.emerg = enc_file, ble_file, gps_json, emerg
         self._ult_enc_t = None
         self._ult_gps_t = None
         self._ult_ble_m = None
+        self._raw_prec = None
+        self._raw_uguali = 0
 
     def imu(self):
         try:
-            b = self.bus.read_i2c_block_data(IMU_ADDR, 0x3B, 14)
-        except OSError:
+            b = bytes(self.bus.read_i2c_block_data(IMU_ADDR, 0x3B, 14))
+        except Exception:
             return None
-        ax, ay, az, _, gx, gy, gz = struct.unpack(">hhhhhhh", bytes(b))
+        if len(b) != 14:
+            return None
+        self._raw_uguali = self._raw_uguali + 1 if b == self._raw_prec else 0
+        self._raw_prec = b
+        if self._raw_uguali + 1 >= 5:                     # 14 byte identici da 5 cicli: sensore congelato/sleep -> nessun dato
+            return None
+        ax, ay, az, _, gx, gy, gz = struct.unpack(">hhhhhhh", b)
         return (ax / 16384.0, ay / 16384.0, az / 16384.0, gx / 131.0, gy / 131.0, gz / 131.0)
 
     def ina_ma(self):
+        """Corrente servo da tensione di shunt (reg 0x01, 10 uV/LSB, shunt 0.1 ohm): non serve calibrazione. None se non risponde."""
         try:
-            r = self.bus.read_i2c_block_data(INA_ADDR, 0x04, 2)
-            return struct.unpack(">h", bytes(r))[0] * 0.1
-        except OSError:
+            r = self.bus.read_i2c_block_data(INA_ADDR, 0x01, 2)
+            return struct.unpack(">h", bytes(r))[0] * 0.01 / 0.1
+        except Exception:
             return None
 
     def enc(self):
         try:
-            with open(ENC_CUM_FILE) as f:
+            with open(self.enc_file) as f:
                 c, tb = f.readline().split()[:2]
             c, tb = int(c), float(tb)
         except (OSError, ValueError):
@@ -92,58 +144,62 @@ class LettoreSensori:
 
     def gps(self):
         try:
-            with open(GPS_JSON) as f:
-                j = json.load(f)
-        except (OSError, ValueError):
+            with open(self.gps_json) as f:
+                txt = f.read()
+            j = json.loads(txt)
+            ts = j.get("ts")
+        except (OSError, ValueError, AttributeError):
             return None
-        if j.get("ts") == self._ult_gps_t:
+        if ts == self._ult_gps_t:
             return None
-        self._ult_gps_t = j.get("ts")
-        return (float(j.get("speed_ms", 0.0)), bool(j.get("fix")))
+        self._ult_gps_t = ts
+        return parse_gps(txt)
 
     def ble(self):
         try:
-            st = os.stat(BLE_FILE)
+            st = os.stat(self.ble_file)
             if st.st_mtime == self._ult_ble_m or time.time() - st.st_mtime > 3.0:
                 return None
             self._ult_ble_m = st.st_mtime
-            with open(BLE_FILE) as f:
-                return float(f.readline().split()[0])
-        except (OSError, ValueError, IndexError):
+            with open(self.ble_file) as f:
+                return parse_ble(f.readline())
+        except OSError:
             return None
+
+    def campione(self, t):
+        return Campione(t=t, enc=self.enc(), imu=self.imu(), gps=self.gps(), ble=self.ble(), ina_ma=self.ina_ma(),
+                        emergenza=os.path.exists(self.emerg))
 
 
 def main():
-    cfg = carica_soglie()
+    try:
+        cfg = carica_soglie()                       # validazione completa: se sbaglia si esce SENZA toccare il pin
+    except SogliaError as e:
+        print("[LIMITER] soglie non valide, non parto: %s" % e, flush=True)
+        scrivi_stato(STATO_DEFAULT, {"t": time.time(), "stato": "NON_PARTITO", "errore": str(e)})
+        return 2
+    try:
+        lock = acquisisci_lock()
+    except LockError as e:
+        print("[LIMITER] non parto: %s" % e, flush=True)
+        scrivi_stato(STATO_DEFAULT, {"t": time.time(), "stato": "NON_PARTITO", "errore": str(e)})
+        return 3
     servo = ServoLgpio()
     ctl = Controllo(cfg, servo, log_eventi=lambda t, da, a, m: print(f"[FONTE] {da} -> {a}: {m}", flush=True))
     sens = LettoreSensori()
     run = [True]
     signal.signal(signal.SIGTERM, lambda *_: run.__setitem__(0, False))
     signal.signal(signal.SIGINT, lambda *_: run.__setitem__(0, False))
-    dt = 1.0 / 50
-    prossimo = time.monotonic()
+    codice = 1
     try:
-        while run[0]:
-            t = time.monotonic()
-            c = Campione(t=t, enc=sens.enc(), imu=sens.imu(), gps=sens.gps(), ble=sens.ble(), ina_ma=sens.ina_ma(),
-                         emergenza=os.path.exists(EMERGENCY_FLAG))
-            ctl.passo(c)          # il comando servo avviene QUI DENTRO, nello stesso ciclo
-            prossimo += dt
-            s = prossimo - time.monotonic()
-            if s > 0:
-                time.sleep(s)
-            else:
-                prossimo = time.monotonic()
+        codice = esegui(ctl, sens, servo, run)
     finally:
         ctl.rampa.azzera()
-        try:
-            servo.pwm(0.0)
-            time.sleep(0.2)
-        except Exception:
-            pass
-        servo.chiudi()
+        chiudi_servo(servo, cfg["freno"]["uscita_tieni_s"])      # 0 gradi tenuto >= 0.6 s, poi pin libero
+        scrivi_stato(STATO_DEFAULT, {"t": time.time(), "stato": "FERMATO", "codice": codice})
+        lock.close()
+    return codice
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

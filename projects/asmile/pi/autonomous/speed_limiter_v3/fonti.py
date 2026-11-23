@@ -8,6 +8,17 @@ from typing import Optional
 G = 9.81
 
 
+def sanifica_velocita(x, vmax=15.0):
+    """Velocita' esterna (GPS/BLE) -> float finito in [0, vmax] oppure None. Mai eccezioni: dato sporco = nessun dato."""
+    try:
+        v = float(x)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if not math.isfinite(v) or v < 0.0 or v > vmax:
+        return None
+    return v
+
+
 @dataclass
 class Campione:
     t: float                         # orologio monotonic dell'host, secondi
@@ -44,6 +55,9 @@ class Encoder:
         self.win = cfg["finestra_parabola_s"]
         self.max_step = cfg["max_salto_counts"]
         self.fresco_s = cfg["fresco_s"]
+        self.sgn = 1 if cfg["verso_avanti"] >= 0 else -1
+        self.indietro = False        # retromarcia: v firmata negativa
+        self.v_firmata = 0.0
         self._last = None
         self._cum = 0
         self._hist = deque()
@@ -55,7 +69,12 @@ class Encoder:
     def aggiorna(self, t, enc):
         if enc is None:
             return
-        te, c = enc
+        try:
+            te, c = float(enc[0]), int(enc[1])
+        except (TypeError, ValueError, IndexError, OverflowError):
+            return
+        if not math.isfinite(te):
+            return
         if self._last is None:
             self._last = c
             self._hist.clear()
@@ -73,7 +92,7 @@ class Encoder:
             self._hist.append((te, self._cum * self.k))
             self.t_nuovo = t
             return
-        self._cum += abs(d)
+        self._cum += self.sgn * d       # FIRMATO: la retromarcia non conta come avanti
         self.t_nuovo = t
         self._fit(te)
 
@@ -90,6 +109,8 @@ class Encoder:
         Y = [sum(y * x ** n for x, y in zip(tau, sm)) for n in range(3)]
         sol = _solve3([[S[0], S[1], S[2]], [S[1], S[2], S[3]], [S[2], S[3], S[4]]], Y)
         if sol is not None:
+            self.v_firmata = sol[1]
+            self.indietro = sol[1] < -0.3
             self.v = max(0.0, sol[1])
             self.a = 2.0 * sol[2]
 
@@ -121,20 +142,68 @@ class ImuLong:
         self._sz2 = 0.0
         self.vibr = 0.0             # std di az su 1 s, in g
         self._t_moto = None
-        self.vibr_on, self.vibr_off = 0.025, 0.015
+        self.vibr_on, self.vibr_off = cfg["vibr_moto_g"], cfg["vibr_fermo_g"]
+        self.a_min, self.a_max = cfg["a_min_g"], cfg["a_max_g"]            # su MEDIA 1 s
+        self.ai_min, self.ai_max = cfg["a_min_inst_g"], cfg["a_max_inst_g"]  # istantaneo: solo dati spazzatura
+        self._wa = deque()
+        self._swa = 0.0
+        self.congelato = cfg["congelato_cicli"]
+        self.ay0, self.gx0 = cfg["ay_riposo_g"], cfg["gx_bias_dps"]        # valori del file: ancora delle ricalibrazioni
+        self.dev_ay, self.dev_gx = cfg["recal_max_dev_ay_g"], cfg["recal_max_dev_gx_dps"]
+        self.rec_dec, self.rec_gx = cfg["recal_max_dec_ms2"], cfg["recal_max_gx_dps"]
+        self._prec = None
+        self._ripetuti = 0
+        self.scartati = 0
+        self.motivo_scarto = ""
+
+    def _valido(self, imu):
+        """Campione utile: 6 numeri finiti, |a| fra a_min e a_max g, e non uguale a quello prima per 'congelato' cicli."""
+        try:
+            ax, ay, az, gx, gy, gz = (float(x) for x in imu)
+        except (TypeError, ValueError):
+            return False, "campione IMU malformato"
+        if not all(math.isfinite(x) for x in (ax, ay, az, gx, gy, gz)):
+            return False, "IMU non finita"
+        a = math.sqrt(ax * ax + ay * ay + az * az)
+        if not (self.ai_min <= a <= self.ai_max):
+            return False, "IMU |a|=%.2f g istantaneo fuori %.1f-%.1f" % (a, self.ai_min, self.ai_max)
+        self._wa.append(a)
+        self._swa += a
+        if len(self._wa) > 50:
+            self._swa -= self._wa.popleft()
+        if len(self._wa) >= 25:
+            m = self._swa / len(self._wa)
+            if not (self.a_min <= m <= self.a_max):
+                return False, "IMU |a| medio %.2f g fuori %.1f-%.1f" % (m, self.a_min, self.a_max)
+        tup = (ax, ay, az, gx, gy, gz)
+        self._ripetuti = self._ripetuti + 1 if tup == self._prec else 0
+        self._prec = tup
+        if self._ripetuti + 1 >= self.congelato:
+            return False, "IMU congelata (%d campioni uguali)" % (self._ripetuti + 1)
+        return True, ""
 
     def aggiorna(self, t, imu, fermo):
         if imu is None:
             return
-        ax, ay, az, gx, gy, gz = imu
+        ok, motivo = self._valido(imu)
+        if not ok:                       # dato non valido = come se non fosse arrivato (l'IMU invecchia e diventa 'morta')
+            self.scartati += 1
+            self.motivo_scarto = motivo
+            return
+        ax, ay, az, gx, gy, gz = (float(x) for x in imu)
         dt = 0.02 if self._t_prec is None else max(1e-3, min(0.2, t - self._t_prec))
         self._t_prec = t
         self._t_ultimo = t
-        if fermo:                                    # ricalcola riposo e bias da fermo
+        # ricalibra riposo/bias SOLO se: encoder fermo (fermo) E senza vibrazione E dec e gx piccoli, e con clamp vicino al file
+        if fermo and not self.in_moto(t, 3.0) and abs((ay - self.ay_riposo) * G) < self.rec_dec \
+                and abs(gx - self.gx_bias) < self.rec_gx:
             al = min(1.0, dt / 1.0)
             self.ay_riposo += al * (ay - self.ay_riposo)
             self.gx_bias += al * (gx - self.gx_bias)
+            self.ay_riposo = max(self.ay0 - self.dev_ay, min(self.ay0 + self.dev_ay, self.ay_riposo))
+            self.gx_bias = max(self.gx0 - self.dev_gx, min(self.gx0 + self.dev_gx, self.gx_bias))
             self.riposo_calibrato = True
+        dt = min(dt, 0.05)                                # dopo un buco di dati non gonfiare EMA e integrale di beccheggio
         al = min(1.0, dt / self.tau_ema)
         self.dec += al * ((ay - self.ay_riposo) * G - self.dec)
         a_raw = -(ay - self.ay_riposo) * G / self.scala     # in scala ENCODER (la dec per l'anti-impuntata resta in scala IMU)
@@ -185,6 +254,8 @@ class Fusione:
             return
         dt = max(0.0, min(0.2, t - self._t_prec))
         self._t_prec = t
+        if not math.isfinite(a_avanti):
+            a_avanti = 0.0
         if self.t_ult_buono is None or t - self.t_ult_buono <= self.c["imu_solo_max_s"] * 2:
             self.v += (a_avanti - self.b) * dt        # senza GPS/BLE da troppo tempo l'IMU non integra piu' (deriva)
         self.v = min(self.v, 15.0)
@@ -209,6 +280,12 @@ class Fusione:
         self.P = [[P00, P01], [P01, P11]]
 
     def misura(self, t, v, quale):
+        v = sanifica_velocita(v, self.c["v_max_valida_ms"])
+        if v is None:
+            return False
+        if not math.isfinite(self.v) or not math.isfinite(self.b):     # stato corrotto: riparte pulito
+            self.v, self.b, self.init = 0.0, 0.0, False
+            self.P = [[4.0, 0.0], [0.0, 0.25]]
         if not self.init:
             self.v, self.init = v, True
             self.P[0][0] = 0.3 ** 2
@@ -219,6 +296,7 @@ class Fusione:
         else:
             self.t_ble = t
         self.t_ult_buono = t
+        return True
 
     def suggerisci_bias(self, t, a_avanti_raw, a_enc):
         """Suggerimento LENTO di bias: tocca solo b (non v), solo con accelerazione piccola (niente scala IMU in gioco)."""
@@ -259,6 +337,9 @@ class Arbitro:
         self._v_enc_ult = 0.0
         self._ultimo_enc_buono = None
         self.motivo_corrente = "avvio"
+        self._t_av = None
+        self.avviso_failopen = False
+        self._t_bad_i = None
 
     def _plausibile(self, t):
         """True se l'encoder concorda con GPS/IMU (non e' una prova di verita': cerca guasti grossi)."""
@@ -268,9 +349,14 @@ class Arbitro:
             vf = self.fus.v
             bad_v = abs(self.enc.v - vf) > max(pl["tol_v_gps_ms"], pl["tol_v_gps_rel"] * vf)
         bad_a = self.imu.viva(t) and abs(self.enc.a - self.imu.a_liscia) > pl["tol_a_imu_ms2"]
+        # l'encoder inventa velocita' (anche senza GPS): dice moto ma l'IMU non vibra (misurato: ferma p95 0.006 g, in moto p5 0.048 g)
+        bad_i = self.imu.viva(t) and self.enc.v > pl["vel_senza_vibrazione_ms"] and not self.imu.in_moto(t, 1.0)
+        self._t_bad_i = (self._t_bad_i if self._t_bad_i is not None else t) if bad_i else None
         self._t_bad_v = (self._t_bad_v if self._t_bad_v is not None else t) if bad_v else None
         self._t_bad_a = (self._t_bad_a if self._t_bad_a is not None else t) if bad_a else None
         durata = pl["tempo_s"]
+        if self._t_bad_i is not None and t - self._t_bad_i >= durata:
+            return False, "encoder dice moto ma l'IMU non vibra"
         if (self._t_bad_v is not None and t - self._t_bad_v >= durata) or \
            (self._t_bad_a is not None and t - self._t_bad_a >= durata):
             return False, "encoder in disaccordo con " + ("GPS" if self._t_bad_v is not None and t - self._t_bad_v >= durata else "IMU")
@@ -293,8 +379,8 @@ class Arbitro:
                 self._t_ok = None
             elif self.enc_implausibile:
                 # riammissione: solo con prove IN MOVIMENTO (fermo = encoder 0 e GPS 0 concordano sempre, non prova nulla)
-                prova = self.fus.t_gps is not None and t - self.fus.t_gps <= self.fcfg["gps_fresco_s"] \
-                    and max(self.enc.v, self.fus.v) > 1.0
+                prova = (self.fus.t_gps is not None and t - self.fus.t_gps <= self.fcfg["gps_fresco_s"]
+                         and max(self.enc.v, self.fus.v) > 1.0) or (self.enc.v > 1.0 and self.imu.in_moto(t, 1.0))
                 if not prova:
                     self._t_ok = None
                 else:
@@ -323,9 +409,10 @@ class Arbitro:
         else:
             nuova = "NESSUNA"
             motivo = motivo or "nessuna fonte di velocita'"
-        if nuova in ("GPS_IMU", "BLE_IMU") and not self.imu.in_moto(t):
-            nuova = "FERMO_IMU"                       # GPS/BLE dicono 'si muove' ma l'IMU non vibra: rumore GPS a bici ferma
-            motivo = "IMU non vibra (bici ferma): GPS/BLE ignorati"
+        if nuova != "ENC" and self.imu.viva(t) and not self.imu.in_moto(t):
+            nuova = "FERMO_IMU"                       # GPS/BLE/encoder dicono 'si muove' ma l'IMU non vibra: bici ferma
+            motivo = "IMU non vibra (bici ferma): velocita' esterne ignorate"
+        self._avvisa(t, nuova)
         if nuova != self.fonte:
             self.eventi.append((t, self.fonte, nuova, motivo or self.motivo_corrente))
             if self.fonte == "ENC" and nuova != "ENC":
@@ -335,6 +422,22 @@ class Arbitro:
                 self._off = 0.0
             self.fonte = nuova
         return self.fonte
+
+    def _avvisa(self, t, nuova):
+        """Fail-open da rendere VISIBILE: encoder fermo (o non plausibile) ma l'IMU vibra e non c'e' GPS/BLE = nessun limite."""
+        cieco = nuova in ("NESSUNA", "IMU_SOLO") and self.imu.viva(t) and self.imu.in_moto(t, 1.0)
+        enc_fermo = self.enc.fresco(t) and self.enc.v < 0.1
+        cond = (nuova == "ENC" and enc_fermo and self.imu.in_moto(t, 1.0) and self.imu.vibr > 3 * self.imu.vibr_on
+                and (self.fus.t_gps is None or t - self.fus.t_gps > self.fcfg["gps_fresco_s"])
+                and (self.fus.t_ble is None or t - self.fus.t_ble > self.fcfg["ble_fresco_s"])) or cieco
+        if cond:
+            self._t_av = self._t_av if self._t_av is not None else t
+            if t - self._t_av >= 3.0 and not self.avviso_failopen:
+                self.avviso_failopen = True
+                self.eventi.append((t, nuova, nuova, "AVVISO fail-open: la bici vibra ma la velocita' e' ferma/ignota e non c'e' GPS/BLE: nessun limite attivo"))
+        else:
+            self._t_av = None
+            self.avviso_failopen = False
 
     def stato(self, t):
         """(v, a, fonte) da usare nel controllo."""

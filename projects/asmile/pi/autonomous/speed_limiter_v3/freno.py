@@ -30,8 +30,10 @@ class Rampa:
                 r = min(r, su_max)
             self.angolo = min(target, self.angolo + r * dt)
         else:
-            self.angolo = max(target, self.angolo - c["rampa_giu_deg_s"] * dt)
-        self.angolo = min(self.angolo, tetto)       # se il tetto scende, scende subito
+            r = c["rampa_giu_deg_s"]
+            if self.angolo > tetto:                      # tetto sceso: rilascio a rampa (veloce), niente salto secco
+                r = max(r, c["rampa_tetto_deg_s"])
+            self.angolo = max(target, self.angolo - r * dt)
         return self.angolo
 
     def azzera(self):
@@ -88,9 +90,20 @@ class GuardiaIna:
         self.t_alto = None
         self.cap = None
         self.n_arretra = 0
+        self.t_ma_ok = None          # ultimo istante con una lettura INA valida
+        self.assente = False         # INA non risponde: guardia SPENTA, avviso visibile
 
     def passo(self, t, ma, fermo_da, angolo):
         c = self.c
+        if ma is not None and not math.isfinite(ma):
+            ma = None
+        if ma is not None:
+            self.t_ma_ok = t
+            self.assente = False
+        else:
+            if self.t_ma_ok is None:
+                self.t_ma_ok = t
+            self.assente = (t - self.t_ma_ok) >= c["assente_dopo_s"]
         if ma is None or fermo_da < c["servo_fermo_s"] or ma <= c["ma_fermo_max"]:
             self.t_alto = None
             if angolo <= 0.0:
@@ -202,6 +215,8 @@ class Regolatore:
         else:
             self.a_des, self.livello = -min(d["forte"], d["normale"] + r["k_sopra_15_ms2_per_ms"] * (vp - self.v2)), "sopra15"
         self.frena = angolo > 0.5 or self.a_des < 0
+        if vp < self.v1 - 0.5:                       # ben sotto la zona (> ~1.8 km/h): il freno non serve, rilascio a rampa veloce
+            return 0.0
         pmax = d["forte_picco_max"] if self.livello == "sopra15" else d["normale_picco_max"]
         err = self.a_f - self.a_des
         if abs(err) < r["banda_morta_ms2"]:

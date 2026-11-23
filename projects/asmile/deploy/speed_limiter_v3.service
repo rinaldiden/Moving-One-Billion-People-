@@ -1,0 +1,21 @@
+# BOZZA - NON INSTALLARE: speed_limiter v3 e' solo provato a secco sul Mac (asmile-sicurezza: BLOCK al deploy).
+[Unit]
+Description=Asmile #001 speed_limiter v3 (limite 15 km/h, freno 0-50 gradi)
+# un solo padrone di GPIO12: la v2 e servofreno non devono mai girare insieme (in piu' c'e' il flock /run/brake_gpio12.lock)
+Conflicts=speed_limiter.service servofreno.service
+After=sensor_hub.service
+
+[Service]
+Type=simple
+User=root
+Environment=PYTHONPATH=/home/asmile/wip/Moving-One-Billion-People-/projects/asmile/pi/autonomous
+ExecStart=/usr/bin/python3 -m speed_limiter_v3.hw
+# dopo QUALSIASI fine (anche SIGKILL/OOM) il freno torna a 0 gradi; il '-' = non fallire lo stop se non riesce
+ExecStopPost=-/usr/bin/python3 -m speed_limiter_v3.porta_a_zero
+KillSignal=SIGTERM
+TimeoutStopSec=6
+# NON riparte da solo: un limiter caduto deve vedersi (stato in /run/speed_limiter_v3.state + log), non risorgere in silenzio
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
