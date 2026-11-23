@@ -68,7 +68,7 @@ SERVO_FREQ = 50
 PWM_PULSE_MIN_US = 500
 PWM_PULSE_MAX_US = 2500
 PWM_PERIOD_US = 1_000_000 / SERVO_FREQ
-BRAKE_MAX_ANGLE = 60    # mai oltre: idraulico inchioda
+BRAKE_MAX_ANGLE = 50    # 23/11 Daniele: massimo 50° (a 60 il servo va in stallo ≥3,2 A). Mai oltre.
 BRAKE_PWM_ON_THRESHOLD = 2.0   # sotto questo angolo → free pin (hi-Z), risparmio
 
 # ─── Loop ─────────────────────────────────────────────────────────────
