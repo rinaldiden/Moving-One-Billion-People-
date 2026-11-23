@@ -30,7 +30,7 @@ static const char *TAG = "rec";
 #define NBUF        4
 #define REC_DIV     3
 #define SEG_S       60
-#define H264_BITRATE 2000000
+#define H264_BITRATE 6000000     /* 23/11: 2 → 6 Mbps per la prima calibrazione col mock (dettagli fini su strada, lezione logger001: compressione = angoli sporchi) */
 #define N_ULTIMI    32
 
 static int s_cap = -1, s_enc = -1;
@@ -390,8 +390,8 @@ esp_err_t logger02_rec_start(void)
 
     ctrl(s_enc, V4L2_CID_MPEG_VIDEO_H264_I_PERIOD, 17);     /* un I-frame al secondo circa */
     ctrl(s_enc, V4L2_CID_MPEG_VIDEO_BITRATE, H264_BITRATE);
-    ctrl(s_enc, V4L2_CID_MPEG_VIDEO_H264_MIN_QP, 22);
-    ctrl(s_enc, V4L2_CID_MPEG_VIDEO_H264_MAX_QP, 38);
+    ctrl(s_enc, V4L2_CID_MPEG_VIDEO_H264_MIN_QP, 18);
+    ctrl(s_enc, V4L2_CID_MPEG_VIDEO_H264_MAX_QP, 32);
     memset(&fmt, 0, sizeof(fmt));
     fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
     fmt.fmt.pix.width = W;
