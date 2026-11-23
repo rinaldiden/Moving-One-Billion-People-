@@ -13,3 +13,5 @@
 - 2026-11-09 17:38 001: sterzo: velocità default 20 deg/s (variazione 6-8%, picco 26 deg/s, 13-20 A), resto invariato pi/steering/sterzo_fluido_001.py fleet/001/data agents/prove/sterzo_001
 - 2026-11-09 17:51 001: sterzo: micro-rampa in partenza (jerk 250 deg/s^3, spinta attrito graduale): niente colpo in partenza; VESC ±45 A pi/steering/sterzo_fluido_001.py fleet/001/data agents/prove/sterzo_001
 - 2026-11-11 07:55 001: recorder modo calib 6 Mbps via /tmp/asmile_calib_mode (attivo oggi 2026-11-11, overlay: sparisce al riavvio) 
+- 2026-11-23 15:15 001: master_switch: OFF = freno a 0 (non più 60°); servofreno disabled projects/asmile/pi/power/master_switch.py
+- 2026-11-23 16:01 001: tetto freno 50° in speed_limiter e master_switch 

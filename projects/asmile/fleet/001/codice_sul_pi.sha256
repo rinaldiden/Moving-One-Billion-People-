@@ -30,7 +30,7 @@ e703546c6134b1adc1c7d1691079fcd749c1e9c4fe82525e84d6af9942feede1  ./pi/autonomou
 b27f0302e58a7f196f8c46a0ec4a32dcaf6d604717ba333a54e92ef9e9a31317  ./pi/autonomous/position_fusion.py
 a9edfb2acd784a6511c19b09c4df47153b214e295fe42b08e59a18f4c21f7fe0  ./pi/autonomous/route_replay.py
 9d3dac4f0f0781295413371a97e431df6cdcd7594e4c8c40433ddd74986ad17b  ./pi/autonomous/shadow_mode.py
-8bfc213d95a05f6888144e7b58ea2023e7d3bee31bc08c55ba6c93f3a4c4a8e7  ./pi/autonomous/speed_limiter.py
+73f09e5b6fde01fd6c54c96446c30d0baedf7ff359f45fbf406e6fa48184c081  ./pi/autonomous/speed_limiter.py
 e634f28b5285d740022560d8bb1fd7791fe7847ea24346872d4be075329ccd50  ./pi/autonomous/test_route_replay.py
 bbab7c1e9e5cb2a1bf8c9840288db3aea8d9b70e69c2aae758ea4b21ff429bca  ./pi/autonomous/vision_safety.py
 0e6e1a84ff5ef79ecde90a9930a0f5f8ac5098b669ce7b54c5e61f905941b4a6  ./pi/braking/brake_servo.py
@@ -42,7 +42,7 @@ a00a08777c68a9a31ca85e008db0740c0835abbfb547e2d1abd3490659761102  ./pi/buzzer/pr
 8e3726a7e0203b616638eb949fefb28d48c8f04aa97dd8ac98e15f49a2215f14  ./pi/buzzer/test_buzzer.py
 c93ee873a74404be593259413abfa8f011d5b3268fdc474c33616cd131e0d475  ./pi/camera/calibrate_camera.py
 17e69b7cf5bc13e02d199f6bc789071baabeedfc85a9fbb34b5b2c7293b8adbe  ./pi/camera/calibrate_stereo.py
-0565de6c7e0ff82eb409364ed0ff3c5281fe8bc7c9ff09f62ccdb91cd8a4f147  ./pi/camera/dual_cam_recorder.py
+6cc4d6738cc79d4c0201457b3b6521322091f27934a4a53b93316d2b0c2e3241  ./pi/camera/dual_cam_recorder.py
 afe11deb55a7efe603c3f11debedd30c0f24677478083c4849e11eb330d5add0  ./pi/camera/frame_times.py
 67e0496f265fe3589cce5ccbca34e24ebbd8917bc67dba4dfab07b054b71769b  ./pi/camera/raw_stream.py
 d1ac04dba0f701c1f632dfcd514b515a9a3940bb5bb14372ca3e7f748a47e812  ./pi/camera/stream_server.py
@@ -50,7 +50,7 @@ d1ac04dba0f701c1f632dfcd514b515a9a3940bb5bb14372ca3e7f748a47e812  ./pi/camera/st
 bd541f0e45c96ae0fb3b06f8813ab36eba39e3ba8b3d4b2ae7c12f94e966f239  ./pi/camera/test_dual_cam.py
 df6ad026c44d2220960ced8cbb7d095c08c3bb96610df27cd47317cc8849310b  ./pi/logging/training_recorder.py
 4f8d3cb26d07b1c8588ce75bec4b8adddb36fce107f855de5f69e6363c6f3125  ./pi/power/health_logger.py
-dcc40478b1dccb67d45831b96ecd84a16f7efef1f9550182f65d80a62855e8e4  ./pi/power/master_switch.py
+3de135e2c80f8cb215d72f8df73ecff5ce33838c3fb427cbb35922e3fe55f12e  ./pi/power/master_switch.py
 6927159f876f3b748609144a39acac3b10b68a554af66cd502c4ad4a930b1aa9  ./pi/power/safe_shutdown.py
 cfa009aa19f619bf75dd34d2a0edaf78190bdce7ff297151200071a204119fe7  ./pi/sensors/actuator_log.py
 055076a7d735519ce22c4d7ec3b26ad30b2254f5b4f2ff15d70f88fae1674ce6  ./pi/sensors/gps_neo_m10.py
@@ -77,8 +77,8 @@ a57079bc2bedacf48773e540fa887e3c1b80f345196f6c3db8367219cfa9c2be  ./pi/steering/
 ed93ff23a783820efc1b2ecb8d694eb5e3e6edbf9c45161f7bfe11601e818d38  ./pi/steering/test_encoder_modes.py
 e847ff0df9b1279de15e774625f162352b330023835a2d8d06497a62dc2bec00  ./pi/steering/test_encoder_spi.py
 2c88d3d6378d6e0eeb636474365f7d6e730ca298f19453dcb87db23900bf4376  ./pi/steering/test_level_shifter.py
-0796e148c627f9a6a87fabe352a77976c50635de3c4f17be948eef2a439a0e07  ./pi/steering/test_loopback.py
 9d1489a2f0a85b3aed6b7af26f3c255230347786d959941f44326d7a2e50fc1d  ./pi/steering/test_loopback_auto.py
+0796e148c627f9a6a87fabe352a77976c50635de3c4f17be948eef2a439a0e07  ./pi/steering/test_loopback.py
 43f8f15cca0d10693aac38cd04ba3e73d2183b971026406f30fae73e081ec2fe  ./pi/steering/test_motor_spin.py
 4c017c6ed7a674528cd416483bedc29ba98c6d11f1a272aa3d902c7b13b618e9  ./pi/steering/test_motor_spin2.py
 927cca5b2cd6950220c99fab0f82b8a7bceb0fff16a0606d3d395102df6fa92d  ./pi/steering/test_multimeter.py
@@ -93,8 +93,8 @@ affd7eb6bf8ea4588fb94474ee34e4bd1b40ee732b6ad6b6cce3be0b5db3b1ab  ./pi/steering/
 09296bdbd3dba7f941eed76d0d7b7c58436060e234ff547720feab571220807e  ./pi/vision/rtsp_stream.py
 88298b7a066b20e78fa3241831fa32427037844f9ed967e86db866f205b96fd5  ./pi/vision/setup_streaming.sh
 3a1a6c7d428e96aa4d22edf82f4741e865706697ef491dbb8cf5e58110bf1c3d  ./training/behavioral_cloning.py
-12094600129918bf83c799cc4e2724aa98c136846033adcb10b46be32d320396  ./training/build_dataset.py
 028e8def723405190c6c1be261cfeca8afc096f6b7cc886834cba20db851b27a  ./training/build_dataset_v2.py
+12094600129918bf83c799cc4e2724aa98c136846033adcb10b46be32d320396  ./training/build_dataset.py
 ed34932fd7762c3d9530e6f3e4fa005a79ccbaaa5a2e3bddf0c25f5c46a26b7c  ./training/depth_extractor.py
 f643851a8fabf7e0ed4b7d8ced13df10307f8f898561df6a6d5088afd8b75972  ./training/depth_test1.py
 798a43f52b51b66867c18d918cdf5f5c79c2655f119ff7e5762ad81125d59e8a  ./training/frame_extractor.py
