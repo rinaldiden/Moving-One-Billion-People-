@@ -526,3 +526,103 @@ for k in (10993,11982,12984):
 out=np.vstack(tiles)
 D='/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/asmile-loggers/logger02_giro_20261123/controllo_distanze.jpg'
 cv2.imwrite(D,out,[cv2.IMWRITE_JPEG_QUALITY,85]);print(out.shape)
+
+# ===== file: plate.py =====
+from rig import *
+import pickle
+from dec import clip
+pairs=pickle.load(open('pairs.pkl','rb'))
+maps1=cv2.initUndistortRectifyMap(K1,d1,RR1,P1,(1280,720),cv2.CV_32FC1);maps2=cv2.initUndistortRectifyMap(K2,d2,R2,P1,(1280,720),cv2.CV_32FC1)
+def rectpair(k):
+    a,b,_=pairs[k];ia=clip(a[1])[a[2]].copy();ib=clip(b[1])[b[2]].copy()
+    return cv2.remap(ia,*maps1,cv2.INTER_LINEAR),cv2.remap(ib,*maps2,cv2.INTER_LINEAR)
+if __name__=='__main__':
+    ra,rb=rectpair(10993)
+    c=ra[400:500,640:800];d=rb[400:500,640:800]
+    cv2.imwrite('plate_L.png',cv2.resize(c,None,fx=6,fy=6,interpolation=cv2.INTER_CUBIC))
+    print(ra.shape)
+
+# ===== file: plate3.py =====
+from plate import *
+import json
+def disp(ra,rb,cx,cy,hw,hh):
+    tpl=ra[cy-hh:cy+hh,cx-hw:cx+hw];out=[]
+    x0=max(cx-hw-200,0)
+    res=cv2.matchTemplate(rb[cy-hh:cy+hh,x0:cx+hw+20],tpl,cv2.TM_CCOEFF_NORMED)[0]
+    j=int(res.argmax());v=res[j]
+    if 0<j<len(res)-1:
+        a,b,c=res[j-1],res[j],res[j+1];s=j+0.5*(a-c)/(a-2*b+c)
+    else:s=j
+    return (cx-hw)-(x0+s),float(v)
+ref,_=rectpair(11720);tpl0=ref[424:480,521:860].astype(np.float32);WREF=322.0;WOUT=339.0
+def search(ra,scales):
+    best=(-1,None,None)
+    for s in scales:
+        t=cv2.resize(tpl0,None,fx=s,fy=s,interpolation=cv2.INTER_AREA)
+        if t.shape[0]<10 or t.shape[1]<20:continue
+        r=cv2.matchTemplate(ra.astype(np.float32),t,cv2.TM_CCOEFF_NORMED);_,mv,_,ml=cv2.minMaxLoc(r)
+        if mv>best[0]:best=(mv,s,ml)
+    return best
+rows=[]
+for k in (11346,11420,11500,11570,11651,11720,11760,11800):
+    try: ra,rb=rectpair(k)
+    except Exception as e: print(k,'err',e);continue
+    coarse=search(ra,np.geomspace(0.12,1.2,28))
+    if coarse[1] is None or coarse[0]<0.5: print(k,'non trovata',coarse[0]);continue
+    s0=coarse[1];fine=search(ra,np.linspace(s0*0.93,s0*1.07,15))
+    mv,s,(x,y)=fine
+    # affina scala per parabola
+    ss=np.linspace(s0*0.93,s0*1.07,15);sc=[]
+    for q in ss:
+        t=cv2.resize(tpl0,None,fx=q,fy=q,interpolation=cv2.INTER_AREA);r=cv2.matchTemplate(ra.astype(np.float32),t,cv2.TM_CCOEFF_NORMED);sc.append(r.max())
+    i=int(np.argmax(sc))
+    if 0<i<len(ss)-1:
+        a,b,c=sc[i-1],sc[i],sc[i+1];s=ss[i]+0.5*(a-c)/(a-2*b+c)*(ss[1]-ss[0])
+    w=WREF*s
+    th,tw=int(tpl0.shape[0]*s),int(tpl0.shape[1]*s)
+    cxp=x+tw//2;cyp=y+th//2
+    hw=max(int(tw*0.3),8);hh=max(int(th*0.25),4)
+    d,v=disp(ra,rb,cxp,cyp,hw,hh)
+    r=dict(k=k,zncc_scala=round(float(mv),2),scala=round(float(s),3),w_px=round(float(w),1),disp=round(float(d),2),zncc_disp=round(v,2),Z_stereo=round(float(1236.26*0.2/(d+0.4)),2),Z_targa=round(float(1236.26*0.52/w),2),B_eff_mm=round(float(520*(d+0.4)/w),1),x=int(cxp),y=int(cyp))
+    rows.append(r);print(r)
+b=np.array([r['B_eff_mm'] for r in rows if r['zncc_scala']>0.85]);print('B_eff (zncc>0.85) n=%d media %.1f mediana %.1f sd %.1f'%(len(b),b.mean(),np.median(b),b.std()))
+json.dump(rows,open('plate_rows.json','w'))
+
+# ===== file: height.py =====
+from plate import *
+import json
+T=np.array([p[0][0]/1e6 for p in pairs])
+sg=cv2.StereoSGBM_create(minDisparity=0,numDisparities=192,blockSize=7,P1=8*49,P2=32*49,uniquenessRatio=8,speckleWindowSize=100,speckleRange=2,disp12MaxDiff=1,mode=cv2.STEREO_SGBM_MODE_SGBM_3WAY)
+f=f0;Bn=0.2;rng=np.random.default_rng(11)
+ts=list(np.arange(472,575,5))+list(np.arange(660,870,5))
+res=[]
+for t in ts:
+    k=int(np.argmin(abs(T-t)));ra,rb=rectpair(k)
+    disp=sg.compute(ra,rb).astype(np.float32)/16.0
+    yy,xx=np.mgrid[470:710:3,150:1130:3]
+    d=disp[yy,xx];ok=d>3
+    Z=f*Bn/(d[ok]+0.4);u=xx[ok];v=yy[ok]
+    P=np.c_[(u-cx)*Bn/(d[ok]+0.4),(v-cy)*Bn/(d[ok]+0.4),Z]
+    sel=(Z>1.2)&(Z<10)
+    P=P[sel]
+    if len(P)<300:continue
+    best=None;bn=0
+    for _ in range(400):
+        i=rng.choice(len(P),3,replace=False);n=np.cross(P[i[1]]-P[i[0]],P[i[2]]-P[i[0]]);nr=np.linalg.norm(n)
+        if nr<1e-9:continue
+        n/=nr
+        if n[1]<0:n=-n
+        if n[1]<0.95:continue
+        h=n@P[i[0]]
+        if not 0.3<h<1.8:continue
+        inl=abs(P@n-h)<0.02+0.006*P[:,2]
+        if inl.sum()>bn:best,bn=inl,inl.sum()
+    if best is None or bn<0.35*len(P):continue
+    A=np.c_[P[best],-np.ones(best.sum())];vv=np.linalg.svd(A,full_matrices=False)[2][-1];nn=vv[:3]/np.linalg.norm(vv[:3]);hh=vv[3]/np.linalg.norm(vv[:3])
+    if nn[1]<0:nn,hh=-nn,-hh
+    res.append(dict(t=float(t),k=k,h200=float(hh),pitch_up=float(-np.degrees(np.arcsin(nn[2]))),roll=float(np.degrees(np.arcsin(nn[0]))),inl=float(bn/len(P)),n=len(P),Zmed=float(np.median(P[best][:,2]))))
+    print(res[-1])
+json.dump(res,open('height.json','w'))
+h=np.array([r['h200'] for r in res]);pi=np.array([r['pitch_up'] for r in res]);ro=np.array([r['roll'] for r in res])
+print('frames',len(res),'h(B=200) med %.3f IQR %.3f-%.3f p10-p90 %.3f-%.3f'%(np.median(h),*np.percentile(h,[25,75]),*np.percentile(h,[10,90])))
+print('pitch med %.2f IQR %.2f..%.2f ; roll med %.2f IQR %.2f..%.2f'%(np.median(pi),*np.percentile(pi,[25,75]),np.median(ro),*np.percentile(ro,[25,75])))

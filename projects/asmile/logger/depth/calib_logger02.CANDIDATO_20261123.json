@@ -86,11 +86,11 @@
  "valid_for": "SOLO logger02 (HW3, case v5/v6) con queste 2 camere. NON vale per #001, asmile2, logger001.",
  "stato": "CANDIDATO ARANCIO 2026-11-23 (prima calibrazione senza tabellone, senza encoder). Scala metrica NON verificata.",
  "focal_rect_px": 1236.2576945462931,
- "cam_height_m": null,
- "cam_height_nota": "piano strada instabile (0.60-0.85 m per blocco, pitch/roll del piano fino a 19/-12 gradi: vicoli con muri): NON stimabile; serve metro",
+ "cam_height_m": 0.84,
+ "cam_height_nota": "piano strada SGBM, 23 fotogrammi in moto: mediana 0.839 IQR 0.81-0.86; +-0.05 m (focale +-5%, B 2%); pitch +3.2 (asse sopra il piano), roll -1.6 gradi",
  "cam_elev_gravity_deg": -1.86,
  "method": "selfcal_senza_encoder.py: SIFT L-R su 130+ coppie 150-870 s, epipolare (Sampson) su blocchi alterni; d0 da rigidita' del moto (155 set)",
- "baseline_note": "|T|=200 mm IMPOSTO (nominale meccanico, non misurato): scala metrica NON verificata",
+ "baseline_note": "|T|=200 mm lasciato (misurato dai pixel 199+-4 mm). Focale +-5% non risolta: Z assoluta +-5-6%",
  "holdout_dy_zone_med_p95": [
   [
    0.31,
@@ -192,5 +192,25 @@
   "(10, 15)": 0.995,
   "(15, 25)": 0.977
  },
- "sorgente": "calib_asmile-001.json (SOLO come punto di partenza della lente sinistra; centri ottici rifatti)"
+ "sorgente": "calib_asmile-001.json (SOLO come punto di partenza della lente sinistra; centri ottici rifatti)",
+ "baseline_misurata_targa_mm": {
+  "valore": 199.2,
+  "incertezza_mm": 4,
+  "n": 4,
+  "per_frame_mm": [
+   201.8,
+   199.2,
+   196.7,
+   199.0
+  ],
+  "distanze_m": [
+   2.0,
+   2.3,
+   2.8,
+   6.1
+  ],
+  "fonte": "targa 520 mm Renault Scenic FK284EX, B=W*d/w_px (focale eliminata)"
+ },
+ "cam_pitch_vs_strada_deg": 3.24,
+ "cam_roll_vs_strada_deg": -1.59
 }
