@@ -119,3 +119,9 @@ Ogni riga rimanda al `REGISTRO.md` (quando/fonte) — qui sta solo la regola.
 - JLCPCB FAQ assemblaggio (jlcpcb.com/help/article/98-pcb-assembly-faqs) · saldatura a mano, parti in conto lavoro · 18/11
 
 ## Errori fatti e regola che ne è nata → `ANTIPATTERN.md`
+
+## 2026-11-23 — alimentazione dell'HW definitivo (da logger02, Daniele)
+- Logger02 col pacco a ~3,5 V e MT3608: la A ripartiva "da accensione" nei picchi wifi (7 volte in 11 minuti durante gli scarichi).
+- Daniele: per l'HW definitivo tenere come possibile il **Pololu U3V40F5** (step-up 5 V, fino a 4 A). Riferimento di margine anche per
+  l'alimentazione su scheda dell'HW4: deve reggere i picchi wifi della P4 con la cella a 3,0-3,5 V senza far cadere il 5 V/3V3.
+- Non confondere: i crash con firmware a 6 Mbps erano il wifi della A sotto scarico pesante, non l'alimentazione.
