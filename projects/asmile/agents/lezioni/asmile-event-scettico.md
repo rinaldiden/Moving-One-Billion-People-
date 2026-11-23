@@ -14,3 +14,5 @@ Scritte da palla.py (VETO dei critici + bilanci giusto/sbagliato). Leggile prima
 - 2026-11-13 SBAGLIATO (`agents/rapporti/registro_guide_logger_20261113.md`): Nel VETO 1 avrei dovuto chiedere subito il tasso base del flusso in moto e non solo gli arresti singoli
 - 2026-11-13 GIUSTO (`agents/rapporti/eventi_guida_20261113.md`): Segno rifatto da video con test sintetico; rifatte le regole con codice indipendente e provate su un secondo giro (09/11) dove il doppio dei falsi non si vedeva in-sample
 - 2026-11-13 SBAGLIATO (`agents/rapporti/eventi_guida_20261113.md`): Non ho potuto etichettare gli scatti 09/11 (nessuna verita): avrei dovuto guardare i fotogrammi di quei 8 scatti; ay vs az confusi nel mio primo dump
+- 2026-11-23 GIUSTO (`projects/asmile/agents/rapporti/decel_frenate_20261113-23.md`): Riesecuzione del codice sul CSV grezzo: numeri riproducibili; controllo di circ sul file deployato; lettura diretta di brake_out_deg intorno a 15:05:00
+- 2026-11-23 SBAGLIATO (`projects/asmile/agents/rapporti/decel_frenate_20261113-23.md`): Non ho controllato i fotogrammi (disco/tempo); avrei dovuto mappare sessione->frame prima
