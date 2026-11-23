@@ -1,0 +1,115 @@
+{
+ "_cosa": "Soglie dello speed_limiter v3 di #001 (BOZZA, solo prova a secco sul Mac). Tutto qui, niente numeri nel codice. Daniele 23/11 + decel dalle frenate vere 13/11 (agents/rapporti/decel_frenate_20261113-23.md).",
+ "stato": "BOZZA - da validare da Daniele prima di qualsiasi deploy",
+ "velocita": {
+  "v_max_kmh": 15.0,
+  "zona_inizio_kmh": 12.0,
+  "_note": "Daniele 23/11 (via capo): 12-15 km/h rallenti dolcemente (decel obiettivo cresce piano da 0 a 'normale'); sopra 15 riporti a 15 con anello chiuso sulla decel misurata dall'encoder; <=50 gradi sempre. Sostituisce 14/13. CONSEGUENZA da dire a Daniele: su discesa costante la velocita' si assesta ~12-13, non 15."
+ },
+ "encoder": {
+  "m_per_count": 2.1219e-05,
+  "_circ_dubbio": "taratura deployata (metro 9/11) = 2.1219e-05 m/count (0.3477 m/giro enc.). Alternativa 0.3374/16384 = 2.0594e-05: le velocita' calano del 3%. GPS dice ~1.00 con 0.3374 (vedi report).",
+  "finestra_parabola_s": 0.3,
+  "max_salto_counts": 8000,
+  "fresco_s": 0.25,
+  "plausibilita": {
+   "tol_v_gps_ms": 1.2,
+   "tol_v_gps_rel": 0.25,
+   "tol_a_imu_ms2": 2.5,
+   "tempo_s": 1.5,
+   "riammissione_s": 3.0
+  }
+ },
+ "imu": {
+  "ay_riposo_g": 0.043,
+  "gx_bias_dps": -2.64,
+  "_segni": "avanti = -ay (frenata: ay sopra il riposo). gx > 0 = muso giu'. Bias/riposo ricalcolati a ogni avvio da fermo.",
+  "ema_dec_s": 0.14,
+  "morta_dopo_s": 0.3
+ },
+ "fusione_gps_imu": {
+  "r_gps_ms": 0.2,
+  "r_ble_ms": 0.35,
+  "r_enc_bias": 0.5,
+  "q_v": 0.5,
+  "q_bias": 0.02,
+  "gps_fresco_s": 2.0,
+  "ble_fresco_s": 3.0,
+  "imu_solo_max_s": 1.5,
+  "sigma_v_max_ms": 1.0
+ },
+ "decel_obiettivo_ms2": {
+  "_fonte": "PROVVISORIE: come frena DANIELE a mano (n=30 frenate, 1 giorno 13/11, il servo NON era collegato al freno: le 30 frenate sono tutte sue). Scala ENCODER (parabola 0.3 s). NON confrontare con IMU (legge 1.4-2x). Ritardo comando->decelerazione del servo: nessun dato, vedi freno.ritardo_comando_decel_s.",
+  "normale": 0.55,
+  "normale_picco_max": 1.0,
+  "forte": 1.0,
+  "forte_picco_max": 1.6,
+  "massima_tollerata": 1.3,
+  "massima_picco_max": 2.0,
+  "mai_oltre": 2.5,
+  "jerk_max_ms3": 4.0,
+  "forte_se_sopra_kmh": 15.0
+ },
+ "freno": {
+  "tetto_deg": 50.0,
+  "tetto_assoluto_codice_deg": 50.0,
+  "rampa_su_deg_s": 12.0, "rampa_su_sopra_vmax_deg_s": 25.0,
+  "rampa_su_oltre_soglia_deg_s": 3.0,
+  "soglia_lenta_deg": 35.0,
+  "rampa_giu_deg_s": 25.0,
+  "k_anello_deg_s_per_ms2": 15.0,
+  "impulso_trigger_deg": 1.0,
+  "impulso_tieni_s": 0.15,
+  "libera_sotto_deg": 2.0,
+  "tetto_imu_morta_deg": 25.0,
+  "_note": "il tetto 50 e' scritto anche nel codice: il file puo' solo ABBASSARLO. L'angolo non e' mappato su decel: anello chiuso sulla decel misurata.",
+  "ritardo_comando_decel_s": 0.3,
+  "_ritardo": "PARAMETRO da misurare a banco (nessun dato: il servo non frenava nei log). Usato solo per rilasciare in anticipo (v prevista fra ritardo secondi < v_rilascia).",
+  "_rampe": "salita 12 gradi/s (3 sopra 35), discesa 25 gradi/s: salto di angolo massimo per ciclo 0.5 gradi; con g=0.05 m/s2/grado il jerk del comando e' <=1.25 m/s3 (limite 4). Il rilascio anti-impuntata e' l'UNICA eccezione (immediato)."
+ },
+ "anti_impuntata": {
+  "dec_imu_min_ms2": 2.0,
+  "muso_giu_min_deg": 1.5,
+  "finestra_s": 0.3,
+  "_v_min": "nessuna velocita minima (regola di Daniele senza): a v=0 a angolo 0 rilascia 0 gradi, innocuo; la 2a impuntata vera avviene a <1.8 km/h",
+  "ripresa_frazione": 0.7,
+  "ripresa_in_piano_deg": 0.5,
+  "ripresa_in_piano_dps": 5.0,
+  "ripresa_in_piano_s": 0.3,
+  "ripresa_ripristino_s": 4.0,
+  "tetto_precoce": {
+   "attivo": true,
+   "dec_imu_ms2": 3.0,
+   "frazione": 0.7
+  },
+  "rilascio_gradi": 8.0,
+  "ancora_giu_dps": 3.0,
+  "fermo_s": 0.5,
+  "ripresa_rampa_deg_s": 3.0,
+  "ripresa_rampa_s": 4.0,
+  "_note": "Daniele (23/11): al primo ciclo con dec IMU>=2.0 e muso giu'>=1.5 gradi in 0.3 s togli rilascio_gradi (8, PROPOSTA); se nel ciclo dopo il muso scende ancora (gx>ancora_giu_dps e condizione ancora vera) togli altri 8, fino a 0. Poi per fermo_s non sale; riprende con rampa lenta (3 gradi/s per 4 s) col 70% della forza solo con la bici in piano."
+ },
+ "ina219": {
+  "ma_fermo_max": 1000.0,
+  "tempo_s": 1.0,
+  "arretra_deg": 3.0,
+  "servo_fermo_s": 0.5
+ },
+ "log_hz": 10,
+ "fallback": {
+  "tetto_deg": 35.0,
+  "imu_scala_vs_enc": 1.5,
+  "_note": "con GPS/BLE+IMU la decel arriva dall'IMU (legge ~1.5x l'encoder): divisa per imu_scala_vs_enc e tetto freno piu' basso. Valori da validare."
+ },
+ "emergenza": {
+  "_note": "flag /tmp/emergency_brake: sale al tetto con la rampa normale (lenta sopra 35 gradi); l'anti-impuntata ha sempre la precedenza. Semantica da CONFERMARE con Daniele/asmile-sicurezza."
+ },
+ "regolatore": {
+  "esponente_zona": 1.5,
+  "k_sopra_15_ms2_per_ms": 1.0,
+  "a_pos_max_ms2": 0.3,
+  "banda_morta_ms2": 0.05,
+  "a_filtro_s": 0.2,
+  "_note": "zona 12-15: a_voluta = -normale*x^esp, x=(v-12)/3. Sopra 15: -min(forte, normale + k*(v-15)). Sotto 12: a_voluta=+a_pos (l'angolo cala piano, niente on/off). Banda morta e filtro contro le oscillazioni."
+ }
+}
