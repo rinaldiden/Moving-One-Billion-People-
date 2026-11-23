@@ -35,3 +35,26 @@ Codice: `logger/depth/calib_rock/logger02_v2/` (moduli rieseguibili; `python3 -m
 **Accordo focale:** giroscopio 1.03 +-0.03; VP non vincolante; targhe/colline non misurano f (si elimina / zero). Indipendenti davvero: una sola (giroscopio). Confermato: **VERDE impossibile senza metro**.
 **Gate previsti (con f +-3%, B +-2%, d0 +-0.5):** errore profondita' atteso <5 m ~ +-4%, 5-10 m ~ +-5-6%, 10-20 m ~ +-8-10%: il gate +-2% <5 m NON dimostrato.
 **Impossibile senza metro:** focale assoluta (resta +-3%), scala metrica verificata, banco_fisso reale. Servono: un oggetto misurato a 2-4-8 m e l'altezza del centro lenti.
+
+---
+# SEGUITO 23/11 sera - giro2 (13:46 e 14:06): il montaggio si e' mosso (candidato v3)
+Codice nuovo (`logger/depth/calib_rock/logger02_v2/`): `m1_extract_lr.py` (match L-R grezzi, accoppiamento PER SESSIONE), `m2_fit_mount.py`, `m3_segments.py`, `m6_candidato_v3.py` (fit + verifica), `m4_lines_giro2.py` + `m5_vp_filtrato.py` (punti di fuga). JSON: `logger/depth/calib_logger02.CANDIDATO_v3_giro2_20261123.json` (v1 e v2 non toccati). **Verdetto: ARANCIO** (rosso nei primi 6 minuti).
+
+**Il "dy 4 px" del run automatico era SBAGLIATO (troncato).** `d1_dy_indep.py` scarta |dy|>6: con la calib v2 il dy vero e' **9.5 px** (mediana, p95 12.4, segno costante, uguale in tutte le 9 zone: 9.1-10.1). Quel 4.06/5.87 era la coda dentro il gate. In piu' `make_pairs`/`imu()` (common.py) mescolano le due sessioni (entrambe ripartono da t~9 s: tb non monotono, IMU interleaved) e `g6_focal` e' fallito: il run "automatico" non e' affidabile sul giro2 (focale/d0/targhe NON rimisurati, come dichiarato). Sessione 2 (14:06): A copre 9-70 s, B 199-321 s, nessuna sovrapposizione => zero coppie stereo, scartata. Tutto il fit e' sulla sessione 1 (13:46, 1045 s, 1370 coppie con match, 247k punti, nessun parametro di calibrazione nel vincolo: epipolare Sampson su punti grezzi, lente di v2 fissa).
+
+**Prima/dopo (blocchi di 60 s alterni: fit sui pari, test sui DISPARI, poi scambio; solo tratto stabile t>=390 s, 104k punti test):**
+| | mediana |dy| | p95 | in moto (>15 dps) med/p95 |
+|---|---|---|---|
+| v2 (R base) | 9.55 | 12.43 | 9.70 / 12.65 |
+| v3 (R rifatta) | **0.79** | **3.15** | 0.82 / 3.95 |
+| v3 scambio blocchi | 0.81 | 3.36 | 0.80 / 4.23 |
+Verifica indipendente dal codice di rettifica (immagini rettificate con cv2.remap + SIFT, 24k punti, 90 coppie dei blocchi dispari, gate +-25): v2 mediana 9.31 / p95 11.68 -> v3 **0.70 / 2.68**.
+Zone 3x3 (med/p95, test): v2 9.1-10.1 / 11.3-13.5 ovunque; v3 0.52-1.27 / 2.65-3.54 (peggiore: alto-centro 1.27/3.54, centro-sx alto 0.83/3.53). Il p95 resta 2.7-3.4 px: gate p95<1 NON raggiunto. E' in buona parte il pavimento del metodo (SIFT H.264): anche rifittando R per ogni blocco di 60 s su meta' fotogrammi e testando sull'altra meta' il p95 resta 2.0-4.0 (med 0.4-0.8), come il p95 2.6 del v2 sul giro del mattino.
+
+**Quanto si e' mosso (R nuova vs R v2):** rotazione relativa L-R **-0.435 gradi attorno a X (beccheggio relativo, = 9.5 px di dy)**, Z (rollio) -0.013 gradi, **Y non fittabile** (con T lungo x l'epipolare non la vede; vale ~3.9 px di d0 per 0.2 gradi: ho lasciato quella di v2 e d0 = -2.55 invariato). Stesso valore dai due semi-insiemi (-0.4361 / -0.4335): non e' rumore. Un fit libero dei centri ottici (v2-style) va a 59 px su cx: degenere, scartato (centri e T di v2 invariati).
+**E non e' fermo nemmeno dentro il giro** (mediana dy con R fissa, per 30 s): 150-330 s da -6.7 a -2.2 px (officina, bici maneggiata), **salto a 330 s (+5.0 px = +0.26 gradi)**, poi deriva lenta +1.1 -> -0.64 px in 650 s (0.09 gradi); la temperatura (A 19-23, B 25-28 gradi) non la spiega (flat mentre dy scende). Fit per blocco di 60 s: Rx da -0.64 a -0.38 gradi nei primi 6 min, poi -0.40 -> -0.48. Il tratto iniziale (<340 s) con la R del tratto stabile resta mediana 3.86 / p95 10.1.
+**Conclusione chiara: le camere si muovono nel case.** Fra il giro del mattino (dy 0.3 in v2) e il giro2 la rotazione relativa e' cambiata di 0.44 gradi; durante l'uso si muove ancora di 0.1-0.3 gradi, a scatti (maneggio/urti) e a deriva. Non ho prove sul perche' (case non chiuso bene, giochi, fuoco/lente che gira): NON VERIFICATO. Serve (a) **ricalibrazione AUTOMATICA per sessione** (almeno Rx, 1 parametro, ogni ~60 s di moto con >5000 match: regge med 0.4-0.8 px) e (b) **supporti piu' rigidi nel case v6** (bloccare le schede/ottiche; prova: stesso test dy prima e dopo un'ora di uso e dopo un urto).
+
+**Focale con un secondo metodo (punti di fuga, indipendente dal giroscopio): NON VINCOLANTE.** v1_vp su 108 fotogrammi con due VP: q=f/f_K mediana 1.08 ma IQR 0.84-1.76, per scena 1.01 / 1.11 / 2.15; con filtri di condizionamento (VP 0.4-8, >=8 rette, ortogonali) resta **1 solo fotogramma**: vicoli non Manhattan, rette corte. Nessuna f da riportare (resta v2: giroscopio 1.03 +-0.03). Plumb-line = lente, non f. Nessun test circolare: l'unica fonte indipendente su f e' ancora il giroscopio.
+
+**Per VERDE:** (1) metro a 2-4-8 m (scala e f); (2) giro con strada aperta e bordi lungo i lati (almeno una fiancata con 2 direzioni ortogonali visibili); (3) la ricalibrazione per sessione online + registrare il dy giornaliero; (4) clip piu' lunghe stereo: nel giro2 mancano i clip A della sessione 2.
