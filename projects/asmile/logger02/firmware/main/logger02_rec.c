@@ -30,7 +30,7 @@ static const char *TAG = "rec";
 #define NBUF        4
 #define REC_DIV     3
 #define SEG_S       60
-#define H264_BITRATE 6000000     /* 23/11: 2 → 6 Mbps per la prima calibrazione col mock (dettagli fini su strada, lezione logger001: compressione = angoli sporchi) */
+#define H264_BITRATE 6000000     /* 23/11: 2 → 6 Mbps per la calibrazione col mock (dettagli fini su strada) */
 #define N_ULTIMI    32
 
 static int s_cap = -1, s_enc = -1;

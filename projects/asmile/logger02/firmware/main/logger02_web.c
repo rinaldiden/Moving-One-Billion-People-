@@ -149,7 +149,10 @@ static esp_err_t h_dl(httpd_req_t *req)
     char *buf = heap_caps_malloc(32768, MALLOC_CAP_SPIRAM);
     size_t n;
     esp_err_t r = ESP_OK;
-    while (r == ESP_OK && (n = fread(buf, 1, 32768, f)) > 0) r = httpd_resp_send_chunk(req, buf, n);
+    while (r == ESP_OK && (n = fread(buf, 1, 32768, f)) > 0) {
+        r = httpd_resp_send_chunk(req, buf, n);
+        logger02_scarico_visto();                   /* 23/11: un pezzo da 25 MB dura più di un minuto: sveglia a ogni blocco, non solo all'inizio */
+    }
     fclose(f);
     free(buf);
     return httpd_resp_send_chunk(req, NULL, 0);
@@ -342,6 +345,7 @@ static esp_err_t proxy_b(httpd_req_t *req, const char *porta)
     int n;
     while ((n = esp_http_client_read(c, buf, 16384)) > 0) {
         if (httpd_resp_send_chunk(req, buf, n) != ESP_OK) break;
+        logger02_scarico_visto();                   /* scarico dei file della B attraverso la A: la A resta sveglia */
     }
     free(buf);
     esp_http_client_close(c);
