@@ -282,7 +282,11 @@ def pull_logger02():
                          default="")                     # CSV IMU del minuto in corso (uno al minuto)
         # salute/errori (firmware dal 20/11): il più recente di ogni tipo è ancora aperto
         aperti = {max([f["nome"] for f in files if f["nome"].startswith(pr)], default="") for pr in ("salute_", "errori_")}
-        for f in sorted(files, key=lambda x: x["nome"]):
+        # 23/11: prima la sessione più recente (il giro appena fatto), dentro la sessione in ordine
+        import re
+        sess_di = lambda n: (re.search(r"(\d{8}_\d{6})", n) or re.search(r"(boot\d+)", n) or [None, ""])[1]
+        files = sorted(sorted(files, key=lambda x: x["nome"]), key=lambda x: sess_di(x["nome"]), reverse=True)
+        for f in files:
             nome, size = f["nome"], f["byte"]
             if base_corso and nome.startswith(base_corso):
                 continue                                  # pezzo ancora in scrittura (video + frames)

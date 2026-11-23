@@ -21,7 +21,7 @@ def candidates(DKs=(2,4)):
             if not(0.09<t1-t0<0.32): continue
             if P[k][0][1]!=P[k+DK][0][1]: continue   # stesso clip A (decodifica una volta)
             R=integ(X,t0,t1);ang=np.degrees(np.linalg.norm(cv2.Rodrigues(R)[0]))
-            if 1.5<ang<20 and not(1400<t0): out.append((k,k+DK,t0,t1,ang))
+            if 1.5<ang<20: out.append((k,k+DK,t0,t1,ang))
     return out
 def work(args):
     clipname,lst=args

@@ -37,13 +37,16 @@ def resid(s):
         R=rot(a[1],b[0],s);u0=a[2]/np.linalg.norm(a[2]);u1=b[2]/np.linalg.norm(b[2]);pred=R.T@u0
         out.append(np.degrees(np.arccos(np.clip(pred@u1,-1,1))))
     return np.array(out)
+import json
+out=dict(n_transizioni=len(pairs_),s_y=1.0,s_y_sd=None,usabile=False)
 if len(pairs_)>=2:
-    print('errore predetto-misurato con scala 1: med %.2f deg (su angoli med %.1f)'%(np.median(resid(np.ones(3))),np.median([p[2] for p in pairs_])))
-    def f(s): return resid(np.r_[1.0,s]) # s_x non osservabile: fisso 1
-    r=least_squares(f,[1,1],diff_step=1e-3,x_scale=0.02,loss='soft_l1',f_scale=1.0);print('scale giro IMU y,z (gravita):',r.x.round(3),'err med',np.median(f(r.x)).round(2))
-    rng=np.random.default_rng(0);bs=[]
-    base=pairs_
-    for _ in range(25):
+    def f(s): return resid(np.r_[1.0,s])
+    r=least_squares(f,[1,1],diff_step=1e-3,x_scale=0.02,loss='soft_l1',f_scale=1.0)
+    rng=np.random.default_rng(0);bs=[];base=list(pairs_)
+    for _ in range(20):
         idx=rng.integers(0,len(base),len(base));pairs_[:]=[base[i] for i in idx]
         bs.append(least_squares(f,[1,1],diff_step=1e-3,x_scale=0.02,loss='soft_l1',f_scale=1.0).x)
-    pairs_[:]=base;print('bootstrap sd',np.std(bs,0).round(3),'media',np.mean(bs,0).round(3))
+    pairs_[:]=base;sd=np.std(bs,0)
+    out.update(s_y=float(r.x[0]),s_z=float(r.x[1]),s_y_sd=float(sd[0]),s_z_sd=float(sd[1]),usabile=bool(len(base)>=6 and sd[0]<0.08))
+    print('scale giro IMU y,z (gravita):',r.x.round(3),'bootstrap sd',sd.round(3))
+json.dump(out,open(os.path.join(W,'gravity.json'),'w'));print(out)
