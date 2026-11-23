@@ -3,4 +3,11 @@ menu "logger02"
     config L02_TS_NOME
         string "Nome sul tailnet"
         default "logger02"
+
+    config L02_REC_1280X800
+        bool "Registra a 1280x800 (risoluzione piena OV9281, come asmile #001)"
+        default y
+        help
+            23/11: stessi pixel di asmile #001 (OV9281 1280x800 con rpicam), per training e guida autonoma.
+            Spento = 1280x720 (modo Espressif, finestra centrale: righe 40..759 del 1280x800).
 endmenu

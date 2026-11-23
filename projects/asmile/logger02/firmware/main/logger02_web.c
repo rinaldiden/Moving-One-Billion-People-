@@ -56,7 +56,7 @@ static esp_err_t h_stream(httpd_req_t *req)
 {
     static const char *B = "123456789000000000000987654321";
     char hdr[96];
-    size_t max = 1280 * 720 / 2;
+    size_t max = 1280 * 800 / 2;          /* come il buffer JPEG di logger02_rec.c (W*H/2) */
     uint8_t *jpg = heap_caps_malloc(max, MALLOC_CAP_SPIRAM);
     if (!jpg) return ESP_FAIL;
     httpd_resp_set_type(req, "multipart/x-mixed-replace;boundary=123456789000000000000987654321");

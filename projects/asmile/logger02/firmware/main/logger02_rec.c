@@ -1,4 +1,4 @@
-/* Registrazione: OV9281 1280×720 (sensore a 50 fps) → ISP YUV420 → H.264 hardware → SD, a pezzi da 60 s.
+/* Registrazione: OV9281 1280×800 (risoluzione piena, come #001; sensore a 50 fps) → ISP YUV420 → H.264 hardware → SD, a pezzi da 60 s.
  * Si codifica 1 fotogramma ogni REC_DIV (50/3 ≈ 16,7 fps, come il logger001 a 15).
  * Per ogni pezzo: clip_<sessione>_<A|B>_<NNNNN>.h264 + clip_..._frames.csv
  *   frame,t_us,t_a_us,bytes     (t_us = orologio della scheda, t_a_us = orologio della A: confrontabile fra A e B)
@@ -20,6 +20,8 @@
 #include "esp_heap_caps.h"
 #include "linux/videodev2.h"
 #include "esp_video_device.h"
+#include "esp_video_ioctl.h"
+#include "ov9281_1280x800.h"
 #include "driver/jpeg_encode.h"
 #include "driver/i2c_master.h"
 #include "logger02.h"
@@ -27,7 +29,11 @@
 static const char *TAG = "rec";
 
 #define W           1280
+#if CONFIG_L02_REC_1280X800
+#define H           800          /* 23/11: risoluzione piena OV9281, stessi pixel di #001 (multiplo di 16: H.264 senza ritagli) */
+#else
 #define H           720
+#endif
 #define NBUF        4
 #define REC_DIV     3
 #define SEG_S       60
@@ -377,6 +383,13 @@ esp_err_t logger02_rec_start(void)
         ESP_LOGE(TAG, "camera o encoder non disponibili");
         return ESP_FAIL;
     }
+#if CONFIG_L02_REC_1280X800
+    /* il driver Espressif ha solo 640x400 e 1280x720: il modo 1280x800 è in main/ov9281_1280x800.h (va dato PRIMA dei buffer) */
+    if (ioctl(s_cap, VIDIOC_S_SENSOR_FMT, &l02_ov9281_1280x800) != 0) {
+        ESP_LOGE(TAG, "OV9281: formato 1280x800 rifiutato");
+        return ESP_FAIL;
+    }
+#endif
     fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     fmt.fmt.pix.width = W;
     fmt.fmt.pix.height = H;
@@ -455,7 +468,7 @@ esp_err_t logger02_rec_start(void)
     logger02_nome_sessione(s_sess, sizeof(s_sess));
     s_rec = true;
     xTaskCreatePinnedToCore(rec_task, "rec", 6144, NULL, 8, NULL, 1);
-    ESP_LOGI(TAG, "registro sessione %s (1280x720, 1 fotogramma su %d, H.264 %d kbps)", s_sess, REC_DIV,
+    ESP_LOGI(TAG, "registro sessione %s (%dx%d, 1 fotogramma su %d, H.264 %d kbps)", s_sess, W, H, REC_DIV,
              H264_BITRATE / 1000);
     return ESP_OK;
 }
@@ -514,9 +527,9 @@ size_t logger02_rec_jpeg(uint8_t *out, size_t max)
 
 void logger02_rec_stato(char *json, size_t n)
 {
-    snprintf(json, n, "{\"luma\":%d,\"esposizione_us\":%.0f,\"guadagno\":%.2f,\"registra\":%s,\"sessione\":\"%s\",\"file\":\"%s\",\"fotogrammi\":%lu,\"scritti\":%lu,"
+    snprintf(json, n, "{\"w\":%d,\"h\":%d,\"luma\":%d,\"esposizione_us\":%.0f,\"guadagno\":%.2f,\"registra\":%s,\"sessione\":\"%s\",\"file\":\"%s\",\"fotogrammi\":%lu,\"scritti\":%lu,"
              "\"pezzi\":%lu,\"mb\":%.1f,\"sd_libero_mb\":%llu}",
-             s_ae_luma, s_vts0 ? s_exp16 / 16.0 * s_periodo_us / s_vts0 : 0, s_gain / 16.0,
+             W, H, s_ae_luma, s_vts0 ? s_exp16 / 16.0 * s_periodo_us / s_vts0 : 0, s_gain / 16.0,
              s_rec && !s_pausa ? "true" : "false", s_sess, s_vid ? s_file : "", (unsigned long)s_frame, (unsigned long)s_scritti,
              (unsigned long)s_seg, s_bytes / 1e6, logger02_sd_libero_mb());
 }

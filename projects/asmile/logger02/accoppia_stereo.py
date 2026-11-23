@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-accoppia_stereo.py — logger HW3 (A+B): dai video delle due schede a UN video stereo affiancato (SBS 2560x720),
-coppia per coppia, pronto per la calibrazione (logger/depth/calib_charuco.py --video ... --size 1280x720 --no-flip).
+accoppia_stereo.py — logger HW3 (A+B): dai video delle due schede a UN video stereo affiancato (SBS 2560x800,
+2560x720 per i pezzi registrati prima del 23/11), coppia per coppia, pronto per la calibrazione
+(logger/depth/calib_charuco.py --video ... --size 1280x800 --no-flip). La risoluzione si legge dai file (ffprobe).
 
 Ogni scheda registra i suoi pezzi da 60 s: clip_<sess>_<A|B>_NNNNN.h264 + _frames.csv (frame, t_us, t_a_us, bytes).
 Il numero di fotogramma è comune alle due schede e t_a_us è l'ora della A per entrambe: una coppia è buona se il
@@ -18,7 +19,15 @@ Uscita: <out>.mp4 (SBS: sinistra = A, destra = B) + <out>_coppie.csv (frame, t_a
 import argparse, csv, glob, json, os, re, subprocess, sys, urllib.request
 import numpy as np
 
-W, H = 1280, 720
+W, H = 1280, 800          # 23/11: firmware a 1280x800; la misura vera si legge dai file con dimensioni()
+
+
+def dimensioni(h264):
+    """(larghezza, altezza) dal flusso H.264 (i pezzi vecchi sono 1280x720, i nuovi 1280x800)"""
+    p = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height",
+                        "-of", "csv=p=0", h264], capture_output=True, text=True)
+    w, h = (int(x) for x in p.stdout.strip().split(",")[:2])
+    return w, h
 
 
 def get(url, dest=None, timeout=300):
@@ -101,6 +110,11 @@ def main():
         ha = scarica(a.a, "A", a.pezzi, cart)
         oa = [ora_pezzo(os.path.basename(h)) for h in ha]
         hb = scarica(a.b, "B", 0, cart, finestra=(min(x[0] for x in oa), max(x[1] for x in oa)))
+    global W, H
+    dims = {dimensioni(h) for h in ha + hb}
+    if len(dims) != 1:
+        sys.exit(f"pezzi con risoluzioni diverse {sorted(dims)}: scegli pezzi dello stesso firmware")
+    W, H = dims.pop()
     fa, fb = leggi(ha), leggi(hb)
     comuni = sorted(set(fa) & set(fb))
     buone = [f for f in comuni if abs(fb[f][2] - fa[f][2]) <= a.max_us]
