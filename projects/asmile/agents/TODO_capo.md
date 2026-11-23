@@ -154,3 +154,8 @@ Dettaglio e domande in `agents/sicurezza/ARCHITETTURA_SICUREZZA.md` §8. Ordine:
 - Poi: calib_charuco_dual.py → banco fisso → asmile-calib-critico. Partenza: candidato self 18/11 (dy fuori campione 1.14 px; calib 8/11 = 3.61 px, le camere si sono mosse).
 - Daniele: «così l'abbiamo per hw3» → la calib di logger001 fa da base per logger02/HW3 col mock (stesse camere), baseline diversa dalle misure.
 - Firmware HW3 definitivo: tag hw3-def-20261118 (rilasci/HW3_DEF_20261118, flasha_nuovo lo usa).
+
+## 2026-11-23 sera — logger02 calibrazione IN PAUSA (Daniele)
+- FERMO: Daniele fissa meglio il case (si muoveva tutto). Poi giro nuovo e test dy inizio/metà/fine: se resta <1 px senza salti → il dy 9,5 px (Rx -0,435°, salto 5 px a 330 s) era il case che si piegava sul supporto; altrimenti problema dentro il case (v6: camere sulla stessa piastra rigida).
+- Candidato attuale: calib_logger02.CANDIDATO_v3_giro2_20261123.json (ARANCIO). Video 17:00/17:51 (1280×800) scaricati e pronti; cartella giro 14:06 completa in asmile-loggers/logger02 (giro2 era stata montata con download incompleto).
+- STANDBY (Daniele): calibrazione/valutazione con BASELINE 150 mm da rifare QUANDO la calibrazione di logger02 è top (VERDE: metro 2-4-8 m + dy stabile). Base di partenza: agents/rapporti/interasse_150_logger02.md (simulazione 200/150/100 su giro 13:46). Serve per decidere l'interasse del case v6.

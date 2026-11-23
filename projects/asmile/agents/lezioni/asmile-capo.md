@@ -78,3 +78,5 @@ Cosa ho previsto male. Le legge il capo-critico.
 - Prima di dire una causa (IP in conflitto, "colpa mia/non mia") verificarla sui dati (MAC, registro salute).
 - Agenti pesanti: max 2 processi, controllo df prima, file intermedi piccoli e cancellati.
 - 23/11: prima di analizzare "frenate del servo" chiedere/verificare se il servo era COLLEGATO al freno: nei giri 13-23/11 non lo era, tutte le frenate erano di Daniele (il comando nel log non vuol dire azione).
+- 2026-11-23 GIUSTO: giro2: rifit con validazione su blocchi mai usati, trovato dy vero 9.5 px (il gate a 6 px lo tagliava)
+- 2026-11-23 SBAGLIATO: cartella giro2 preparata con download incompleto (14:06 A/B senza sovrapposizione); avevo detto 'giro2 andato male' senza rifittare; dico 'camere si muovono' ma il dy misura solo il moto RELATIVO tra le camere: case che si muove tutto insieme non lo crea, una flessione del case sì
