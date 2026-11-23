@@ -99,7 +99,11 @@ extern volatile int64_t l02_frame_t[32];
 extern volatile uint32_t l02_frame_n;
 static uint32_t s_deq;
 static volatile int64_t s_ultimo_t;           /* ultimo fotogramma, orologio locale */
-static double s_periodo_us = 20000;           /* periodo misurato */
+#if CONFIG_L02_REC_1280X800
+static double s_periodo_us = 60000;           /* periodo misurato (seme: sensore a 16,67 fps) */
+#else
+static double s_periodo_us = 20000;           /* periodo misurato (seme: sensore a 50 fps) */
+#endif
 static volatile int64_t s_t_rif = -1;         /* B: ultimo fotogramma noto della A (tempo A) ... */
 static volatile uint32_t s_f_rif;             /* ... e il suo numero */
 static volatile double s_p_rif = 0;
@@ -292,7 +296,17 @@ static void rec_task(void *arg)
         s_deq++;
         if (s_ultimo_t > 0) {
             double d = (double)(t - s_ultimo_t);
-            if (d > 0.5 * s_periodo_us && d < 1.5 * s_periodo_us) s_periodo_us += (d - s_periodo_us) * 0.02;
+            /* 23/11: col seme a 20 ms e il sensore a 60 ms il periodo non si aggiornava mai -> riga 3,66 us invece di 10,9:
+             * esposizione vera 3 volte più lunga e aggancio di fase della B sbagliato di 3 volte (A/B sfasate 0-30 ms).
+             * Se 30 fotogrammi di fila stanno fuori finestra, riparto dal valore misurato. */
+            static int fuori;
+            if (d > 0.5 * s_periodo_us && d < 1.5 * s_periodo_us) {
+                s_periodo_us += (d - s_periodo_us) * 0.02;
+                fuori = 0;
+            } else if (d > 5000 && d < 200000 && ++fuori >= 30) {
+                s_periodo_us = d;
+                fuori = 0;
+            }
         }
         s_ultimo_t = t;
         /* numerazione COMUNE ad A e B: indice del fotogramma nel tempo della A (stesso numero = stesso istante) */
