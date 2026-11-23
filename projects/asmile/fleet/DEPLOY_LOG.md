@@ -15,3 +15,4 @@
 - 2026-11-11 07:55 001: recorder modo calib 6 Mbps via /tmp/asmile_calib_mode (attivo oggi 2026-11-11, overlay: sparisce al riavvio) 
 - 2026-11-23 15:15 001: master_switch: OFF = freno a 0 (non più 60°); servofreno disabled projects/asmile/pi/power/master_switch.py
 - 2026-11-23 16:01 001: tetto freno 50° in speed_limiter e master_switch 
+- 2026-11-23 16:49 001: speed_limiter v3 in shadow mode avviato dal master (il vecchio limiter non parte più) 
