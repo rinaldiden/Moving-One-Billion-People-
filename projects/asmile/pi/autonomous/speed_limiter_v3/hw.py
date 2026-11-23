@@ -1,6 +1,5 @@
 """Hardware VERO (lgpio, smbus2, file di /tmp). L'UNICO file che importa lgpio/smbus2 (dentro le funzioni, mai a livello di modulo).
 NON VERIFICATO: mai girato sul Pi (vietato da Daniele per questa fase). Avvio: soglie validate -> flock su GPIO12 -> servo -> loop."""
-import fcntl
 import json
 import os
 import signal
@@ -11,6 +10,7 @@ import time
 from .controllo import Controllo, carica_soglie
 from .fonti import Campione, sanifica_velocita
 from .freno import SERVO_HZ, angle_to_duty
+from .lock_gpio12 import LOCK_GPIO12, LockError, acquisisci_lock, acquisisci_lock_attendi   # noqa: F401
 from .servizio import STATO_DEFAULT, chiudi_servo, esegui, scrivi_stato
 from .validazione import SogliaError
 
@@ -18,25 +18,9 @@ ENC_CUM_FILE = "/tmp/encoder_wheel_cum"        # "<count srotolati> <t_monotonic
 BLE_FILE = "/tmp/bike_speed"
 EMERGENCY_FLAG = "/tmp/emergency_brake"
 GPS_JSON = "/tmp/gps_state.json"
-LOCK_GPIO12 = "/run/brake_gpio12.lock"
 GPIO_CHIP, SERVO_PIN = 0, 12
 IMU_ADDR, INA_ADDR = 0x68, 0x40
 VMAX_VALIDA = 15.0
-
-
-class LockError(Exception):
-    pass
-
-
-def acquisisci_lock(path=LOCK_GPIO12):
-    """flock esclusivo (non bloccante) su GPIO12: UN solo padrone. Va preso PRIMA di toccare il pin e tenuto fino all'uscita."""
-    f = open(path, "a+")
-    try:
-        fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except OSError:
-        f.close()
-        raise LockError("GPIO12 ha gia' un padrone (lock %s occupato)" % path)
-    return f
 
 
 def parse_gps(testo_json, vmax=VMAX_VALIDA):
@@ -90,6 +74,44 @@ class ServoLgpio:
             self.lg.gpiochip_close(self.h)
         except Exception:
             pass
+
+
+class ServoOmbra:
+    """SHADOW MODE (Daniele 23/11): stesso controllo, sensori veri, ma il servo NON viene mai toccato. Ricorda solo l'angolo
+    che avrebbe comandato: GPIO12 resta libero (nessun lock, nessun claim)."""
+
+    def __init__(self):
+        self.angolo = 0.0
+
+    def pwm(self, angolo):
+        self.angolo = float(angolo)
+
+    def libera(self):
+        pass
+
+    def chiudi(self):
+        pass
+
+
+class RegistroOmbra:
+    """Una riga per ciclo con quello che il limiter avrebbe fatto, per confrontarlo con le frenate di Daniele (persistente in /data)."""
+    CAMPI = ["t_wall", "t", "fonte", "v", "a", "dec", "v_enc", "a_enc", "enc_fresco", "v_fus", "dec_imu", "d03", "imu_ok",
+             "frena", "livello", "a_des", "target", "angolo", "tetto", "rilascia_ora", "bloccato", "motivi", "emergenza"]
+
+    def __init__(self, cartella="/data/logging/limiter_v3"):
+        import csv
+        os.makedirs(cartella, exist_ok=True)
+        self.f = open(os.path.join(cartella, time.strftime("ombra_%Y%m%d_%H%M%S.csv")), "w", newline="")
+        self.w = csv.writer(self.f)
+        self.w.writerow(self.CAMPI)
+        self.n = 0
+
+    def scrivi(self, r):
+        self.w.writerow([round(time.time(), 3)] + [r.get(k) if not isinstance(r.get(k), float) else round(r.get(k), 4)
+                                                     for k in self.CAMPI[1:]])
+        self.n += 1
+        if self.n % 50 == 0:
+            self.f.flush()
 
 
 class LettoreSensori:
@@ -172,20 +194,30 @@ class LettoreSensori:
 
 
 def main():
+    ombra = "--ombra" in sys.argv
     try:
         cfg = carica_soglie()                       # validazione completa: se sbaglia si esce SENZA toccare il pin
     except SogliaError as e:
         print("[LIMITER] soglie non valide, non parto: %s" % e, flush=True)
         scrivi_stato(STATO_DEFAULT, {"t": time.time(), "stato": "NON_PARTITO", "errore": str(e)})
         return 2
-    try:
-        lock = acquisisci_lock()
-    except LockError as e:
-        print("[LIMITER] non parto: %s" % e, flush=True)
-        scrivi_stato(STATO_DEFAULT, {"t": time.time(), "stato": "NON_PARTITO", "errore": str(e)})
-        return 3
-    servo = ServoLgpio()
+    lock = None
+    if ombra:
+        servo = ServoOmbra()                        # ombra: il freno NON si tocca, niente lock su GPIO12
+        print("[LIMITER] SHADOW MODE: calcolo e registro, il freno non viene comandato", flush=True)
+    else:
+        try:
+            lock = acquisisci_lock()
+        except LockError as e:
+            print("[LIMITER] non parto: %s" % e, flush=True)
+            scrivi_stato(STATO_DEFAULT, {"t": time.time(), "stato": "NON_PARTITO", "errore": str(e)})
+            return 3
+        servo = ServoLgpio()
     ctl = Controllo(cfg, servo, log_eventi=lambda t, da, a, m: print(f"[FONTE] {da} -> {a}: {m}", flush=True))
+    if ombra:
+        reg = RegistroOmbra()
+        passo0 = ctl.passo
+        ctl.passo = lambda c: (lambda r: (reg.scrivi(r), r)[1])(passo0(c))
     sens = LettoreSensori()
     run = [True]
     signal.signal(signal.SIGTERM, lambda *_: run.__setitem__(0, False))
@@ -197,7 +229,10 @@ def main():
         ctl.rampa.azzera()
         chiudi_servo(servo, cfg["freno"]["uscita_tieni_s"])      # 0 gradi tenuto >= 0.6 s, poi pin libero
         scrivi_stato(STATO_DEFAULT, {"t": time.time(), "stato": "FERMATO", "codice": codice})
-        lock.close()
+        if lock is not None:
+            lock.close()
+        if ombra:
+            reg.f.close()
     return codice
 
 

@@ -3,7 +3,7 @@ Prende lo stesso flock di GPIO12 (aspetta fino a 3 s che il limiter lo lasci). N
 import sys
 import time
 
-from .hw import LockError, ServoLgpio, acquisisci_lock
+from .lock_gpio12 import LockError, acquisisci_lock_attendi
 
 
 def main():

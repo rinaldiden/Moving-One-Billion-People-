@@ -207,14 +207,16 @@ class MasterSwitch:
         self.servo_handle = None
         print("[SWITCH] PWM stopped, pin freed (hi-Z) — servo libero")
 
-        # Lancia speed_limiter (subprocess root) DOPO il release del servo.
-        sl_path = f"{HOME_DIR}/wip/Moving-One-Billion-People-/projects/asmile/pi/autonomous/speed_limiter.py"
+        # 23/11 (Daniele): speed_limiter v3 in SHADOW MODE — calcola e registra dove frenerebbe (/data/logging/limiter_v3/),
+        # NON tocca il freno (niente GPIO12). Il vecchio speed_limiter.py NON parte più: frenano solo le mani di Daniele.
+        sl_dir = f"{HOME_DIR}/wip/Moving-One-Billion-People-/projects/asmile/pi/autonomous"
         self.speed_limiter_proc = subprocess.Popen(
-            ["python3", "-u", sl_path],
-            stdout=open("/tmp/speed_limiter.log", "w"),
+            ["python3", "-u", "-m", "speed_limiter_v3.hw", "--ombra"],
+            cwd=sl_dir,
+            stdout=open("/tmp/speed_limiter_v3.log", "w"),
             stderr=subprocess.STDOUT,
         )
-        print(f"[SWITCH] speed_limiter started PID={self.speed_limiter_proc.pid}")
+        print(f"[SWITCH] speed_limiter v3 OMBRA started PID={self.speed_limiter_proc.pid}")
 
         # Clean up any zombie camera processes
         self._kill_camera_zombies()
