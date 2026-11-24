@@ -74,7 +74,8 @@ def test_discesa_forte_riporta_a_15_dolce():
     assert max(x["v_vera"] for x in r if x["t"] > 15) * 3.6 <= 15.0
     assert max(x["angolo"] for x in r) <= 50.0
     slew, inv = comando_liscio(r)
-    assert slew <= CFG["freno"]["rampa_giu_deg_s"] + 1e-6 and inv == 0
+    # 24/11: rampa_giu 12 < rampa_su_sopra_vmax 25: lo slew massimo (su o giu') e' il piu' alto dei due
+    assert slew <= max(CFG["freno"]["rampa_giu_deg_s"], CFG["freno"]["rampa_su_sopra_vmax_deg_s"]) + 1e-6 and inv == 0
     assert jerk_decel(r) <= 4.0
 
 
@@ -114,7 +115,9 @@ def test_encoder_si_stacca_a_meta_frenata_senza_salti():
     assert any(e[1] == "ENC" and e[2] == "GPS_IMU" for e in ev)
     assert any("non fresco" in e[3] for e in ctl.eventi_log)
     assert salto_max_v(r, 14.0, 17.0) < 0.5 and salto_max_v(r, 24.0, 27.0) < 0.5
-    assert comando_liscio(r)[0] <= CFG["freno"]["rampa_giu_deg_s"] + 1e-6
+    # 24/11: con rampa_giu 12 (freno calmo) il passaggio a GPS_IMU abbassa il tetto a 15 e il rilascio sopra il tetto va a
+    # rampa_tetto (60 gradi/s, voluto: verso sicuro, meno freno). Il vincolo "senza salti" resta: mai oltre rampa_tetto.
+    assert comando_liscio(r)[0] <= max(CFG["freno"]["rampa_giu_deg_s"], CFG["freno"]["rampa_tetto_deg_s"]) + 1e-6
     assert max(x["v_vera"] for x in r) * 3.6 < 16.5
 
 
