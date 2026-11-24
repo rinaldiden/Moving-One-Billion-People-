@@ -1,5 +1,6 @@
 """Loop UNICO di controllo: leggi encoder -> v,a -> anti-impuntata -> decisione -> comando servo, tutto in passo().
 Niente thread separato che comanda il freno. Nessun import hardware (lgpio/smbus/serial sono solo in hw.py)."""
+import json
 import math
 import os
 
@@ -19,13 +20,15 @@ def carica_soglie(path=None):
 
 
 class Controllo:
-    def __init__(self, cfg, backend_servo, log_eventi=None):
+    def __init__(self, cfg, backend_servo, log_eventi=None, stato_contatto=None):
         self.cfg = cfg
         self.enc = Encoder(cfg["encoder"])
         self.imu = ImuLong(cfg["imu"], cfg["anti_impuntata"], cfg["fallback"]["imu_scala_vs_enc"])
         self.fus = Fusione(cfg["fusione_gps_imu"])
         self.arb = Arbitro(cfg, cfg["imu"], self.enc, self.imu, self.fus)
-        self.reg = Regolatore(cfg)
+        self.stato_contatto = stato_contatto      # file (es. /data/speed_limiter_v3_contatto.json) o None = niente persistenza
+        self.reg = Regolatore(cfg, self._carica_contatto())
+        self._t_salvato = -1e9
         self.rampa = Rampa(cfg["freno"])
         self.servo = ImpulsoServo(backend_servo, cfg["freno"])
         self.ina = GuardiaIna(cfg["ina219"])
@@ -38,6 +41,30 @@ class Controllo:
         self.dati_scartati = {"gps": 0, "ble": 0}
         self.t_inizio = None
         self._t_rilascio_alto = None
+
+    def _carica_contatto(self):
+        """contatto appreso del giro prima; qualunque problema (file assente/rotto/fuori limiti) = nessuna stima (default prudente)."""
+        if not self.stato_contatto:
+            return None
+        try:
+            with open(self.stato_contatto) as f:
+                x = json.load(f).get("contatto_deg")
+            fr = self.cfg["freno"]
+            return float(x) if isinstance(x, (int, float)) and fr["contatto_min_deg"] <= x <= fr["contatto_max_deg"] else None
+        except (OSError, ValueError, AttributeError, TypeError):
+            return None
+
+    def _salva_contatto(self, t):
+        if not self.stato_contatto or self.reg.contatto is None or t - self._t_salvato < 20.0:
+            return
+        self._t_salvato = t
+        try:
+            tmp = self.stato_contatto + ".tmp"
+            with open(tmp, "w") as f:
+                json.dump({"contatto_deg": round(self.reg.contatto, 2), "n_stime": self.reg.n_stime}, f)
+            os.replace(tmp, self.stato_contatto)
+        except OSError:
+            pass
 
     def passo(self, c: Campione):
         t = c.t
@@ -90,7 +117,10 @@ class Controllo:
         if rilascia:                       # IMMEDIATO, stesso ciclo: qualche grado, non per forza 0
             self.rampa.angolo = nuovo
         # 5) decisione
+        self.reg.fonte = fonte
         target = self.reg.passo(v, a, self.rampa.angolo, dt)
+        if self.reg.appreso_ora:
+            self._salva_contatto(t)
         if c.emergenza:
             target = TETTO_ASSOLUTO
         # 6) tetti
@@ -163,7 +193,7 @@ class Controllo:
             "t": t, "fonte": fonte, "v": v, "a": a, "dec": dec, "v_enc": self.enc.v, "a_enc": self.enc.a,
             "enc_fresco": self.enc.fresco(t), "v_fus": self.fus.v, "sigma_v": self.fus.sigma_v,
             "dec_imu": self.imu.dec, "d03": self.imu.d03, "imu_ok": imu_ok,
-            "frena": self.reg.frena, "livello": self.reg.livello, "fase": self.reg.fase, "a_des": self.reg.a_des,
+            "frena": self.reg.frena, "livello": self.reg.livello, "fase": self.reg.fase, "contatto": self.reg.contatto, "a_nat": self.reg.a_nat, "a_des": self.reg.a_des,
             "target": target, "angolo": angolo, "tetto": tetto, "rilascia_ora": rilascia, "bloccato": no_aum,
             "motivi": ",".join(motivi), "emergenza": c.emergenza, "avvisi": avvisi, "ina_ma": c.ina_ma,
         }

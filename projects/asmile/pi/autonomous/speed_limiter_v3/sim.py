@@ -102,8 +102,9 @@ class SimBici:
     """Bici fisica semplice per le prove SINTETICHE a anello chiuso (discesa che accelera, freno col suo ritardo)."""
 
     def __init__(self, k_enc, v0_kmh=12.0, pendenza_ms2=0.5, resistenza=0.02, k_dec_per_grado=0.05, zona_morta_deg=4.0,
-                 ritardo_s=0.25, imu_scala=1.5, seed=1, imu_rumore_g=0.02, a_nat_fn=None, t0=0.0):
+                 ritardo_s=0.25, imu_scala=1.5, seed=1, imu_rumore_g=0.02, a_nat_fn=None, t0=0.0, jitter_s=0.0):
         self.k_enc = k_enc
+        self.jitter_s = jitter_s            # jitter dell'istante di campionamento dell'encoder (t dato = t vero: lo stimatore usa i t veri)
         self.a_nat_fn = a_nat_fn
         self.t0 = t0
         self.v = v0_kmh / 3.6
@@ -153,7 +154,8 @@ class SimBici:
         if self.t - self.t_ble >= 1.0:
             self.t_ble = self.t
             ble = max(0.0, self.v_hist[-1] + r.gauss(0, 0.1))
-        return Campione(t=self.t, enc=(self.t, int(self.cum_f)), imu=imu, gps=gps, ble=ble, ina_ma=27.0)
+        dj = max(-2 * self.jitter_s, min(2 * self.jitter_s, r.gauss(0, self.jitter_s))) if self.jitter_s else 0.0
+        return Campione(t=self.t, enc=(self.t + dj, int(self.cum_f + self.v * dj / self.k_enc)), imu=imu, gps=gps, ble=ble, ina_ma=27.0)
 
 
 def esegui_sintetico(ctl, servo, bici, durata_s, guasti: Optional[Guasti] = None, dt=0.02, impuntate=(), dt_imp=0.4):

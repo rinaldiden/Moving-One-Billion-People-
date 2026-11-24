@@ -12,6 +12,7 @@ class SogliaError(ValueError):
 LIMITI = {
     "velocita.v_max_kmh": (5.0, 20.0), "velocita.zona_inizio_kmh": (3.0, 19.0),
     "encoder.m_per_count": (1.0e-5, 4.0e-5), "encoder.finestra_parabola_s": (0.15, 0.6),
+    "encoder.pedale_T_default_s": (0.28, 0.7), "encoder.pedale_T_min_s": (0.2, 0.4), "encoder.pedale_T_max_s": (0.4, 1.0), "encoder.pedale_v_min_ms": (0.5, 5.0),
     "encoder.max_salto_counts": (100, 16384), "encoder.fresco_s": (0.05, 1.0), "encoder.verso_avanti": (-1, 1),
     "encoder.plausibilita.tol_v_gps_ms": (0.3, 3.0), "encoder.plausibilita.tol_v_gps_rel": (0.05, 0.6),
     "encoder.plausibilita.tol_a_imu_ms2": (1.0, 6.0), "encoder.plausibilita.tempo_s": (0.5, 5.0),
@@ -53,11 +54,11 @@ LIMITI = {
     "ina219.ma_rilascio_max": (200.0, 1500.0), "ina219.rilascio_tempo_s": (0.1, 2.0),
     "log_hz": (1, 50),
     "fallback.tetto_deg": (0.0, 50.0), "fallback.imu_scala_vs_enc": (1.0, 3.0),
-    "freno.angolo_contatto_deg": (1.0, 30.0), "freno.angolo_lavoro_deg": (2.0, 50.0),
+    "freno.contatto_min_deg": (3.0, 10.0), "freno.contatto_max_deg": (10.0, 30.0), "freno.contatto_default_deg": (3.0, 15.0), "freno.rampa_cerca_deg_s": (1.0, 12.0),
     "freno.margine_contatto_deg": (0.5, 6.0), "freno.rampa_avvicinamento_deg_s": (5.0, 30.0),
     "freno.rampa_fine_su_deg_s": (0.5, 12.0), "freno.rampa_fine_su_sopra15_deg_s": (0.5, 25.0),
     "freno.rampa_fine_giu_deg_s": (0.5, 12.0),
-    "regolatore.v_obiettivo_kmh": (4.0, 19.0), "regolatore.ti_s": (2.0, 30.0), "regolatore.kp_scala": (0.1, 6.0), "regolatore.kp_sopra_deg_per_ms": (0.0, 60.0), "regolatore.rilascio_dolce_deg_s": (0.0, 6.0),
+    "regolatore.v_obiettivo_kmh": (4.0, 19.0), "regolatore.ti_s": (2.0, 30.0), "regolatore.guadagno_anello_1_s": (0.2, 2.0), "regolatore.g_default_ms2_per_deg": (0.03, 0.6), "regolatore.kp_min_deg_per_ms": (0.5, 10.0), "regolatore.kp_max_deg_per_ms": (2.0, 30.0), "regolatore.contatto_rate_max_deg_s": (1.0, 12.0), "regolatore.contatto_a_nat_max_ms2": (0.1, 1.5), "regolatore.kp_sopra_rel": (0.0, 3.0), "regolatore.contatto_soglia_fit_a_ms2": (0.3, 1.5), "regolatore.contatto_alfa": (0.05, 1.0), "regolatore.a_nat_tau_s": (0.5, 5.0), "regolatore.ritardo_misura_a_s": (0.0, 1.0),  "regolatore.rilascio_dolce_deg_s": (0.0, 6.0),
     "regolatore.ingaggio_sotto_zona_kmh": (0.0, 3.0), "regolatore.disimpegno_sotto_zona_kmh": (0.5, 5.0),
     "regolatore.esponente_zona": (1.0, 3.0), "regolatore.k_sopra_15_ms2_per_ms": (0.2, 3.0),
     "regolatore.a_pos_max_ms2": (0.05, 0.6), "regolatore.banda_morta_ms2": (0.0, 0.2), "regolatore.a_filtro_s": (0.05, 0.5),
@@ -120,10 +121,12 @@ def valida(cfg):
     if not cfg["velocita"]["zona_inizio_kmh"] < cfg["velocita"]["v_max_kmh"]:
         raise SogliaError("zona_inizio_kmh deve essere < v_max_kmh")
     fr = cfg["freno"]
-    if not fr["angolo_contatto_deg"] < fr["angolo_lavoro_deg"] <= min(fr["tetto_deg"], 50.0):
-        raise SogliaError("freno: serve angolo_contatto_deg < angolo_lavoro_deg <= tetto_deg (<= 50)")
-    if fr["angolo_contatto_deg"] - fr["margine_contatto_deg"] < fr["libera_sotto_deg"]:
-        raise SogliaError("freno: contatto - margine deve essere >= libera_sotto_deg (sotto verrebbe azzerato)")
+    if not fr["contatto_min_deg"] <= fr["contatto_default_deg"] <= fr["contatto_max_deg"] <= min(fr["tetto_deg"], 50.0):
+        raise SogliaError("freno: serve contatto_min <= contatto_default <= contatto_max <= tetto_deg (<= 50)")
+    if fr["contatto_min_deg"] - fr["margine_contatto_deg"] < fr["libera_sotto_deg"]:
+        raise SogliaError("freno: contatto_min - margine deve essere >= libera_sotto_deg (sotto verrebbe azzerato)")
+    if not fr["rampa_cerca_deg_s"] <= 12.0:
+        raise SogliaError("freno.rampa_cerca_deg_s > 12 gradi/s rifiutato (condizione asmile-sicurezza)")
     rg = cfg["regolatore"]
     if not (cfg["velocita"]["zona_inizio_kmh"] < rg["v_obiettivo_kmh"] < cfg["velocita"]["v_max_kmh"]):
         raise SogliaError("regolatore.v_obiettivo_kmh deve stare fra zona_inizio_kmh e v_max_kmh")

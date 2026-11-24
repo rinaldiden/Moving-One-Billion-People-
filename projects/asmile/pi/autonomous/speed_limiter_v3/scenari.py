@@ -56,3 +56,25 @@ def salto_max_v(r, t0, t1):
     """Massimo salto di v (m/s) fra cicli consecutivi nell'intervallo, solo dove v esiste."""
     v = [(x["t"], x["v"]) for x in r if t0 <= x["t"] < t1 and x["v"] is not None]
     return float(max(abs(b[1] - a[1]) for a, b in zip(v, v[1:]))) if len(v) > 1 else 0.0
+
+
+def pedalate(pend, seed=0, ampl=0.7, f=2.5):
+    """accelerazione naturale a(t) = pendenza + pedalate (f Hz, +-ampl m/s2) + componente a 1 Hz (+-0.3)."""
+    rng = np.random.default_rng(seed)
+    ph = rng.uniform(0, 6.2832, 2)
+    return lambda t: pend + ampl * np.sin(6.2832 * f * t + ph[0]) + 0.3 * np.sin(6.2832 * 1.0 * t + ph[1])
+
+
+def profilo_pedalate(pend, seed=0, pre_s=4.0, rialzo=None, ampl=0.7):
+    """4 s di rullaggio a freno staccato (a naturale ~0: il regolatore misura la decel naturale) e poi la pendenza `pend`;
+    rialzo=(durata_s, a) = tratto iniziale piu' ripido per arrivare 'a 17'. Sempre con le pedalate."""
+    ped = pedalate(0.0, seed, ampl)
+    def a(t):
+        if t < pre_s:
+            base = 0.0
+        elif rialzo is not None and t < pre_s + rialzo[0]:
+            base = rialzo[1]
+        else:
+            base = pend
+        return base + ped(t)
+    return a

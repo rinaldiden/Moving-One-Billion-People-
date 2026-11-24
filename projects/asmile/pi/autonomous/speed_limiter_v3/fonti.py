@@ -1,6 +1,7 @@
 """Fonti di velocita' e decelerazione: encoder ruota (primaria), fusione GPS+IMU, BLE CooSpo, arbitro.
 Nessun import hardware. Tutto lavora su un 'Campione' che riempie hw.py (vero) o sim.py (CSV)."""
 import math
+from bisect import bisect_right
 from collections import deque
 from dataclasses import dataclass
 from typing import Optional
@@ -47,8 +48,16 @@ def _solve3(M, Y):
     return out
 
 
+BANDA_PEDALE_HZ = (1.5, 3.5)       # picco dell'accelerazione dovuto alle pedalate (2 spinte per giro di pedale)
+
+
 class Encoder:
-    """v e a dalla distanza percorsa: parabola ai minimi quadrati sugli ultimi 0.3 s (come WheelEncoder._fit)."""
+    """v e a dalla distanza percorsa dall'encoder ruota (t dell'encoder, non il clock del loop).
+    24/11 STIMATORE A PETTINE: le pedalate (picco ~2.5 Hz, 2 spinte per giro) sono il 'rumore' dell'accelerazione, non
+    l'encoder. v_ma = spostamento su UNA spinta (periodo T stimato online dal picco 1.5-3.5 Hz) / T = media mobile che
+    cancella la pedalata e le sue armoniche, con meno ritardo di un EWMA; a = pendenza (regressione) di v_ma su ~T/2;
+    v = v_ma + a*T/2 (compensa il ritardo della media). Prima del riempimento, o se il pettine non e' pronto:
+    parabola ai minimi quadrati sugli ultimi 0.3 s (v_par, a_par, come WheelEncoder._fit)."""
 
     def __init__(self, cfg):
         self.k = cfg["m_per_count"]
@@ -65,6 +74,15 @@ class Encoder:
         self.a = 0.0
         self.t_nuovo = None          # istante host dell'ultimo dato nuovo
         self.glitch = 0
+        self.v_par = 0.0
+        self.a_par = 0.0
+        self.T = cfg["pedale_T_default_s"]
+        self.T_min, self.T_max = cfg["pedale_T_min_s"], cfg["pedale_T_max_s"]
+        self.v_min_pedale = cfg["pedale_v_min_ms"]
+        self._lt, self._ls = [], []          # storia lunga (te, s) per il pettine
+        self._vma = deque()                  # (te, v_ma)
+        self._t_spettro = -1e9
+        self.pettine = False                 # True se v, a vengono dal pettine
 
     def aggiorna(self, t, enc):
         if enc is None:
@@ -90,11 +108,15 @@ class Encoder:
             self.glitch += 1
             self._hist.clear()
             self._hist.append((te, self._cum * self.k))
+            self._lt.clear()
+            self._ls.clear()
+            self._vma.clear()
             self.t_nuovo = t
             return
         self._cum += self.sgn * d       # FIRMATO: la retromarcia non conta come avanti
         self.t_nuovo = t
         self._fit(te)
+        self._pettine(te)
 
     def _fit(self, te):
         self._hist.append((te, self._cum * self.k))
@@ -109,10 +131,84 @@ class Encoder:
         Y = [sum(y * x ** n for x, y in zip(tau, sm)) for n in range(3)]
         sol = _solve3([[S[0], S[1], S[2]], [S[1], S[2], S[3]], [S[2], S[3], S[4]]], Y)
         if sol is not None:
-            self.v_firmata = sol[1]
-            self.indietro = sol[1] < -0.3
-            self.v = max(0.0, sol[1])
-            self.a = 2.0 * sol[2]
+            self.v_par, self.a_par = max(0.0, sol[1]), 2.0 * sol[2]
+            if not self.pettine:
+                self.v_firmata = sol[1]
+                self.indietro = sol[1] < -0.3
+                self.v = self.v_par
+                self.a = self.a_par
+
+    def _s_a(self, tau):
+        """spostamento interpolato all'istante tau (None se fuori storia)."""
+        lt, ls = self._lt, self._ls
+        i = bisect_right(lt, tau)
+        if i == 0 or i >= len(lt):
+            return None
+        f = (tau - lt[i - 1]) / (lt[i] - lt[i - 1])
+        return ls[i - 1] + f * (ls[i] - ls[i - 1])
+
+    def _stima_periodo(self, te):
+        """picco di potenza dell'accelerazione in 1.5-3.5 Hz sugli ultimi 2 s (DFT diretta ai t veri dell'encoder)."""
+        lt = self._lt
+        i0 = bisect_right(lt, te - 2.0)
+        ts, xs = [], []
+        for i in range(i0 + 5, len(lt)):          # v su 0.1 s: spostamento fra i campioni a ~0.1 s
+            s0 = self._s_a(lt[i] - 0.1)
+            if s0 is None:
+                continue
+            ts.append(lt[i])
+            xs.append((self._ls[i] - s0) / 0.1)
+        if len(xs) < 60 or ts[-1] - ts[0] < 1.5:
+            return None
+        m = sum(xs) / len(xs)
+        xs = [x - m for x in xs]
+        pot = []
+        for k in range(21):                       # 1.5 .. 3.5 Hz passo 0.1
+            f = BANDA_PEDALE_HZ[0] + 0.1 * k
+            w = 2 * math.pi * f
+            c = sum(x * math.cos(w * t) for x, t in zip(xs, ts))
+            sn = sum(x * math.sin(w * t) for x, t in zip(xs, ts))
+            pot.append(f * f * (c * c + sn * sn))        # *f^2: spettro dell'accelerazione
+        j = max(range(21), key=lambda q: pot[q])
+        med = sorted(pot)[10]
+        if pot[j] < 3.0 * med or pot[j] <= 0:
+            return None
+        return 1.0 / (BANDA_PEDALE_HZ[0] + 0.1 * j)
+
+    def _pettine(self, te):
+        self._lt.append(te)
+        self._ls.append(self._cum * self.k)
+        if len(self._lt) > 600:
+            del self._lt[:200]
+            del self._ls[:200]
+        if self.v_par > self.v_min_pedale and te - self._t_spettro >= 0.5:
+            self._t_spettro = te
+            Tn = self._stima_periodo(te)
+            if Tn is not None:
+                self.T = min(self.T_max, max(self.T_min, 0.7 * self.T + 0.3 * Tn))
+        T = self.T
+        s0 = self._s_a(te - T)
+        if s0 is None:
+            self.pettine = False
+            return
+        vma = (self._cum * self.k - s0) / T
+        self._vma.append((te, vma))
+        while len(self._vma) > 3 and te - self._vma[0][0] > 0.5 * T:
+            self._vma.popleft()
+        if len(self._vma) < 6 or te - self._vma[0][0] < 0.3 * T:
+            self.pettine = False
+            return
+        n = len(self._vma)
+        tm = sum(p[0] for p in self._vma) / n
+        vm = sum(p[1] for p in self._vma) / n
+        den = sum((p[0] - tm) ** 2 for p in self._vma)
+        a = sum((p[0] - tm) * (p[1] - vm) for p in self._vma) / den if den > 0 else 0.0
+        v = vma + a * T / 2.0
+        self.pettine = True
+        self.v_firmata = v
+        self.indietro = v < -0.3
+        self.v = max(0.0, v)
+        self.a = a
 
     def fresco(self, t):
         return self.t_nuovo is not None and (t - self.t_nuovo) <= self.fresco_s and len(self._hist) >= 6
