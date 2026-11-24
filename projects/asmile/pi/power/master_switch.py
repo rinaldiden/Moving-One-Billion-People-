@@ -213,6 +213,13 @@ class MasterSwitch:
             return
         print(f"[WATCHDOG] speed_limiter MORTO (codice {p.returncode}): freno a {RELEASE_ANGLE}° e pin libero", flush=True)
         self.speed_limiter_proc = None
+        sys.path.insert(0, f"{HOME_DIR}/wip/Moving-One-Billion-People-/projects/asmile/pi/autonomous")
+        from speed_limiter_v3.lock_gpio12 import LockError, acquisisci_lock_attendi
+        try:
+            lock = acquisisci_lock_attendi(timeout_s=1.0)
+        except LockError:
+            print("[WATCHDOG] GPIO12 ha ancora un padrone: non tocco il freno", flush=True)
+            return
         try:
             h = lgpio.gpiochip_open(GPIO_CHIP)
             try:
@@ -229,6 +236,8 @@ class MasterSwitch:
             log_cmd("brake", "pwm", RELEASE_ANGLE, "watchdog: speed_limiter morto, rilascio")
         except Exception as e:
             print(f"[WATCHDOG] rilascio freno fallito: {e!r}", flush=True)
+        finally:
+            lock.close()
         try:
             with open("/run/speed_limiter_v3.state", "w") as f:
                 f.write('{"stato": "CADUTO", "avvisi": ["LIMITER MORTO: freno rilasciato dal master, nessun limite dei 15 km/h"]}')
@@ -272,13 +281,18 @@ class MasterSwitch:
         # 23/11 sera (Daniele): speed_limiter v3 ATTIVO (comanda il freno, max 50°, anti-impuntata) e registra ogni ciclo in
         # /data/logging/limiter_v3/attivo_*.csv. Il vecchio speed_limiter.py NON parte più.
         sl_dir = f"{HOME_DIR}/wip/Moving-One-Billion-People-/projects/asmile/pi/autonomous"
-        self.speed_limiter_proc = subprocess.Popen(
-            ["python3", "-u", "-m", "speed_limiter_v3.hw"],
-            cwd=sl_dir,
-            stdout=open("/tmp/speed_limiter_v3.log", "w"),
-            stderr=subprocess.STDOUT,
-        )
-        print(f"[SWITCH] speed_limiter v3 ATTIVO started PID={self.speed_limiter_proc.pid}")
+        vecchio = getattr(self, "speed_limiter_proc", None)
+        if vecchio is not None and vecchio.poll() is None:
+            # 24/11 (asmile-sicurezza): riattivazione per recorder morto col limiter vivo -> NON lanciarne un secondo
+            print(f"[SWITCH] speed_limiter v3 gia' vivo PID={vecchio.pid}: non ne lancio un altro")
+        else:
+          self.speed_limiter_proc = subprocess.Popen(
+              ["python3", "-u", "-m", "speed_limiter_v3.hw"],
+              cwd=sl_dir,
+              stdout=open("/tmp/speed_limiter_v3.log", "w"),
+              stderr=subprocess.STDOUT,
+          )
+          print(f"[SWITCH] speed_limiter v3 ATTIVO started PID={self.speed_limiter_proc.pid}")
 
         # Clean up any zombie camera processes
         self._kill_camera_zombies()
