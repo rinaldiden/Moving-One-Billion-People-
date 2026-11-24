@@ -1,0 +1,3 @@
+id,gruppo,qty,query,deve,escludi,note
+bms1s,base,4,scheda protezione batteria litio 1S 3.7V 18650 3A DW01A,1S/1 S|protezione/protection/BMS,2S|3S|4S|caricatore auto,BMS 1 cella con stacco in scarica (sovrascarica ~2.4-2.5 V), sovracorrente e corto, almeno 2 A continui
+tp4056p,alternativa,4,modulo TP4056 con protezione DW01A uscita OUT 18650,TP4056|protezione/protection/DW01,senza protezione,carica + protezione in un modulo: uscita OUT+/OUT- protetta in scarica (1 A di carica)
