@@ -13,7 +13,7 @@ sim2real per migliorare il modello) la fa l'agente / lo skill asmile-sim2real-pi
 
 Uso:  python3 pull_from_loggers.py          # un giro su tutti i logger
 """
-import os, subprocess, hashlib, shlex, json, shutil
+import os, subprocess, hashlib, shlex, json, shutil, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))              # .../projects/asmile/loggers
 DEST_BASE = os.path.abspath(os.path.join(HERE, "..", "asmile-loggers"))
@@ -261,6 +261,55 @@ def http_risponde(host, t=4):
         return False
 
 
+def scarica_con_ripresa(url, part, size, tentativi=6, pausa=3.0, timeout=30, aprire=None, log=print):
+    """Scarica url in `part` RIPRENDENDO da dove era arrivato (Range: bytes=N-). 24/11: i clip da 8-10 MB/min andavano in
+    timeout a meta' e il .part ripartiva da 0 per sempre. Ritorna True solo se part ha ESATTAMENTE `size` byte.
+    Server vecchio che ignora Range (risponde 200): si riparte da 0 (troncato), mai si accoda a meta'.
+    Il .part resta sul disco tra un giro e l'altro (si riprende anche al prossimo launchd)."""
+    import urllib.request, urllib.error, time, re
+    aprire = aprire or (lambda rq: urllib.request.urlopen(rq, timeout=timeout))
+    senza_progresso = 0
+    for t in range(tentativi):
+        off = os.path.getsize(part) if os.path.exists(part) else 0
+        if off == size:
+            return True
+        if off > size:                                   # part piu' lungo del file: non fidarsi, da capo
+            os.remove(part)
+            off = 0
+        rq = urllib.request.Request(url, headers={"Range": f"bytes={off}-"} if off else {})
+        try:
+            with aprire(rq) as r:
+                st = getattr(r, "status", None) or r.getcode()
+                if off and st == 206:
+                    m = re.match(r"bytes (\d+)-", r.headers.get("Content-Range", ""))
+                    if not m or int(m.group(1)) != off:
+                        raise IOError("Content-Range inatteso")
+                    modo = "ab"
+                else:
+                    modo = "wb"                          # 200: il server manda tutto dall'inizio
+                    off = 0
+                with open(part, modo) as out:
+                    shutil.copyfileobj(r, out, 1 << 16)
+        except urllib.error.HTTPError as e:
+            if e.code == 416:                            # Range oltre la fine: part sbagliato, da capo
+                if os.path.exists(part):
+                    os.remove(part)
+            elif e.code == 503:                          # la scheda ha gia' un trasferimento: aspetto
+                log("    scheda occupata (503), aspetto")
+            else:
+                log(f"    HTTP {e.code}")
+        except Exception as e:                           # timeout, reset, IncompleteRead: il .part resta
+            log(f"    interrotto a {os.path.getsize(part) if os.path.exists(part) else 0}/{size}: {e}")
+        nuovo = os.path.getsize(part) if os.path.exists(part) else 0
+        if nuovo == size:
+            return True
+        senza_progresso = 0 if nuovo > off else senza_progresso + 1
+        if senza_progresso >= 3:                         # niente avanza: non martellare la scheda, riprova al prossimo giro
+            return False
+        time.sleep(pausa)
+    return False
+
+
 def pull_logger02(name="logger02", hosts=None):
     """Scarica un logger ESP32 (A + B dietro /b) in asmile-loggers/<name>/: verifica dimensione, poi cancella."""
     import urllib.request
@@ -276,6 +325,16 @@ def pull_logger02(name="logger02", hosts=None):
             pass
     if not host:
         print(f"[{name}] non raggiungibile - skip")
+        return 0
+    # 24/11 (giro di Daniele rovinato): scaricare MENTRE registra manda in crisi A e B (la B si e' fermata alle 16:12
+    # proprio quando il Mac ha iniziato a scaricare). Regola Daniele 18/11: si scarica solo a bici ferma = logger in pausa.
+    try:
+        st = json.loads(get(f"http://{host}/api/stato", 5).read())
+        if st.get("rec", {}).get("registra"):
+            print(f"[{name}] sta registrando (bici in moto): non scarico, aspetto la pausa")
+            return 0
+    except Exception as e:
+        print(f"[{name}] stato non leggibile ({e}): non scarico")
         return 0
     dest = os.path.join(DEST_BASE, name)
     os.makedirs(dest, exist_ok=True)
@@ -298,6 +357,7 @@ def pull_logger02(name="logger02", hosts=None):
         import re
         sess_di = lambda n: (re.search(r"(\d{8}_\d{6})", n) or re.search(r"(boot\d+)", n) or [None, ""])[1]
         files = sorted(sorted(files, key=lambda x: x["nome"]), key=lambda x: sess_di(x["nome"]), reverse=True)
+        guasti = 0
         for f in files:
             nome, size = f["nome"], f["byte"]
             if base_corso and nome.startswith(base_corso):
@@ -308,17 +368,20 @@ def pull_logger02(name="logger02", hosts=None):
                 continue                                  # salute/errori del minuto in corso
             locale = os.path.join(dest, nome)
             try:
-                with get(f"http://{host}{pref}/dl?f={nome}", 120) as r, open(locale + ".part", "wb") as out:
-                    shutil.copyfileobj(r, out, 1 << 20)
-                if os.path.getsize(locale + ".part") != size:
-                    print(f"  {nome}: dimensione diversa, riprovo al prossimo giro")
-                    os.remove(locale + ".part")
+                if not scarica_con_ripresa(f"http://{host}{pref}/dl?f={nome}", locale + ".part", size):
+                    guasti += 1
+                    print(f"  {nome}: incompleto, il .part resta e si riprende al prossimo giro")
+                    if guasti >= 2:
+                        print(f"  [{name}{pref or '/a'}] 2 file di fila falliti: smetto per questo giro (non martello la scheda)")
+                        break
                     continue
+                guasti = 0
                 os.replace(locale + ".part", locale)
                 urllib.request.urlopen(urllib.request.Request(f"http://{host}{pref}/del?f={nome}", method="POST"),
                                        timeout=10).read()
                 print(f"  {nome}: OK ({size} byte) -> cancellato dalla scheda {'B' if pref else 'A'}")
                 n += 1
+                time.sleep(1.0)                            # pausa fra file: la A respira
             except Exception as e:
                 print(f"  {nome}: errore {e}")
     return n
