@@ -179,6 +179,7 @@ class MasterSwitch:
         """Called from main loop — restart recorder if it died while switch is ON."""
         if not self.active:
             return
+        self._limiter_check()
         now = time.monotonic()
         if now - self.last_watchdog < WATCHDOG_INTERVAL:
             return
@@ -202,6 +203,38 @@ class MasterSwitch:
             print("[WATCHDOG] recorder restarted OK")
         else:
             print("[WATCHDOG] recorder failed to start")
+
+    def _limiter_check(self):
+        """24/11 (rollback-guardian): se il limiter muore col freno tirato nessuno lo riapre (la guardia di rilascio sta
+        dentro il limiter). Limiter morto con master ON -> freno a 0 per 1,5 s, pin in ingresso, avviso. NON lo riavvia
+        (Restart=no per scelta: si riaccende col master)."""
+        p = getattr(self, "speed_limiter_proc", None)
+        if p is None or p.poll() is None:
+            return
+        print(f"[WATCHDOG] speed_limiter MORTO (codice {p.returncode}): freno a {RELEASE_ANGLE}° e pin libero", flush=True)
+        self.speed_limiter_proc = None
+        try:
+            h = lgpio.gpiochip_open(GPIO_CHIP)
+            try:
+                lgpio.gpio_free(h, PIN_SERVO)
+            except lgpio.error:
+                pass
+            lgpio.gpio_claim_output(h, PIN_SERVO)
+            lgpio.tx_pwm(h, PIN_SERVO, SERVO_FREQ, angle_to_duty(RELEASE_ANGLE))
+            time.sleep(1.5)
+            lgpio.tx_pwm(h, PIN_SERVO, SERVO_FREQ, 0)
+            lgpio.gpio_free(h, PIN_SERVO)
+            _pin_in_ingresso()
+            lgpio.gpiochip_close(h)
+            log_cmd("brake", "pwm", RELEASE_ANGLE, "watchdog: speed_limiter morto, rilascio")
+        except Exception as e:
+            print(f"[WATCHDOG] rilascio freno fallito: {e!r}", flush=True)
+        try:
+            with open("/run/speed_limiter_v3.state", "w") as f:
+                f.write('{"stato": "CADUTO", "avvisi": ["LIMITER MORTO: freno rilasciato dal master, nessun limite dei 15 km/h"]}')
+        except OSError:
+            pass
+        buzzer_sweep(1500, 600)
 
     def activate(self, follow_me=False):
         """Switch turned ON — release servo + logging. No speed_limiter (deleted 2026-05-22)."""
