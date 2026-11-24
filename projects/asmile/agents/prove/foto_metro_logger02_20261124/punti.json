@@ -1,0 +1,44 @@
+{
+ "calib": "calib_logger02.CANDIDATO_v3_giro2_20261123.json",
+ "f_px": 1188.2627296449264,
+ "B_m": 0.2,
+ "d0_px": -2.55,
+ "righe": 800,
+ "quando": "2026-11-24 14:57:45",
+ "nota": "distanza diretta = dal punto di mezzo fra le due lenti",
+ "punti": [
+  {
+   "x": 731,
+   "y": 572,
+   "d_px": 193.0,
+   "Z_m": 1.22,
+   "dist_diretta_m": 1.23,
+   "lato_m": 0.11,
+   "alto_m": -0.18,
+   "sd_px": 0.32,
+   "n": 1
+  },
+  {
+   "x": 1029,
+   "y": 402,
+   "d_px": 172.31,
+   "Z_m": 1.36,
+   "dist_diretta_m": 1.44,
+   "lato_m": 0.46,
+   "alto_m": -0.01,
+   "sd_px": 0.15,
+   "n": 2
+  },
+  {
+   "x": 1087,
+   "y": 685,
+   "d_px": 138.25,
+   "Z_m": 1.69,
+   "dist_diretta_m": 1.86,
+   "lato_m": 0.66,
+   "alto_m": -0.41,
+   "sd_px": 0.38,
+   "n": 3
+  }
+ ]
+}
