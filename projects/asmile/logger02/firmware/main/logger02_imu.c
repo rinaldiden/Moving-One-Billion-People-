@@ -264,10 +264,22 @@ static bool arma_imu(void)
 
 uint32_t g_dormi_prova_s;   /* >0: sveglia anche a tempo (solo per le prove dal web) */
 
+/* B: se dormi non arriva a esp_deep_sleep_start() entro 30 s (24/11: B rimasta viva ma muta per 35 min), si riavvia da sola;
+ * al riavvio decide WAKE (A sveglia: la B riparte; A addormentata: wake_task la rimette a dormire in ~23 s) */
+static void dormi_scaduta(void *arg)
+{
+    esp_restart();
+}
+
 void logger02_dormi(const char *motivo)
 {
     ESP_LOGW(TAG, "deep sleep: %s", motivo);
     bool a = logger02_ruolo()->is_a;
+    if (!a) {
+        static esp_timer_handle_t guardia;
+        const esp_timer_create_args_t ga = {.callback = dormi_scaduta, .name = "dormi_wd"};
+        if (!guardia && esp_timer_create(&ga, &guardia) == ESP_OK) esp_timer_start_once(guardia, 30000000);
+    }
     if (a) logger02_link_invia("Z");                 /* prima la B */
     logger02_rec_stop();
     if (s_csv) { fclose(s_csv); s_csv = NULL; }

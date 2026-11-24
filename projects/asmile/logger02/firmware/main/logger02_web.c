@@ -5,17 +5,20 @@
  *   GET  /api/stato         JSON: ruolo, uptime, registrazione, sync, IMU, batteria
  *   GET  /api/frames        ultimi tempi dei fotogrammi in tempo A (per misurare lo sfasamento A↔B)
  *   GET  /api/files         elenco file in /sd/rec
- *   GET  /dl?f=<nome>       scarica un file
+ *   GET  /dl?f=<nome>       scarica un file; supporta Range: bytes=N[-M] (206) per riprendere. Un solo trasferimento
+ *                           alla volta (altri: 503 Retry-After), buffer preallocati all'avvio (24/11)
  *   POST /del?f=<nome>      cancella (il Mac cancella solo dopo aver controllato la dimensione)
  *   POST /ota               nuovo firmware (corpo = .bin), poi riavvio
  *   POST /dormi             deep sleep subito (prova) */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 #include "esp_http_server.h"
 #include "esp_http_client.h"
 #include "esp_ota_ops.h"
@@ -137,24 +140,96 @@ static bool nome_ok(httpd_req_t *req, char *path, size_t n)
     return true;
 }
 
+/* 24/11 scarico affidabile (crash 18/11: esp_hosted SDIO non trova 23 KB di RAM interna contigua mentre si trasferisce).
+ *  - buffer preallocati UNA volta all'avvio (PSRAM): niente malloc/free per richiesta, niente frammentazione
+ *  - blocchi da 8 KB (prima 32 KB file / 16 KB proxy) e una pausa di 1 tick fra blocchi
+ *  - un solo trasferimento di FILE alla volta (A: proprio o della B): il secondo riceve 503 e il Mac riprova
+ *  - contropressione: se la RAM interna libera scende sotto SOGLIA_RAM si aspetta (fino a 1 s) invece di spingere */
+#define BLK 8192
+#define SOGLIA_RAM 70000
+static uint8_t *s_buf_dl;                     /* trasferimenti di file */
+static uint8_t *s_buf_api;                    /* risposte piccole/POST via proxy */
+static SemaphoreHandle_t s_lock_dl, s_lock_api;
+static char s_cr[96];                         /* Content-Range della risposta in corso (protetto da s_lock_dl) */
+
+static void contropressione(void)
+{
+    for (int i = 0; i < 50 && heap_caps_get_free_size(MALLOC_CAP_INTERNAL) < SOGLIA_RAM; i++) vTaskDelay(pdMS_TO_TICKS(20));
+    vTaskDelay(1);
+}
+
+static bool occupato(httpd_req_t *req)
+{
+    httpd_resp_set_status(req, "503 Service Unavailable");
+    httpd_resp_set_hdr(req, "Retry-After", "5");
+    httpd_resp_sendstr(req, "trasferimento in corso");
+    return true;
+}
+
+/* "Range: bytes=N-" o "bytes=N-M" -> da, a (incluso). false se assente. Solo un intervallo, niente suffissi */
+static bool leggi_range(httpd_req_t *req, long *da, long *a)
+{
+    char v[64];
+    if (httpd_req_get_hdr_value_str(req, "Range", v, sizeof(v)) != ESP_OK || strncmp(v, "bytes=", 6)) return false;
+    char *fine;
+    long n = strtol(v + 6, &fine, 10);
+    if (*fine != '-' || fine == v + 6) return false;
+    *da = n;
+    *a = fine[1] ? strtol(fine + 1, NULL, 10) : -1;
+    return true;
+}
+
 static esp_err_t h_dl(httpd_req_t *req)
 {
     char p[160];
     if (!nome_ok(req, p, sizeof(p))) return ESP_OK;
+    struct stat st;
+    if (stat(p, &st) != 0) return httpd_resp_send_404(req);
+    if (!s_buf_dl || xSemaphoreTake(s_lock_dl, 0) != pdTRUE) { occupato(req); return ESP_OK; }
+    long size = st.st_size, da = 0, a = size - 1;
+    bool parz = false;
+    long rd, ra;
+    if (leggi_range(req, &rd, &ra)) {
+        if (rd < 0 || rd >= size) {
+            snprintf(s_cr, sizeof(s_cr), "bytes */%ld", size);
+            httpd_resp_set_status(req, "416 Range Not Satisfiable");
+            httpd_resp_set_hdr(req, "Content-Range", s_cr);
+            httpd_resp_sendstr(req, "range fuori file");
+            xSemaphoreGive(s_lock_dl);
+            return ESP_OK;
+        }
+        da = rd;
+        if (ra >= 0 && ra < size - 1) a = ra;
+        parz = true;
+    }
     FILE *f = fopen(p, "rb");
-    if (!f) return httpd_resp_send_404(req);
+    if (!f || (da && fseek(f, da, SEEK_SET) != 0)) {
+        if (f) fclose(f);
+        xSemaphoreGive(s_lock_dl);
+        return httpd_resp_send_404(req);
+    }
     httpd_resp_set_type(req, "application/octet-stream");
-    char *buf = heap_caps_malloc(32768, MALLOC_CAP_SPIRAM);
-    size_t n;
+    httpd_resp_set_hdr(req, "Accept-Ranges", "bytes");
+    if (parz) {
+        snprintf(s_cr, sizeof(s_cr), "bytes %ld-%ld/%ld", da, a, size);
+        httpd_resp_set_status(req, "206 Partial Content");
+        httpd_resp_set_hdr(req, "Content-Range", s_cr);
+    }
+    long resto = a - da + 1;
     esp_err_t r = ESP_OK;
     logger02_scarico_inizio();                      /* 24/11: scarico in corso = mai dormire */
-    while (buf && r == ESP_OK && (n = fread(buf, 1, 32768, f)) > 0) {
-        r = httpd_resp_send_chunk(req, buf, n);
-        logger02_scarico_visto();                   /* 23/11: un pezzo da 25 MB dura più di un minuto: sveglia a ogni blocco, non solo all'inizio */
+    while (r == ESP_OK && resto > 0) {
+        size_t n = fread(s_buf_dl, 1, resto < BLK ? (size_t)resto : BLK, f);
+        if (n == 0) { r = ESP_FAIL; break; }        /* file accorciato: chunk finale mancante = il Mac vede il troncamento */
+        contropressione();
+        r = httpd_resp_send_chunk(req, (const char *)s_buf_dl, n);
+        resto -= n;
+        logger02_scarico_visto();                   /* 23/11: un pezzo da 25 MB dura più di un minuto: sveglia a ogni blocco */
     }
     fclose(f);
-    free(buf);
     logger02_scarico_fine();
+    xSemaphoreGive(s_lock_dl);
+    if (r != ESP_OK) return r;
     return httpd_resp_send_chunk(req, NULL, 0);
 }
 
@@ -315,43 +390,91 @@ static esp_err_t h_dormi(httpd_req_t *req)
  * e ogni attesa lo blocca per tutti (17/11: la pagina che chiedeva /b ogni 2 s rendeva la A "irraggiungibile") */
 static volatile int64_t s_b_giu_fino;
 
+static const char *stato_str(int c)
+{
+    switch (c) {
+    case 206: return "206 Partial Content";
+    case 404: return "404 Not Found";
+    case 416: return "416 Range Not Satisfiable";
+    case 503: return "503 Service Unavailable";
+    default:  return NULL;                         /* 200 e il resto: stato di default */
+    }
+}
+
+/* IDF 5.5: esp_http_client_get_header() legge gli header della RICHIESTA, non della risposta (guardian 24/11):
+ * il Content-Range della B si cattura qui, nell'evento ON_HEADER, e finisce in s_cr_b (protetto da s_lock_dl) */
+static char s_cr_b[96];
+static esp_err_t ev_b(esp_http_client_event_t *e)
+{
+    if (e->event_id == HTTP_EVENT_ON_HEADER && e->header_key && e->header_value && !strcasecmp(e->header_key, "Content-Range")) {
+        snprintf(s_cr_b, sizeof(s_cr_b), "%s", e->header_value);
+    }
+    return ESP_OK;
+}
+
 static esp_err_t proxy_b_corpo(httpd_req_t *req, const char *porta)
 {
     if (esp_timer_get_time() < s_b_giu_fino) {
         httpd_resp_set_status(req, "503 Service Unavailable");
         return httpd_resp_sendstr(req, "{\"errore\":\"B non raggiungibile\"}");
     }
+    bool file = porta[0] == 0 && strstr(req->uri, "/dl");     /* download di un file della B: buffer e lock dei file */
+    bool stream = porta[0] != 0;                              /* :82 streaming: buffer proprio (policy: niente streaming lungo) */
+    SemaphoreHandle_t lock = file ? s_lock_dl : s_lock_api;
+    uint8_t *buf = file ? s_buf_dl : s_buf_api;
+    int blk = file ? BLK : 8192;
+    if (stream) { buf = heap_caps_malloc(16384, MALLOC_CAP_SPIRAM); blk = 16384; lock = NULL; }
+    if (!buf || (lock && xSemaphoreTake(lock, file ? 0 : pdMS_TO_TICKS(5000)) != pdTRUE)) {
+        if (stream) free(buf);
+        occupato(req);
+        return ESP_OK;
+    }
     char url[192];
     snprintf(url, sizeof(url), "http://%s%s%s", g_ip_b, porta, req->uri + 2);
-    esp_http_client_config_t cc = {.url = url, .timeout_ms = req->method == HTTP_POST ? 15000 : 2500, .buffer_size = 8192,
+    esp_http_client_config_t cc = {.url = url, .timeout_ms = req->method == HTTP_POST ? 15000 : (file ? 8000 : 2500), .buffer_size = 4096, .event_handler = ev_b,
                                    .method = req->method == HTTP_POST ? HTTP_METHOD_POST : HTTP_METHOD_GET};
+    if (file) s_cr_b[0] = 0;
     esp_http_client_handle_t c = esp_http_client_init(&cc);
+    char rng[64];
+    if (file && httpd_req_get_hdr_value_str(req, "Range", rng, sizeof(rng)) == ESP_OK) esp_http_client_set_header(c, "Range", rng);
     esp_err_t r = esp_http_client_open(c, req->method == HTTP_POST ? req->content_len : 0);
-    char *buf = heap_caps_malloc(16384, MALLOC_CAP_SPIRAM);
     if (r == ESP_OK && req->method == HTTP_POST) {
         int resto = req->content_len, n;
-        while (resto > 0 && (n = httpd_req_recv(req, buf, resto < 16384 ? resto : 16384)) > 0) {
-            esp_http_client_write(c, buf, n);
+        while (resto > 0 && (n = httpd_req_recv(req, (char *)buf, resto < blk ? resto : blk)) > 0) {
+            esp_http_client_write(c, (char *)buf, n);
             resto -= n;
         }
     }
     if (r != ESP_OK || esp_http_client_fetch_headers(c) < 0) {
-        free(buf);
         esp_http_client_cleanup(c);
+        if (stream) free(buf);
+        if (lock) xSemaphoreGive(lock);
         s_b_giu_fino = esp_timer_get_time() + 8000000;
         httpd_resp_set_status(req, "503 Service Unavailable");
         return httpd_resp_sendstr(req, "{\"errore\":\"B non raggiungibile\"}");
     }
     char *ct = NULL;
     if (esp_http_client_get_header(c, "Content-Type", &ct) == ESP_OK && ct) httpd_resp_set_type(req, ct);
-    int n;
-    while ((n = esp_http_client_read(c, buf, 16384)) > 0) {
-        if (httpd_resp_send_chunk(req, buf, n) != ESP_OK) break;
-        if (strstr(req->uri, "/dl")) logger02_scarico_visto();     /* solo blocchi di FILE della B (non gli elenchi /b/api/files) */
+    if (file) {
+        const char *ss = stato_str(esp_http_client_get_status_code(c));
+        if (ss) httpd_resp_set_status(req, ss);
+        if (s_cr_b[0]) httpd_resp_set_hdr(req, "Content-Range", s_cr_b);     /* catturato in ev_b */
+        httpd_resp_set_hdr(req, "Accept-Ranges", "bytes");
     }
-    free(buf);
+    int n;
+    esp_err_t e = ESP_OK;
+    while ((n = esp_http_client_read(c, (char *)buf, blk)) > 0) {
+        if (file) contropressione();
+        if ((e = httpd_resp_send_chunk(req, (const char *)buf, n)) != ESP_OK) break;
+        if (file) logger02_scarico_visto();                /* solo blocchi di FILE della B (non gli elenchi /b/api/files) */
+    }
+    /* se la B si e' interrotta (n < 0) NON chiudo con il chunk finale: il Mac vede la risposta troncata e riprende con Range */
+    bool ok_fine = (n == 0) && e == ESP_OK;
     esp_http_client_close(c);
     esp_http_client_cleanup(c);
+    if (stream) free(buf);
+    if (lock) xSemaphoreGive(lock);
+    if (!ok_fine) return ESP_FAIL;
     return httpd_resp_send_chunk(req, NULL, 0);
 }
 
@@ -392,6 +515,11 @@ static esp_err_t h_b_stream(httpd_req_t *req)
 
 esp_err_t logger02_web_start(void)
 {
+    /* buffer e lock una volta sola (24/11): PSRAM, mai piu' allocati per richiesta */
+    s_buf_dl = heap_caps_malloc(BLK, MALLOC_CAP_SPIRAM);
+    s_buf_api = heap_caps_malloc(8192, MALLOC_CAP_SPIRAM);
+    s_lock_dl = xSemaphoreCreateBinary(); xSemaphoreGive(s_lock_dl);
+    s_lock_api = xSemaphoreCreateBinary(); xSemaphoreGive(s_lock_api);
     httpd_handle_t s81 = server(81, 32769, 2);
     httpd_uri_t st = {"/stream", HTTP_GET, h_stream};
     httpd_register_uri_handler(s81, &st);

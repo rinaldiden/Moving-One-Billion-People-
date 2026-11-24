@@ -280,16 +280,31 @@ def scarica_con_ripresa(url, part, size, tentativi=6, pausa=3.0, timeout=30, apr
         try:
             with aprire(rq) as r:
                 st = getattr(r, "status", None) or r.getcode()
+                cr = r.headers.get("Content-Range", "")
                 if off and st == 206:
-                    m = re.match(r"bytes (\d+)-", r.headers.get("Content-Range", ""))
-                    if not m or int(m.group(1)) != off:
+                    m = re.match(r"bytes (\d+)-", cr)
+                    if m and int(m.group(1)) == off:
+                        with open(part, "ab") as out:
+                            shutil.copyfileobj(r, out, 1 << 16)
+                    elif m:
                         raise IOError("Content-Range inatteso")
-                    modo = "ab"
+                    else:
+                        # 206 senza Content-Range (proxy /b della A, 24/11): accetto SOLO se i byte ricevuti sono
+                        # esattamente size-off; li metto da parte e li accodo a verifica fatta
+                        tmp = part + ".r"
+                        with open(tmp, "wb") as out:
+                            shutil.copyfileobj(r, out, 1 << 16)
+                        if os.path.getsize(tmp) == size - off:
+                            with open(part, "ab") as out, open(tmp, "rb") as src:
+                                shutil.copyfileobj(src, out, 1 << 16)
+                            os.remove(tmp)
+                        else:
+                            os.remove(tmp)
+                            raise IOError("206 senza Content-Range e lunghezza diversa da size-offset")
                 else:
-                    modo = "wb"                          # 200: il server manda tutto dall'inizio
-                    off = 0
-                with open(part, modo) as out:
-                    shutil.copyfileobj(r, out, 1 << 16)
+                    off = 0                              # 200: il server manda tutto dall'inizio
+                    with open(part, "wb") as out:
+                        shutil.copyfileobj(r, out, 1 << 16)
         except urllib.error.HTTPError as e:
             if e.code == 416:                            # Range oltre la fine: part sbagliato, da capo
                 if os.path.exists(part):

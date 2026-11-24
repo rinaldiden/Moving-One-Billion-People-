@@ -12,6 +12,7 @@
 #include "esp_timer.h"
 #include "esp_log.h"
 #include "logger02.h"
+#include "logger02_wake_logic.h"
 
 static const char *TAG = "link";
 
@@ -102,6 +103,26 @@ static void wake_task(void *arg)
     }
 }
 
+static volatile int64_t s_b_vista;                  /* A: ultima riga ricevuta dalla B (0 = mai da quando la A e' accesa) */
+
+/* A: se la B non si fa sentire, ri-alzo WAKE con un impulso (vedi logger02_wake_logic.h, test in host_test) */
+static void wake_ripulsa_task(void *arg)
+{
+    int fatti = 0;
+    while (fatti < 2) {
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        if (l02_wake_impulso(esp_timer_get_time(), s_b_vista, fatti)) {
+            ESP_LOGW(TAG, "la B non risponde: impulso su WAKE (%d)", ++fatti);
+            gpio_set_level(L02_PIN_WAKE, 0);
+            vTaskDelay(pdMS_TO_TICKS(WAKE_IMPULSO_MS));
+            gpio_set_level(L02_PIN_WAKE, 1);
+        } else if (s_b_vista > 0) {
+            break;
+        }
+    }
+    vTaskDelete(NULL);
+}
+
 static volatile int s_b_pend = -1;
 static volatile int64_t s_b_pend_t;
 
@@ -112,6 +133,7 @@ int logger02_b_da_scaricare(void)
 
 static void comando(const char *riga)
 {
+    if (logger02_ruolo()->is_a) s_b_vista = esp_timer_get_time();     /* sulla A ogni riga UART viene dalla B */
     if (riga[0] == 'S' && !logger02_ruolo()->is_a) {
         unsigned seq, fa = 0;
         long long ta, tfa = -1;
@@ -228,6 +250,7 @@ esp_err_t logger02_link_init(void)
         gpio_set_level(L02_PIN_SYNC_A, 0);
         gpio_set_level(L02_PIN_WAKE, 1);            /* sveglia la B (resta alto finché A è sveglia) */
         xTaskCreate(sync_task, "sync", 3072, NULL, 10, NULL);
+        xTaskCreate(wake_ripulsa_task, "wake_rp", 3072, NULL, 3, NULL);
     } else {
         gpio_config_t wk = {.pin_bit_mask = 1ULL << L02_PIN_WAKE, .mode = GPIO_MODE_INPUT,
                             .pull_down_en = GPIO_PULLDOWN_ENABLE};
