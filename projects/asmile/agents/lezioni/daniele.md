@@ -47,3 +47,4 @@
 ## 2026-11-24 — scarico = sveglio
 - **Regola per TUTTI i logger e le Asmile: mentre si scarica, l'apparecchio resta sveglio, non va in sleep e non si spegne.** Uno scarico in corso non si interrompe mai (nessun tetto di durata); solo la batteria bassa vince.
 - 2026-11-24 **Logger ESP32 (logger02 e successivi): niente streaming lungo né letture ripetute della B attraverso la A** — fa cadere la connessione e blocca gli scarichi. "Che non capiti più."
+- 2026-11-24 sera **Firmware logger02 di stasera = candidato flotta.** Se fino al 26/11 il logger NON si spegne mentre scarica, il wifi NON va giù e quando è acceso resta sempre raggiungibile, il firmware di stasera diventa quello di TUTTI i logger (ota_flotta.sh con OK_DANIELE, una scheda alla volta). Se succede uno dei tre, no.
