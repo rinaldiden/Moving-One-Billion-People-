@@ -32,80 +32,81 @@ Pedalate 2.5 Hz +-0.7 m/s2 + 1 Hz +-0.3, jitter t encoder 3 ms, 4 s di rullaggio
 
   m = np.nanmean(np.array([gira(reg, kd, zm, pend, 0, s, pettine=pet, riall=riall) for s in range(3)]), 0)
   m = np.nanmean(np.array([gira(reg, kd, zm, pend, 0, s, pettine=pet, riall=riall) for s in range(3)]), 0)
+  m = np.nanmean(np.array([gira(reg, kd, zm, pend, 0, s, pettine=pet, riall=riall) for s in range(3)]), 0)
 | contatto vero | freno | scenario | regolatore | inv/min | gradi/s | impulsi/s | v max 0-10s | v max dopo | v media | ang max | decel max | jerk freno | errore contatto appreso (gradi) | inv/min a regime (dopo 20 s) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 5 | 0.1 | discesa ripida | prima | 0.0 | 2.6 | 1.2 | 15.4 | 13.0 | 12.1 | 27 | 1.69 | 2.5 | - | 0.0 |
-| 5 | 0.1 | discesa ripida | dopo | 0.0 | 4.4 | 2.6 | 18.0 | 16.4 | 13.6 | 22 | 1.25 | 0.9 | 11.6 | 0.0 |
+| 5 | 0.1 | discesa ripida | dopo | 0.0 | 4.2 | 2.4 | 17.4 | 15.9 | 13.5 | 22 | 1.24 | 1.2 | 12.0 | 0.0 |
 | 5 | 0.1 | discesa forte | prima | 0.0 | 2.3 | 0.9 | 14.0 | 12.8 | 12.2 | 18 | 1.38 | 2.2 | - | 0.0 |
-| 5 | 0.1 | discesa forte | dopo | 0.0 | 4.1 | 2.1 | 16.2 | 15.8 | 13.7 | 16 | 1.08 | 0.9 | 7.5 | 0.0 |
+| 5 | 0.1 | discesa forte | dopo | 0.0 | 4.0 | 2.0 | 16.0 | 14.9 | 13.6 | 16 | 1.18 | 1.2 | nan | 0.0 |
 | 5 | 0.1 | arrivo a 17 | prima | 46.3 | 3.0 | 1.5 | 16.2 | 13.3 | 12.2 | 31 | 2.85 | 6.0 | - | 0.0 |
-| 5 | 0.1 | arrivo a 17 | dopo | 0.0 | 4.3 | 2.4 | 18.8 | 15.1 | 13.5 | 20 | 1.97 | 2.5 | 3.0 | 0.0 |
+| 5 | 0.1 | arrivo a 17 | dopo | 0.0 | 4.3 | 2.4 | 18.3 | 15.1 | 13.7 | 21 | 2.11 | 2.5 | 2.0 | 0.0 |
 | 5 | 0.1 | quasi piano | prima | 0.0 | 2.0 | 0.7 | 13.2 | 13.2 | 12.2 | 9 | 1.11 | 0.9 | - | 0.0 |
 | 5 | 0.1 | quasi piano | dopo | 0.0 | 3.8 | 1.7 | 14.7 | 14.7 | 13.5 | 9 | 1.15 | 0.8 | 1.3 | 0.0 |
 | 5 | 0.2 | discesa ripida | prima | 41.3 | 17.4 | 13.5 | 15.2 | 15.4 | 12.8 | 23 | 2.75 | 12.0 | - | 44.8 |
-| 5 | 0.2 | discesa ripida | dopo | 0.0 | 5.0 | 3.3 | 16.4 | 16.3 | 14.1 | 16 | 1.60 | 1.8 | 5.1 | 0.0 |
+| 5 | 0.2 | discesa ripida | dopo | 0.0 | 4.8 | 3.0 | 16.1 | 15.7 | 13.5 | 16 | 1.60 | 4.1 | 5.7 | 0.0 |
 | 5 | 0.2 | discesa forte | prima | 0.0 | 8.5 | 6.8 | 14.2 | 14.2 | 12.4 | 15 | 1.92 | 5.0 | - | 0.0 |
-| 5 | 0.2 | discesa forte | dopo | 0.0 | 4.0 | 2.1 | 15.5 | 15.2 | 13.7 | 13 | 1.39 | 1.8 | 2.5 | 0.0 |
+| 5 | 0.2 | discesa forte | dopo | 0.0 | 4.2 | 2.3 | 15.2 | 14.6 | 13.6 | 13 | 1.38 | 3.3 | 3.9 | 0.0 |
 | 5 | 0.2 | arrivo a 17 | prima | 40.3 | 4.2 | 3.0 | 15.4 | 13.2 | 12.2 | 24 | 2.76 | 12.0 | - | 0.0 |
-| 5 | 0.2 | arrivo a 17 | dopo | 106.0 | 4.4 | 2.4 | 17.5 | 14.9 | 13.8 | 18 | 2.77 | 12.0 | nan | 0.0 |
+| 5 | 0.2 | arrivo a 17 | dopo | 110.7 | 4.4 | 2.4 | 16.9 | 14.7 | 13.7 | 17 | 2.58 | 12.0 | 1.8 | 0.0 |
 | 5 | 0.2 | quasi piano | prima | 0.0 | 2.6 | 1.6 | 13.1 | 13.1 | 12.2 | 8 | 1.24 | 2.1 | - | 0.0 |
 | 5 | 0.2 | quasi piano | dopo | 0.0 | 3.7 | 1.7 | 14.5 | 14.5 | 13.5 | 8 | 1.22 | 1.6 | 0.7 | 0.0 |
 | 5 | 0.3 | discesa ripida | prima | 58.0 | 20.8 | 15.8 | 16.0 | 17.4 | 14.7 | 21 | 3.57 | 18.0 | - | 57.6 |
-| 5 | 0.3 | discesa ripida | dopo | 0.0 | 6.4 | 5.4 | 16.2 | 16.2 | 13.9 | 14 | 2.01 | 2.7 | nan | 0.0 |
+| 5 | 0.3 | discesa ripida | dopo | 0.0 | 8.5 | 6.9 | 16.3 | 16.6 | 13.9 | 15 | 2.25 | 6.2 | nan | 0.0 |
 | 5 | 0.3 | discesa forte | prima | 41.7 | 12.6 | 9.4 | 14.3 | 14.6 | 12.4 | 16 | 2.77 | 18.0 | - | 39.6 |
-| 5 | 0.3 | discesa forte | dopo | 0.0 | 5.6 | 4.4 | 15.4 | 15.9 | 14.2 | 12 | 1.79 | 2.7 | -0.2 | 0.0 |
+| 5 | 0.3 | discesa forte | dopo | 0.0 | 5.1 | 3.7 | 15.4 | 15.5 | 14.0 | 12 | 1.75 | 3.6 | 1.7 | 0.0 |
 | 5 | 0.3 | arrivo a 17 | prima | 42.3 | 5.8 | 4.6 | 15.0 | 13.5 | 12.3 | 21 | 3.25 | 18.0 | - | 0.0 |
-| 5 | 0.3 | arrivo a 17 | dopo | 72.0 | 4.6 | 3.0 | 16.9 | 15.0 | 14.0 | 15 | 2.99 | 18.0 | 0.6 | 0.0 |
+| 5 | 0.3 | arrivo a 17 | dopo | 80.3 | 4.6 | 2.9 | 16.5 | 14.9 | 13.9 | 15 | 2.97 | 18.0 | nan | 0.0 |
 | 5 | 0.3 | quasi piano | prima | 0.0 | 3.0 | 2.1 | 13.1 | 13.1 | 12.2 | 8 | 1.36 | 3.4 | - | 0.0 |
 | 5 | 0.3 | quasi piano | dopo | 0.0 | 3.7 | 1.9 | 14.5 | 14.6 | 13.4 | 8 | 1.33 | 2.4 | 0.3 | 0.0 |
 | 8 | 0.1 | discesa ripida | prima | 0.0 | 2.7 | 1.4 | 15.9 | 13.2 | 12.1 | 32 | 1.84 | 2.5 | - | 0.0 |
-| 8 | 0.1 | discesa ripida | dopo | 0.0 | 4.5 | 2.5 | 19.3 | 16.5 | 13.7 | 28 | 1.52 | 0.9 | 11.6 | 0.0 |
+| 8 | 0.1 | discesa ripida | dopo | 0.0 | 4.4 | 2.5 | 18.6 | 16.8 | 13.7 | 25 | 1.28 | 1.2 | 11.7 | 0.0 |
 | 8 | 0.1 | discesa forte | prima | 0.0 | 2.5 | 1.2 | 14.6 | 13.0 | 12.1 | 24 | 1.56 | 2.5 | - | 0.0 |
-| 8 | 0.1 | discesa forte | dopo | 0.0 | 4.2 | 2.2 | 17.0 | 16.4 | 13.8 | 19 | 1.11 | 0.9 | nan | 0.0 |
+| 8 | 0.1 | discesa forte | dopo | 0.0 | 4.1 | 2.2 | 16.9 | 15.7 | 13.7 | 19 | 1.18 | 1.2 | nan | 0.0 |
 | 8 | 0.1 | arrivo a 17 | prima | 47.3 | 3.2 | 1.8 | 16.8 | 13.9 | 12.2 | 35 | 2.88 | 6.0 | - | 0.0 |
-| 8 | 0.1 | arrivo a 17 | dopo | 0.0 | 4.4 | 2.4 | 19.7 | 15.7 | 13.6 | 22 | 1.84 | 0.9 | 2.7 | 0.0 |
+| 8 | 0.1 | arrivo a 17 | dopo | 0.0 | 4.5 | 2.6 | 19.2 | 15.7 | 13.5 | 23 | 1.96 | 1.2 | 2.7 | 0.0 |
 | 8 | 0.1 | quasi piano | prima | 0.0 | 2.0 | 0.8 | 13.6 | 13.6 | 12.2 | 12 | 1.15 | 1.0 | - | 0.0 |
-| 8 | 0.1 | quasi piano | dopo | 0.0 | 3.7 | 1.9 | 15.3 | 15.4 | 13.7 | 12 | 1.11 | 0.9 | 1.1 | 0.0 |
+| 8 | 0.1 | quasi piano | dopo | 0.0 | 3.8 | 1.9 | 15.3 | 15.4 | 13.6 | 12 | 1.11 | 1.2 | 1.1 | 0.0 |
 | 8 | 0.2 | discesa ripida | prima | 46.7 | 18.6 | 15.0 | 15.7 | 15.8 | 13.0 | 27 | 2.82 | 12.0 | - | 48.0 |
-| 8 | 0.2 | discesa ripida | dopo | 0.0 | 5.6 | 4.1 | 18.0 | 17.9 | 14.5 | 21 | 1.92 | 3.9 | 4.8 | 0.0 |
+| 8 | 0.2 | discesa ripida | dopo | 0.0 | 4.5 | 2.6 | 17.2 | 16.3 | 13.8 | 19 | 1.66 | 2.4 | 5.6 | 0.0 |
 | 8 | 0.2 | discesa forte | prima | 0.0 | 8.9 | 7.1 | 14.4 | 14.3 | 12.5 | 19 | 2.00 | 5.0 | - | 0.0 |
-| 8 | 0.2 | discesa forte | dopo | 0.0 | 4.4 | 2.7 | 16.3 | 16.0 | 13.9 | 16 | 1.36 | 1.8 | 3.3 | 0.0 |
+| 8 | 0.2 | discesa forte | dopo | 0.0 | 4.4 | 2.5 | 16.3 | 15.4 | 13.7 | 16 | 1.48 | 3.3 | 3.4 | 0.0 |
 | 8 | 0.2 | arrivo a 17 | prima | 40.0 | 4.3 | 3.1 | 16.1 | 13.6 | 12.2 | 27 | 3.10 | 12.0 | - | 0.0 |
-| 8 | 0.2 | arrivo a 17 | dopo | 98.7 | 5.1 | 3.0 | 19.1 | 15.7 | 13.5 | 20 | 2.65 | 12.0 | 1.3 | 0.0 |
+| 8 | 0.2 | arrivo a 17 | dopo | 102.0 | 4.7 | 2.5 | 18.2 | 15.5 | 13.6 | 21 | 2.78 | 12.0 | 1.4 | 0.0 |
 | 8 | 0.2 | quasi piano | prima | 0.0 | 2.6 | 1.6 | 13.5 | 13.5 | 12.2 | 12 | 1.24 | 2.2 | - | 0.0 |
-| 8 | 0.2 | quasi piano | dopo | 0.0 | 3.8 | 2.0 | 15.2 | 15.3 | 13.6 | 14 | 1.64 | 2.9 | 0.0 | 0.0 |
+| 8 | 0.2 | quasi piano | dopo | 0.0 | 3.9 | 2.0 | 15.2 | 15.2 | 13.4 | 12 | 1.45 | 2.4 | 0.4 | 0.0 |
 | 8 | 0.3 | discesa ripida | prima | 58.0 | 22.8 | 18.2 | 17.0 | 18.9 | 15.8 | 24 | 3.48 | 18.0 | - | 59.2 |
-| 8 | 0.3 | discesa ripida | dopo | 34.3 | 9.7 | 8.0 | 18.7 | 19.9 | 15.7 | 20 | 2.83 | 18.0 | nan | 36.4 |
+| 8 | 0.3 | discesa ripida | dopo | 0.0 | 6.8 | 5.6 | 17.0 | 17.1 | 14.5 | 17 | 2.15 | 3.6 | nan | 0.0 |
 | 8 | 0.3 | discesa forte | prima | 46.7 | 16.4 | 12.4 | 15.0 | 15.3 | 12.8 | 21 | 3.07 | 18.0 | - | 48.0 |
-| 8 | 0.3 | discesa forte | dopo | 0.0 | 6.4 | 5.4 | 16.3 | 16.5 | 14.4 | 16 | 2.05 | 2.7 | nan | 0.0 |
+| 8 | 0.3 | discesa forte | dopo | 0.0 | 6.2 | 4.8 | 16.0 | 15.8 | 14.0 | 15 | 1.78 | 3.6 | nan | 0.0 |
 | 8 | 0.3 | arrivo a 17 | prima | 42.0 | 6.0 | 4.6 | 15.9 | 13.5 | 12.3 | 24 | 3.33 | 18.0 | - | 0.0 |
-| 8 | 0.3 | arrivo a 17 | dopo | 60.7 | 5.1 | 3.6 | 18.5 | 15.7 | 14.3 | 19 | 2.99 | 18.0 | 0.4 | 0.0 |
+| 8 | 0.3 | arrivo a 17 | dopo | 76.3 | 4.9 | 3.3 | 17.6 | 15.5 | 13.9 | 19 | 3.14 | 18.0 | 0.7 | 0.0 |
 | 8 | 0.3 | quasi piano | prima | 0.0 | 3.1 | 2.1 | 13.5 | 13.5 | 12.2 | 11 | 1.42 | 4.1 | - | 0.0 |
-| 8 | 0.3 | quasi piano | dopo | 0.0 | 3.7 | 2.1 | 15.2 | 15.3 | 13.6 | 13 | 1.80 | 5.9 | -0.1 | 0.0 |
+| 8 | 0.3 | quasi piano | dopo | 0.0 | 3.5 | 1.9 | 15.2 | 15.2 | 13.5 | 12 | 1.49 | 4.9 | 0.3 | 0.0 |
 | 12 | 0.1 | discesa ripida | prima | 0.0 | 2.8 | 1.3 | 16.6 | 13.3 | 12.2 | 36 | 1.98 | 2.5 | - | 0.0 |
-| 12 | 0.1 | discesa ripida | dopo | 37.3 | 3.7 | 2.2 | 26.2 | 93.0 | 50.9 | 33 | 1.53 | 4.3 | 11.8 | 0.0 |
+| 12 | 0.1 | discesa ripida | dopo | 0.0 | 4.6 | 2.5 | 20.0 | 17.1 | 13.7 | 31 | 1.48 | 1.2 | 11.9 | 0.0 |
 | 12 | 0.1 | discesa forte | prima | 0.0 | 2.7 | 1.3 | 15.3 | 13.2 | 12.1 | 30 | 1.73 | 2.4 | - | 0.0 |
-| 12 | 0.1 | discesa forte | dopo | 0.0 | 4.2 | 2.3 | 18.3 | 17.3 | 13.9 | 24 | 1.18 | 0.9 | nan | 0.0 |
+| 12 | 0.1 | discesa forte | dopo | 0.0 | 4.2 | 2.2 | 18.1 | 17.1 | 13.8 | 24 | 1.16 | 1.2 | nan | 0.0 |
 | 12 | 0.1 | arrivo a 17 | prima | 49.0 | 3.2 | 1.7 | 17.6 | 14.2 | 12.2 | 36 | 2.72 | 6.0 | - | 0.0 |
-| 12 | 0.1 | arrivo a 17 | dopo | 0.0 | 4.6 | 2.7 | 20.4 | 16.1 | 13.8 | 25 | 1.84 | 0.9 | 2.6 | 0.0 |
+| 12 | 0.1 | arrivo a 17 | dopo | 0.0 | 4.4 | 2.7 | 20.0 | 16.0 | 13.6 | 26 | 1.78 | 1.2 | 2.7 | 0.0 |
 | 12 | 0.1 | quasi piano | prima | 0.0 | 2.1 | 0.8 | 14.0 | 14.0 | 12.2 | 17 | 1.22 | 1.1 | - | 0.0 |
-| 12 | 0.1 | quasi piano | dopo | 0.0 | 3.8 | 2.0 | 15.4 | 16.1 | 13.9 | 17 | 1.16 | 0.9 | 0.6 | 0.0 |
+| 12 | 0.1 | quasi piano | dopo | 0.0 | 3.7 | 1.8 | 15.4 | 15.8 | 13.7 | 17 | 1.17 | 1.2 | nan | 0.0 |
 | 12 | 0.2 | discesa ripida | prima | 47.3 | 19.2 | 15.2 | 16.1 | 15.8 | 13.1 | 31 | 2.77 | 12.0 | - | 47.2 |
-| 12 | 0.2 | discesa ripida | dopo | 0.0 | 5.1 | 3.5 | 19.8 | 18.7 | 14.3 | 26 | 2.18 | 1.8 | 5.4 | 0.0 |
+| 12 | 0.2 | discesa ripida | dopo | 0.0 | 7.6 | 5.7 | 18.9 | 16.8 | 13.7 | 25 | 2.03 | 3.3 | 5.7 | 0.0 |
 | 12 | 0.2 | discesa forte | prima | 0.0 | 9.7 | 7.6 | 14.8 | 14.6 | 12.5 | 25 | 2.28 | 5.0 | - | 0.0 |
-| 12 | 0.2 | discesa forte | dopo | 0.0 | 4.6 | 2.9 | 17.5 | 17.0 | 14.2 | 20 | 1.52 | 1.8 | 1.7 | 0.0 |
+| 12 | 0.2 | discesa forte | dopo | 0.0 | 4.0 | 2.1 | 17.3 | 16.2 | 13.9 | 20 | 1.42 | 2.4 | 3.3 | 0.0 |
 | 12 | 0.2 | arrivo a 17 | prima | 39.3 | 4.5 | 3.3 | 16.9 | 14.2 | 12.2 | 32 | 3.69 | 12.0 | - | 0.0 |
-| 12 | 0.2 | arrivo a 17 | dopo | 0.0 | 4.9 | 2.7 | 20.2 | 16.3 | 13.7 | 23 | 2.35 | 5.0 | 1.2 | 0.0 |
+| 12 | 0.2 | arrivo a 17 | dopo | 60.0 | 5.2 | 3.4 | 19.6 | 16.4 | 13.7 | 24 | 2.59 | 9.7 | 1.2 | 0.0 |
 | 12 | 0.2 | quasi piano | prima | 0.0 | 2.7 | 1.8 | 13.9 | 13.9 | 12.2 | 16 | 1.36 | 2.3 | - | 0.0 |
-| 12 | 0.2 | quasi piano | dopo | 0.0 | 4.0 | 2.2 | 15.4 | 16.0 | 13.7 | 17 | 1.52 | 2.4 | 0.7 | 0.0 |
-| 12 | 0.3 | discesa ripida | prima | 60.0 | 22.0 | 17.3 | 17.6 | 20.2 | 16.4 | 29 | 3.46 | 18.0 | - | 62.4 |
-| 12 | 0.3 | discesa ripida | dopo | 43.0 | 9.8 | 8.0 | 19.6 | 22.4 | 17.3 | 24 | 3.00 | 18.0 | nan | 46.8 |
+| 12 | 0.2 | quasi piano | dopo | 0.0 | 4.1 | 2.5 | 15.4 | 15.9 | 13.8 | 17 | 1.51 | 2.4 | 0.1 | 0.0 |
+| 12 | 0.3 | discesa ripida | prima | 57.3 | 22.2 | 17.5 | 17.6 | 19.9 | 16.5 | 29 | 3.46 | 18.0 | - | 59.2 |
+| 12 | 0.3 | discesa ripida | dopo | 36.3 | 9.4 | 7.7 | 19.1 | 20.0 | 15.6 | 24 | 2.72 | 18.0 | nan | 34.8 |
 | 12 | 0.3 | discesa forte | prima | 46.0 | 18.8 | 14.9 | 15.5 | 15.9 | 13.3 | 26 | 3.33 | 18.0 | - | 48.0 |
-| 12 | 0.3 | discesa forte | dopo | 0.0 | 6.4 | 5.4 | 17.3 | 17.2 | 14.9 | 20 | 1.93 | 2.7 | nan | 0.0 |
+| 12 | 0.3 | discesa forte | dopo | 0.0 | 5.5 | 4.1 | 17.1 | 16.0 | 14.0 | 19 | 1.82 | 3.6 | 1.7 | 0.0 |
 | 12 | 0.3 | arrivo a 17 | prima | 41.0 | 6.3 | 5.0 | 16.6 | 14.3 | 12.3 | 29 | 3.29 | 18.0 | - | 0.0 |
-| 12 | 0.3 | arrivo a 17 | dopo | 69.0 | 4.9 | 3.4 | 20.1 | 16.5 | 14.3 | 22 | 2.78 | 18.0 | 0.4 | 0.0 |
+| 12 | 0.3 | arrivo a 17 | dopo | 67.3 | 4.9 | 3.4 | 19.4 | 16.3 | 14.2 | 23 | 3.10 | 18.0 | 0.3 | 0.0 |
 | 12 | 0.3 | quasi piano | prima | 0.0 | 3.1 | 2.3 | 13.9 | 13.9 | 12.3 | 16 | 1.58 | 4.0 | - | 0.0 |
-| 12 | 0.3 | quasi piano | dopo | 0.0 | 3.9 | 2.2 | 15.4 | 16.0 | 13.8 | 16 | 1.57 | 4.3 | 0.3 | 0.0 |
+| 12 | 0.3 | quasi piano | dopo | 0.0 | 3.7 | 2.1 | 15.4 | 15.8 | 13.8 | 16 | 1.49 | 3.6 | -0.2 | 0.0 |
 
 Riassunto (36 celle): celle con inversioni sull'intero scenario prima 18/36, dopo 9/36; a regime (dopo 20 s) prima 9/36, dopo 3/36. Impulsi/s max 18.2 -> 9.0. Il contatto e' appreso entro 1 gradi in 10 celle su 28 con stima (mediana |errore| 1.9 gradi: in scenari ripidi la stima e' saltata o peggiore; nei quasi piano e negli arrivi a 17 con freno 0.2-0.3 e' 0-1.5).
 
@@ -143,3 +144,24 @@ Prima/dopo (36 celle, stessa sim; "v2" = consegna precedente d97c10d2):
 Resta: arrivo a 17 con freno >= 0.2 (60-106 inversioni/min nel transitorio, tetto precoce), discese ripide (v max 17-22, un caso a 93 km/h con contatto vero 12 e freno 0.1: il freno non regge, tetto di riserva 15 gradi). v media 15.1 e' alta: in v3 lo stato non confermato inizia spesso sotto il contatto vero e il PI sale piu' lenta nelle discese; i dati sono in tabella.
 
 Test v3: 126 passati (121 + 5 nuovi: non confermato = ignoto, 3 conferme coerenti + salto massimo, correzione per decel prima di base, persistenza/scadenza/reset/flag, g incerto). Il replay vero del 13/11 e' stato eseguito (CSV del repo principale collegato nel worktree).
+
+## v4 - REGOLA DURA sopra v_max (capo 24/11: la cella a 93 km/h era un fallimento di sicurezza)
+Cause trovate in sim (steep, contatto 12, freno 0.1, seed 2): (1) l'encoder veniva scartato come "salto irreale" gia' a 22-24 km/h perche' `max_salto_counts` (8000) e' pensato per un campione a 21 ms: con il jitter e campioni piu' distanti la soglia scattava, il sistema passava a GPS_IMU (tetto 15 gradi per la regola di riserva) e poi a NESSUNA (v>54 km/h scartata) = angolo a 0 con la bici in fuga; (2) il regolatore si fermava a contatto_min-margine / a un contatto stimato e rilasciava per rumore sulla decel. Interventi:
+- **Regola dura** (freno.py): se v (stimatore) > v_max e la decel netta attesa < voluta -> l'angolo sale a >= 12 gradi/s (rampa_cerca) fino al tetto, indipendente da contatto stimato/confermato, da g, dal blocco "contatto troppo alto" (che abbassa la stima ma non ferma la salita) e dal cap su g. La decel netta attesa e' a_f - g_eff*(salita comandata nell'ultimo `lag`): la parte di freno "in volo" non ancora nella misura (predittore) - senza, la sim sovrastima (overshoot di rampa*ritardo 0.55 s e scatto del tetto precoce anti-impuntata). Esce quando la bici rallenta (decel netta < -0.1 m/s2, `salita_dura_decel_ms2`) e prosegue il PI fine. Salite a 12 gradi/s scartano la ricerca del contatto. NON ho aggiunto la versione "piu' dolce nella zona 12-15": provata (salita forzata a 4 gradi/s con v>13 e in salita) rovinava l'apprendimento del contatto (5 test) - da rivedere con te.
+- **Encoder** (fonti.py): il limite di salto e' scalato con il dt reale del campione (`max_salto_counts * max(1, dt/21 ms)`): non allarga la soglia per il dt nominale, corregge il caso di campioni piu' distanti. Resta il tetto fisico a ~29 km/h per campione da 21 ms: sopra, l'encoder e' ancora "salto irreale" e si cade nel fallback: NON toccato (proposta: ricavare il limite da v_max fisica e dt, da decidere con asmile-sicurezza). Il fallback con tetto 15 gradi e "NESSUNA = 0" non e' stato modificato.
+- Nuovi test (falliscono sul codice precedente, verificato: 6 falliti): discesa ripida, contatto vero 12/15/20, freno 0.05/0.1, nessuna stima: v < 30 km/h sempre; se il freno al tetto regge (decel fisica netta >= 1.0) v <= 17 dopo 10 s e media a regime < 15, altrimenti il tetto (a meno di 6 gradi) e' raggiunto; mai crescita della v sopra v_max con l'angolo fermo sotto il tetto. Piu': regola dura unitaria (>= 12 gradi/s anche con contatto 'troppo alto' o non confermato), contatto troppo alto non impedisce di frenare.
+
+Discesa ripida 1.2 m/s2, nessuna stima, 64 s (seed 0; vmax = su tutta la corsa dal rullaggio, dopo 10 s = v[10 s:]):
+| contatto vero | freno | v max prima (v3) | v max v4 | v max dopo 10 s v4 | media dopo 20 s v4 | angolo max v4 |
+|---|---|---|---|---|---|---|
+| 12 | 0.1 | 20.0 (93 su altri semi) | 20.0 | 15.5 | 13.3 | 31 |
+| 15 | 0.1 | 21.3 | 21.3 | 15.7 | 13.6 | 35 |
+| 20 | 0.1 | 250+ | 23.1 | 15.9 | 13.6 | 41 |
+| 12 | 0.05 | 250+ | 22.8 | 17.0 | 13.5 | 46 |
+| 15 | 0.05 | 250+ | 24.3 | 19.7 | 13.6 | 48 |
+| 20 | 0.05 | 250+ | 27.6 | 25.3 | 13.9 | 50 (tetto) |
+Con contatto 20 e freno 0.05 il freno al tetto da una decel netta di 0.3 m/s2: il massimo fisico e' raggiunto (angolo 50), la v scende solo piano: dichiarato, non risolvibile dal regolatore. Il transitorio (da 10 km/h con pendenza 1.2 verso 20+ km/h) resta: la zona morta e il ritardo 0.55 s non si recuperano.
+
+Confronto 36 celle (v3 = precedente, v4 = ora): celle con inversioni 8/36 -> 7/36; a regime 2/36 -> 1/36; v max dopo 5 s: max 93 -> 20.0 (mediana 16.1 -> 15.8); **v media a regime: media 15.1 -> 13.8, massimo 50.9 -> 15.6** (resta una cella >= 15: contatto 12, freno 0.3, discesa ripida, 15.6, con 36 inversioni/min); contatto appreso entro 1 grado 8/27 (mediana 1.7 gradi). Arrivo a 17 con freno >= 0.2: ancora 60-110 inversioni/min nel transitorio (tetto precoce anti-impuntata), invariato.
+
+Test v4: 134 passati (126 + 8 nuovi); nessuna soglia di sicurezza allargata; kp 1.6 (guadagno_anello) invariato come richiesto, da rivedere dopo.

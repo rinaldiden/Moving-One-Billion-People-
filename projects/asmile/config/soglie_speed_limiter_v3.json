@@ -165,6 +165,8 @@
   "contatto_rate_max_deg_s": 6.0,
   "contatto_a_nat_max_ms2": 0.5,
   "contatto_conferme": 3,
+  "gia_margine_ms2": 0.0,
+  "salita_dura_decel_ms2": 0.1,
   "contatto_coerenza_deg": 1.5,
   "contatto_salto_max_deg": 3.0,
   "contatto_soglia_anticipo_ms2": 0.35,

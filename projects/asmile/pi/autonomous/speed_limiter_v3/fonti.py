@@ -104,7 +104,9 @@ class Encoder:
             return
         d = c - self._last
         self._last = c
-        if abs(d) > self.max_step:        # salto irreale: scarta e riparte la finestra
+        dt_enc = te - self._hist[-1][0] if self._hist else 0.021
+        lim = self.max_step * max(1.0, dt_enc / 0.021)       # max_salto_counts vale per un campione a 21 ms (50 Hz): un campione piu' distante porta legittimamente piu' impulsi
+        if abs(d) > lim:        # salto irreale: scarta e riparte la finestra
             self.glitch += 1
             self._hist.clear()
             self._hist.append((te, self._cum * self.k))

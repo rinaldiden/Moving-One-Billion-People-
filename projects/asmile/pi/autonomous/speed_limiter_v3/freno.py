@@ -453,7 +453,7 @@ class Regolatore:
         e = vp - self.v_set
         sopra = max(0.0, vp - self.v2) * r["kp_sopra_rel"] * kp      # sopra la v_max piu' deciso (solo li')
         u = kp * e + sopra + self.I
-        gia = dec > 0.1 and dec >= -self.a_des            # sta gia' rallentando quanto il profilo chiede
+        gia = dec > 0.1 and dec >= -self.a_des + r["gia_margine_ms2"]            # sta gia' rallentando quanto il profilo chiede
         if not (e > 0 and u >= umax) and not (gia and e > 0):      # niente windup; se gia' rallenta non spinge di piu'
             self.I += ki * e * dt
         if gia:                                          # rilascio dolce
@@ -483,6 +483,24 @@ class Regolatore:
             # massimo voluto, cosi' non si supera. rate = (forte - dec)/(g * ritardo), mai sotto 1.5 gradi/s
             g_eff = self.g_eff                           # incerto => mai piu' basso del default: non sale piu' in fretta
             self.rate_su = min(self.rate_su, max(1.5, (d["forte"] - max(dec, 0.0)) / (g_eff * self.lag)))
+        # REGOLA DURA (capo 24/11, indipendente da contatto stimato/confermato e da g): sopra v_max con decel misurata < voluta
+        # l'angolo DEVE salire (>= rampa_cerca = 12 gradi/s) finche' la decel compare (a_f sotto -salita_dura_decel_ms2: la bici sta rallentando davvero; poi PI fine), fino al tetto: mai fermo a contatto_min-margine,
+        # a un contatto stimato, ne' per il cap su g o per il blocco di "contatto troppo alto". Piu' dolce (meta' rampa fine) nella
+        # zona sopra v_obiettivo se la v sta ancora salendo e la decel e' sotto la voluta.
+        tetto_loc = min(f["tetto_deg"], TETTO_ASSOLUTO)
+        ang_lag = angolo                                 # angolo di `lag` secondi fa: la parte di freno ancora "in volo" (non ancora nella a)
+        for (th, ah) in self._ang_h:
+            if th >= self.t - self.lag:
+                ang_lag = ah
+                break
+        a_pred = self.a_f - self.g_eff * max(0.0, angolo - ang_lag)      # decel netta attesa quando la salita gia' comandata fara' effetto
+        if vp > self.v2 and a_pred > max(self.a_des, -r["salita_dura_decel_ms2"]):
+            target = max(target, min(tetto_loc, angolo + f["rampa_cerca_deg_s"] * dt))
+            self.rate_su = max(self.rate_su or 0.0, f["rampa_cerca_deg_s"])
+            self.fase = "salita_dura"
+            self._scan = None                            # salita a 12 gradi/s: inutile per imparare il contatto (ritardo/rampa), scartata
+        if self.fase == "salita_dura":
+            self.I = max(0.0, min(umax, max(self.I, target - base - kp * e - sopra)))
         self.rate_giu = f["rampa_fine_giu_deg_s"]
         if dec > pmax:
             target = min(target, angolo - f["k_anello_deg_s_per_ms2"] * (dec - pmax) * dt)

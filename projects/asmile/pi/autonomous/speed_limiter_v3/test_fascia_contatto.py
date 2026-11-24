@@ -358,3 +358,53 @@ def test_g_incerto_non_sale_piu_in_fretta():
     reg.contatto, reg.conferme = 8.0, 3
     assert reg.g_eff == 0.05                                   # confermato: usa il valore appreso
     assert RG["g_default_ms2_per_deg"] >= 0.2
+
+
+# ---------------------------------------------------------------- regola dura (capo 24/11): sopra v_max l'angolo sale, mai fermo
+@pytest.mark.parametrize("zm,kd", [(12.0, 0.1), (15.0, 0.1), (20.0, 0.1), (12.0, 0.05), (15.0, 0.05), (20.0, 0.05)])
+def test_discesa_ripida_freno_debole_nessuna_stima_mai_fermo_sopra_vmax(zm, kd):
+    """pendenza 1.2 m/s2 (~12%), contatto vero 12-20 gradi, freno 0.05-0.1 m/s2 per grado, NESSUNA stima (nessun file).
+    Se il freno al tetto puo' reggere la pendenza (decel fisica netta >= 1.0): v <= 17 km/h dopo 10 s e media a regime < 15.
+    Altrimenti (freno troppo debole) il massimo fisico e' provato dal tetto raggiunto. In ogni caso: nessuna fuga
+    (v < 30 km/h) e mai crescita della v sopra v_max con l'angolo fermo sotto il tetto."""
+    r, ctl, s = _gira(kd, zm, 1.2, 0, dur=64)
+    r = r[200:]
+    v = np.array([x["v_vera"] for x in r]) * 3.6
+    ang = np.array([x["angolo"] for x in r])
+    t = np.array([x["t"] for x in r])
+    tetto = F["tetto_deg"]
+    fisico = kd * (tetto - zm) - 1.2
+    assert v.max() < 30.0                                       # nessuna fuga (prima: 250 km/h con angolo rilasciato)
+    if fisico >= 1.0:
+        assert v[500:].max() <= 17.0
+        assert v[1000:].mean() < 15.0
+    else:
+        assert ang.max() >= tetto - 6.0                         # il freno e' arrivato (quasi) al tetto: piu' di cosi' non c'e'
+    # mai crescita indefinita con angolo fermo: finestre di 3 s sopra v_max in cui v sale di >1 km/h e l'angolo si muove <0.5 gradi
+    w = 150
+    for i in range(0, len(r) - w, 25):
+        if v[i] > 15.5 and v[i + w] - v[i] > 1.0 and ang[i:i + w].max() - ang[i:i + w].min() < 0.5:
+            assert ang[i + w] >= tetto - 1.0, (t[i], v[i], ang[i])
+
+
+def test_regola_dura_unitaria_sale_ad_almeno_12_gradi_s_senza_stima_ne_conferma():
+    """v > v_max e decel misurata < voluta: l'angolo sale a >= rampa_cerca fino al tetto, qualunque sia il contatto (anche 'troppo alto')."""
+    for contatto, conf in ((None, 0), (14.0, 3), (25.0, 1)):
+        reg, rampa = (Regolatore(CFG) if contatto is None else _reg_noto(contatto, conf)), Rampa(F)
+        v = 17.0 / 3.6
+        angoli = [ciclo(reg, rampa, v, 0.3) for _ in range(250)]            # sale ancora (a=+0.3), nessuna decel
+        sal = np.diff([0.0] + angoli) / 0.02
+        # senza fisica (la bici simulata non risponde) il predittore del freno "in volo" rallenta la salita dopo pochi gradi;
+        # la salita fino al tetto con la bici vera e' nel test di sim. Qui: parte subito e a >= 12 gradi/s.
+        assert max(angoli) >= 4.0
+        assert sal[1:8].min() >= F["rampa_cerca_deg_s"] - 1e-6              # all'inizio sale a 12 gradi/s, anche con contatto 'troppo alto'/non confermato
+        assert reg.fase in ("salita_dura", "fine")
+
+
+def test_contatto_troppo_alto_non_impedisce_di_frenare():
+    reg, rampa = _reg_noto(20.0), Rampa(F)
+    reg.a_nat, reg._t_lib = 0.0, 5.0
+    reg.blocca_salita = True
+    v = 16.5 / 3.6
+    ang = [ciclo(reg, rampa, v, 0.2) for _ in range(150)]
+    assert ang[-1] > 20.0 and all(b >= a - 1e-9 for a, b in zip(ang[:-1], ang[1:]))
