@@ -20,7 +20,7 @@ def main():
     servo = ServoLgpio()
     try:
         servo.pwm(0.0)
-        time.sleep(0.7)
+        time.sleep(1.5)   # 24/11: da 50 gradi 0,7 s non bastano (come tieni_zero_s)
     finally:
         servo.libera()
         servo.chiudi()

@@ -42,6 +42,17 @@ def parse_ble(testo, vmax=VMAX_VALIDA):
         return None
 
 
+def pin_in_ingresso():
+    """Su Pi 5 gpio_free lascia GPIO12 in OUTPUT LOW (visto 13/11 e 24/11: 'op dl'): il SER0062 col LOW continuo non si
+    apre. Pin davvero in ingresso senza pull (hi-Z), come il metodo di asmile2."""
+    import subprocess
+    try:
+        subprocess.run(["pinctrl", "set", str(SERVO_PIN), "ip", "pn"], timeout=1, check=False,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception:
+        pass
+
+
 class ServoLgpio:
     """Backend servo: impulso 50 Hz poi pin libero (hi-Z). Mai 330 Hz, mai LOW continuo."""
 
@@ -70,16 +81,6 @@ class ServoLgpio:
             self.claimed = False
             pin_in_ingresso()
 
-
-def pin_in_ingresso():
-    """Su Pi 5 gpio_free lascia GPIO12 in OUTPUT LOW (visto 13/11 e 24/11: 'op dl'): il SER0062 col LOW continuo non si
-    apre. Pin davvero in ingresso senza pull (hi-Z), come il metodo di asmile2."""
-    import subprocess
-    try:
-        subprocess.run(["pinctrl", "set", str(SERVO_PIN), "ip", "pn"], timeout=1, check=False,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except Exception:
-        pass
 
     def chiudi(self):
         try:

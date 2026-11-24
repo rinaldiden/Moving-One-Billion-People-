@@ -90,10 +90,16 @@ class ImpulsoServo:
             self.b.libera()
             self.attivo = False
 
+    RIPROVE_ZERO_MAX = 4
+
     def riprova_zero(self, t):
-        """Comandato 0 ma il servo assorbe ancora corrente (non si e' aperto): nuovo impulso lungo a 0."""
+        """Comandato 0 ma il servo assorbe ancora corrente (non si e' aperto): nuovo impulso lungo a 0. Al massimo
+        RIPROVE_ZERO_MAX volte (servo in stallo = rischio burnout): poi pin libero e solo avviso."""
+        if self.n_riprova_zero >= self.RIPROVE_ZERO_MAX:
+            return False
         self._impulso(t, 0.0, 0.0)
         self.n_riprova_zero += 1
+        return True
 
     def fermo_da(self, t):
         """Da quanti secondi non parte un nuovo impulso."""

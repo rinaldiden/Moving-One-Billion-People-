@@ -77,3 +77,27 @@ def test_guardia_rilascio_zitta_col_servo_aperto():
         ctl.passo(Campione(t=t, enc=(t, 0), imu=(0.0, 0.0, 1.0, 0.0, 0.0, 0.0), ina_ma=27.0))
         t += DT
     assert ctl.servo.n_riprova_zero == 0
+
+
+def test_guardia_al_massimo_quattro_riprove_poi_avviso():
+    b = ServoFinto()
+    ctl = Controllo(CFG, b)
+    t = 100.0
+    for k in range(3000):                     # 60 s di stallo continuo a 0 gradi
+        b.t = t
+        r = ctl.passo(Campione(t=t, enc=(t, 0), imu=(0.0, 0.0, 1.0, 0.0, 0.0, 0.0), ina_ma=3200.0))
+        t += DT
+    assert ctl.servo.n_riprova_zero == ctl.servo.RIPROVE_ZERO_MAX
+    assert b.pin_libero
+    assert any("FRENO NON SI APRE" in a for a in r["avvisi"])
+
+
+def test_guardia_si_riarma_quando_il_freno_si_apre():
+    b = ServoFinto()
+    ctl = Controllo(CFG, b)
+    t = 100.0
+    for ma in [3200.0] * 200 + [27.0] * 200:
+        b.t = t
+        ctl.passo(Campione(t=t, enc=(t, 0), imu=(0.0, 0.0, 1.0, 0.0, 0.0, 0.0), ina_ma=ma))
+        t += DT
+    assert ctl.servo.n_riprova_zero == 0

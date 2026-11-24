@@ -145,12 +145,15 @@ class Controllo:
             if self._t_rilascio_alto is None:
                 self._t_rilascio_alto = t
             elif t - self._t_rilascio_alto >= gi["rilascio_tempo_s"]:
-                self.servo.riprova_zero(t)
+                fatto = self.servo.riprova_zero(t)
                 self._t_rilascio_alto = None
-                avvisi.append("freno non si apre: %.0f mA a 0 gradi, nuovo impulso lungo a 0 (%d)"
-                              % (c.ina_ma, self.servo.n_riprova_zero))
+                if fatto:
+                    avvisi.append("freno non si apre: %.0f mA a 0 gradi, nuovo impulso lungo a 0 (%d)"
+                                  % (c.ina_ma, self.servo.n_riprova_zero))
         else:
             self._t_rilascio_alto = None
+            if self.servo.ultimo != 0.0 or (c.ina_ma is not None and math.isfinite(c.ina_ma) and not self.servo.attivo):
+                self.servo.n_riprova_zero = 0     # freno aperto davvero (corrente bassa) o nuova frenata: si riparte da 0
         if self.servo.n_riprova_zero:
             motivi.append("riprova_zero")
             if self.servo.n_riprova_zero >= 3:
