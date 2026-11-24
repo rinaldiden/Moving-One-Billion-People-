@@ -168,3 +168,8 @@ Dettaglio e domande in `agents/sicurezza/ARCHITETTURA_SICUREZZA.md` §8. Ordine:
   (collegato allo STANDBY calib baseline 150).
 - Carrello (solo preparare): 12 inserti M2.5x4, 12 viti M2.5x6 ISO 4762, O-ring NBR 164x2.
 
+
+## 2026-11-24 pomeriggio — logger02 col case fissato (Daniele: "guarda se la calib viene ottima")
+- Le sessioni di oggi (10:37 e 14:03-14:36) sono il logger FERMO SUL BANCO davanti al portatile, NON un giro: misurano solo sync A/B col fw 941d249d e stabilità da fermo + quanto si è mosso il montaggio rispetto al v3. asmile-calib al lavoro (PREREG + rapporto agents/rapporti/calib_logger02_20261124.md) → poi asmile-calib-critico. Per dire "il case ora è fermo in bici" serve un giro vero.
+- CONTROLLO COL METRO (richiesta Daniele): `logger/depth/calib_rock/logger02_v2/foto_metro.py <calib.json> <out>` prende un fotogramma da A (:81/stream) e da B (:82/b/stream), rettifica (720→800: cy+40), SGBM con controllo sinistra-destra, scarta riflessi e bordi, segna 6-8 punti con la distanza diretta (dal punto di mezzo fra le lenti). Provato a secco: funziona, ma la scena deve avere oggetti fra ~1 e 10 m con texture (sotto 0,93 m è fuori portata con 256 px di disparità). logger02 era in sleep alle 14:5x: serve svegliarlo.
+- Obiettivo di Daniele: mock → calibrazione di ogni asmile logger (e delle prossime asmile) senza tabellone; i numeri del metro sono la verità che serve per tarare focale e d0 del mock.
