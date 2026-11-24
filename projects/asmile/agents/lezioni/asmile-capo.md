@@ -87,3 +87,4 @@ Cosa ho previsto male. Le legge il capo-critico.
 - 2026-11-24: ho guardato solo la sessione più lunga (14:03, banco) e ho detto "oggi non c'è un giro". C'era una terza sessione (14:32) col giro. Prima di dire cosa c'è nei dati: elencare TUTTE le sessioni (prefisso data_ora per A e B) e guardare il giroscopio di ogni clip.
 - 2026-11-24 GIUSTO: freno #001: confronto limiter+sensor_hub ha trovato stallo 3,2 A al comando 0 e GPIO12 op dl; metro v4 entro 3%
 - 2026-11-24 SBAGLIATO: ho detto 'nessun giro oggi' guardando una sola sessione; foto metro calcolata con v3 già superata
+- 2026-11-24 **Daniele: "hai sminchiato la connessione del logger02… che non capiti più".** Per il fuoco ho usato lo streaming in diretta (anche della B via proxy della A) per minuti: la A è caduta più volte e lo scarico del giro si è bloccato. REGOLA: su logger ESP32 mai streaming lungo né letture ripetute della B; una foto singola per camera o i video già scaricati.

@@ -3,6 +3,13 @@ Uso: python3 logger02/nitidezza_live.py [secondi] [host]  -> una riga ogni ~0,5 
 import sys, time, threading, urllib.request
 import numpy as np, cv2
 
+# 24/11 (Daniele: "che non capiti piu'"): lo streaming lungo fa cadere la A, e la B passa dal proxy della A (peggio).
+# Questo strumento resta solo per la A e solo con --so-cosa-faccio; per il fuoco usa larghezza_bordi.py su UNA foto.
+if '--so-cosa-faccio' not in sys.argv:
+    sys.exit("BLOCCATO: niente streaming lungo su logger02 (fa cadere la connessione). Usa: python3 logger02/larghezza_bordi.py --live A")
+if 'B' in sys.argv[1:2] or ('nitidezza' in __file__):
+    sys.exit("BLOCCATO: niente streaming della B attraverso la A")
+
 BOUND = b'--123456789000000000000987654321'
 SEC = float(sys.argv[1]) if len(sys.argv) > 1 else 20
 HOST = sys.argv[2] if len(sys.argv) > 2 else '192.168.1.122'

@@ -46,3 +46,4 @@
 
 ## 2026-11-24 — scarico = sveglio
 - **Regola per TUTTI i logger e le Asmile: mentre si scarica, l'apparecchio resta sveglio, non va in sleep e non si spegne.** Uno scarico in corso non si interrompe mai (nessun tetto di durata); solo la batteria bassa vince.
+- 2026-11-24 **Logger ESP32 (logger02 e successivi): niente streaming lungo né letture ripetute della B attraverso la A** — fa cadere la connessione e blocca gli scarichi. "Che non capiti più."
