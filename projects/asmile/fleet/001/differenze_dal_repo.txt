@@ -1,8 +1,11 @@
 ≠ ./config/setup_new_raspi.sh
 ≠ ./pi/autonomous/object_depth.py
 ≠ ./pi/autonomous/shadow_mode.py
+≠ ./pi/autonomous/speed_limiter_v3/test_rilascio_v3.py
+≠ ./pi/autonomous/speed_limiter_v3/test_speed_limiter_v3.py
 solo-Pi ./pi/braking/speed_limiter.py
 ≠ ./pi/camera/dual_cam_recorder.py
 ≠ ./pi/logging/training_recorder.py
+≠ ./pi/power/master_switch.py
 ≠ ./pi/sensors/sensor_hub.py
 ≠ ./training/shadow_analyzer.py
