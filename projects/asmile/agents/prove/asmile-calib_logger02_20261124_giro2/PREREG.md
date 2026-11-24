@@ -37,3 +37,24 @@ Verdetto: "fermo" solo se 1+2+3+4+5 insieme; altrimenti si dichiara quale fallis
 
 ## DEVIAZIONE dichiarata (dopo il primo giro esplorativo, PRIMA del giro ufficiale)
 Nel giro esplorativo il fit RC lasciava liberi Ry, cx e cy di entrambe le camere: Ry e (cx1-cx2) NON sono osservabili dall'epipolare e spostano d0 (Ry 0.0107 vs 0.0025 rad fra pari e dispari = 13 px di d0; cx1-cx2 4.6 vs -6.3 px). Il PREREG diceva gia' Ry=v4: era un errore di implementazione mio. Correzione: liberi SOLO Rx, Rz, Ty, Tz, cy della camera destra (relativo), + k1,k2 nel RCL. Ry, cx1, cx2, cy1 = v4 (cosi' d0 = -2.55 resta quello di v4, provvisorio). Soglie e regola RCL invariate.
+
+## ROUND 2 (richiesta del capo dopo il PASSA parziale del critico; scritto PRIMA di misurare; v5 non si tocca, v6 solo se migliora)
+### Punto 1: residuo di lente, giudicato PER ZONA 3x3 sui blocchi tenuti fuori
+Stessi dati (lr_matches.pkl, 867 coppie |dt|<=0.1 ms), stessi blocchi (60 s pari/dispari + scambio), stesso fit di montaggio (liberi Rx,Rz,Ty,Tz,cy destra; Ry,cx1,cx2 = v4). Modelli, in aggiunta al RC di v5:
+- K2: k1,k2 comuni (gia' provato nel giro 1);  K3: k1,k2,k3 comuni;  KC: k1,k2 per camera (4 par);  KCF: KC + rapporto di focale destra/sinistra (fx e fy della destra x (1+e));  KCFc: KCF + cy della sinistra libero con limite +-15 px.
+Si ADOTTA un modello (solo come v6) SOLO se in ENTRAMBE le direzioni (pari->dispari e dispari->pari), contemporaneamente:
+ a) il numero di zone con mediana |dy| > 1 px (solo zone con >=15 punti) non aumenta e almeno in una direzione diminuisce;
+ b) nessuna zona peggiora di >10% in mediana |dy|; 
+ c) il |segno mediano| della zona basso-destra (zona 8) scende di >=30%; 
+ d) mediana globale non peggiora;
+ e) i parametri restano fisici: |k1|,|k2|,|k3| entro 0.3/0.3/0.15 dal valore v5 e la mappa r_d(r_u) monotona fino a r_d=0.64; il rapporto di focale entro +-2%;
+ f) effetto sulla scala: spostamento mediano della disparita' rettificata (dx) rispetto a v5, per zona, riportato; se > 1 px in una zona lo scrivo come costo (cambia Z lateralmente), non e' un criterio di scarto ma va in rapporto.
+Se piu' modelli passano: il piu' semplice (meno parametri). Poi verifica indipendente remap+SIFT (coppie k%12==6) sui blocchi pari/dispari/ferme con il modello scelto: mediana per zona.
+### Punto 2: R_imu->camera per blocco (Procrustes)
+Dati: coppie A-A vicine (g1, 667, rotazione gyro 1.5-20 gradi, solo t 130-330 e 390-715), rotazione visiva da matrice essenziale (cv2.findEssentialMat/recoverPose su punti normalizzati con la lente v5), rotazione giroscopio integrata con bias di QUESTA sessione (-1.04, 0.48, -0.94). Modello: rotvec_vis = -s * Rc * rotvec_gyro (convenzione di g2/g4: Rrel = Rc Rg^T Rc^T). Kabsch pesato per |rot| con scala s isotropa per blocco di 60 s, e Rc di v5-case come confronto.
+Criteri "Rc cambiata": (i) angolo fra Rc_nuova (tutti i dati) e Rc_v5case > 1.5 gradi; (ii) errore angolare mediano relativo sui blocchi tenuti fuori (fit su pari, test su dispari e viceversa) cala >= 20% rispetto a Rc_v5case; (iii) dispersione fra blocchi della Rc (angolo dalla mediana) < 1 grado. Se (i)+(ii)+(iii): uso la Rc nuova e rifaccio focale dal giroscopio (g4 per asse, pari/dispari). Se no: Rc invariata e il rollio 1.065 resta spiegato come scala giro/lente, NON verificato.
+Coerenza focale dopo: q pari vs dispari entro 3% e s_rollio in 1+-0.05; altrimenti focale NON VERIFICATA (resta v5, +-5%).
+
+### ESITO ROUND 2 (scritto dopo la misura; criteri non cambiati)
+Punto 1: NESSUN modello passa, v6 NON scritta. Zone con mediana>1 (dispari, pari): RC 4,1; K2 1,1; K3 1,1; KC 1,2; KCF 1,2; KCFc 1,2. Segno mediano zona 8 (RC -0.67/-1.27): K2 -0.52/-0.70 (-23%/-45%: fallisce c su dispari); K3 -0.54/-0.71 (-19%/-44%: fallisce c); KC -0.36/-0.36 (-47%/-71%: c ok) ma fallisce a (pari: 1->2 zone>1) e b (zona 0 pari 0.95->1.12, +17%). Costo scala (dx vs v5) fino a 1.1 px in zona 2 con KC.
+Punto 2: Rc NON cambiata secondo i criteri: (i) angolo 1.87 gradi >1.5 SI; (ii) calo errore tenuto fuori 6.6% e 10.6% (<20%) NO; (iii) dispersione blocchi mediana 3.3 max 9.8 gradi (>1) NO (blocchi mal condizionati, cond fino a 470). Esplorativo post-hoc: pendenze per asse con Rc v5-case: imbardata 1.065, rollio 1.07, beccheggio 0.83-1.03 (instabile).
