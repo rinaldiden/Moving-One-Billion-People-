@@ -330,6 +330,9 @@ def pull_logger02(name="logger02", hosts=None):
     import urllib.request
     def get(url, t=10):
         return urllib.request.urlopen(url, timeout=t)
+    if os.path.exists(os.path.join(DEST_BASE, f".pausa_{name}")):     # 24/11: Daniele "smetti di scaricare" (togli il file per riprendere)
+        print(f"[{name}] scarico in pausa (file .pausa_{name})")
+        return 0
     host = None
     for h in (hosts or HTTP_HOSTS_EXTRA.get(name, [])):
         try:
