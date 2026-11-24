@@ -134,7 +134,8 @@ class Controllo:
             motivi.append("anti_impuntata")
         elif no_aum:
             motivi.append("ripresa_attesa")
-        angolo = self.rampa.passo(target, tetto, dt, su_max, self.reg.livello == "sopra15" or c.emergenza)
+        r_su, r_giu = (None, None) if c.emergenza else (self.reg.rate_su, self.reg.rate_giu)
+        angolo = self.rampa.passo(target, tetto, dt, su_max, self.reg.livello == "sopra15" or c.emergenza, r_su, r_giu)
         # 7) comando servo: stesso ciclo
         self.servo.tick(t, angolo)
         # 8) guardia di rilascio (24/11): comandato 0, impulso finito, ma il servo assorbe ancora > ma_rilascio_max per
@@ -162,7 +163,7 @@ class Controllo:
             "t": t, "fonte": fonte, "v": v, "a": a, "dec": dec, "v_enc": self.enc.v, "a_enc": self.enc.a,
             "enc_fresco": self.enc.fresco(t), "v_fus": self.fus.v, "sigma_v": self.fus.sigma_v,
             "dec_imu": self.imu.dec, "d03": self.imu.d03, "imu_ok": imu_ok,
-            "frena": self.reg.frena, "livello": self.reg.livello, "a_des": self.reg.a_des,
+            "frena": self.reg.frena, "livello": self.reg.livello, "fase": self.reg.fase, "a_des": self.reg.a_des,
             "target": target, "angolo": angolo, "tetto": tetto, "rilascia_ora": rilascia, "bloccato": no_aum,
             "motivi": ",".join(motivi), "emergenza": c.emergenza, "avvisi": avvisi, "ina_ma": c.ina_ma,
         }

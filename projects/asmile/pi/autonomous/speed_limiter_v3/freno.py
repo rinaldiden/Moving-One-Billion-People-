@@ -18,7 +18,7 @@ class Rampa:
         self.c = cfg
         self.angolo = 0.0
 
-    def passo(self, target, tetto, dt, su_max=None, sopra_vmax=False):
+    def passo(self, target, tetto, dt, su_max=None, sopra_vmax=False, r_su=None, r_giu=None):
         c = self.c
         tetto = min(tetto, c["tetto_deg"], TETTO_ASSOLUTO)
         target = max(0.0, min(target, tetto))
@@ -26,11 +26,13 @@ class Rampa:
             r = c["rampa_su_oltre_soglia_deg_s"] if self.angolo >= c["soglia_lenta_deg"] else c["rampa_su_deg_s"]
             if sopra_vmax and self.angolo < c["soglia_lenta_deg"]:
                 r = c["rampa_su_sopra_vmax_deg_s"]       # sopra 15 km/h sale un po' piu' in fretta (sempre sotto 35)
+            if r_su is not None:                         # fascia di contatto (Regolatore): rampa propria, mai oltre la lenta sopra soglia
+                r = r_su if self.angolo < c["soglia_lenta_deg"] else min(r_su, c["rampa_su_oltre_soglia_deg_s"])
             if su_max is not None:
                 r = min(r, su_max)
             self.angolo = min(target, self.angolo + r * dt)
         else:
-            r = c["rampa_giu_deg_s"]
+            r = c["rampa_giu_deg_s"] if r_giu is None else r_giu
             if self.angolo > tetto:                      # tetto sceso: rilascio a rampa (veloce), niente salto secco
                 r = max(r, c["rampa_tetto_deg_s"])
             self.angolo = max(target, self.angolo - r * dt)
@@ -209,11 +211,16 @@ class AntiImpuntata:
 
 
 class Regolatore:
-    """Anello CHIUSO sull'accelerazione misurata (encoder), nessuna tabella gradi->decel (i dati non la danno).
-    - sotto zona_inizio (12): decel voluta = +a_pos (l'angolo cala piano a 0, niente on/off)
-    - 12..15: rallenti dolcemente: decel voluta cresce da 0 a 'normale' (x^esponente)
-    - sopra 15: riporti a 15: normale + k*(v-15), al massimo 'forte'
-    L'angolo sale se la bici decelera meno del voluto, scende se di piu'. Banda morta + filtro = niente oscillazioni."""
+    """Regolatore a FASCIA DI CONTATTO (24/11, richiesta di Daniele: loop fine dove il freno sfiora-lavora).
+    Il freno vero ha una zona morta (fino a angolo_contatto non frena) e poi ~0.1-0.3 m/s2 per grado. L'accelerazione
+    dell'encoder e' rumorosa (std ~0.4 m/s2): inseguirla fa 14-24 inversioni/min. Qui si controlla la VELOCITA' (poco rumorosa):
+      - 'libero': sotto la zona, angolo 0.
+      - 'avvicinamento_contatto': v >= zona-ingaggio: in fretta fino a contatto - margine (ancora NON frena).
+      - 'fine': PI sulla velocita' attorno a v_obiettivo, angolo = (contatto - margine) + u, u = kp*e + I, kp ricavata dalla
+        fascia ((lavoro - contatto) gradi alla v_max). Rampe piccole. Se la bici gia' rallenta quanto il profilo chiede (decel
+        >= voluta) I cala piano (rilascio dolce) fino a contatto-margine. Non torna a 0 finche' v non e' sotto
+        zona - disimpegno (isteresi). Nessun salto: tutto passa dalla Rampa; anti-impuntata e tetti restano a valle.
+    a_des/livello (profilo di decel voluta per zona) restano per log e per i picchi massimi."""
 
     def __init__(self, cfg):
         self.v = cfg["velocita"]
@@ -222,15 +229,28 @@ class Regolatore:
         self.r = cfg["regolatore"]
         self.v1 = self.v["zona_inizio_kmh"] / 3.6
         self.v2 = self.v["v_max_kmh"] / 3.6
+        self.v_set = self.r["v_obiettivo_kmh"] / 3.6
+        self.v_ing = self.v1 - self.r["ingaggio_sotto_zona_kmh"] / 3.6
+        self.v_dis = self.v1 - self.r["disimpegno_sotto_zona_kmh"] / 3.6
+        self.base = self.f["angolo_contatto_deg"] - self.f["margine_contatto_deg"]
+        self.kp = self.r["kp_scala"] * (self.f["angolo_lavoro_deg"] - self.f["angolo_contatto_deg"]) / (self.v2 - self.v_set)
+        self.ki = self.kp / self.r["ti_s"]
         self.a_des = 0.0
         self.livello = "-"
+        self.fase = "-"
         self.frena = False
         self.a_f = 0.0
+        self.ingaggiato = False
+        self.I = 0.0
+        self.rate_su = None
+        self.rate_giu = None
 
     def passo(self, v, a, angolo, dt):
         d, f, r = self.d, self.f, self.r
+        self.rate_su = self.rate_giu = None
         if v is None:
-            self.a_des, self.livello, self.frena = 0.0, "cieco", False
+            self.a_des, self.livello, self.fase, self.frena = 0.0, "cieco", "cieco", False
+            self.ingaggiato, self.I = False, 0.0
             return 0.0
         self.a_f += min(1.0, dt / r["a_filtro_s"]) * (a - self.a_f)
         dec = -self.a_f
@@ -244,16 +264,46 @@ class Regolatore:
         else:
             self.a_des, self.livello = -min(d["forte"], d["normale"] + r["k_sopra_15_ms2_per_ms"] * (vp - self.v2)), "sopra15"
         self.frena = angolo > 0.5 or self.a_des < 0
-        if vp < self.v1 - 0.5:                       # ben sotto la zona (> ~1.8 km/h): il freno non serve, rilascio a rampa veloce
-            return 0.0
         pmax = d["forte_picco_max"] if self.livello == "sopra15" else d["normale_picco_max"]
-        err = self.a_f - self.a_des
-        if abs(err) < r["banda_morta_ms2"]:
-            rate = 0.0
-        else:
-            rate = f["k_anello_deg_s_per_ms2"] * (err - (r["banda_morta_ms2"] if err > 0 else -r["banda_morta_ms2"]))
-        if dec > pmax:
-            rate = min(rate, -f["k_anello_deg_s_per_ms2"] * (dec - pmax))
         if dec > d["mai_oltre"]:
+            self.fase = "mai_oltre"
+            self.I = max(0.0, min(self.I, angolo * 0.5 - self.base))
             return angolo * 0.5
-        return max(0.0, angolo + rate * dt)
+        # isteresi: ingaggio a zona - ingaggio, disimpegno a zona - disimpegno
+        if not self.ingaggiato:
+            if vp >= self.v_ing:
+                self.ingaggiato = True
+                self.I = max(0.0, angolo - self.base)
+        elif vp < self.v_dis:
+            self.ingaggiato = False
+        if not self.ingaggiato:
+            self.fase, self.I = "libero", 0.0
+            return 0.0                                   # rilascio a rampa (rampa_giu), come prima
+        tetto = min(f["tetto_deg"], TETTO_ASSOLUTO)
+        umax = max(0.0, tetto - self.base)
+        e = vp - self.v_set
+        sopra = max(0.0, vp - self.v2) * r["kp_sopra_deg_per_ms"]      # sopra la v_max piu' deciso (solo li')
+        u = self.kp * e + sopra + self.I
+        gia = dec > 0.1 and dec >= -self.a_des            # sta gia' rallentando quanto il profilo chiede
+        if not (e > 0 and u >= umax) and not (gia and e > 0):      # niente windup; se gia' rallenta non spinge di piu'
+            self.I += self.ki * e * dt
+        if gia:                                          # rilascio dolce
+            self.I -= r["rilascio_dolce_deg_s"] * dt
+        # I non resta davanti all'angolo reale piu' di 3 gradi (rampe, tetti, anti-impuntata a valle)
+        self.I = max(0.0, min(self.I, umax, max(0.0, angolo - self.base) + 3.0))
+        u = max(0.0, min(self.kp * e + sopra + self.I, umax))
+        target = self.base + u
+        if gia:
+            target = min(target, max(angolo, self.base))     # mai piu' freno se gia' rallenta abbastanza
+        if angolo < self.base - 0.3:
+            self.fase = "avvicinamento_contatto"
+            self.rate_su = f["rampa_avvicinamento_deg_s"]
+            target = min(target, self.base)
+        else:
+            self.fase = "fine"
+            self.rate_su = f["rampa_fine_su_sopra15_deg_s"] if self.livello == "sopra15" else f["rampa_fine_su_deg_s"]
+        self.rate_giu = f["rampa_fine_giu_deg_s"]
+        if dec > pmax:
+            target = min(target, angolo - f["k_anello_deg_s_per_ms2"] * (dec - pmax) * dt)
+            self.I = max(0.0, min(self.I, target - self.base))
+        return max(0.0, target)

@@ -53,6 +53,12 @@ LIMITI = {
     "ina219.ma_rilascio_max": (200.0, 1500.0), "ina219.rilascio_tempo_s": (0.1, 2.0),
     "log_hz": (1, 50),
     "fallback.tetto_deg": (0.0, 50.0), "fallback.imu_scala_vs_enc": (1.0, 3.0),
+    "freno.angolo_contatto_deg": (1.0, 30.0), "freno.angolo_lavoro_deg": (2.0, 50.0),
+    "freno.margine_contatto_deg": (0.5, 6.0), "freno.rampa_avvicinamento_deg_s": (5.0, 30.0),
+    "freno.rampa_fine_su_deg_s": (0.5, 12.0), "freno.rampa_fine_su_sopra15_deg_s": (0.5, 25.0),
+    "freno.rampa_fine_giu_deg_s": (0.5, 12.0),
+    "regolatore.v_obiettivo_kmh": (4.0, 19.0), "regolatore.ti_s": (2.0, 30.0), "regolatore.kp_scala": (0.1, 6.0), "regolatore.kp_sopra_deg_per_ms": (0.0, 60.0), "regolatore.rilascio_dolce_deg_s": (0.0, 6.0),
+    "regolatore.ingaggio_sotto_zona_kmh": (0.0, 3.0), "regolatore.disimpegno_sotto_zona_kmh": (0.5, 5.0),
     "regolatore.esponente_zona": (1.0, 3.0), "regolatore.k_sopra_15_ms2_per_ms": (0.2, 3.0),
     "regolatore.a_pos_max_ms2": (0.05, 0.6), "regolatore.banda_morta_ms2": (0.0, 0.2), "regolatore.a_filtro_s": (0.05, 0.5),
 }
@@ -113,6 +119,16 @@ def valida(cfg):
         raise SogliaError("decelerazioni obiettivo non ordinate (normale <= forte <= massima <= mai_oltre)")
     if not cfg["velocita"]["zona_inizio_kmh"] < cfg["velocita"]["v_max_kmh"]:
         raise SogliaError("zona_inizio_kmh deve essere < v_max_kmh")
+    fr = cfg["freno"]
+    if not fr["angolo_contatto_deg"] < fr["angolo_lavoro_deg"] <= min(fr["tetto_deg"], 50.0):
+        raise SogliaError("freno: serve angolo_contatto_deg < angolo_lavoro_deg <= tetto_deg (<= 50)")
+    if fr["angolo_contatto_deg"] - fr["margine_contatto_deg"] < fr["libera_sotto_deg"]:
+        raise SogliaError("freno: contatto - margine deve essere >= libera_sotto_deg (sotto verrebbe azzerato)")
+    rg = cfg["regolatore"]
+    if not (cfg["velocita"]["zona_inizio_kmh"] < rg["v_obiettivo_kmh"] < cfg["velocita"]["v_max_kmh"]):
+        raise SogliaError("regolatore.v_obiettivo_kmh deve stare fra zona_inizio_kmh e v_max_kmh")
+    if not rg["ingaggio_sotto_zona_kmh"] < rg["disimpegno_sotto_zona_kmh"]:
+        raise SogliaError("regolatore: ingaggio_sotto_zona_kmh deve essere < disimpegno_sotto_zona_kmh (isteresi)")
     if cfg["freno"]["tetto_deg"] > 50.0 or cfg["freno"]["tetto_assoluto_codice_deg"] > 50.0:
         raise SogliaError("tetto freno > 50 gradi rifiutato")
     if cfg["imu"]["vibr_fermo_g"] >= cfg["imu"]["vibr_moto_g"]:
