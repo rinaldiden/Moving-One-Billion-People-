@@ -6,7 +6,7 @@ set -euo pipefail
 H=asmile@100.75.198.118
 R=/home/asmile/wip/Moving-One-Billion-People-/projects/asmile
 F="pi/autonomous/speed_limiter_v3/freno.py pi/autonomous/speed_limiter_v3/controllo.py pi/autonomous/speed_limiter_v3/hw.py
-pi/autonomous/speed_limiter_v3/validazione.py pi/autonomous/speed_limiter_v3/test_rilascio_v3.py config/soglie_speed_limiter_v3.json
+pi/autonomous/speed_limiter_v3/validazione.py pi/autonomous/speed_limiter_v3/test_rilascio_v3.py pi/autonomous/speed_limiter_v3/porta_a_zero.py config/soglie_speed_limiter_v3.json
 pi/power/master_switch.py"
 cd "$(dirname "$0")/.."
 PW=asmile
@@ -14,7 +14,9 @@ if [ "${1:-}" != rollback ]; then
   ssh $H "rm -rf /tmp/deploy_freno && mkdir -p /tmp/deploy_freno"
   for f in $F; do ssh $H "mkdir -p /tmp/deploy_freno/$(dirname $f)"; scp -q "$f" "$H:/tmp/deploy_freno/$f"; done
 fi
-ssh $H "echo $PW | sudo -S -p '' bash -s" <<EOF
+F=$(echo $F)
+TMP=$(mktemp)
+cat > "$TMP" <<EOF
 set -e
 mount -o remount,rw /media/root-ro
 for base in $R /media/root-ro$R; do
@@ -32,3 +34,5 @@ cd $R && for f in $F; do md5sum \$f /media/root-ro$R/\$f; done
 systemctl restart master_switch
 sleep 4; systemctl is-active master_switch; pinctrl get 12
 EOF
+scp -q "$TMP" $H:/tmp/deploy_freno_run.sh; rm -f "$TMP"
+ssh $H "echo $PW | sudo -S -p '' bash /tmp/deploy_freno_run.sh"
