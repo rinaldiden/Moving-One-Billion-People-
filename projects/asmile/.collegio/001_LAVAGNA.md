@@ -1,4 +1,4 @@
-# Lavagna asmile #001 — 2026-11-21 17:43
+# Lavagna asmile #001 — 2026-11-24 14:48
 
 **Livello raggiunto:** nessuno  ·  **Stiamo lavorando per:** L0 (registra)
 
@@ -32,6 +32,6 @@
 | ⬜ | L3.ombra_sterzo | 5 sessioni in ombra dello sterzo | asmile-sim-validator → asmile-regressione |  |
 | ⬜ | L4.sim2real | Policy validata in sim + banco virtuale senza regressioni | asmile-sim-validator → asmile-regressione |  |
 
-**Video da lavorare:** 28  ·  **Decisioni da firmare:** 11  ·  **Pi online:** nessuno
+**Video da lavorare:** 38  ·  **Decisioni da firmare:** 11  ·  **Pi online:** nessuno
 
 _Generata da projects/asmile/agents/stato.py — non modificarla a mano._
