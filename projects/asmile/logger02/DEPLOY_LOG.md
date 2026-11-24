@@ -27,3 +27,4 @@
 | 2026-11-23 15:13 | logger02 B | | hw3-def-20261118-70-g99d11299-d (1280x800 16,7 fps) | ok |
 | 2026-11-23 19:36 | logger02 A | 99d11299 | 9163c8ab | ok (periodo fotogramma 60 ms; >4 min sulla nuova) |
 | 2026-11-23 19:47 | logger02 B | 99d11299 | 9163c8ab | ok: fase camere media 25 us, max 66 us (prima 15 ms), riga 10,91 us |
+| 2026-11-24 17:04 | logger02 A | hw3-def-20261118-107-gd52e3dd5- Nov 24 2026 16:47:44 | hw3-def-20261118-90-g9163c8ab-d Nov 23 2026 19:30:46 | ROLLBACK ok |

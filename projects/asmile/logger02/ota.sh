@@ -14,7 +14,7 @@ LOGGER="${LOGGER:-logger02}"                  # quale logger HW3 (flotta.csv); t
 riga=$(grep "^$LOGGER," "$(cd "$(dirname "$0")" && pwd)/flotta.csv") || { echo "$LOGGER non è in flotta.csv"; exit 1; }
 TS=$(echo "$riga" | cut -d, -f8); LAN=$(echo "$riga" | cut -d, -f2)
 A="${LOGGER02_HOST:-${TS:-$LAN}}"            # Tailscale se c'è, se no l'IP di casa della A
-BIN="$QUI/firmware/build/logger02.bin"
+BIN="${BIN:-$QUI/firmware/build/logger02.bin}"   # 24/11: BIN=... per caricare un .bin compilato a parte (mai quello di un build in corso)
 LOG="$QUI/DEPLOY_LOG.md"
 
 versione() { curl -s -m 8 "http://$A$1/api/stato" | python3 -c "import json,sys;print(json.load(sys.stdin)['versione'])" 2>/dev/null; }
