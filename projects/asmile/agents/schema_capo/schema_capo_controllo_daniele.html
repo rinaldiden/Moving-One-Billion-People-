@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><title>Asmile capo e controlli di Daniele</title>
+<style>
+@page { size: A4 landscape; margin: 10mm; }
+body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; color: #1d2430; margin: 0; font-size: 10.5pt; }
+h1 { font-size: 17pt; margin: 0 0 2mm; } h2 { font-size: 13pt; margin: 4mm 0 2mm; }
+.sub { color: #5b6573; margin-bottom: 3mm; }
+.pag { page-break-after: always; } .pag:last-child { page-break-after: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+td, th { border: 1px solid #cfd5dd; padding: 1.6mm 2mm; vertical-align: top; text-align: left; }
+th { background: #eef1f5; }
+.d { display: inline-block; background: #d6336c; color: #fff; border-radius: 3mm; padding: 0 2mm; font-weight: 700; font-size: 9pt; }
+.oggi { color: #2b8a3e; font-weight: 700; } .no { color: #c92a2a; font-weight: 700; }
+.leg span { margin-right: 6mm; }
+.box { border: 1px solid #cfd5dd; border-radius: 2mm; padding: 2mm 3mm; margin-top: 2mm; }
+</style></head><body>
+
+<div class="pag">
+<h1>Asmile capo: come gira un giro, e dove entra il controllo di Daniele</h1>
+<div class="sub">24/11/2026 · repo Moving-One-Billion-People-/projects/asmile · <span class="d">D1…D5</span> = punti di controllo di Daniele proposti (da decidere insieme)</div>
+<svg viewBox="0 0 1100 560" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Helvetica, Arial" font-size="13">
+<defs>
+ <marker id="f" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#3b4a5e"/></marker>
+ <marker id="fr" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#d6336c"/></marker>
+ <marker id="fv" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#2b8a3e"/></marker>
+</defs>
+<style>.b{fill:#f6f8fb;stroke:#3b4a5e;stroke-width:1.4} .t{font-weight:700} .s{font-size:11px;fill:#4a5565}
+.dan{fill:#fff0f4;stroke:#d6336c;stroke-width:2} .ok{fill:#ebfbee;stroke:#2b8a3e;stroke-width:1.4} .ko{fill:#fff5f5;stroke:#c92a2a;stroke-width:1.4}
+.l{stroke:#3b4a5e;stroke-width:1.6;fill:none;marker-end:url(#f)} .lr{stroke:#d6336c;stroke-width:2;fill:none;stroke-dasharray:6 4;marker-end:url(#fr)}
+.lv{stroke:#2b8a3e;stroke-width:1.6;fill:none;marker-end:url(#fv)} .bd{fill:#d6336c} .bdt{fill:#fff;font-weight:700;font-size:12px}</style>
+
+<!-- Daniele -->
+<rect x="360" y="8" width="380" height="54" rx="10" class="dan"/>
+<text x="550" y="30" text-anchor="middle" class="t">DANIELE</text>
+<text x="550" y="48" text-anchor="middle" class="s">ordini · "vai" motore/freno · firme di livello · azioni fisiche · STOP</text>
+
+<!-- capo steps -->
+<rect x="20" y="100" width="190" height="64" rx="8" class="b"/><text x="115" y="124" text-anchor="middle" class="t">1. STATO VERO</text>
+<text x="115" y="142" text-anchor="middle" class="s">stato.py (lavagna L0-L4)</text><text x="115" y="156" text-anchor="middle" class="s">palla.py stato · Pi online</text>
+<rect x="245" y="100" width="190" height="64" rx="8" class="b"/><text x="340" y="124" text-anchor="middle" class="t">2. PIANO</text>
+<text x="340" y="142" text-anchor="middle" class="s">gate aperto più basso</text><text x="340" y="156" text-anchor="middle" class="s">a ritroso: chi lo sblocca</text>
+<rect x="470" y="100" width="190" height="64" rx="8" class="b"/><text x="565" y="124" text-anchor="middle" class="t">3. VISTO</text>
+<text x="565" y="142" text-anchor="middle" class="s">asmile-capo-critico</text><text x="565" y="156" text-anchor="middle" class="s">PASSA / VETO sul piano</text>
+<rect x="695" y="100" width="190" height="64" rx="8" class="b"/><text x="790" y="124" text-anchor="middle" class="t">4. DISPATCH</text>
+<text x="790" y="142" text-anchor="middle" class="s">verticali indipendenti in parallelo</text><text x="790" y="156" text-anchor="middle" class="s">dipendenti in serie</text>
+<rect x="905" y="100" width="180" height="64" rx="8" class="b"/><text x="995" y="124" text-anchor="middle" class="t">5. CHIUSURA</text>
+<text x="995" y="142" text-anchor="middle" class="s">commit · lavagna · bilancio</text><text x="995" y="156" text-anchor="middle" class="s">lezioni · riepilogo a Daniele</text>
+<path d="M210,132 H243" class="l"/><path d="M435,132 H468" class="l"/><path d="M660,132 H693" class="l"/>
+<path d="M995,164 V200 H1060 V520 H20 V132" class="l" stroke-opacity="0.35"/>
+<text x="540" y="535" text-anchor="middle" class="s">giro successivo (/loop /asmile-capo)</text>
+
+<!-- palla -->
+<rect x="250" y="240" width="210" height="70" rx="8" class="b"/><text x="355" y="266" text-anchor="middle" class="t">PRODUTTORE</text>
+<text x="355" y="284" text-anchor="middle" class="s">legge le sue lezioni</text><text x="355" y="298" text-anchor="middle" class="s">fa il lavoro → palla.py passa</text>
+<rect x="540" y="240" width="220" height="70" rx="8" class="b"/><text x="650" y="266" text-anchor="middle" class="t">CONTRO-AGENTE</text>
+<text x="650" y="284" text-anchor="middle" class="s">solo artefatto + gate, rifà le misure</text><text x="650" y="298" text-anchor="middle" class="s">palla.py verdetto</text>
+<path d="M790,164 V200 H355 V238" class="l"/><path d="M460,275 H538" class="l"/>
+<rect x="830" y="222" width="130" height="34" rx="6" class="ok"/><text x="895" y="244" text-anchor="middle" class="t" fill="#2b8a3e">PASSA → prova</text>
+<rect x="830" y="266" width="130" height="34" rx="6" class="ko"/><text x="895" y="288" text-anchor="middle" class="t" fill="#c92a2a">VETO → rifai</text>
+<path d="M760,262 L828,240" class="lv"/><path d="M760,284 L828,284" class="l"/>
+<path d="M895,300 V330 H355 V312" class="l"/>
+<text x="625" y="345" text-anchor="middle" class="s">al 3° VETO sullo stesso lavoro → il capo chiede a Daniele</text>
+
+<!-- dispositivi -->
+<rect x="250" y="390" width="160" height="58" rx="8" class="b"/><text x="330" y="414" text-anchor="middle" class="t">asmile-sicurezza</text><text x="330" y="432" text-anchor="middle" class="s">ALLOW / BLOCK</text>
+<rect x="450" y="390" width="160" height="58" rx="8" class="b"/><text x="530" y="414" text-anchor="middle" class="t">asmile-deploy</text><text x="530" y="432" text-anchor="middle" class="s">Pi / OTA logger</text>
+<rect x="650" y="390" width="190" height="58" rx="8" class="b"/><text x="745" y="414" text-anchor="middle" class="t">rollback-guardian</text><text x="745" y="432" text-anchor="middle" class="s">si torna indietro da soli?</text>
+<rect x="880" y="390" width="180" height="58" rx="8" class="b"/><text x="970" y="414" text-anchor="middle" class="t">registra_deploy.sh</text><text x="970" y="432" text-anchor="middle" class="s">foto config + commit + push</text>
+<path d="M895,256 Q1000,330 960,370 Q900,395 330,388" class="l" stroke-opacity="0.6"/>
+<text x="1000" y="345" class="s">se tocca un Pi</text><text x="1000" y="358" class="s">o un logger</text>
+<path d="M410,419 H448" class="l"/><path d="M610,419 H648" class="l"/><path d="M840,419 H878" class="l"/>
+
+<!-- controlli Daniele -->
+<path d="M500,62 Q420,80 380,98" class="lr"/>
+<circle cx="405" cy="80" r="11" class="bd"/><text x="405" y="84" text-anchor="middle" class="bdt">D1</text>
+<path d="M740,52 Q1085,70 1085,190 Q1085,240 964,240" class="lr"/>
+<circle cx="1085" cy="185" r="11" class="bd"/><text x="1085" y="189" text-anchor="middle" class="bdt">D2</text>
+<path d="M362,55 Q228,70 228,250 Q228,419 246,419" class="lr"/>
+<circle cx="228" cy="320" r="11" class="bd"/><text x="228" y="324" text-anchor="middle" class="bdt">D3</text>
+<path d="M740,40 Q1095,40 1000,98" class="lr"/>
+<circle cx="1040" cy="56" r="11" class="bd"/><text x="1040" y="60" text-anchor="middle" class="bdt">D4</text>
+<path d="M360,30 Q30,30 60,98" class="lr"/>
+<circle cx="120" cy="40" r="11" class="bd"/><text x="120" y="44" text-anchor="middle" class="bdt">D5</text>
+</svg>
+<div class="leg"><span><span class="d">D1</span> piano del giro</span><span><span class="d">D2</span> ogni verdetto</span><span><span class="d">D3</span> ogni azione su un dispositivo</span><span><span class="d">D4</span> conclusioni sui dati</span><span><span class="d">D5</span> STOP globale</span></div>
+</div>
+
+<div class="pag">
+<h2>I controlli di Daniele</h2>
+<table>
+<tr><th style="width:20%">Dove</th><th style="width:40%">Oggi</th><th>Proposta (da decidere insieme)</th></tr>
+<tr><td><span class="d">D1</span> Piano del giro</td><td class="no">decide il capo, lo vede solo il capo-critico</td><td>Prima di far partire le verticali il capo manda il piano in 5 righe. Parte col tuo ok, o dopo 10 minuti senza risposta solo se il piano non tocca dispositivi.</td></tr>
+<tr><td><span class="d">D2</span> Ogni verdetto (PASSA/VETO)</td><td class="no">decide il contro-agente; tu senti solo il 3° veto</td><td>Una riga a te con la prova (immagine o numero) e la possibilità di dire "stop" o "rifai".</td></tr>
+<tr><td><span class="d">D3</span> Ogni azione su un dispositivo, anche software, anche sul logger di prova</td><td class="no">aggiornamenti e letture invasive li decide il capo (24/11: OTA con build sbagliato, streaming che ha fatto cadere logger02)</td><td>Prima il tuo ok, con cosa, perché e come si torna indietro.</td></tr>
+<tr><td><span class="d">D4</span> Conclusioni sui dati</td><td class="no">il capo riassume (24/11: "il giro non c'è", sbagliato)</td><td>Prima di "c'è / non c'è" ti mostra l'elenco delle sessioni con gli orari veri.</td></tr>
+<tr><td><span class="d">D5</span> STOP globale</td><td class="no">non esiste</td><td>Un tuo "stop" (Terminale o Telegram) ferma tutti gli agenti al passo in corso.</td></tr>
+<tr><td>Già tuo oggi</td><td class="oggi" colspan="2">motore e freno ("vai") · strada · firme di livello (L0-L4) · OTA della flotta · 3° veto · azioni fisiche</td></tr>
+</table>
+
+<h2>Le verticali (produttore → contro-agente)</h2>
+<table>
+<tr><th style="width:14%">Verticale</th><th>Catena</th></tr>
+<tr><td>Governo</td><td>capo → capo-critico · sicurezza → sicurezza-redteam · <b>Daniele = firma</b></td></tr>
+<tr><td>Dati</td><td>logger-ingest → ingest-critico → log-harvester → dati-auditor · human-loop → feedback-critico</td></tr>
+<tr><td>Percezione</td><td>calib → calib-critico → depth → occhio · scene-reconstructor → occhio · segmentazione: segmenter → verifier → situation (→ scettico) → router (→ critico) → modeler → regressione</td></tr>
+<tr><td>Attuazione</td><td>banco-hw → banco-critico → actuator-modeler → attuatori-avversario</td></tr>
+<tr><td>Guida</td><td>event-miner → scettico → sim-builder → sim-breaker → policy-trainer → policy-redteam → banco virtuale (curator, replayer, scorer → vtest-critic) → sim-validator → regressione → <b>Daniele</b> · online-learner (dormiente fino a L1)</td></tr>
+<tr><td>Veicolo</td><td>pi-001 → pi-001-verifica · deploy → rollback-guardian · monitor → anomalie · flotta → cross-bici · hw-pcb → pcb-critico</td></tr>
+<tr><td>Conoscenza</td><td>ricercatore → ricerca-scettico · retrofit → costi-scettico</td></tr>
+</table>
+<div class="box"><b>Scala di autonomia:</b> L0 registra → L1 ombra → L2 freno → L3 sterzo → L4 autonomia. Si sale solo con tutti i gate del livello in PASSA con prova + firma di Daniele. · <b>Parlare a Daniele:</b> avvisa.py info / chiedi / fai → Terminale, Telegram dopo 10 minuti.</div>
+</div>
+</body></html>
