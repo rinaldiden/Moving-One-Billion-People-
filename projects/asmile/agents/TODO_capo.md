@@ -159,3 +159,12 @@ Dettaglio e domande in `agents/sicurezza/ARCHITETTURA_SICUREZZA.md` §8. Ordine:
 - FERMO: Daniele fissa meglio il case (si muoveva tutto). Poi giro nuovo e test dy inizio/metà/fine: se resta <1 px senza salti → il dy 9,5 px (Rx -0,435°, salto 5 px a 330 s) era il case che si piegava sul supporto; altrimenti problema dentro il case (v6: camere sulla stessa piastra rigida).
 - Candidato attuale: calib_logger02.CANDIDATO_v3_giro2_20261123.json (ARANCIO). Video 17:00/17:51 (1280×800) scaricati e pronti; cartella giro 14:06 completa in asmile-loggers/logger02 (giro2 era stata montata con download incompleto).
 - STANDBY (Daniele): calibrazione/valutazione con BASELINE 150 mm da rifare QUANDO la calibrazione di logger02 è top (VERDE: metro 2-4-8 m + dy stabile). Base di partenza: agents/rapporti/interasse_150_logger02.md (simulazione 200/150/100 su giro 13:46). Serve per decidere l'interasse del case v6.
+
+## 2026-11-24 — case logger HW3 v7 (interasse 150) DISEGNATA, doc NON salvato
+- Doppio: fusion/progetti/case-logger-hw3/STAMPA_v7.md (commit doppio a42b5b2). Scatola 203x64,3x52, camere a 150, pacco nella tasca
+  del coperchio, viti esterne M2.5x6 + inserti M2.5x4, O-ring 164x2, 2 asole fascette nell'aggancio.
+- Da Daniele: «salva» in Fusion quando gli va bene; misure vere HW-775 (25x20x6 stimato) e posizione del suo LED.
+- Quando si monta: camere GIRATE di 180 -> girare l'immagine nel firmware/pipeline logger HW3 v7 e rifare la calibrazione
+  (collegato allo STANDBY calib baseline 150).
+- Carrello (solo preparare): 12 inserti M2.5x4, 12 viti M2.5x6 ISO 4762, O-ring NBR 164x2.
+
