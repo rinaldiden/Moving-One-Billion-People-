@@ -3,6 +3,7 @@ Niente thread separato che comanda il freno. Nessun import hardware (lgpio/smbus
 import json
 import math
 import os
+import time
 
 from .fonti import Arbitro, Encoder, Fusione, ImuLong, Campione, sanifica_velocita
 from .freno import (TETTO_ASSOLUTO, AntiImpuntata, GuardiaIna, ImpulsoServo, Rampa, Regolatore)
@@ -20,14 +21,16 @@ def carica_soglie(path=None):
 
 
 class Controllo:
-    def __init__(self, cfg, backend_servo, log_eventi=None, stato_contatto=None):
+    def __init__(self, cfg, backend_servo, log_eventi=None, stato_contatto=None, adesso=time.time):
         self.cfg = cfg
         self.enc = Encoder(cfg["encoder"])
         self.imu = ImuLong(cfg["imu"], cfg["anti_impuntata"], cfg["fallback"]["imu_scala_vs_enc"])
         self.fus = Fusione(cfg["fusione_gps_imu"])
         self.arb = Arbitro(cfg, cfg["imu"], self.enc, self.imu, self.fus)
+        self.adesso = adesso
         self.stato_contatto = stato_contatto      # file (es. /data/speed_limiter_v3_contatto.json) o None = niente persistenza
-        self.reg = Regolatore(cfg, self._carica_contatto())
+        c0 = self._carica_contatto()
+        self.reg = Regolatore(cfg, *(c0 if c0 else (None, 0)))
         self._t_salvato = -1e9
         self.rampa = Rampa(cfg["freno"])
         self.servo = ImpulsoServo(backend_servo, cfg["freno"])
@@ -43,25 +46,48 @@ class Controllo:
         self._t_rilascio_alto = None
 
     def _carica_contatto(self):
-        """contatto appreso del giro prima; qualunque problema (file assente/rotto/fuori limiti) = nessuna stima (default prudente)."""
+        """(contatto, conferme) del giro prima, oppure None. Qualunque problema = nessuna stima (default prudente): file
+        assente/rotto/fuori limiti, scaduto (contatto_scadenza_s, 7 giorni), flag di reset (<file>.reset: cambio pastiglie)."""
         if not self.stato_contatto:
             return None
         try:
+            flag = self.stato_contatto + ".reset"
+            if os.path.exists(flag):
+                self.reset_contatto()
+                return None
             with open(self.stato_contatto) as f:
-                x = json.load(f).get("contatto_deg")
+                d = json.load(f)
+            x, t0 = d.get("contatto_deg"), d.get("t_unix")
             fr = self.cfg["freno"]
-            return float(x) if isinstance(x, (int, float)) and fr["contatto_min_deg"] <= x <= fr["contatto_max_deg"] else None
-        except (OSError, ValueError, AttributeError, TypeError):
+            if not (isinstance(x, (int, float)) and fr["contatto_min_deg"] <= x <= fr["contatto_max_deg"]):
+                return None
+            if not (isinstance(t0, (int, float)) and math.isfinite(t0)) or not (0 <= self.adesso() - t0 <= fr["contatto_scadenza_s"]):
+                return None
+            n = d.get("conferme", 0)
+            return (float(x), int(n) if isinstance(n, int) and 0 <= n <= 100 else 0)
+        except (OSError, ValueError, AttributeError, TypeError, OverflowError):
             return None
 
-    def _salva_contatto(self, t):
-        if not self.stato_contatto or self.reg.contatto is None or t - self._t_salvato < 20.0:
+    def reset_contatto(self):
+        """reset ESPLICITO (cambio pastiglie, sospetto): cancella file e flag, la stima riparte da zero."""
+        if self.stato_contatto:
+            for p in (self.stato_contatto, self.stato_contatto + ".reset", self.stato_contatto + ".tmp"):
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
+        if hasattr(self, "reg"):
+            self.reg.contatto, self.reg.g, self.reg.conferme, self.reg.n_stime, self.reg._scan = None, None, 0, 0, None
+
+    def _salva_contatto(self, t, subito=False):
+        if not self.stato_contatto or self.reg.contatto is None or (not subito and t - self._t_salvato < 20.0):
             return
         self._t_salvato = t
         try:
             tmp = self.stato_contatto + ".tmp"
             with open(tmp, "w") as f:
-                json.dump({"contatto_deg": round(self.reg.contatto, 2), "n_stime": self.reg.n_stime}, f)
+                json.dump({"contatto_deg": round(self.reg.contatto, 2), "n_stime": self.reg.n_stime,
+                           "conferme": self.reg.conferme, "t_unix": self.adesso()}, f)
             os.replace(tmp, self.stato_contatto)
         except OSError:
             pass
@@ -120,7 +146,7 @@ class Controllo:
         self.reg.fonte = fonte
         target = self.reg.passo(v, a, self.rampa.angolo, dt)
         if self.reg.appreso_ora:
-            self._salva_contatto(t)
+            self._salva_contatto(t, subito=self.reg.corretto_ora)
         if c.emergenza:
             target = TETTO_ASSOLUTO
         # 6) tetti

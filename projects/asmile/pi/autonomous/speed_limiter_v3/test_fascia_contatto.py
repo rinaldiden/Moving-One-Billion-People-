@@ -101,8 +101,8 @@ def test_validazione_contatto_plausibilita():
 
 
 # ---------------------------------------------------------------- avvicinamento, rilascio, isteresi (contatto appreso nel file)
-def _reg_noto(c=8.0):
-    return Regolatore(CFG, contatto0=c)
+def _reg_noto(c=8.0, conferme=3):
+    return Regolatore(CFG, contatto0=c, conferme0=conferme)        # contatto CONFERMATO (>= contatto_conferme stime coerenti)
 
 
 def test_contatto_ignoto_nessun_angolo_a_priori_e_salita_lenta():
@@ -270,3 +270,91 @@ def test_emergenza_ignora_le_rampe_del_regolatore():
     from speed_limiter_v3.fonti import Campione
     ctl.passo(Campione(t=b.t, emergenza=True))
     assert ctl.reg.rate_su is not None or True                         # il Controllo passa None alla Rampa in emergenza (sotto)
+
+
+# ---------------------------------------------------------------- correzioni asmile-sicurezza 24/11 (b) e (c)
+def test_stima_non_confermata_vale_come_ignota_avvicinamento_prudente():
+    reg, rampa = _reg_noto(8.0, conferme=1), Rampa(F)
+    assert not reg.confermato and reg.base == F["contatto_min_deg"] - F["margine_contatto_deg"]
+    v = (CFG["velocita"]["zona_inizio_kmh"] - 0.3) / 3.6
+    sal = np.diff([0.0] + [ciclo(reg, rampa, v, 0.0) for _ in range(100)]) / 0.02
+    assert sal.max() <= F["rampa_cerca_deg_s"] + 1e-9 and rampa.angolo < 8.0
+
+
+def test_conferma_con_3_stime_coerenti_e_salto_massimo():
+    reg = Regolatore(CFG)
+    def scan_con(c0, g=0.2):
+        pt = [(a, g * max(0.0, a - c0)) for a in np.linspace(0, 25, 150) if g * max(0.0, a - c0) < 0.8]
+        reg._scan = {"pt": pt, "t0": 0.0, "a0": 0.0, "ultimo": 20.0, "a_nat": 0.0}
+        reg.t = 6.0
+        reg._chiudi_scan(6.0, 20.0)
+    scan_con(8.0)
+    assert reg.contatto is not None and reg.conferme == 1 and not reg.confermato
+    scan_con(8.5)
+    scan_con(8.2)
+    assert reg.conferme == 3 and reg.confermato
+    scan_con(14.0)                                              # stima incoerente: riparte il conteggio, salto <= 3 gradi
+    prima = reg.contatto
+    assert reg.conferme == 1 and not reg.confermato
+    scan_con(25.0)
+    assert reg.contatto - prima <= RG["contatto_salto_max_deg"] + 1e-9
+    # il salto massimo e' anche un limite validato
+    c = copy.deepcopy(CFG)
+    c["regolatore"]["contatto_salto_max_deg"] = 5.0
+    with pytest.raises(SogliaError):
+        valida(c)
+
+
+def test_decel_prima_di_arrivare_a_base_abbassa_il_contatto_e_ferma_la_salita():
+    """contatto stimato 14, vero 7 (pastiglie consumate): la decel compare a 7 gradi mentre si sale verso 13."""
+    reg, rampa = _reg_noto(14.0), Rampa(F)
+    v = 13.5 / 3.6
+    reg.a_nat, reg._t_lib = 0.0, 5.0                           # a_nat gia' misurata in rullaggio a freno staccato (come in marcia)
+    for _ in range(100):
+        ciclo(reg, rampa, v, 0.0)
+    assert rampa.angolo > 6.5
+    rampa.angolo = 6.0
+    corretto = False
+    for k in range(120):
+        ang = rampa.angolo
+        a = -0.3 * max(0.0, ang - 6.0) if False else -0.8      # decel gia' presente (freno che morde sotto la stima)
+        prima = rampa.angolo
+        ciclo(reg, rampa, v, a)
+        if reg.corretto_ora:
+            corretto = True
+            assert rampa.angolo <= prima + 1e-9                # la salita si ferma subito
+            break
+    assert corretto and reg.contatto < 14.0 and reg.contatto >= F["contatto_min_deg"] and reg.conferme == 0 and not reg.confermato
+
+
+def test_persistenza_scadenza_reset_e_flag(tmp_path):
+    p = str(tmp_path / "c.json")
+    ora = [1_000_000.0]
+    def nuovo_ctl():
+        return Controllo(CFG, ServoFinto(), stato_contatto=p, adesso=lambda: ora[0])
+    json.dump({"contatto_deg": 9.0, "conferme": 3, "t_unix": ora[0] - 3600}, open(p, "w"))
+    c = nuovo_ctl()
+    assert c.reg.contatto == 9.0 and c.reg.confermato
+    json.dump({"contatto_deg": 9.0, "conferme": 3, "t_unix": ora[0] - F["contatto_scadenza_s"] - 10}, open(p, "w"))
+    assert nuovo_ctl().reg.contatto is None                    # scaduto
+    json.dump({"contatto_deg": 9.0, "conferme": 3, "t_unix": ora[0] + 3600}, open(p, "w"))
+    assert nuovo_ctl().reg.contatto is None                    # data nel futuro: non fidarsi
+    json.dump({"contatto_deg": 9.0, "conferme": 3}, open(p, "w"))
+    assert nuovo_ctl().reg.contatto is None                    # senza data
+    json.dump({"contatto_deg": 9.0, "conferme": 3, "t_unix": ora[0]}, open(p, "w"))
+    open(p + ".reset", "w").write("cambio pastiglie")
+    assert nuovo_ctl().reg.contatto is None and not os.path.exists(p) and not os.path.exists(p + ".reset")    # flag: ignora e cancella
+    json.dump({"contatto_deg": 9.0, "conferme": 3, "t_unix": ora[0]}, open(p, "w"))
+    c = nuovo_ctl()
+    c.reset_contatto()                                         # reset esplicito
+    assert c.reg.contatto is None and c.reg.conferme == 0 and not os.path.exists(p)
+
+
+def test_g_incerto_non_sale_piu_in_fretta():
+    """g non confermato: kp e rampa usano almeno g_default (centrale 0.2), anche se la stima grezza di g e' bassa."""
+    reg = Regolatore(CFG)
+    reg.g = 0.05
+    assert reg.g_eff >= RG["g_default_ms2_per_deg"]
+    reg.contatto, reg.conferme = 8.0, 3
+    assert reg.g_eff == 0.05                                   # confermato: usa il valore appreso
+    assert RG["g_default_ms2_per_deg"] >= 0.2

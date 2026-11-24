@@ -258,7 +258,7 @@ class Regolatore:
     salita <= 12 gradi/s. Con fonte di riserva (GPS/BLE/IMU) niente apprendimento: default prudente e avvicinamento lento.
     a_des/livello (profilo di decel voluta per zona) restano per log e per i picchi massimi."""
 
-    def __init__(self, cfg, contatto0=None):
+    def __init__(self, cfg, contatto0=None, conferme0=0):
         self.v = cfg["velocita"]
         self.d = cfg["decel_obiettivo_ms2"]
         self.f = cfg["freno"]
@@ -272,8 +272,13 @@ class Regolatore:
         self.lag = self.f["ritardo_comando_decel_s"] + self.r["ritardo_misura_a_s"]
         self.contatto = None            # stima appresa (gradi) o None
         self.n_stime = 0
+        self.conferme = 0               # stime coerenti (entro contatto_coerenza_deg) di fila: confermato se >= contatto_conferme
+        self._ecc_n = 0                 # cicli consecutivi con decel in eccesso durante l'avvicinamento
+        self.corretto_ora = False
+        self.blocca_salita = False
         if contatto0 is not None and self._plausibile(contatto0):
             self.contatto = float(contatto0)
+            self.conferme = max(0, int(conferme0))
         self.a_des = 0.0
         self.livello = "-"
         self.fase = "-"
@@ -302,10 +307,20 @@ class Regolatore:
         return self.contatto if self.contatto is not None else self.f["contatto_default_deg"]    # solo per la finestra dello scan
 
     @property
+    def confermato(self):
+        return self.contatto is not None and self.conferme >= self.r["contatto_conferme"]
+
+    @property
+    def g_eff(self):
+        """guadagno da usare per kp e per la rampa: se non confermato, mai piu' basso del default (prudente: kp ridotto, salita lenta)."""
+        gd = self.r["g_default_ms2_per_deg"]
+        return self.g if (self.g is not None and self.confermato) else max(self.g or 0.0, gd)
+
+    @property
     def base(self):
         """angolo di attesa: contatto appreso - margine; con contatto ignoto contatto_min - margine (sotto qualunque contatto
-        plausibile: non frena mai) e poi si cerca il contatto con salita lenta."""
-        if self.contatto is not None:
+        plausibile: non frena mai) e poi si cerca il contatto con salita lenta. Finche' la stima non e' CONFERMATA vale come ignota."""
+        if self.confermato:
             return self.contatto - self.f["margine_contatto_deg"]
         return self.f["contatto_min_deg"] - self.f["margine_contatto_deg"]      # ignoto: sotto il minimo plausibile, mai a contatto
 
@@ -313,6 +328,8 @@ class Regolatore:
         """aggiorna a_nat e la ricerca del contatto. Chiamato a ogni ciclo con l'angolo comandato (prima della decisione)."""
         r, f = self.r, self.f
         self.appreso_ora = False
+        self.corretto_ora = False
+        self.blocca_salita = False
         self.t += dt
         t = self.t
         self._ang_h.append((t, angolo))
@@ -335,6 +352,23 @@ class Regolatore:
                 break
         sal = angolo - self._ang_h[0][1]
         eccesso = self.a_nat - a_f
+        # CORREZIONE (asmile-sicurezza 24/11): decel in eccesso PRIMA di arrivare a contatto-margine => il contatto stimato e'
+        # troppo alto: ferma la salita e prendi l'angolo attuale come nuovo contatto (abbassa la stima, mai sotto il minimo).
+        if self.contatto is not None and self._t_lib >= r["a_nat_tau_s"] and angolo <= self.contatto - f["margine_contatto_deg"] + 0.3 \
+                and eccesso >= r["contatto_soglia_anticipo_ms2"]:
+            self._ecc_n += 1
+            if self._ecc_n >= r["contatto_anticipo_cicli"]:
+                nuovo = max(f["contatto_min_deg"], min(ang_d, angolo))
+                if nuovo < self.contatto:
+                    self.contatto = nuovo
+                self.conferme = 0
+                self.blocca_salita = True
+                self.corretto_ora = True
+                self.appreso_ora = True
+                self._ecc_n = 0
+                self._scan = None
+        else:
+            self._ecc_n = 0
         sc = self._scan
         self._pre.append((ang_d, eccesso))
         if len(self._pre) > 75:
@@ -365,7 +399,12 @@ class Regolatore:
             return
         c0, g = res
         self.g = g if self.g is None else self.g + r["contatto_alfa"] * (g - self.g)
-        self.contatto = c0 if self.contatto is None else self.contatto + r["contatto_alfa"] * (c0 - self.contatto)
+        if self.contatto is None:
+            self.contatto, self.conferme = c0, 1
+        else:
+            self.conferme = self.conferme + 1 if abs(c0 - self.contatto) <= r["contatto_coerenza_deg"] else 1
+            passo_c = max(-r["contatto_salto_max_deg"], min(r["contatto_salto_max_deg"], r["contatto_alfa"] * (c0 - self.contatto)))
+            self.contatto += passo_c                     # media lenta, salto massimo per giro
         self.n_stime += 1
         self.appreso_ora = True
 
@@ -393,7 +432,7 @@ class Regolatore:
         pmax = d["forte_picco_max"] if self.livello == "sopra15" else d["normale_picco_max"]
         self._apprendi(dt, angolo, self.a_f)
         base = self.base
-        kp = min(r["kp_max_deg_per_ms"], max(r["kp_min_deg_per_ms"], r["guadagno_anello_1_s"] / (self.g if self.g is not None else r["g_default_ms2_per_deg"])))
+        kp = min(r["kp_max_deg_per_ms"], max(r["kp_min_deg_per_ms"], r["guadagno_anello_1_s"] / self.g_eff))
         ki = kp / r["ti_s"]
         if dec > d["mai_oltre"]:
             self.fase = "mai_oltre"
@@ -423,24 +462,26 @@ class Regolatore:
         self.I = max(0.0, min(self.I, umax, max(0.0, angolo - base) + 3.0))
         u = max(0.0, min(kp * e + sopra + self.I, umax))
         target = base + u
-        if self.g is not None and self.contatto is not None:
+        if self.g is not None and self.confermato:
             # con contatto e guadagno appresi: mai oltre l'angolo che darebbe la decel massima voluta (+50% di margine)
             target = min(target, self.contatto + 1.5 * (d["forte"] + max(self.a_nat or 0.0, 0.0)) / self.g)
+        if self.blocca_salita:                           # contatto corretto in questo ciclo: ferma subito la salita
+            target = min(target, angolo)
         if gia or dec >= d["forte"]:                     # gia' rallenta abbastanza, o decel gia' al massimo voluto: non spinge di piu'
             target = min(target, max(angolo, base))
         if angolo < base - 0.3:
             self.fase = "avvicinamento_contatto"
-            self.rate_su = f["rampa_avvicinamento_deg_s"] if (self.contatto is not None and self.fonte == "ENC") else f["rampa_cerca_deg_s"]
+            self.rate_su = f["rampa_avvicinamento_deg_s"] if (self.confermato and self.fonte == "ENC") else f["rampa_cerca_deg_s"]
             target = min(target, base)
         else:
             self.fase = "fine"
             self.rate_su = f["rampa_fine_su_sopra15_deg_s"] if self.livello == "sopra15" else f["rampa_fine_su_deg_s"]
-            if self.contatto is None or self.fonte != "ENC":
+            if not self.confermato or self.fonte != "ENC":
                 self.rate_su = min(self.rate_su, f["rampa_cerca_deg_s"])
         if self.fase == "fine":
             # fluidita': la decel arriva con ritardo (comando + misura): la salita rallenta man mano che dec si avvicina al
             # massimo voluto, cosi' non si supera. rate = (forte - dec)/(g * ritardo), mai sotto 1.5 gradi/s
-            g_eff = self.g if self.g is not None else r["g_default_ms2_per_deg"]
+            g_eff = self.g_eff                           # incerto => mai piu' basso del default: non sale piu' in fretta
             self.rate_su = min(self.rate_su, max(1.5, (d["forte"] - max(dec, 0.0)) / (g_eff * self.lag)))
         self.rate_giu = f["rampa_fine_giu_deg_s"]
         if dec > pmax:

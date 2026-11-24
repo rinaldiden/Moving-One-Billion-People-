@@ -14,7 +14,7 @@ sp = importlib.util.spec_from_file_location('speed_limiter_v3.freno_prima', os.p
 prima = importlib.util.module_from_spec(sp); sp.loader.exec_module(prima)
 class Vecchio(prima.Regolatore):
     rate_su = rate_giu = None; fase = '-'; contatto = None; a_nat = None; appreso_ora = False; fonte = 'ENC'
-    def __init__(self, cfg, c0=None): super().__init__(cfg)
+    def __init__(self, cfg, c0=None, n0=0): super().__init__(cfg)
 NUOVO = controllo.Regolatore
 cfg = carica_soglie()
 _pett = fonti.Encoder._pettine
