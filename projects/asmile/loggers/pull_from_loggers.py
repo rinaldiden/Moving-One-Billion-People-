@@ -32,7 +32,8 @@ FLEET = {
     "asmile-001": {"host": "100.75.198.118",          # IP Tailscale (fisso per nodo)
                    "user": "asmile", "layout": "sessions", "src": "/data/training_sessions",
                    "sensors": ["/data/logging/sensors",          # CSV unico sensor_hub 50 Hz (2026-11-07)
-                               "/data/logging/speed_limiter", "/data/logging/training_data_pi"]},  # formato vecchio
+                               "/data/logging/speed_limiter", "/data/logging/training_data_pi",   # formato vecchio
+                               "/data/logging/limiter_v3"]},   # registro del limiter v3 (ombra/attivo, 24/11)
 }
 
 # Fallback statico se Tailscale non è disponibile (host = alias ssh o IP).
@@ -246,16 +247,27 @@ def check_batteria(lg):
     json.dump(st, open(BATT_STATO, "w"))
 
 
-# --- logger02 (HW3, 2 × ESP32-P4): niente ssh, API HTTP sulla A (la B dietro /b/). Tailscale 100.117.207.99, LAN .122.
-LOGGER02_HOSTS = ["100.117.207.99", "192.168.1.122"]
+# --- logger ESP32 (HW3: logger02 e successivi, 2 × ESP32-P4): niente ssh, API HTTP sulla A (la B dietro /b/).
+# Indirizzi di riserva per nome (LAN di casa): Tailscale non sempre c'è.
+HTTP_HOSTS_EXTRA = {"logger02": ["100.117.207.99", "192.168.1.122"]}
 
 
-def pull_logger02():
+def http_risponde(host, t=4):
+    import urllib.request
+    try:
+        urllib.request.urlopen(f"http://{host}/api/stato", timeout=t).read()
+        return True
+    except Exception:
+        return False
+
+
+def pull_logger02(name="logger02", hosts=None):
+    """Scarica un logger ESP32 (A + B dietro /b) in asmile-loggers/<name>/: verifica dimensione, poi cancella."""
     import urllib.request
     def get(url, t=10):
         return urllib.request.urlopen(url, timeout=t)
     host = None
-    for h in LOGGER02_HOSTS:
+    for h in (hosts or HTTP_HOSTS_EXTRA.get(name, [])):
         try:
             get(f"http://{h}/api/stato", 5).read()
             host = h
@@ -263,9 +275,9 @@ def pull_logger02():
         except Exception:
             pass
     if not host:
-        print("[logger02] non raggiungibile - skip")
+        print(f"[{name}] non raggiungibile - skip")
         return 0
-    dest = os.path.join(DEST_BASE, "logger02")
+    dest = os.path.join(DEST_BASE, name)
     os.makedirs(dest, exist_ok=True)
     n = 0
     for pref in ("", "/b"):
@@ -273,7 +285,7 @@ def pull_logger02():
             stato = json.loads(get(f"http://{host}{pref}/api/stato").read())
             files = json.loads(get(f"http://{host}{pref}/api/files").read())
         except Exception as e:
-            print(f"[logger02{pref or '/a'}] errore elenco: {e}")
+            print(f"[{name}{pref or '/a'}] errore elenco: {e}")
             continue
         in_corso = stato.get("rec", {}).get("file", "")
         base_corso = in_corso.replace(".h264", "")
@@ -312,12 +324,58 @@ def pull_logger02():
     return n
 
 
+# 24/11 (Daniele: "da tutti gli asmile che si collegano a Tailscale, in automatico"): da launchd la CLI di Tailscale.app
+# fallisce SEMPRE (CLIError 3), quindi la scoperta non trovava le unita' nuove. MagicDNS (100.100.100.100) invece risponde
+# anche da launchd e solo per i nodi che esistono: provo i nomi della flotta per convenzione.
+NOMI_FLOTTA = (["asmile-%03d" % i for i in range(1, 21)] + ["logger%02d" % i for i in range(1, 21)]
+               + ["asmile-logger"] + ["asmile-logger%03d" % i for i in range(1, 21)])
+REGISTRO = os.path.join(HERE, "flotta_tailscale.json")      # ultimi nodi visti (diagnostica)
+
+
+def risolvi(nome):
+    import socket
+    try:
+        return socket.gethostbyname(nome)
+    except OSError:
+        return None
+
+
+def scopri_magicdns():
+    """-> (unita' ssh [Pi], logger HTTP [ESP32]) per i nomi della flotta che MagicDNS risolve."""
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(16) as ex:
+        ips = dict(zip(NOMI_FLOTTA, ex.map(risolvi, NOMI_FLOTTA)))
+    pi, esp = [], []
+    for nome, ip in ips.items():
+        if not ip or not ip.startswith("100."):
+            continue
+        if nome in FLEET:
+            pi.append(dict(FLEET[nome], name=nome, host=ip))
+        elif nome.startswith("asmile-") and nome[7:].isdigit():      # Asmile nuova: stesso layout di #001
+            pi.append(dict(FLEET["asmile-001"], name=nome, host=ip))
+        elif nome.startswith("logger") and nome[6:].isdigit():       # logger ESP32 (HW3 e successivi)
+            esp.append((nome, [ip] + [h for h in HTTP_HOSTS_EXTRA.get(nome, []) if h != ip]))
+        else:                                                         # logger su Raspberry (asmile-logger...)
+            pi.append({"name": nome, "host": ip, "user": USER_MAP.get(nome, DEFAULT_USER), "src": SRC,
+                       "sensors": ["/data/logging/sensors"], "frames_glob": "clip_*_frames.csv"})
+    try:
+        with open(REGISTRO, "w") as f:
+            json.dump({k: v for k, v in ips.items() if v}, f, indent=1)
+    except OSError:
+        pass
+    return pi, esp
+
+
 def main():
     os.makedirs(DEST_BASE, exist_ok=True)
-    loggers = discover_loggers()
-    if loggers:
-        print(f"Tailscale: {len(loggers)} logger online -> {', '.join(l['name'] for l in loggers)}")
+    loggers, esp32 = scopri_magicdns()
+    if loggers or esp32:
+        print("MagicDNS: " + ", ".join([l["name"] for l in loggers] + [n for n, _ in esp32]))
     else:
+        loggers = discover_loggers()
+        if loggers:
+            print(f"Tailscale: {len(loggers)} logger online -> {', '.join(l['name'] for l in loggers)}")
+    if not loggers:
         # da launchd la CLI di Tailscale.app prova ad aprire la GUI e fallisce ("CLIError 3"):
         # allora provo direttamente gli IP Tailscale noti (reachable() scarta chi è offline)
         loggers = LOGGERS + [dict(cfg, name=n) for n, cfg in FLEET.items()]
@@ -333,10 +391,13 @@ def main():
         n = pull_sessions(lg) if lg.get("layout") == "sessions" else pull_logger(lg)
         print(f"[{lg['name']}] scaricati+cancellati {n} segmenti")
         tot += n
-    n02 = pull_logger02()
-    if n02:
-        print(f"[logger02] scaricati+cancellati {n02} file")
-    tot += n02
+    if not any(n == "logger02" for n, _ in esp32):
+        esp32.append(("logger02", HTTP_HOSTS_EXTRA["logger02"]))     # LAN di casa anche senza Tailscale
+    for nome, hosts in esp32:
+        n02 = pull_logger02(nome, hosts)
+        if n02:
+            print(f"[{nome}] scaricati+cancellati {n02} file")
+        tot += n02
     if tot:
         print(f"TOTALE {tot} nuovi segmenti in {DEST_BASE}")
         # Hook elaborazione: se esiste on_new_videos.sh, lancialo sui nuovi video
