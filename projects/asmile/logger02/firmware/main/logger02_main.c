@@ -95,6 +95,7 @@ void app_main(void)
     const int sblocca[] = {L02_PIN_C6_EN, L02_PIN_SD_PWR, L02_PIN_PA, L02_PIN_WAKE, L02_PIN_ETH_RST};
     for (size_t i = 0; i < sizeof(sblocca) / sizeof(sblocca[0]); i++) gpio_hold_dis(sblocca[i]);
     ESP_ERROR_CHECK(example_video_init());
+    logger02_batt_avvio();                 /* A: batteria < 3,1 V = non avvio e dormo senza risvegli (Daniele 24/11) */
     logger02_saluto();
     const logger02_ruolo_t *ru = logger02_ruolo();
     ESP_LOGI(TAG, "scheda %c, risveglio: %d", ru->is_a ? 'A' : 'B', (int)esp_sleep_get_wakeup_cause());

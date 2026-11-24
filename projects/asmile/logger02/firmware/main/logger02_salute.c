@@ -104,6 +104,40 @@ static void conta_riavvio(void)
     nvs_close(h);
 }
 
+/* Spegnimenti per batteria (24/11): scritti in NVS prima di dormire, riletti e loggati (E) al riavvio successivo,
+ * cosi' finiscono nel registro errori anche se la SD non c'era piu'. */
+void logger02_salute_batt_stop(int tipo, float v)
+{
+    nvs_handle_t h;
+    if (nvs_open("salute", NVS_READWRITE, &h) != ESP_OK) return;
+    uint32_t n = 0;
+    nvs_get_u32(h, "bstop_n", &n);
+    nvs_set_u32(h, "bstop_n", n + 1);
+    nvs_set_u32(h, "bstop_tipo", (uint32_t)tipo);
+    nvs_set_u32(h, "bstop_mv", v > 0 ? (uint32_t)(v * 1000.0f + 0.5f) : 0);
+    nvs_set_u32(h, "bstop_da_dire", 1);
+    nvs_commit(h);
+    nvs_close(h);
+}
+
+static void batt_stop_riporta(void)
+{
+    nvs_handle_t h;
+    if (nvs_open("salute", NVS_READWRITE, &h) != ESP_OK) return;
+    uint32_t da = 0, n = 0, tipo = 0, mv = 0;
+    nvs_get_u32(h, "bstop_da_dire", &da);
+    if (da) {
+        nvs_get_u32(h, "bstop_n", &n);
+        nvs_get_u32(h, "bstop_tipo", &tipo);
+        nvs_get_u32(h, "bstop_mv", &mv);
+        ESP_LOGE(TAG, "ULTIMO SPEGNIMENTO PER BATTERIA (n. %lu): %s, media %.2f V", (unsigned long)n,
+                 tipo == 2 ? "avvio rifiutato (< 3,1 V)" : "spento in uso (< 3,0 V per 10 s)", mv / 1000.0f);
+        nvs_set_u32(h, "bstop_da_dire", 0);
+        nvs_commit(h);
+    }
+    nvs_close(h);
+}
+
 /* --- file --- */
 static temperature_sensor_handle_t s_tsens;
 /* Sospetto 21/11: sulla A (unica con l'ADC della batteria) il firmware con la temperatura moriva dopo 20 s - 2 min,
@@ -228,6 +262,7 @@ void logger02_salute_presto(void)
 esp_err_t logger02_salute_start(void)
 {
     s_lock = xSemaphoreCreateMutex();
+    batt_stop_riporta();
     xTaskCreatePinnedToCore(salute_task, "salute", 4096, NULL, 3, NULL, 0);
     ESP_LOGI(TAG, "ultimo riavvio: %s (avvii %lu, brownout %lu, crash %lu)", s_motivo,
              (unsigned long)s_avvii, (unsigned long)s_brownout, (unsigned long)s_crash);
