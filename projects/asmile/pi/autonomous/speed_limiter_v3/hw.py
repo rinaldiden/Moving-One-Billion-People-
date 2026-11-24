@@ -68,6 +68,18 @@ class ServoLgpio:
             lg.tx_pwm(self.h, SERVO_PIN, SERVO_HZ, 0.0)
             lg.gpio_free(self.h, SERVO_PIN)
             self.claimed = False
+            pin_in_ingresso()
+
+
+def pin_in_ingresso():
+    """Su Pi 5 gpio_free lascia GPIO12 in OUTPUT LOW (visto 13/11 e 24/11: 'op dl'): il SER0062 col LOW continuo non si
+    apre. Pin davvero in ingresso senza pull (hi-Z), come il metodo di asmile2."""
+    import subprocess
+    try:
+        subprocess.run(["pinctrl", "set", str(SERVO_PIN), "ip", "pn"], timeout=1, check=False,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception:
+        pass
 
     def chiudi(self):
         try:
@@ -96,7 +108,7 @@ class ServoOmbra:
 class RegistroOmbra:
     """Una riga per ciclo con quello che il limiter avrebbe fatto, per confrontarlo con le frenate di Daniele (persistente in /data)."""
     CAMPI = ["t_wall", "t", "fonte", "v", "a", "dec", "v_enc", "a_enc", "enc_fresco", "v_fus", "dec_imu", "d03", "imu_ok",
-             "frena", "livello", "a_des", "target", "angolo", "tetto", "rilascia_ora", "bloccato", "motivi", "emergenza"]
+             "frena", "livello", "a_des", "target", "angolo", "tetto", "rilascia_ora", "bloccato", "motivi", "emergenza", "ina_ma"]
 
     def __init__(self, cartella="/data/logging/limiter_v3"):
         import csv

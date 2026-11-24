@@ -106,6 +106,12 @@ def buzzer_sweep(start_freq: int, end_freq: int, step: int = 50, step_time: floa
         pass
 
 
+def _pin_in_ingresso():
+    """24/11: su Pi 5 gpio_free lascia GPIO12 in OUTPUT LOW ('op dl'); il SER0062 vuole il pin davvero libero."""
+    subprocess.run(["pinctrl", "set", str(PIN_SERVO), "ip", "pn"], timeout=1, check=False,
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
 def angle_to_duty(angle: float) -> float:
     # Servo montato invertito: raw 180° = rilasciato, raw 0° = freno pieno.
     # angle "logico": 0 = release, +N = N° di frenata.
@@ -223,7 +229,8 @@ class MasterSwitch:
         print(f"[SWITCH] Servo → {RELEASE_ANGLE}° (release, 1.5s di pulse @ {SERVO_FREQ}Hz)")
         time.sleep(1.5)
         lgpio.tx_pwm(h, PIN_SERVO, SERVO_FREQ, 0)  # ferma PWM (duty 0)
-        lgpio.gpio_free(h, PIN_SERVO)              # rilascia pin → hi-Z
+        lgpio.gpio_free(h, PIN_SERVO)              # rilascia pin
+        _pin_in_ingresso()                          # davvero hi-Z (Pi 5: gpio_free lascia LOW)
         log_cmd("brake", "free", RELEASE_ANGLE, "master_switch ON")
         lgpio.gpiochip_close(h)
         self.servo_handle = None
@@ -304,6 +311,7 @@ class MasterSwitch:
         lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, 0)
         time.sleep(0.05)
         lgpio.gpio_free(h2, PIN_SERVO)
+        _pin_in_ingresso()
         log_cmd("brake", "free", OFF_ANGLE, "master_switch OFF")
         # 23/11: a pin libero il SER0062 tiene la posizione da solo; se spinge contro l'olio resta in stallo per ore
         # (misura INA: a 50° a volte 0,03 A, a volte 1,3 A). Guardia: finché la corrente a pin libero è sopra 0,4 A,
@@ -320,6 +328,7 @@ class MasterSwitch:
             lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, 0)
             time.sleep(0.05)
             lgpio.gpio_free(h2, PIN_SERVO)
+            _pin_in_ingresso()
             time.sleep(0.3)
             log_cmd("brake", "free", ang, "master_switch OFF: arretro (corrente %.2f A)" % i_a)
             print(f"[SWITCH] stazionamento: corrente {i_a:.2f} A a pin libero -> arretro a {ang}°")

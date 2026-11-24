@@ -37,6 +37,7 @@ class Controllo:
         self.imu_ever = False
         self.dati_scartati = {"gps": 0, "ble": 0}
         self.t_inizio = None
+        self._t_rilascio_alto = None
 
     def passo(self, c: Campione):
         t = c.t
@@ -136,13 +137,31 @@ class Controllo:
         angolo = self.rampa.passo(target, tetto, dt, su_max, self.reg.livello == "sopra15" or c.emergenza)
         # 7) comando servo: stesso ciclo
         self.servo.tick(t, angolo)
+        # 8) guardia di rilascio (24/11): comandato 0, impulso finito, ma il servo assorbe ancora > ma_rilascio_max per
+        # rilascio_tempo_s -> il freno NON si e' aperto: nuovo impulso lungo a 0 e avviso visibile.
+        gi = cfg["ina219"]
+        if (self.servo.ultimo == 0.0 and not self.servo.attivo and c.ina_ma is not None and math.isfinite(c.ina_ma)
+                and c.ina_ma > gi["ma_rilascio_max"]):
+            if self._t_rilascio_alto is None:
+                self._t_rilascio_alto = t
+            elif t - self._t_rilascio_alto >= gi["rilascio_tempo_s"]:
+                self.servo.riprova_zero(t)
+                self._t_rilascio_alto = None
+                avvisi.append("freno non si apre: %.0f mA a 0 gradi, nuovo impulso lungo a 0 (%d)"
+                              % (c.ina_ma, self.servo.n_riprova_zero))
+        else:
+            self._t_rilascio_alto = None
+        if self.servo.n_riprova_zero:
+            motivi.append("riprova_zero")
+            if self.servo.n_riprova_zero >= 3:
+                avvisi.append("FRENO NON SI APRE: %d impulsi di rilascio ripetuti" % self.servo.n_riprova_zero)
         return {
             "t": t, "fonte": fonte, "v": v, "a": a, "dec": dec, "v_enc": self.enc.v, "a_enc": self.enc.a,
             "enc_fresco": self.enc.fresco(t), "v_fus": self.fus.v, "sigma_v": self.fus.sigma_v,
             "dec_imu": self.imu.dec, "d03": self.imu.d03, "imu_ok": imu_ok,
             "frena": self.reg.frena, "livello": self.reg.livello, "a_des": self.reg.a_des,
             "target": target, "angolo": angolo, "tetto": tetto, "rilascia_ora": rilascia, "bloccato": no_aum,
-            "motivi": ",".join(motivi), "emergenza": c.emergenza, "avvisi": avvisi,
+            "motivi": ",".join(motivi), "emergenza": c.emergenza, "avvisi": avvisi, "ina_ma": c.ina_ma,
         }
 
     def chiudi(self):

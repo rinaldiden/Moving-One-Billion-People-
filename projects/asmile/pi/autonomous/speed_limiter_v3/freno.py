@@ -52,6 +52,26 @@ class ImpulsoServo:
         self.t_inizio = -1e9
         self.n_impulsi = 0
         self.max_comandato = 0.0
+        self.tieni = cfg["impulso_tieni_s"]
+        self.n_riprova_zero = 0
+
+    def _tieni(self, angolo, delta):
+        """24/11: con 0,15 s fissi il ritorno a 0 non arrivava (freno rimasto chiuso, servo in stallo 3,2 A). Il PWM resta
+        acceso il tempo della corsa (tieni_per_grado_s), e per tornare a 0 almeno tieni_zero_s (master ON usa 1,5 s e apre)."""
+        c = self.c
+        s = max(c["impulso_tieni_s"], delta * c["tieni_per_grado_s"])
+        if angolo == 0.0:
+            s = max(s, c["tieni_zero_s"])
+        return s
+
+    def _impulso(self, t, angolo, delta):
+        self.b.pwm(angolo)
+        self.attivo = True
+        self.ultimo = angolo
+        self.t_inizio = t
+        self.tieni = self._tieni(angolo, delta)
+        self.n_impulsi += 1
+        self.max_comandato = max(self.max_comandato, angolo)
 
     def tick(self, t, angolo):
         c = self.c
@@ -61,16 +81,19 @@ class ImpulsoServo:
         delta = abs(angolo - self.ultimo)
         verso_zero = angolo == 0.0 and self.ultimo != 0.0
         if delta >= c["impulso_trigger_deg"] or verso_zero:
-            self.b.pwm(angolo)
-            self.attivo = True
-            self.ultimo = angolo
-            self.t_inizio = t
-            self.n_impulsi += 1
-            self.max_comandato = max(self.max_comandato, angolo)
+            # il tempo della corsa si somma a quello che restava dell'impulso precedente (rampa a gradini di 1 grado)
+            resto = max(0.0, self.tieni - (t - self.t_inizio)) if self.attivo else 0.0
+            self._impulso(t, angolo, delta)
+            self.tieni = max(self.tieni, resto + delta * c["tieni_per_grado_s"])
             return
-        if self.attivo and t - self.t_inizio >= c["impulso_tieni_s"]:
+        if self.attivo and t - self.t_inizio >= self.tieni:
             self.b.libera()
             self.attivo = False
+
+    def riprova_zero(self, t):
+        """Comandato 0 ma il servo assorbe ancora corrente (non si e' aperto): nuovo impulso lungo a 0."""
+        self._impulso(t, 0.0, 0.0)
+        self.n_riprova_zero += 1
 
     def fermo_da(self, t):
         """Da quanti secondi non parte un nuovo impulso."""

@@ -76,6 +76,9 @@
   "k_anello_deg_s_per_ms2": 15.0,
   "impulso_trigger_deg": 1.0,
   "impulso_tieni_s": 0.15,
+  "tieni_per_grado_s": 0.03,
+  "tieni_zero_s": 1.5,
+  "_tieni": "24/11: con 0.15 s fissi il ritorno a 0 non arrivava (freno chiuso, stallo 3.2 A). PWM acceso per la corsa (0.03 s/grado: 50 gradi = 1.5 s) e per tornare a 0 almeno 1.5 s, come il master ON che apre davvero.",
   "libera_sotto_deg": 2.0,
   "tetto_imu_morta_deg": 0.0,
   "_note": "il tetto 50 e' scritto anche nel codice: il file puo' solo ABBASSARLO. L'angolo non e' mappato su decel: anello chiuso sulla decel misurata.",
@@ -85,7 +88,7 @@
   "tetto_imu_morta_emergenza_deg": 25.0,
   "_imu_morta": "DECISIONE PER DANIELE: IMU morta/congelata = anti-impuntata cieca, quindi fuori emergenza tetto 0 (rilascio, proposta di asmile-sicurezza); in emergenza tetto 25. Prima era 25 sempre.",
   "rampa_tetto_deg_s": 60.0,
-  "uscita_tieni_s": 0.6,
+  "uscita_tieni_s": 1.5,
   "_uscita": "all'uscita: 0 gradi tenuto >= uscita_tieni_s (0.6, da misurare a banco da 50 gradi) PRIMA di liberare il pin"
  },
  "anti_impuntata": {
@@ -115,7 +118,10 @@
   "tempo_s": 1.0,
   "arretra_deg": 3.0,
   "servo_fermo_s": 0.5,
-  "assente_dopo_s": 2.0
+  "assente_dopo_s": 2.0,
+  "ma_rilascio_max": 600.0,
+  "rilascio_tempo_s": 0.3,
+  "_rilascio": "24/11: a 0 gradi e pin libero il servo aperto assorbe 25-30 mA; sopra 600 mA per 0.3 s = freno non aperto -> nuovo impulso lungo a 0."
  },
  "log_hz": 10,
  "fallback": {
