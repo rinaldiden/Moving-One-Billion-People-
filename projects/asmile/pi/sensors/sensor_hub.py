@@ -75,6 +75,7 @@ ENC_FRESH_MS = 500
 
 # ─── GPS NEO-M10 ───────────────────────────────────────────────────────
 GPS_PORT = "/dev/ttyAMA3"
+GPS_STATE_FILE = "/tmp/gps_state.json"   # letto dal limiter v3 (fallback GPS+IMU) e da route_replay/training_recorder
 GPS_BAUD = 38400
 GPS_RATE_MS = 100       # 10 Hz
 # UBX-CFG-VALSET (strato RAM: si rimanda a ogni avvio, la config salvata del modulo non cambia)
@@ -545,6 +546,13 @@ def main():
             vals += [g["t_ms"], g["utc"], g.get("quality", 0) if g.get("fix_rmc") else 0,
                      fmt(g.get("lat"), 7), fmt(g.get("lon"), 7), fmt(g.get("speed"), 3),
                      fmt(g.get("heading"), 1), fmt(g.get("sats"), 0), fmt(g.get("hdop"), 2), fmt(g.get("alt"), 1)]
+            # 24/11: il limiter v3 legge la velocita' GPS da qui per il fallback GPS+IMU (prima la scriveva il limiter v2,
+            # che non parte piu': fallback morto). Solo sul campione GPS nuovo: ts cambia, se il GPS tace il limiter non lo usa.
+            try:
+                write_json_atomic(GPS_STATE_FILE, {"ts": g["t_ms"], "speed_ms": g.get("speed"),
+                                                   "fix": bool(g.get("fix_rmc")), "hdop": g.get("hdop"), "sats": g.get("sats")})
+            except Exception:
+                pass
         else:
             vals += [""] * 10
         vals.append("|".join(ev))
