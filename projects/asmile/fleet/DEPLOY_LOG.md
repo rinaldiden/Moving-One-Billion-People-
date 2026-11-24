@@ -17,3 +17,4 @@
 - 2026-11-23 16:01 001: tetto freno 50° in speed_limiter e master_switch 
 - 2026-11-23 16:49 001: speed_limiter v3 in shadow mode avviato dal master (il vecchio limiter non parte più) 
 - 2026-11-23 16:56 001: limiter v3 attivo all'1; stazionamento 50° con guardia INA a 0 
+- 2026-11-24 15:13 001: freno: ritorno a 0 con PWM lungo + pin in ingresso + guardia rilascio (3a3551ad) 
