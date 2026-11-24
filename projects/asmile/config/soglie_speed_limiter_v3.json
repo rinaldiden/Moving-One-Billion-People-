@@ -11,6 +11,8 @@
   "_circ_dubbio": "taratura deployata (metro 9/11) = 2.1219e-05 m/count (0.3477 m/giro enc.). Alternativa 0.3374/16384 = 2.0594e-05: le velocita' calano del 3%. GPS dice ~1.00 con 0.3374 (vedi report).",
   "finestra_parabola_s": 0.3,
   "max_salto_counts": 8000,
+  "v_fisica_max_ms": 20.0,
+  "_v_fisica": "24/11: limite del salto scalato col tempo fra due letture: 20 m/s (72 km/h) di velocita' fisica massima; 8000 impulsi resta il minimo. Prima a 29 km/h (o dopo un buco di lettura) l'encoder veniva scartato e il freno rilasciato.",
   "fresco_s": 0.25,
   "plausibilita": {
    "tol_v_gps_ms": 1.2,

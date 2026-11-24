@@ -12,7 +12,7 @@ class SogliaError(ValueError):
 LIMITI = {
     "velocita.v_max_kmh": (5.0, 20.0), "velocita.zona_inizio_kmh": (3.0, 19.0),
     "encoder.m_per_count": (1.0e-5, 4.0e-5), "encoder.finestra_parabola_s": (0.15, 0.6),
-    "encoder.max_salto_counts": (100, 16384), "encoder.fresco_s": (0.05, 1.0), "encoder.verso_avanti": (-1, 1),
+    "encoder.max_salto_counts": (100, 16384), "encoder.v_fisica_max_ms": (12.0, 30.0), "encoder.fresco_s": (0.05, 1.0), "encoder.verso_avanti": (-1, 1),
     "encoder.plausibilita.tol_v_gps_ms": (0.3, 3.0), "encoder.plausibilita.tol_v_gps_rel": (0.05, 0.6),
     "encoder.plausibilita.tol_a_imu_ms2": (1.0, 6.0), "encoder.plausibilita.tempo_s": (0.5, 5.0),
     "encoder.plausibilita.riammissione_s": (1.0, 30.0), "encoder.plausibilita.vel_senza_vibrazione_ms": (0.5, 4.0),
