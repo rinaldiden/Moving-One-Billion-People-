@@ -13,3 +13,5 @@
 - 2026-11-12 14:21 **info** — Buondì 🙏 Oggi i Pi sono spenti, lavoro sul Mac: prima chiudo la taratura dell'encoder ruota dai log del 9/11 (sembra +3%: 0,3477 invece di 0,3374, NON cambio niente sul Pi senza il tuo vai). Poi, se mi dai l'ok, controllo la calibrazione B30 mentre la bici si muove usando l'encoder come metro.
 - 2026-11-12 14:21 **chiedi** — Ostacoli: dopo 3 bocciature quasi tutti i falsi allarmi rimasti sono muri a bordo strada. Come vado avanti?
 - 2026-11-12 14:51 **telegram** — [20261112_142110] inviato
+- 2026-11-24 14:49 **info** — Oggi pomeriggio misuro sul giro di logger02 delle 14:03 se le camere restano ferme (dy a inizio, metà e fine) e se il sync A/B nuovo regge. Non tocco il logger.
+- 2026-11-24 14:49 **chiedi** — Il case di logger02 era già fissato meglio PRIMA del giro di oggi delle 14:03?

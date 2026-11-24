@@ -63,6 +63,7 @@ class Encoder:
         self.k = cfg["m_per_count"]
         self.win = cfg["finestra_parabola_s"]
         self.max_step = cfg["max_salto_counts"]
+        self.v_fis = cfg["v_fisica_max_ms"]
         self.fresco_s = cfg["fresco_s"]
         self.sgn = 1 if cfg["verso_avanti"] >= 0 else -1
         self.indietro = False        # retromarcia: v firmata negativa
@@ -104,9 +105,12 @@ class Encoder:
             return
         d = c - self._last
         self._last = c
-        dt_enc = te - self._hist[-1][0] if self._hist else 0.021
-        lim = self.max_step * max(1.0, dt_enc / 0.021)       # max_salto_counts vale per un campione a 21 ms (50 Hz): un campione piu' distante porta legittimamente piu' impulsi
-        if abs(d) > lim:        # salto irreale: scarta e riparte la finestra
+        # 24/11: il limite fisso (8000 impulsi = 29 km/h a 21 ms, 5,5 km/h su un buco di 112 ms) scartava l'encoder in
+        # discesa veloce o dopo un ritardo di lettura -> fonte NESSUNA -> freno rilasciato. Ora il limite cresce col tempo
+        # trascorso dall'ultimo campione (velocita' fisica massima v_fisica_max_ms), mai sotto max_salto_counts.
+        dt_e = te - self._hist[-1][0] if self._hist else 0.0
+        lim = max(self.max_step, self.v_fis * dt_e / self.k) if 0.0 < dt_e < 1.0 else self.max_step
+        if abs(d) > lim:                  # salto irreale: scarta e riparte la finestra
             self.glitch += 1
             self._hist.clear()
             self._hist.append((te, self._cum * self.k))

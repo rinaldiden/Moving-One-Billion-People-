@@ -101,3 +101,27 @@ def test_guardia_si_riarma_quando_il_freno_si_apre():
         ctl.passo(Campione(t=t, enc=(t, 0), imu=(0.0, 0.0, 1.0, 0.0, 0.0, 0.0), ina_ma=ma))
         t += DT
     assert ctl.servo.n_riprova_zero == 0
+
+
+def test_encoder_non_scartato_in_discesa_veloce_ne_dopo_un_buco_di_lettura():
+    """24/11: a 35 km/h (9,7 m/s) con letture ogni 21 ms, e con un buco di 112 ms a 15 km/h, l'encoder resta la fonte."""
+    from speed_limiter_v3.fonti import Encoder
+    k = CFG["encoder"]["m_per_count"]
+    for v, dts in ((9.7, [0.021] * 60), (4.2, [0.021] * 20 + [0.112] + [0.021] * 20)):
+        e = Encoder(CFG["encoder"])
+        t, x = 10.0, 0.0
+        e.aggiorna(t, (t, 0))
+        for dt in dts:
+            t += dt; x += v * dt
+            e.aggiorna(t, (t, int(x / k)))
+        assert e.glitch == 0, (v, e.glitch)
+        assert abs(e.v - v) < 0.3, (v, e.v)
+
+
+def test_encoder_salto_davvero_irreale_ancora_scartato():
+    from speed_limiter_v3.fonti import Encoder
+    k = CFG["encoder"]["m_per_count"]
+    e = Encoder(CFG["encoder"])
+    e.aggiorna(10.0, (10.0, 0)); e.aggiorna(10.021, (10.021, 100))
+    e.aggiorna(10.042, (10.042, 100 + int(1.0 / k)))       # 1 m in 21 ms = 171 km/h: impossibile
+    assert e.glitch == 1

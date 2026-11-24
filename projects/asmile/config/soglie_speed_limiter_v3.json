@@ -16,6 +16,8 @@
   "pedale_v_min_ms": 2.0,
   "_pettine": "24/11 stimatore a pettine: media mobile su una spinta di pedale (T stimato online dal picco 1.5-3.5 Hz, default 0.4, limiti 0.28-0.7), a = pendenza su T/2.",
   "max_salto_counts": 8000,
+  "v_fisica_max_ms": 20.0,
+  "_v_fisica": "24/11: limite del salto scalato col tempo fra due letture: 20 m/s (72 km/h) di velocita' fisica massima; 8000 impulsi resta il minimo. Prima a 29 km/h (o dopo un buco di lettura) l'encoder veniva scartato e il freno rilasciato.",
   "fresco_s": 0.25,
   "plausibilita": {
    "tol_v_gps_ms": 1.2,

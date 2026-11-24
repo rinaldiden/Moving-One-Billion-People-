@@ -70,7 +70,10 @@ double logger02_rec_riga_us(void);
 esp_err_t logger02_imu_start(void);
 void logger02_imu_stato(char *json, size_t n);
 float logger02_batteria_v(void);              /* <0 se non collegata */
-void logger02_dormi(const char *motivo);      /* chiude tutto e va in deep sleep (A sveglia con IMU, B con WAKE) */
+void logger02_dormi(const char *motivo);
+void logger02_dormi_def(const char *motivo);  /* deep sleep SENZA risvegli (batteria): riparte solo con reset/riaccensione */
+void logger02_spegni_batteria(const char *motivo, float media_v);  /* registra motivo (log+NVS) e dormi_def */
+void logger02_batt_avvio(void);               /* A, all'avvio: batteria < 3,1 V = non avvio, dormi_def (soglie in logger02_batt_logic.h) */      /* chiude tutto e va in deep sleep (A sveglia con IMU, B con WAKE) */
 void logger02_scarico_inizio(void);           /* 24/11: trasferimento aperto (/dl, proxy /b): contatore >0 = mai dormire */
 void logger02_scarico_fine(void);             /* da chiamare SEMPRE in uscita, anche in errore */
 void logger02_scarico_visto(void);            /* il Mac sta scaricando (web): A resta sveglia finché finisce */
@@ -78,6 +81,7 @@ void logger02_scarico_visto(void);            /* il Mac sta scaricando (web): A 
 /* salute (A e B): una riga al secondo + errori del log, come asmile_health.csv del logger001 */
 void logger02_salute_presto(void);            /* all'avvio, prima di tutto: aggancia il log, conta il riavvio */
 esp_err_t logger02_salute_start(void);        /* dopo la SD */
+void logger02_salute_batt_stop(int tipo, float v);  /* NVS: 1 = spento in uso (3 V), 2 = avvio rifiutato; loggato al riavvio */
 void logger02_salute_chiudi(void);            /* prima del deep sleep */
 void logger02_salute_stato(char *json, size_t n);
 #include "freertos/FreeRTOS.h"
