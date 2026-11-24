@@ -25,12 +25,12 @@ Stato: v2 dopo VETO 1/3 del banco-critico. NON eseguito sul Pi. Script `pi/braki
 Fatti dal codice: il limiter v3 e' un figlio `python3 -u -m speed_limiter_v3.hw` lanciato da `master_switch.py` (`activate()`) dentro la cgroup di
 `master_switch.service` (User=root, KillMode default = control-group). `master_switch.py` NON installa handler SIGTERM: `systemctl stop` lo uccide subito,
 **senza** `deactivate()`/`cleanup()` -> niente parcheggio a 50 gradi. Systemd manda SIGTERM anche al figlio limiter (e al recorder), `hw.py` lo gestisce:
-`esegui` esce, `chiudi_servo` porta a 0 gradi tenuti >= 0,6 s, libera il pin, chiude il lock; systemd attende che tutta la cgroup sia morta.
+`esegui` esce, `chiudi_servo` porta a 0 gradi tenuti >= 1,5 s (uscita_tieni_s, deployato 24/11), libera il pin, chiude il lock; systemd attende che tutta la cgroup sia morta.
 1. `systemctl list-units | grep -E "master_switch|speed_limiter"`: deve esserci solo `master_switch.service`.
 2. `sudo systemctl stop master_switch` (ferma anche il recorder: nessun video durante la prova, normale).
 3. `pgrep -af "master_switch|speed_limiter_v3|servofreno"` -> **vuoto**. Se un `speed_limiter_v3` vive: NON andare avanti, dirlo a Daniele (nessun kill a mano senza ok).
 4. Lo script prende il lock `/run/brake_gpio12.lock`: se occupato esce senza toccare il pin. Il freno puo' essere a un angolo ignoto
-   (il rilascio a 0 del limiter dura 0,6 s, da 50 gradi non basta): per questo il PRIMO movimento dello script e' un impulso a 0 gradi di 1,5 s (dopo il "vai").
+   (il rilascio a 0 del limiter dura 1,5 s dal 24/11; per sicurezza): per questo il PRIMO movimento dello script e' un impulso a 0 gradi di 1,5 s (dopo il "vai").
 5. Fine prova: `sudo systemctl start master_switch`. Al boot del master: switch fisico ON -> `activate()` (rilascia e riparte limiter+recorder);
    switch OFF -> `deactivate(force=True)` = freno a 50 gradi di parcheggio. Concordare con Daniele la posizione dello switch PRIMA. Mai reboot.
 
