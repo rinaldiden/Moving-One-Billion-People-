@@ -33,7 +33,9 @@ scrivi_log() { echo "| $(date '+%Y-%m-%d %H:%M') | $LOGGER $1 | $2 | $3 | $4 |" 
 
 if [ "${1:-}" = "rollback" ]; then
     for pref in "" "/b"; do
-        nome=$([ -z "$pref" ] && echo A || echo B); prima=$(versione "$pref")
+        nome=$([ -z "$pref" ] && echo A || echo B)
+        [ -n "${SOLO:-}" ] && [ "$SOLO" != "$nome" ] && continue     # rollback rispetta SOLO: dopo un SOLO=B fallito la A non si tocca
+        prima=$(versione "$pref")
         curl -s -m 20 -X POST "http://$A$pref/rollback"; echo
         dopo=$(aspetta "$pref" "$prima") && scrivi_log "$nome" "$prima" "$dopo" "ROLLBACK ok" || scrivi_log "$nome" "$prima" "?" "ROLLBACK non verificato"
     done
@@ -48,6 +50,7 @@ cp "$BIN" "$QUI/rilasci/logger02_$GIT.bin"
 
 for pref in "" "/b"; do                         # A prima: se qualcosa va storto la B resta com'era
     nome=$([ -z "$pref" ] && echo A || echo B)
+    [ -n "${SOLO:-}" ] && [ "$SOLO" != "$nome" ] && continue     # 24/11: SOLO=A o SOLO=B = una scheda alla volta
     prima=""; for i in 1 2 3 4 5 6; do prima=$(versione "$pref"); [ -n "$prima" ] && break; sleep 5; done
     [ -n "$prima" ] || { echo "$nome non risponde: mi fermo"; exit 1; }
     # versione attesa = quella scritta nel .bin (esp_app_desc_t): "ok" solo se la scheda gira PROPRIO quella
@@ -61,7 +64,13 @@ print(g(0x10,0x30),g(0x60,0x70),g(0x50,0x60))")
         echo "$nome tentativo $tentativo: $r"
         if dopo=$(aspetta "$pref" "$prima"); then
             sleep 20; dopo=$(versione "$pref")          # il ritorno automatico avviene nei primi secondi
-            [ "$dopo" = "$atteso" ] && { ok=1; break; }
+            if [ "$dopo" = "$atteso" ]; then
+                # la guardia OTA conferma a ~3 min: un reset in mezzo = rollback silenzioso. Ricontrollo dopo ~4 min.
+                echo "$nome: ricontrollo fra 4 minuti (guardia OTA)..."; sleep 240; dopo=$(versione "$pref")
+                [ "$dopo" = "$atteso" ] && { ok=1; break; }
+                echo "$nome dopo 4 min gira «$dopo» invece di «$atteso»: rollback silenzioso della guardia"
+                scrivi_log "$nome" "$prima" "$dopo" "TORNATO INDIETRO dopo 4 min ($GIT)"; exit 1
+            fi
             echo "$nome gira «$dopo» invece di «$atteso»: il firmware nuovo è tornato indietro (crash all'avvio?)"
             scrivi_log "$nome" "$prima" "$dopo" "TORNATO INDIETRO ($GIT)"; exit 1
         fi

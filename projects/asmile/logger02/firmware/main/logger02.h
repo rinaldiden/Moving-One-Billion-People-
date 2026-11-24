@@ -71,6 +71,8 @@ esp_err_t logger02_imu_start(void);
 void logger02_imu_stato(char *json, size_t n);
 float logger02_batteria_v(void);              /* <0 se non collegata */
 void logger02_dormi(const char *motivo);      /* chiude tutto e va in deep sleep (A sveglia con IMU, B con WAKE) */
+void logger02_scarico_inizio(void);           /* 24/11: trasferimento aperto (/dl, proxy /b): contatore >0 = mai dormire */
+void logger02_scarico_fine(void);             /* da chiamare SEMPRE in uscita, anche in errore */
 void logger02_scarico_visto(void);            /* il Mac sta scaricando (web): A resta sveglia finché finisce */
 
 /* salute (A e B): una riga al secondo + errori del log, come asmile_health.csv del logger001 */

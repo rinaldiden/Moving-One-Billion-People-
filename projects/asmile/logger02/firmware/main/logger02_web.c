@@ -106,7 +106,6 @@ static esp_err_t h_frames(httpd_req_t *req)
 
 static esp_err_t h_files(httpd_req_t *req)
 {
-    logger02_scarico_visto();
     httpd_resp_set_type(req, "application/json");
     httpd_resp_sendstr_chunk(req, "[");
     DIR *d = opendir(L02_REC_DIR);
@@ -140,7 +139,6 @@ static bool nome_ok(httpd_req_t *req, char *path, size_t n)
 
 static esp_err_t h_dl(httpd_req_t *req)
 {
-    logger02_scarico_visto();
     char p[160];
     if (!nome_ok(req, p, sizeof(p))) return ESP_OK;
     FILE *f = fopen(p, "rb");
@@ -149,18 +147,19 @@ static esp_err_t h_dl(httpd_req_t *req)
     char *buf = heap_caps_malloc(32768, MALLOC_CAP_SPIRAM);
     size_t n;
     esp_err_t r = ESP_OK;
-    while (r == ESP_OK && (n = fread(buf, 1, 32768, f)) > 0) {
+    logger02_scarico_inizio();                      /* 24/11: scarico in corso = mai dormire */
+    while (buf && r == ESP_OK && (n = fread(buf, 1, 32768, f)) > 0) {
         r = httpd_resp_send_chunk(req, buf, n);
         logger02_scarico_visto();                   /* 23/11: un pezzo da 25 MB dura più di un minuto: sveglia a ogni blocco, non solo all'inizio */
     }
     fclose(f);
     free(buf);
+    logger02_scarico_fine();
     return httpd_resp_send_chunk(req, NULL, 0);
 }
 
 static esp_err_t h_del(httpd_req_t *req)
 {
-    logger02_scarico_visto();
     char p[160];
     if (!nome_ok(req, p, sizeof(p))) return ESP_OK;
     bool ok = remove(p) == 0;
@@ -316,7 +315,7 @@ static esp_err_t h_dormi(httpd_req_t *req)
  * e ogni attesa lo blocca per tutti (17/11: la pagina che chiedeva /b ogni 2 s rendeva la A "irraggiungibile") */
 static volatile int64_t s_b_giu_fino;
 
-static esp_err_t proxy_b(httpd_req_t *req, const char *porta)
+static esp_err_t proxy_b_corpo(httpd_req_t *req, const char *porta)
 {
     if (esp_timer_get_time() < s_b_giu_fino) {
         httpd_resp_set_status(req, "503 Service Unavailable");
@@ -348,12 +347,22 @@ static esp_err_t proxy_b(httpd_req_t *req, const char *porta)
     int n;
     while ((n = esp_http_client_read(c, buf, 16384)) > 0) {
         if (httpd_resp_send_chunk(req, buf, n) != ESP_OK) break;
-        logger02_scarico_visto();                   /* scarico dei file della B attraverso la A: la A resta sveglia */
+        if (strstr(req->uri, "/dl")) logger02_scarico_visto();     /* solo blocchi di FILE della B (non gli elenchi /b/api/files) */
     }
     free(buf);
     esp_http_client_close(c);
     esp_http_client_cleanup(c);
     return httpd_resp_send_chunk(req, NULL, 0);
+}
+
+/* ogni /b (file della B via A) conta come trasferimento aperto, qualunque sia l'uscita; lo stream :81 no */
+static esp_err_t proxy_b(httpd_req_t *req, const char *porta)
+{
+    bool conta = porta[0] == 0 && strstr(req->uri, "/dl");     /* solo download di file della B */
+    if (conta) logger02_scarico_inizio();
+    esp_err_t e = proxy_b_corpo(req, porta);
+    if (conta) logger02_scarico_fine();
+    return e;
 }
 
 static httpd_handle_t server(uint16_t porta, uint16_t ctrl, int handlers)
@@ -373,7 +382,6 @@ static httpd_handle_t server(uint16_t porta, uint16_t ctrl, int handlers)
 
 static esp_err_t h_b(httpd_req_t *req)
 {
-    logger02_scarico_visto();
     return proxy_b(req, "");
 }
 

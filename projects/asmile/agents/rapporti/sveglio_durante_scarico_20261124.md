@@ -1,0 +1,29 @@
+# Sveglio durante lo scarico (24/11/2026) - asmile-deploy
+Regola Daniele: mentre si scarica, l'apparecchio resta sveglio (in lezioni/daniele.md). NON deployato, NON caricato OTA.
+
+## 1. logger02 (firmware/main: logger02.h, logger02_imu.c, logger02_web.c) - compilato OK (idf.py build)
+- a) Wifi giu': se ci sono pezzi (A+B) e la rete e' stata vista dopo l'ultimo moto, non dorme finche' la rete manca da < 180 s (RETE_GIU_S). Rete mai vista dopo il moto (lontano da casa) = come prima. `s_rete_vista` aggiornato ogni secondo nel task IMU.
+- b) Contatore `s_trasf` (atomico): `logger02_scarico_inizio/fine` in `h_dl` e in `proxy_b` (wrapper: fine chiamata a ogni uscita, errore/chiusura compresi; lo stream :81 non conta). Con contatore>0 `resto_sveglio_per_scarico` risponde subito true, PRIMA del controllo rete. Antiblocco: il contatore vale solo se `scarico_visto` negli ultimi 180 s (un contatore rimasto appeso non tiene acceso per sempre). MAX_SCARICO_S (1 h) RIMOSSO: uno scarico non si interrompe mai.
+- BATTERIA: non esiste nessuno spegnimento per batteria bassa nel firmware (grep: `logger02_batteria_v` serve solo a CSV/stato/salute). NON ne ho inventato uno: SEGNALATO. Lettura: partitore 100k/33k su GPIO20 con calibrazione curve-fitting IDF, scartata se <2 V o pin libero. I 3,18-3,26 V nei CSV salute NON sono credibili come tensione batteria (partitore dato per 12 V, un pacco 1S darebbe ~4 V): NON VERIFICATO se il pin e' collegato/calibrato; serve una misura col tester su GPIO20 e sul pacco.
+- c) SENZA_RICHIESTE_S 300 -> 600 (il Mac passa ogni 120 s: 5 passaggi saltati prima di dormire).
+- d) B: non dorme mai da sola. Dorme solo (1) col comando "Z" dalla A in `logger02_dormi`, (2) se WAKE resta basso 3 s (lo abbassa solo la A che sta dormendo/resetta). Nessun timer proprio sulla B (imu_task e' solo A). Quindi la B segue la A: coperta dal fix a/b. Rischio residuo: reset/crash della A durante lo scarico = B dorme dopo 3 s (accettabile).
+- Rischio da guardare: resto_sveglio e' chiamato 1 volta/s solo dal task IMU; se quel task si blocca non dorme ne' registra (stato di oggi).
+- OTA (Daniele, una scheda alla volta; aggiunto `SOLO=A|B` a logger02/ota.sh, di default invariato = A poi B):
+  `cd /Users/danielerinaldi/progetti/Moving-One-Billion-People- && SOLO=A bash projects/asmile/logger02/ota.sh` -> verifica rete (curl http://100.117.207.99/api/stato) -> `SOLO=B bash projects/asmile/logger02/ota.sh`. Il build e' in logger02/firmware/build/logger02.bin. Rollback: `bash projects/asmile/logger02/ota.sh rollback`.
+- Provato solo: compilazione. NON VERIFICATO sul logger (logica sleep non simulabile qui): prova a casa = scarico lungo, spegnere il router 1 minuto, deve restare sveglio.
+
+## 2. logger001 (Pi): pi/sensors/logger_autospegni.py + test_logger_autospegni.py (12 test verdi, a secco sul Mac)
+- Non spegne se in SRC (/data/recordings) ci sono .h264 da scaricare (stessa regola di complete_clips del Mac: tutti tranne il piu' recente) E il Mac ha fatto login ssh negli ultimi 10 min (ss connessione 22 aperta, o journalctl "Accepted"; il pull usa ssh ogni 2-5 min) .
+- Tetti: Mac mai visto/lontano = spegne come prima; 180 min di attesa dopo il fermo (MAX_ATTESA_MIN, se il pull non riesce a cancellare); batteria ADS1115 sotto 10,0 V (stessa soglia dell'avviso Telegram del Mac) = spegne comunque. rsync/scp/sftp in corso blocca sempre, senza tetto.
+- NON VERIFICATO sul Pi: `journalctl -g Accepted` (formato log ssh), `ss` filtro, lettura ADS dentro il servizio (bus I2C condiviso con IMU: letture brevi ogni ~secondo SOLO quando e' in fermo e ci sono file; verificare che non disturbi il sensor_hub).
+- Deploy (non fatto; Pi offline per me): `bash projects/asmile/deploy/registra_deploy.sh logger ...` dopo aver copiato logger_autospegni.py in /home/asmile-logger/ e `systemctl restart logger_autospegni`; da Daniele col vai.
+
+## 3. #001 e asmile2: solo lettura
+- #001 (ssh lettura, 24/11): timer attivi = solo di sistema (zram, apt, logrotate, fstrim...: nessuno spegne); servizi su: safe_shutdown + asmile_health; logger_autospegni e imu_wake NON installati (not-found). Nel repo l'unico `poweroff` e' safe_shutdown.py (GPIO, manca batteria) e l'alias manuale `off` di flash_asmile.sh. logind.conf: nessuna riga Idle/Lid attiva.
+- asmile2: NON VERIFICATO live (192.168.1.119 timeout, offline). Dal repo: stessi script/provisioning (flash_asmile.sh, setup_new_raspi.sh), nessun autospegnimento oltre safe_shutdown.
+
+## CORREZIONI dopo VETO 1/3 (asmile-rollback-guardian)
+1. logger02: "scarico visto" ora SOLO da blocchi di file davvero inviati (h_dl e proxy B solo se URI contiene /dl); tolto da /api/files, /del, /b generico, inizio di h_dl e inizio/fine contatore. Logica estratta in `logger02/firmware/main/logger02_sleep_logic.h` (pura, usata dal firmware); tetto MAX_DAL_FERMO_S 3 h per tutto tranne trasferimento attivo (contatore>0 e blocchi/inizio negli ultimi 180 s). Prova a secco col codice vero: `cd logger02/firmware/host_test && cc -I../main test_sleep_logic.c && ./a.out` -> 11/11 ok (solo /api/files per 4 h: dorme entro 3 h; download vero 5 h: resta sveglio; contatore appeso: dorme; wifi giu'). Ricompilato ok. Batteria logger02 ancora senza protezione (segnalato).
+2. ota.sh: `rollback` rispetta SOLO; verifica versione ripetuta dopo 4 min (rollback silenzioso della guardia = esito TORNATO INDIETRO, exit 1). Ogni OTA dura ora ~4 min in piu' per scheda.
+3. logger_autospegni.py: parte nuova in try/except (in errore: log + comportamento di prima = spegne); getmtime protetto, ss/journalctl mancanti non lanciano. Test 14/14 (file sparito, comandi mancanti).
+   Deploy sul Pi, con backup: `ssh asmile-logger 'cp /home/asmile-logger/logger_autospegni.py{,.bak}'`, poi scp del nuovo + `systemctl restart logger_autospegni`; rollback: `cp logger_autospegni.py.bak logger_autospegni.py && systemctl restart logger_autospegni`; poi `deploy/registra_deploy.sh logger ...`.

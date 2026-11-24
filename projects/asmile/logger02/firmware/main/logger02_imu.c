@@ -22,6 +22,7 @@
 #include "esp_netif.h"
 #include "protocol_examples_common.h"
 #include "logger02.h"
+#include "logger02_sleep_logic.h"
 
 static const char *TAG = "imu";
 
@@ -32,10 +33,6 @@ static const char *TAG = "imu";
 /* a casa col wifi: resta sveglio finché il Mac scarica (Daniele 21/11) */
 /* 23/11 (Daniele: «deve essere così sempre»): ferma col wifi → registrazione in pausa (pezzi chiusi) e resta sveglia
  * finché sulla SD di A e B ci sono pezzi da scaricare e il Mac li sta prendendo; poi dorme. */
-#define ATTESA_SCARICO_S 600    /* pezzi da scaricare ma il Mac non è ancora passato: lo aspetto 10 minuti (passa ogni 2) */
-#define SENZA_RICHIESTE_S 300   /* il Mac ha smesso di chiedere da 5 minuti con pezzi ancora lì: dormo, riprende al risveglio */
-#define DOPO_SCARICO_S   60     /* niente più da scaricare: un minuto e dormo */
-#define MAX_SCARICO_S    3600   /* tetto: un'ora di scarico, poi dorme comunque (batteria) */
 #define GYRO_FERMO  3.0f
 #define ACC_FERMO_G 0.030f
 
@@ -47,13 +44,27 @@ static uint32_t s_campioni, s_errori;
 static adc_oneshot_unit_handle_t s_adc;
 static adc_cali_handle_t s_cali;
 static float s_batt = -1;
-static volatile int64_t s_ultimo_scarico;
+static volatile int64_t s_ultimo_scarico;      /* ultimo BLOCCO davvero inviato (non /api/files) */
+static volatile int64_t s_ultimo_inizio;
 static int s_moto_fila;
 static bool s_in_pausa;
 
 void logger02_scarico_visto(void)
 {
     s_ultimo_scarico = esp_timer_get_time();
+}
+
+/* 24/11 (Daniele: «mentre si scarica l'apparecchio resta sveglio»): contatore dei trasferimenti aperti */
+static volatile int s_trasf;
+static volatile int64_t s_rete_vista;
+void logger02_scarico_inizio(void)
+{
+    s_ultimo_inizio = esp_timer_get_time();
+    __atomic_add_fetch(&s_trasf, 1, __ATOMIC_SEQ_CST);
+}
+void logger02_scarico_fine(void)
+{
+    if (__atomic_sub_fetch(&s_trasf, 1, __ATOMIC_SEQ_CST) < 0) __atomic_store_n(&s_trasf, 0, __ATOMIC_SEQ_CST);
 }
 
 static bool rete_ok(void)
@@ -63,20 +74,14 @@ static bool rete_ok(void)
     return n && esp_netif_is_netif_up(n) && esp_netif_get_ip_info(n, &ip) == ESP_OK && ip.ip.addr != 0;
 }
 
-/* fermo da FERMO_S: dorme, salvo se col wifi il Mac sta per scaricare o sta scaricando */
+/* fermo da FERMO_S: dorme, salvo scarico in corso. Logica pura in logger02_sleep_logic.h (host_test). */
 static bool resto_sveglio_per_scarico(int64_t t)
 {
-    if (!rete_ok()) return false;
-    int64_t fermo_da = s_ultimo_moto + FERMO_S * 1000000LL;
-    if (t - fermo_da > MAX_SCARICO_S * 1000000LL) return false;
     int b = logger02_b_da_scaricare();
-    int pezzi = logger02_rec_da_scaricare() + (b > 0 ? b : 0);
-    bool visitato = s_ultimo_scarico > s_ultimo_moto;
-    if (pezzi > 0) {
-        if (!visitato) return t - fermo_da < ATTESA_SCARICO_S * 1000000LL;
-        return t - s_ultimo_scarico < SENZA_RICHIESTE_S * 1000000LL;
-    }
-    return visitato ? t - s_ultimo_scarico < DOPO_SCARICO_S * 1000000LL : t - fermo_da < DOPO_SCARICO_S * 1000000LL;
+    l02_sveglio_in_t in = {.ultimo_moto = s_ultimo_moto, .ultimo_blocco = s_ultimo_scarico, .ultimo_inizio = s_ultimo_inizio,
+                           .rete_vista = s_rete_vista, .trasf = __atomic_load_n(&s_trasf, __ATOMIC_SEQ_CST),
+                           .pezzi = logger02_rec_da_scaricare() + (b > 0 ? b : 0), .rete = rete_ok()};
+    return l02_resto_sveglio(t, &in);
 }
 
 static esp_err_t w(uint8_t reg, uint8_t v)
@@ -167,7 +172,7 @@ static void imu_task(void *arg)
             s_moto_fila = 0;
         }
         pax = s_ax; pay = s_ay; paz = s_az;
-        if (s_campioni % 50 == 0) s_batt = leggi_batteria();
+        if (s_campioni % 50 == 0) { s_batt = leggi_batteria(); if (rete_ok()) s_rete_vista = t; }
         if (s_csv) {
             fprintf(s_csv, "%lld,%lu,%.4f,%.4f,%.4f,%.2f,%.2f,%.2f,", (long long)t, (unsigned long)logger02_rec_frame(),
                     s_ax, s_ay, s_az, s_gx, s_gy, s_gz);

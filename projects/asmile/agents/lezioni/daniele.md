@@ -43,3 +43,6 @@
 - Comportamento: 12-15 km/h rallenta dolce; >15 riporta a 15 con anello chiuso sulla decel da encoder; impuntata → togli qualche grado subito, poi riprendi dolce; mai a scatti.
 - Emergenza / IMU morta: di riserva. Domani 2 frenate forti di Daniele → decelerazione massima obiettivo; il freno comanda i gradi (≤50) per arrivare a quella decel. IMU morta → decel più dolce. Si rivede dopo la prima prova.
 - Cancelli: niente "è a posto" senza prove misurate; non far lavorare gli agenti a vuoto.
+
+## 2026-11-24 — scarico = sveglio
+- **Regola per TUTTI i logger e le Asmile: mentre si scarica, l'apparecchio resta sveglio, non va in sleep e non si spegne.** Uno scarico in corso non si interrompe mai (nessun tetto di durata); solo la batteria bassa vince.
