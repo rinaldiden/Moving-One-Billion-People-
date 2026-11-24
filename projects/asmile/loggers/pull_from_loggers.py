@@ -330,8 +330,8 @@ def pull_logger02(name="logger02", hosts=None):
     # proprio quando il Mac ha iniziato a scaricare). Regola Daniele 18/11: si scarica solo a bici ferma = logger in pausa.
     try:
         st = json.loads(get(f"http://{host}/api/stato", 5).read())
-        if st.get("rec", {}).get("registra"):
-            print(f"[{name}] sta registrando (bici in moto): non scarico, aspetto la pausa")
+        if st.get("rec", {}).get("registra") is not False:      # solo se dice chiaramente "non registro" (pausa)
+            print(f"[{name}] sta registrando o stato senza 'registra': non scarico, aspetto la pausa")
             return 0
     except Exception as e:
         print(f"[{name}] stato non leggibile ({e}): non scarico")
