@@ -28,3 +28,6 @@
 | 2026-11-23 19:36 | logger02 A | 99d11299 | 9163c8ab | ok (periodo fotogramma 60 ms; >4 min sulla nuova) |
 | 2026-11-23 19:47 | logger02 B | 99d11299 | 9163c8ab | ok: fase camere media 25 us, max 66 us (prima 15 ms), riga 10,91 us |
 | 2026-11-24 17:04 | logger02 A | hw3-def-20261118-107-gd52e3dd5- Nov 24 2026 16:47:44 | hw3-def-20261118-90-g9163c8ab-d Nov 23 2026 19:30:46 | ROLLBACK ok |
+| 2026-11-24 17:13 | logger02 A | hw3-def-20261118-90-g9163c8ab-d Nov 23 2026 19:30:46 | 1 Nov 24 2026 17:05:32 | ok (hw3-def-20261118-111-g1d3fe65f-dirty) |
+| 2026-11-24 17:18 | logger02 B | hw3-def-20261118-90-g9163c8ab-d Nov 23 2026 19:30:46 | 1 Nov 24 2026 17:05:32 | ok (hw3-def-20261118-112-g9f4612b5-dirty) |
+| 2026-11-24 17:18 | logger02 A+B | nota | versione "1" = build da `git archive` (senza storia git) | codice = commit ac6d8974 (firmware identico a be60284d), .bin sha256 5fbae49ae635a50b… — "sveglio mentre scarica". Candidato flotta dal 26/11 se regge (decisione Daniele) |
