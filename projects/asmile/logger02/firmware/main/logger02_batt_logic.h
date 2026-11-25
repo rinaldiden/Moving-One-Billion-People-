@@ -2,9 +2,12 @@
  * 24/11: le celle sono finite a 1,9 V (tester di Daniele) mentre il firmware leggeva 2,03 V; il modulo step-up non stacca
  * in scarica e il firmware non aveva protezione. Decisione di Daniele: "il logger si spegne ai 3 V".
  *
- *  - Taratura: L02_BATT_SCALA e' l'UNICO posto. 2,03 V letti = 1,90 V veri (tester) -> 1,90/2,03 = 0,936. Un solo punto, a cella
- *    SCARICA: da rifare con 2 punti (cella carica ~4,0 V + scarica) appena c'e' una cella carica; con un solo punto l'errore
- *    a 3-4 V puo' essere diverso (offset e guadagno non separabili). Finche' non rifatta, 3,0 V "veri" sono ~3,0 +/- 0,2 V.
+ *  - Taratura DEFINITIVA (Daniele 25/11/2026): V_vera = L02_BATT_PENDENZA * lettura + L02_BATT_OFFSET = 1,025 * lettura + 0,01.
+ *    UNICO posto: l02_batt_vera() qui sotto. Fonte: tester di Daniele, punti 3,24 letti <-> 3,33 V veri (in carica) e
+ *    4,05 <-> 4,16 (cella carica, 25/11 08:45, agents/TODO_capo.md), confermata dal confronto delle 14:03 (tester 4,0 V,
+ *    logger 3,87 V). Il punto 2,03 <-> 1,90 (cella sovrascarica, 24/11) e' fuori retta (ADC non lineare in basso) e NON
+ *    entra. Sostituisce L02_BATT_SCALA = 0,936 (2f8cad2e), sbagliato fra 3 e 4,2 V: spegneva a ~3,2 V veri.
+ *    Con questa retta: spegnimento 3,0 V veri = lettura grezza ~2,917; avvio 3,1 V veri = grezza ~3,015.
  *  - Spegnimento: media mobile di L02_BATT_FINESTRA letture (1 al secondo: la lettura salta 2,36-2,83 in un secondo); media
  *    sotto L02_BATT_OFF_V per L02_BATT_OFF_S secondi CONSECUTIVI (un solo ritorno sopra azzera il conteggio); finestra piena.
  *  - Avvio: media delle prime letture sotto L02_BATT_START_V (3,1 V) = non avvio. Isteresi 0,1 V sopra la soglia di spegnimento:
@@ -17,7 +20,8 @@
 #include <stdint.h>
 #include <math.h>
 
-#define L02_BATT_SCALA      0.936f   /* tensione vera = lettura grezza * scala (unico punto di taratura, vedi sopra) */
+#define L02_BATT_PENDENZA   1.025f   /* tensione vera = PENDENZA * lettura grezza + OFFSET (taratura 25/11, vedi sopra) */
+#define L02_BATT_OFFSET     0.01f
 #define L02_BATT_OFF_V      3.0f
 #define L02_BATT_OFF_S      10
 #define L02_BATT_START_V    3.1f
@@ -35,7 +39,7 @@ typedef struct {
 
 static inline bool l02_batt_valida(float v) { return !isnan(v) && v >= L02_BATT_ASSENTE_V; }
 
-static inline float l02_batt_vera(float grezza) { return l02_batt_valida(grezza) ? grezza * L02_BATT_SCALA : grezza; }
+static inline float l02_batt_vera(float grezza) { return l02_batt_valida(grezza) ? L02_BATT_PENDENZA * grezza + L02_BATT_OFFSET : grezza; }
 
 /* una lettura (gia' tarata, 1 al secondo). t in us (> 0). */
 static inline l02_batt_esito_t l02_batt_campione(l02_batt_t *b, int64_t t, float v)

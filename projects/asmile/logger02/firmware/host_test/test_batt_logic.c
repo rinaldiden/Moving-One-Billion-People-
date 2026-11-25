@@ -11,7 +11,11 @@ static int run(l02_batt_t *b, const float *v, int n, int t0){
     return -1;
 }
 int main(void){
-    chk("taratura: 2,03 letti -> 1,90", close_(l02_batt_vera(2.03f),1.90f), true);
+    /* taratura 25/11 (Daniele): V = 1,025 * lettura + 0,01 */
+    chk("taratura: 3,24 letti -> 3,33 (tester)", fabsf(l02_batt_vera(3.24f)-3.33f)<0.01f, true);
+    chk("taratura: 4,05 letti -> 4,16 (tester)", fabsf(l02_batt_vera(4.05f)-4.16f)<0.01f, true);
+    chk("taratura: 3,87 letti -> ~4,0 (tester 14:03)", fabsf(l02_batt_vera(3.87f)-4.0f)<0.03f, true);
+    chk("taratura: 2,00 letti -> 2,06", close_(l02_batt_vera(2.00f),2.06f), true);
     chk("taratura: NaN resta NaN", isnan(l02_batt_vera(NAN)), true);
     chk("taratura: <0,5 non toccata", l02_batt_vera(0.2f)==0.2f, true);
     /* 1) sotto 3,0 costante: scatta dopo 10 s (finestra piena a 5 s, poi 10 s) */
@@ -53,8 +57,16 @@ int main(void){
       float g[6]={-1,-1,-1,-1,-1,-1}; chk("avvio con batteria assente: parte", l02_batt_avvio_ok(g,6,&m), true);
       chk("... media -1", m==-1.0f, true);
       float h[6]={-1,-1,2.5f,-1,2.6f,-1}; chk("avvio con letture miste, valide basse: rifiuta", !l02_batt_avvio_ok(h,6,&m), true); }
-    /* 9) caso reale 24/11: lettura grezza 2,03 (vera 1,90) -> spegne */
+    /* 9) caso reale 24/11: lettura grezza 2,03 -> spegne (anche con la retta nuova, 2,09 V) */
     { l02_batt_t b={0}; float v[30]; for(int i=0;i<30;i++) v[i]=l02_batt_vera(2.03f); chk("caso 24/11 (grezza 2,03): spegne", run(&b,v,30,1)>=0, true); }
+    /* 10) soglie in letture GREZZE con la taratura 25/11: spegnimento a 3,0 V veri = grezza ~2,917 */
+    { l02_batt_t b={0}; float v[40]; for(int i=0;i<40;i++) v[i]=l02_batt_vera(2.90f); chk("grezza 2,90 (vera 2,98): spegne", run(&b,v,40,1)>=0, true); }
+    { l02_batt_t b={0}; float v[60]; for(int i=0;i<60;i++) v[i]=l02_batt_vera(2.93f); chk("grezza 2,93 (vera 3,01): non spegne", run(&b,v,60,1)==-1, true); }
+    { l02_batt_t b={0}; float v[60]; for(int i=0;i<60;i++) v[i]=l02_batt_vera(3.10f); chk("grezza 3,10 (vera 3,19, col vecchio 0,936 = 2,90 e spegneva): non spegne", run(&b,v,60,1)==-1, true); }
+    /* 11) avvio 3,1 V veri = grezza ~3,015 */
+    { float a[6], m; for(int i=0;i<6;i++) a[i]=l02_batt_vera(3.00f); chk("avvio grezza 3,00 (vera 3,085): rifiuta", !l02_batt_avvio_ok(a,6,&m), true);
+      for(int i=0;i<6;i++) a[i]=l02_batt_vera(3.03f); chk("avvio grezza 3,03 (vera 3,116): parte", l02_batt_avvio_ok(a,6,&m), true);
+      for(int i=0;i<6;i++) a[i]=l02_batt_vera(3.25f); chk("avvio grezza 3,25 (vera 3,34, col vecchio 0,936 = 3,04 rifiutava): parte", l02_batt_avvio_ok(a,6,&m), true); }
     printf(bad?"ERRORE\n":"TUTTO OK\n");
     return bad;
 }
