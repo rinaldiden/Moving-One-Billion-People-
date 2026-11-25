@@ -197,11 +197,9 @@
    "dec_ok_ms2": 0.5,
    "k_dec_deg_s_per_ms2": 45.0,
    "giu_max_deg_s": 30.0,
-   "_note": "Daniele 25/11 giro 5: progressivo, mai a scatti. Chiude in base alla VELOCITA' media su una pedalata (filtro 0,8 s): 4 gradi/s per ogni km/h sopra l'obiettivo (max 8), sotto l'obiettivo riapre allo stesso modo. Rilascio in base alla DECEL: oltre 0,6 m/s2 toglie 30 gradi/s per m/s2 in eccesso (max 30).",
-   "ina_morso_ma": 1500.0,
-   "indietro_deg_s": 10.0,
-   "tieni_dopo_morso_s": 0.4,
-   "_morso": "25/11 10:41: a 18 gradi (attesa) decel 1,5-1,7 col servo a 3 A: morso sceso (pastiglie calde). Attesa 18->15; servo >1500 mA = morde: indietro 10 gradi/s e non richiude per 0,4 s."
+   "_note": "Daniele 25/11: solo velocita' e decel comandano. Chiude in base alla velocita' media (0,4 s): 4 gradi/s per km/h sopra 9,5 (max 8), riapre sotto. Rilascia in base alla decel oltre 0,5 m/s2 (45 gradi/s per m/s2, max 30). Il punto di morso lo IMPARA (angolo a cui la decel supera dec_ok mentre chiude) e aspetta 3 gradi sotto; sotto quel punto avvicina a 25 gradi/s. Nessun angolo fisso.",
+   "margine_morso_deg": 3.0,
+   "avvicinamento_deg_s": 25.0
   }
  }
 }

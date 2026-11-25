@@ -291,7 +291,7 @@ class Regolatore:
         self.a_f = 0.0
         self._init = False
         self._dec_prec, self._jerk, self._v_f = None, 0.0, None
-        self.ina_ma, self._t_morso = None, -1e9
+        self.ina_ma, self._t_morso, self._morso, self.attesa_appresa = None, -1e9, None, 0.0
         self.ingaggiato = False
         self.I = 0.0
         self.rate_su = None
@@ -471,19 +471,18 @@ class Regolatore:
             rate = inc["k_v_deg_s_per_kmh"] * ev
             if dec > inc["dec_ok_ms2"]:                         # rallenta gia' piu' del voluto: rilascia in proporzione
                 rate -= inc["k_dec_deg_s_per_ms2"] * (dec - inc["dec_ok_ms2"])
-            # 25/11 giro 10:41 (Daniele: "quando mordi abbastanza rilascia quel micro"): la corrente del servo e' il sensore del
-            # morso in tempo reale (pastiglie serrate = servo sotto carico, 1,5-3,2 A). Il punto di morso si sposta (18-25 gradi,
-            # pastiglie calde): appena il servo e' carico smette di chiudere e torna indietro di un poco.
-            ma = self.ina_ma
-            if ma is not None and ma == ma and ma > inc["ina_morso_ma"]:
-                self._t_morso = self.t
-                rate = min(rate, -inc["indietro_deg_s"])
-            elif self.t - self._t_morso < inc["tieni_dopo_morso_s"]:
-                rate = min(rate, 0.0)                   # appena morso: non richiude subito
-            rate = max(-inc["giu_max_deg_s"], min(inc["su_max_deg_s"], rate))
+            # 25/11 Daniele: "deve fare in automatico leggendo decel e velocita', non soglie fisse". Il punto di morso NON e' un
+            # angolo scritto: lo impara il loop (angolo a cui, chiudendo, la decel supera dec_ok) e l'attesa e' poco sotto.
+            if rate > 0 and dec > inc["dec_ok_ms2"]:
+                self._morso = angolo if self._morso is None else self._morso + 0.3 * (angolo - self._morso)
+            attesa = max(0.0, self._morso - inc["margine_morso_deg"]) if self._morso is not None else 0.0
+            if angolo < attesa and rate > 0:
+                rate = max(rate, inc["avvicinamento_deg_s"])       # sotto il morso imparato: avvicina in fretta (non frena)
+            rate = max(-inc["giu_max_deg_s"], min(max(inc["su_max_deg_s"], inc["avvicinamento_deg_s"] if angolo < attesa else 0.0), rate))
+            self.attesa_appresa = attesa
             self.fase = "incrementale"
-            self.rate_su, self.rate_giu = inc["su_max_deg_s"], inc["giu_max_deg_s"]
-            return max(0.0, min(tetto, max(base, angolo + rate * dt)))
+            self.rate_su, self.rate_giu = max(inc["su_max_deg_s"], inc["avvicinamento_deg_s"]), inc["giu_max_deg_s"]
+            return max(0.0, min(tetto, angolo + rate * dt))
         umax = max(0.0, tetto - base)
         e = vp - self.v_set
         sopra = max(0.0, vp - self.v2) * r["kp_sopra_rel"] * kp      # sopra la v_max piu' deciso (solo li')
