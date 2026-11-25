@@ -28,3 +28,4 @@
 - 2026-11-25 10:40 001: freno: anti-impuntata confermata da encoder, filtro v 0.4, rilascio 45 
 - 2026-11-25 10:47 001: freno: corrente servo = sensore morso, attesa 15 
 - 2026-11-25 10:52 001: freno: solo vel/decel, morso imparato 
+- 2026-11-25 10:57 001: freno: riapre veloce sotto obiettivo, chiude max 5, dec_ok 0.3 
