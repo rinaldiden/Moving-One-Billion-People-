@@ -452,6 +452,16 @@ def scopri_magicdns():
 
 
 def main():
+    # 25/11: launchd lo rilancia ogni 120 s anche se il giro prima sta ancora scaricando -> due processi sugli stessi .part
+    # ("No such file ... .part"). Un solo scarico alla volta.
+    import fcntl
+    global _LOCK
+    _LOCK = open(os.path.join(DEST_BASE, ".pull.lock"), "w")
+    try:
+        fcntl.flock(_LOCK, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        print("scarico precedente ancora in corso: salto questo giro")
+        return
     os.makedirs(DEST_BASE, exist_ok=True)
     loggers, esp32 = scopri_magicdns()
     if loggers or esp32:
