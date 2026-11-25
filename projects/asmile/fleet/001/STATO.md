@@ -1,4 +1,4 @@
-# 001 — stato fotografato 2026-11-24 19:00 dopo: freno sul loop dell'encoder (14bebb6d: pettine pedalate, contatto appreso, PI velocita', regola dura, encoder fix) + sensor_hub con gps_state.json; ordine di Daniele, prova domani
+# 001 — stato fotografato 2026-11-25 09:12 dopo: freno: soglie 8-10 km/h dolce (v_max 10, zona 8, obiettivo 9, rampe lente, tetto 50), sicurezza ALLOW condizionato
 kernel: 6.12.75+rpt-rpi-2712
 git sul Pi: 1967cbf 2026-05-13 fix: separate boot config for asmile (ov9281 dual cam, no arducam HAT)
 overlay: si

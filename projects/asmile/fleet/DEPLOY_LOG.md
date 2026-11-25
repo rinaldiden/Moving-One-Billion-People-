@@ -19,3 +19,4 @@
 - 2026-11-23 16:56 001: limiter v3 attivo all'1; stazionamento 50° con guardia INA a 0 
 - 2026-11-24 15:13 001: freno: ritorno a 0 con PWM lungo + pin in ingresso + guardia rilascio (3a3551ad) 
 - 2026-11-24 19:00 001: freno sul loop dell'encoder (14bebb6d: pettine pedalate, contatto appreso, PI velocita', regola dura, encoder fix) + sensor_hub con gps_state.json; ordine di Daniele, prova domani 
+- 2026-11-25 09:12 001: freno: soglie 8-10 km/h dolce (v_max 10, zona 8, obiettivo 9, rampe lente, tetto 50), sicurezza ALLOW condizionato 
