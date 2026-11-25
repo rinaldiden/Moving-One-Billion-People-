@@ -26,3 +26,4 @@
 - 2026-11-25 09:58 001: freno: valori appresi da 30 frenate in ombra; master con flag ombra; limiter di nuovo attivo 
 - 2026-11-25 10:21 001: freno progressivo: velocita' media + rilascio da decel 
 - 2026-11-25 10:40 001: freno: anti-impuntata confermata da encoder, filtro v 0.4, rilascio 45 
+- 2026-11-25 10:47 001: freno: corrente servo = sensore morso, attesa 15 
