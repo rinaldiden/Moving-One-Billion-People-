@@ -4,7 +4,6 @@
 ≠ ./pi/autonomous/speed_limiter_v3/test_rilascio_v3.py
 ≠ ./pi/autonomous/speed_limiter_v3/test_speed_limiter_v3.py
 solo-Pi ./pi/braking/speed_limiter.py
-≠ ./pi/camera/dual_cam_recorder.py
 ≠ ./pi/logging/training_recorder.py
 ≠ ./pi/sensors/sensor_hub.py
 ≠ ./training/shadow_analyzer.py

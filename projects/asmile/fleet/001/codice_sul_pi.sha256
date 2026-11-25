@@ -59,7 +59,7 @@ a00a08777c68a9a31ca85e008db0740c0835abbfb547e2d1abd3490659761102  ./pi/buzzer/pr
 8e3726a7e0203b616638eb949fefb28d48c8f04aa97dd8ac98e15f49a2215f14  ./pi/buzzer/test_buzzer.py
 c93ee873a74404be593259413abfa8f011d5b3268fdc474c33616cd131e0d475  ./pi/camera/calibrate_camera.py
 17e69b7cf5bc13e02d199f6bc789071baabeedfc85a9fbb34b5b2c7293b8adbe  ./pi/camera/calibrate_stereo.py
-6cc4d6738cc79d4c0201457b3b6521322091f27934a4a53b93316d2b0c2e3241  ./pi/camera/dual_cam_recorder.py
+d5dec2073e28482b0d03cf24f2a53061d6e228dd0a2cbffb0dc3aa176f88f179  ./pi/camera/dual_cam_recorder.py
 afe11deb55a7efe603c3f11debedd30c0f24677478083c4849e11eb330d5add0  ./pi/camera/frame_times.py
 67e0496f265fe3589cce5ccbca34e24ebbd8917bc67dba4dfab07b054b71769b  ./pi/camera/raw_stream.py
 d1ac04dba0f701c1f632dfcd514b515a9a3940bb5bb14372ca3e7f748a47e812  ./pi/camera/stream_server.py
