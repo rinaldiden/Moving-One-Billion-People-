@@ -17,6 +17,8 @@
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
 #include "esp_sleep.h"
+#include "esp_system.h"
+#include "esp_attr.h"
 #include "esp_timer.h"
 #include "esp_log.h"
 #include "esp_netif.h"
@@ -71,6 +73,62 @@ void logger02_scarico_fine(void)
     if (__atomic_sub_fetch(&s_trasf, 1, __ATOMIC_SEQ_CST) < 0) __atomic_store_n(&s_trasf, 0, __ATOMIC_SEQ_CST);
 }
 
+bool logger02_in_pausa(void)
+{
+    return s_in_pausa;
+}
+
+bool logger02_scarico_in_corso(void)
+{
+    int64_t u = s_ultimo_scarico > s_ultimo_inizio ? s_ultimo_scarico : s_ultimo_inizio;
+    return __atomic_load_n(&s_trasf, __ATOMIC_SEQ_CST) > 0 && esp_timer_get_time() - u < TRASF_STALLO_S * 1000000LL;
+}
+
+/* prove (rete di sicurezza, OTA del C6): resta sveglia fino a s_sveglio_fino */
+static volatile int64_t s_sveglio_fino;
+void logger02_prova_sveglio(int s)
+{
+    s_sveglio_fino = esp_timer_get_time() + (int64_t)s * 1000000LL;
+}
+
+/* 25/11: riavvio pulito della rete di sicurezza. Lo stato del sonno passa il riavvio (RAM .noinit, valida solo dopo
+ * un riavvio software): da quanto è ferma, da quanto non vede rete, la prova in corso. Così il riavvio NON allunga
+ * l'accensione: la logica del sonno vede gli stessi tempi di prima (niente MIN_ACCESO da capo, niente fermo da capo). */
+#define SALVA_MAGIC 0x4C303252u
+typedef struct { uint32_t magic, riavvii; int64_t fermo_us, rete_eta_us, sveglio_us; } salva_t;
+static __NOINIT_ATTR salva_t s_salva;
+static int s_riavvii;                 /* della rete di sicurezza, in questo risveglio */
+static bool s_ripreso;                /* stato del sonno ripreso dal riavvio pulito */
+static volatile int s_chiusura;       /* dormi o riavvio pulito: il primo che arriva chiude i file, l'altro aspetta */
+
+void logger02_riavvio_init(void)
+{
+    if (esp_reset_reason() != ESP_RST_SW || s_salva.magic != SALVA_MAGIC) {
+        memset(&s_salva, 0, sizeof(s_salva));     /* accensione, risveglio, crash: si riparte da zero */
+        return;
+    }
+    s_riavvii = s_salva.riavvii;
+}
+
+int logger02_rete_riavvii(void)
+{
+    return s_riavvii;
+}
+
+void logger02_riavvio_pulito(const char *motivo)
+{
+    if (__atomic_exchange_n(&s_chiusura, 1, __ATOMIC_SEQ_CST)) return;     /* sta già dormendo o riavviando */
+    int64_t t = esp_timer_get_time();
+    ESP_LOGW(TAG, "riavvio pulito: %s (ferma da %lld s)", motivo, (long long)((t - s_ultimo_moto) / 1000000));
+    s_salva = (salva_t){.magic = SALVA_MAGIC, .riavvii = (uint32_t)s_riavvii + 1, .fermo_us = t - s_ultimo_moto,
+                        .rete_eta_us = t - s_rete_vista, .sveglio_us = s_sveglio_fino > t ? s_sveglio_fino - t : 0};
+    logger02_rec_stop();
+    if (s_csv) { fclose(s_csv); s_csv = NULL; }
+    logger02_salute_chiudi();
+    vTaskDelay(pdMS_TO_TICKS(200));
+    esp_restart();
+}
+
 static bool rete_ok(void)
 {
     esp_netif_t *n = get_example_netif();
@@ -81,6 +139,7 @@ static bool rete_ok(void)
 /* fermo da FERMO_S: dorme, salvo scarico in corso. Logica pura in logger02_sleep_logic.h (host_test). */
 static bool resto_sveglio_per_scarico(int64_t t)
 {
+    if (t < s_sveglio_fino) return true;          /* prova in corso (rete di sicurezza, OTA del C6) */
     int b = logger02_b_da_scaricare();
     l02_sveglio_in_t in = {.ultimo_moto = s_ultimo_moto, .ultimo_blocco = s_ultimo_scarico, .ultimo_inizio = s_ultimo_inizio,
                            .rete_vista = s_rete_vista, .trasf = __atomic_load_n(&s_trasf, __ATOMIC_SEQ_CST),
@@ -212,7 +271,7 @@ static void imu_task(void *arg)
             fputc('\n', s_csv);
             if (t - s_pezzo_t0 > 60000000LL) { fclose(s_csv); s_csv = NULL; apri_csv(); }
         }
-        bool ferma = t > MIN_ACCESO_S * 1000000LL && t - s_ultimo_moto > FERMO_S * 1000000LL;
+        bool ferma = (s_ripreso || t > MIN_ACCESO_S * 1000000LL) && t - s_ultimo_moto > FERMO_S * 1000000LL;
         if (ferma != s_in_pausa && s_campioni % 25 == 0) {     /* pausa/ripresa su A e B (ogni 0,5 s al massimo) */
             s_in_pausa = ferma;
             logger02_rec_pausa(ferma);
@@ -244,6 +303,16 @@ esp_err_t logger02_imu_start(void)
     batt_adc_init();
 
     s_ultimo_moto = esp_timer_get_time();
+    if (s_salva.magic == SALVA_MAGIC) {                 /* dopo un riavvio pulito: stessi tempi di prima */
+        int64_t t = esp_timer_get_time();
+        s_ultimo_moto = t - s_salva.fermo_us;
+        s_rete_vista = t - s_salva.rete_eta_us;
+        if (s_salva.sveglio_us > 0) s_sveglio_fino = t + s_salva.sveglio_us;
+        s_ripreso = true;
+        s_salva.magic = 0;
+        ESP_LOGW(TAG, "dopo il riavvio pulito n.%d: ferma da %lld s, rete vista %lld s fa", s_riavvii,
+                 (long long)(s_salva.fermo_us / 1000000), (long long)(s_salva.rete_eta_us / 1000000));
+    }
     apri_csv();
     xTaskCreatePinnedToCore(imu_task, "imu", 4096, NULL, 9, NULL, 0);
     ESP_LOGI(TAG, "MPU6050 ok, 50 Hz; spegnimento dopo %d s fermo", FERMO_S);
@@ -322,6 +391,9 @@ static void dormi_per_sempre(bool a)
 
 void logger02_dormi_def(const char *motivo)
 {
+    if (__atomic_exchange_n(&s_chiusura, 1, __ATOMIC_SEQ_CST)) {   /* riavvio pulito già in corso (al riavvio la protezione 3 V ricontrolla) */
+        vTaskDelay(portMAX_DELAY);
+    }
     ESP_LOGW(TAG, "deep sleep DEFINITIVO: %s", motivo);
     bool a = logger02_ruolo()->is_a;
     if (a) logger02_link_invia("Z");                 /* prima la B */
@@ -375,6 +447,9 @@ void logger02_batt_avvio(void)
 
 void logger02_dormi(const char *motivo)
 {
+    if (__atomic_exchange_n(&s_chiusura, 1, __ATOMIC_SEQ_CST)) {   /* riavvio pulito già in corso */
+        vTaskDelay(portMAX_DELAY);
+    }
     ESP_LOGW(TAG, "deep sleep: %s", motivo);
     bool a = logger02_ruolo()->is_a;
     if (a) logger02_link_invia("Z");                 /* prima la B */

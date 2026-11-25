@@ -9,7 +9,9 @@
  *                           alla volta (altri: 503 Retry-After), buffer preallocati all'avvio (24/11)
  *   POST /del?f=<nome>      cancella (il Mac cancella solo dopo aver controllato la dimensione)
  *   POST /ota               nuovo firmware (corpo = .bin), poi riavvio
- *   POST /dormi             deep sleep subito (prova) */
+ *   POST /dormi             deep sleep subito (prova)
+ *   POST /rete_prova?azione=wifi_off|wifi_off_blocca|c6|versione&conferma=si   prove della rete di sicurezza (25/11)
+ *   POST /c6_ota?conferma=si   corpo = network_adapter.bin (esp_hosted slave per C6): aggiorna il C6 (25/11) */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -82,19 +84,20 @@ static esp_err_t h_stream(httpd_req_t *req)
 
 static esp_err_t h_stato(httpd_req_t *req)
 {
-    char rec[320], sync[480], imu[320], ts[96], sal[200], out[1900];
+    char rec[320], sync[480], imu[320], ts[96], sal[200], rete[260], out[2200];
     logger02_rec_stato(rec, sizeof(rec));
     logger02_sync_stato(sync, sizeof(sync));
     if (logger02_ruolo()->is_a) logger02_imu_stato(imu, sizeof(imu));
     else snprintf(imu, sizeof(imu), "null");
     logger02_tailscale_stato(ts, sizeof(ts));
     logger02_salute_stato(sal, sizeof(sal));
+    logger02_rete_stato(rete, sizeof(rete));
     const esp_app_desc_t *app = esp_app_get_description();
-    snprintf(out, sizeof(out), "{\"scheda\":\"%s\",\"riavvio\":%d,\"versione\":\"%s %s %s\",\"partizione\":\"%s\",\"ram_interna_libera\":%u,\"ram_interna_min\":%u,\"uptime_s\":%lld,\"t_us\":%lld,\"t_a_us\":%lld,\"rec\":%s,\"sync\":%s,\"imu\":%s,\"tailscale\":%s,\"salute\":%s}",
+    snprintf(out, sizeof(out), "{\"scheda\":\"%s\",\"riavvio\":%d,\"versione\":\"%s %s %s\",\"partizione\":\"%s\",\"ram_interna_libera\":%u,\"ram_interna_min\":%u,\"uptime_s\":%lld,\"t_us\":%lld,\"t_a_us\":%lld,\"rec\":%s,\"sync\":%s,\"imu\":%s,\"tailscale\":%s,\"salute\":%s,\"rete\":%s}",
              logger02_ruolo()->nome, (int)esp_reset_reason(), app->version, app->date, app->time, esp_ota_get_running_partition()->label,
              (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
              (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL), esp_timer_get_time() / 1000000, esp_timer_get_time(),
-             logger02_t_a(esp_timer_get_time()), rec, sync, imu, ts, sal);
+             logger02_t_a(esp_timer_get_time()), rec, sync, imu, ts, sal, rete);
     httpd_resp_set_type(req, "application/json");
     return httpd_resp_sendstr(req, out);
 }
@@ -385,6 +388,65 @@ static esp_err_t h_dormi(httpd_req_t *req)
     return ESP_OK;
 }
 
+static bool conferma(httpd_req_t *req, char *azione, size_t n)
+{
+    char q[96], c[8];
+    if (httpd_req_get_url_query_str(req, q, sizeof(q)) != ESP_OK || httpd_query_key_value(q, "conferma", c, sizeof(c)) != ESP_OK
+        || strcmp(c, "si")) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "serve conferma=si");
+        return false;
+    }
+    if (azione && httpd_query_key_value(q, "azione", azione, n) != ESP_OK) azione[0] = 0;
+    return true;
+}
+
+static esp_err_t h_rete_prova(httpd_req_t *req)
+{
+    char az[24], out[160];
+    if (!conferma(req, az, sizeof(az))) return ESP_OK;
+    esp_err_t r = logger02_rete_prova(az, out, sizeof(out));
+    if (r != ESP_OK) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, esp_err_to_name(r));
+        return ESP_OK;
+    }
+    httpd_resp_set_type(req, "application/json");
+    return httpd_resp_sendstr(req, out);
+}
+
+/* firmware del C6: controllo che sia davvero un'immagine ESP32-C6 di esp_hosted prima di darla al C6 */
+static esp_err_t h_c6_ota(httpd_req_t *req)
+{
+    if (!conferma(req, NULL, 0)) return ESP_OK;
+    size_t len = req->content_len;
+    if (len < 200 * 1024 || len > 1900 * 1024) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "dimensione non plausibile");
+        return ESP_OK;
+    }
+    uint8_t *buf = heap_caps_malloc(len, MALLOC_CAP_SPIRAM);
+    if (!buf) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "niente memoria");
+        return ESP_OK;
+    }
+    size_t preso = 0;
+    while (preso < len) {
+        int n = httpd_req_recv(req, (char *)buf + preso, len - preso > 16384 ? 16384 : len - preso);
+        if (n == HTTPD_SOCK_ERR_TIMEOUT) continue;
+        if (n <= 0) break;
+        preso += n;
+    }
+    uint32_t magic_desc = buf[0x20] | buf[0x21] << 8 | buf[0x22] << 16 | (uint32_t)buf[0x23] << 24;
+    bool ok = preso == len && buf[0] == 0xE9 && (buf[12] | buf[13] << 8) == 13 /* ESP32-C6 */ &&
+              magic_desc == 0xABCD5432 && !strncmp((const char *)buf + 0x20 + 0x30, "network_adapter", 16);
+    if (!ok) {
+        free(buf);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "non e' un firmware esp_hosted per ESP32-C6 (o arrivato a meta')");
+        return ESP_OK;
+    }
+    esp_err_t r = logger02_c6_ota(buf, len);
+    httpd_resp_sendstr(req, r == ESP_OK ? "ricevuto: aggiorno il C6 (1-2 minuti), poi la scheda si riavvia" : esp_err_to_name(r));
+    return ESP_OK;
+}
+
 /* A: /b/<x> → http://B/<x>, in streaming (anche POST /b/ota) */
 /* se la B non risponde, per 30 s rispondo subito "B giù" invece di aspettare: il server della A è uno solo
  * e ogni attesa lo blocca per tutti (17/11: la pagina che chiedeva /b ogni 2 s rendeva la A "irraggiungibile") */
@@ -543,6 +605,7 @@ esp_err_t logger02_web_start(void)
         {"/api/frames", HTTP_GET, h_frames}, {"/api/files", HTTP_GET, h_files}, {"/dl", HTTP_GET, h_dl},
         {"/del", HTTP_POST, h_del}, {"/ota", HTTP_POST, h_ota}, {"/dormi", HTTP_POST, h_dormi}, {"/formatta", HTTP_POST, h_formatta},
         {"/api/storia", HTTP_GET, h_storia}, {"/rollback", HTTP_POST, h_rollback}, {"/tskey", HTTP_POST, h_tskey},
+        {"/rete_prova", HTTP_POST, h_rete_prova}, {"/c6_ota", HTTP_POST, h_c6_ota},
     };
     for (size_t i = 0; i < sizeof(u) / sizeof(u[0]); i++) httpd_register_uri_handler(s, &u[i]);
     if (logger02_ruolo()->is_a) {

@@ -159,7 +159,7 @@ static void apri_file(void)
     s_csv = fopen(p, "w");
     if (s_csv) {
         fprintf(s_csv, "ora,t_us,t_a_us,uptime_s,ultimo_riavvio,avvii,brownout,crash,temp_c,batt_v,"
-                       "ram_int_libera,ram_int_min,psram_libera,sd_libero_mb,fotogrammi,scritti,errori,avvisi,log_persi\n");
+                       "ram_int_libera,ram_int_min,psram_libera,sd_libero_mb,fotogrammi,scritti,errori,avvisi,log_persi,rssi\n");
     }
     s_err = NULL;                                     /* il .log si apre solo se arriva un avviso */
     s_pezzo++;
@@ -228,13 +228,16 @@ static void salute_task(void *arg)
                     (long long)(t / 1000000), s_motivo, (unsigned long)s_avvii, (unsigned long)s_brownout,
                     (unsigned long)s_crash, s_temp);
             if (bv > 0) fprintf(s_csv, "%.2f", bv);
-            fprintf(s_csv, ",%u,%u,%u,%llu,%lu,%lu,%lu,%lu,%lu\n",
+            fprintf(s_csv, ",%u,%u,%u,%llu,%lu,%lu,%lu,%lu,%lu,",
                     (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
                     (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL),
                     (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM),
                     (unsigned long long)logger02_sd_libero_mb(), (unsigned long)logger02_rec_frame(),
                     (unsigned long)logger02_rec_scritti(), (unsigned long)s_n_err, (unsigned long)s_n_avv,
                     (unsigned long)s_persi);
+            int rssi = logger02_rete_rssi();         /* 25/11: segnale wifi (vuoto = non collegato / non noto) */
+            if (rssi) fprintf(s_csv, "%d", rssi);
+            fputc('\n', s_csv);
         }
         scrivi_errori(ora);
         if (t - s_pezzo_t0 > 60000000LL) { chiudi_file(); apri_file(); }

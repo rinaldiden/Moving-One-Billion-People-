@@ -77,6 +77,19 @@ void logger02_batt_avvio(void);               /* A, all'avvio: batteria < 3,1 V 
 void logger02_scarico_inizio(void);           /* 24/11: trasferimento aperto (/dl, proxy /b): contatore >0 = mai dormire */
 void logger02_scarico_fine(void);             /* da chiamare SEMPRE in uscita, anche in errore */
 void logger02_scarico_visto(void);            /* il Mac sta scaricando (web): A resta sveglia finché finisce */
+/* 25/11: rete di sicurezza (logger02_wifi.c) */
+bool logger02_in_pausa(void);                 /* A: bici ferma, registrazione in pausa */
+bool logger02_scarico_in_corso(void);         /* trasferimento aperto e non appeso (blocchi negli ultimi 3 min) */
+void logger02_prova_sveglio(int s);           /* prove: non dormire per s secondi (anche dopo un riavvio pulito) */
+void logger02_riavvio_init(void);             /* all'avvio: riprende lo stato salvato da logger02_riavvio_pulito */
+void logger02_riavvio_pulito(const char *motivo);  /* chiude registrazione e file come prima del sonno, poi riavvia */
+int logger02_rete_riavvii(void);              /* riavvii della rete di sicurezza in questo risveglio */
+esp_err_t logger02_rete_sicurezza_start(void);   /* eventi wifi nel registro + (A) rete di sicurezza */
+int logger02_rete_rssi(void);                 /* 0 = non noto */
+void logger02_rete_stato(char *json, size_t n);
+esp_err_t logger02_rete_prova(const char *azione, char *out, size_t n);
+esp_err_t logger02_c6_ota(uint8_t *buf, size_t len);   /* aggiorna il C6 (esp_hosted slave); prende buf (PSRAM) */
+const char *logger02_c6_ota_esito(void);
 
 /* salute (A e B): una riga al secondo + errori del log, come asmile_health.csv del logger001 */
 void logger02_salute_presto(void);            /* all'avvio, prima di tutto: aggancia il log, conta il riavvio */
