@@ -32,3 +32,4 @@
 - 2026-11-25 12:19 001: freno: fascia del morso (-2/+3, chiude 2, apre 4 gradi/s) 
 - 2026-11-25 14:05 001: freno: corsa veloce 25 gradi poi fascia del morso 
 - 2026-11-25 14:06 001: freno: 25 gradi in un colpo solo 
+- 2026-11-25 14:35 001: freno come in officina: 25 gradi in 0,5 s, poi 16,7 gradi/s su velocita'/decel, PWM hardware 
