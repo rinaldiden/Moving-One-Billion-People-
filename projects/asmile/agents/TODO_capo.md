@@ -1,4 +1,10 @@
 # TODO del capo — agenti fermati e passi successivi
+
+## 2026-11-25 pomeriggio — DA FARE (Daniele)
+- **Critici + sicurezza su freno e limiter**: far passare a asmile-sicurezza (+ asmile-sicurezza-redteam) e ai critici (asmile-rollback-guardian, asmile-banco-critico) la VALIDA freno 15:00 (tag freno-001-valida-20261125-1500): speed_limiter_v3 (freno.py incrementale, hw.py ServoPwmHw/PWM hardware, servizio.py rampe, controllo.py senza guardia corrente col master su 1) e master_switch.py (ON/OFF/watchdog a rampa, angolo in /data/freno_angolo). Su strada è stata deployata senza test (regola prova su strada): ora irrobustire senza cambiare il comportamento approvato.
+- **Fallback velocità IMU+GPS dietro l'encoder ruota**: se l'encoder manca o non è fresco, il freno deve continuare con GPS+IMU (poi BLE). Nel codice c'è già un arbitro delle fonti (fonti.py: GPS_IMU / BLE_IMU / IMU_SOLO, tetto 35° con fonte di riserva) ma non è mai stato verificato su strada né con la logica nuova: verificarlo (encoder staccato a bici in moto, col vai) e chiuderlo.
+- VESC sterzo: Daniele vuole la corrente assoluta a 100 A (oggi l_abs_current_max 150): scrittura solo col suo vai, backup prima.
+- Sterzo #001 25/11 15:11: limiti encoder 5978/2218 raggiunti a 15 deg/s con max 60 A (copia temporanea, cancellata): DX 4,0 s, SX 5,7 s, centro 3,2 s; corrente media 6-9 A, max 14,8 A; motore 8,7 °C. Log in agents/prove/sterzo_001/limiti60_20261125/.
 Aggiornato 2026-11-10 sera. Daniele ha fermato gli agenti: domattina gira la 2ª ripresa di calibrazione di #001.
 Ripresa: tutti gli agenti riprendono da qui.
 
