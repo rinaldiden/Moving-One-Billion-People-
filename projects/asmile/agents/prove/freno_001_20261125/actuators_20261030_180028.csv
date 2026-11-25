@@ -1,0 +1,7 @@
+t_ms,device,cmd,value,note
+18168,brake,free,50,master_switch OFF
+25585,brake,pwm,0,master_switch ON: rilascio
+27086,brake,free,0,master_switch ON
+437045,brake,pwm,50,master_switch OFF: freno di stazionamento
+438596,brake,free,50,master_switch OFF
+439600,brake,free,48,master_switch OFF: arretro (corrente 1.83 A)

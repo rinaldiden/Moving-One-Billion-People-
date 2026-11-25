@@ -2,9 +2,10 @@
  "_cosa": "Soglie dello speed_limiter v3 di #001 (BOZZA, solo prova a secco sul Mac). Tutto qui, niente numeri nel codice. Daniele 23/11 + decel dalle frenate vere 13/11 (agents/rapporti/decel_frenate_20261113-23.md).",
  "stato": "BOZZA - da validare da Daniele prima di qualsiasi deploy",
  "velocita": {
-  "v_max_kmh": 15.0,
-  "zona_inizio_kmh": 12.0,
-  "_note": "Daniele 23/11 (via capo): 12-15 km/h rallenti dolcemente (decel obiettivo cresce piano da 0 a 'normale'); sopra 15 riporti a 15 con anello chiuso sulla decel misurata dall'encoder; <=50 gradi sempre. Sostituisce 14/13. CONSEGUENZA da dire a Daniele: su discesa costante la velocita' si assesta ~12-13, non 15."
+  "v_max_kmh": 10.0,
+  "zona_inizio_kmh": 8.0,
+  "_note": "Daniele 23/11 (via capo): 12-15 km/h rallenti dolcemente (decel obiettivo cresce piano da 0 a 'normale'); sopra 15 riporti a 15 con anello chiuso sulla decel misurata dall'encoder; <=50 gradi sempre. Sostituisce 14/13. CONSEGUENZA da dire a Daniele: su discesa costante la velocita' si assesta ~12-13, non 15.",
+  "_25_11": "Daniele 25/11: prova 8-10 km/h, freno dolce ('lo voglio sentire entrare e funzionare'); prima 12/15."
  },
  "encoder": {
   "m_per_count": 2.1219e-05,
@@ -62,21 +63,21 @@
  },
  "decel_obiettivo_ms2": {
   "_fonte": "PROVVISORIE: come frena DANIELE a mano (n=30 frenate, 1 giorno 13/11, il servo NON era collegato al freno: le 30 frenate sono tutte sue). Scala ENCODER (parabola 0.3 s). NON confrontare con IMU (legge 1.4-2x). Ritardo comando->decelerazione del servo: nessun dato, vedi freno.ritardo_comando_decel_s.",
-  "normale": 0.55,
+  "normale": 0.4,
   "normale_picco_max": 1.0,
-  "forte": 1.0,
+  "forte": 0.6,
   "forte_picco_max": 1.6,
   "massima_tollerata": 1.3,
   "massima_picco_max": 2.0,
   "mai_oltre": 2.5,
   "jerk_max_ms3": 4.0,
-  "forte_se_sopra_kmh": 15.0
+  "forte_se_sopra_kmh": 10.0
  },
  "freno": {
   "tetto_deg": 50.0,
   "tetto_assoluto_codice_deg": 50.0,
   "rampa_su_deg_s": 12.0,
-  "rampa_su_sopra_vmax_deg_s": 25.0,
+  "rampa_su_sopra_vmax_deg_s": 12.0,
   "rampa_su_oltre_soglia_deg_s": 3.0,
   "soglia_lenta_deg": 35.0,
   "rampa_giu_deg_s": 25.0,
@@ -91,12 +92,12 @@
   "contatto_max_deg": 25.0,
   "contatto_default_deg": 4.0,
   "_contatto": "24/11 (Daniele: il loop sull'encoder vede da solo quando la decel compare): il CONTATTO (angolo a cui la decel misurata supera la naturale) lo APPRENDE il Regolatore e lo tiene con media lenta; questi tre sono SOLO limiti di plausibilita' e il default prudente BASSO usato finche' non ha una stima (o con fonte di riserva): avvicinamento lento <= rampa_cerca_deg_s fino al default. Mai da misurare a priori.",
-  "rampa_cerca_deg_s": 12.0,
+  "rampa_cerca_deg_s": 8.0,
   "contatto_scadenza_s": 604800,
   "margine_contatto_deg": 1.0,
-  "rampa_avvicinamento_deg_s": 25.0,
+  "rampa_avvicinamento_deg_s": 12.0,
   "rampa_fine_su_deg_s": 8.0,
-  "rampa_fine_su_sopra15_deg_s": 12.0,
+  "rampa_fine_su_sopra15_deg_s": 8.0,
   "rampa_fine_giu_deg_s": 5.0,
   "_fascia": "Regolatore a fascia di contatto: avvicinamento veloce fino a contatto-margine (non frena), poi PI sulla velocita' con rampe piccole (8 gradi/s su, 5 giu'; jerk del freno = rampa x 0.1-0.3 m/s2 per grado <= 2.4 m/s3). Il rilascio anti-impuntata e i tetti restano immediati.",
   "tetto_imu_morta_deg": 0.0,
@@ -108,7 +109,8 @@
   "_imu_morta": "DECISIONE PER DANIELE: IMU morta/congelata = anti-impuntata cieca, quindi fuori emergenza tetto 0 (rilascio, proposta di asmile-sicurezza); in emergenza tetto 25. Prima era 25 sempre.",
   "rampa_tetto_deg_s": 60.0,
   "uscita_tieni_s": 1.5,
-  "_uscita": "all'uscita: 0 gradi tenuto >= uscita_tieni_s (0.6, da misurare a banco da 50 gradi) PRIMA di liberare il pin"
+  "_uscita": "all'uscita: 0 gradi tenuto >= uscita_tieni_s (0.6, da misurare a banco da 50 gradi) PRIMA di liberare il pin",
+  "_25_11": "Prova dolce 8-10 km/h (Daniele 25/11): tetto resta 50 (con 25 in discesa ripida la sim non tiene la v_max), rampe piu' lente (avvicinamento 12, cerca 8, sopra v_max 12, fine 8). Prima: 25/12/12/12... vedi git."
  },
  "anti_impuntata": {
   "dec_imu_min_ms2": 2.0,
@@ -157,7 +159,7 @@
   "a_pos_max_ms2": 0.3,
   "banda_morta_ms2": 0.05,
   "a_filtro_s": 0.2,
-  "v_obiettivo_kmh": 13.0,
+  "v_obiettivo_kmh": 9.0,
   "ti_s": 5.0,
   "guadagno_anello_1_s": 1.6,
   "g_default_ms2_per_deg": 0.2,
@@ -180,7 +182,7 @@
   "a_nat_tau_s": 1.5,
   "ritardo_misura_a_s": 0.25,
   "ingaggio_sotto_zona_kmh": 0.5,
-  "disimpegno_sotto_zona_kmh": 1.5,
+  "disimpegno_sotto_zona_kmh": 1.0,
   "_fine": "24/11 PI sulla velocita': v_obiettivo (tra zona e v_max) attorno a cui il freno lavora; kp ricavata dalla fascia (lavoro-contatto gradi alla v_max), ki = kp/ti_s; rilascio_dolce: gradi/s tolti dall'integrale se la bici gia' rallenta quanto il profilo chiede; isteresi: ingaggio a zona-0.5, disimpegno (angolo a 0) sotto zona-1.5 km/h.",
   "_note": "zona 12-15: a_voluta = -normale*x^esp, x=(v-12)/3. Sopra 15: -min(forte, normale + k*(v-15)). Sotto 12: a_voluta=+a_pos (l'angolo cala piano, niente on/off). Banda morta e filtro contro le oscillazioni."
  }
