@@ -72,6 +72,22 @@ Ogni riga contiene:
 - le CLASSI SAM 3 della finestra -4/+1 s, con la Z minima stereo solo per #001 dal 25/11 (`distanze_valide`).
 - Prima del 25/11 per #001, e sempre per logger001 e asmile2, ci sono solo le classi, senza distanze: la calib di #001 è validata sul montaggio del 25/11 e mai si usa la calib di un'altra unità.
 
+Copertura finale **[verificato]**. SAM 3 è girato su 5 fotogrammi per manovra (t-3, -2, -1, 0, +1 s), circa 1700 fotogrammi; mai più di 2 processi pesanti insieme.
+
+| unità / tipo | manovre di Daniele | con classi | con distanze stereo |
+|---|---|---|---|
+| #001 frenate | 210 | 171 | 146 (solo 25/11) |
+| #001 sterzate | 92 | 77 | 52 |
+| logger001 frenate | 19 | 19 | 0 |
+| logger001 sterzate | 19 | 0 (nel registro non c'è l'ora: nessun aggancio al video) | 0 |
+| asmile2 frenate | 289 | 3 (classi non lanciate sulle frenate) | 0 |
+| asmile2 sterzate | 63 | 61 | 0 |
+
+PERCHÉ su #001 (solo #001 ha le regole; per le altre unità il perché è vuoto):
+- **Frenate (210):** curva 47, senza motivo visibile 92, unknown 21 (quelle in coda del 25/11), ostacolo 6, persona 4, auto ferma di lato 1, vuoto 39 (senza video o senza fotogrammi).
+- **Sterzate (92):** curva 71, ostacolo 4, persona 1, senza motivo 1, vuoto 15.
+- **Attenzione:** fuori dalle 30 controllate sono etichette di SOLA regola (conf "bassa"), con la `precisione_regola_30` accanto. "Senza motivo visibile" vuol dire soprattutto che la regola non vede, non che il motivo non ci sia.
+
 ## 4. Coda casi dubbi (`training/perception_pipeline/casi_dubbi/queue/`, immagini in `casi_dubbi/frames/`)
 
 29 casi nuovi (più i 6 che c'erano già), tutti `status: open`. Ognuno ha i fotogrammi, i dati, la domanda e le opzioni (+ Altro):
@@ -100,7 +116,7 @@ Come le trova SAM 3. Prova su 15 fotogrammi veri (8 #001, 3 logger001, 4 logger0
 - Cerca le regioni che sporgono dal piano strada (stereo) senza nessuna classe, le raggruppa (tracce + CLIP) e propone un nome.
 - Primo giro (soglie dichiarate): 952 regioni, quasi tutte asfalto e muri. Scartato, perché il piano fisso non regge il beccheggio.
 - Secondo giro: 3 tracce. 1 vera, un'insegna di negozio a 9 m (caso per Daniele). 2 sono errori stereo nel cielo, marcati "scartato".
-- Fatto solo sulle finestre delle 30 frenate.
+- Fatto sulle finestre delle 30 frenate e poi su tutte le altre 12 sessioni #001 del 25/11. Lì è uscita 1 sola traccia: una macchia al bordo dell'immagine, scartata. In totale 4 righe nel registro: 1 da confermare, 3 scartate.
 - CLIP ViT-B/32 sui ritagli in bianco e nero non distingue niente (dice "nothing"): il nome l'ho dato io guardando.
 
 ## 6. Cosa manca / da fare
