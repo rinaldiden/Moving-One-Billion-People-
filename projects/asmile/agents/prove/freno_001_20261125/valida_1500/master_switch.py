@@ -1,0 +1,456 @@
+#!/usr/bin/env python3
+"""
+Asmile Master Switch — GPIO toggle controls system state.
+
+Physical switch between GPIO 17 (Pin 11) and GND (Pin 9).
+  - Switch ON  (closed, GPIO LOW):  unlock brake, start logging/recording
+  - Switch OFF (open, GPIO HIGH):   lock brake (full braking), stop logging
+
+Wiring:
+  GPIO 17 (Pin 11) ──── switch ──── GND (Pin 9)
+  Internal pull-up: pin reads HIGH when switch open, LOW when closed.
+
+Future: same switch will toggle autonomous driving instead of logging.
+
+Install as service:
+  sudo cp master_switch.service /etc/systemd/system/
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now master_switch.service
+"""
+
+import lgpio
+import time
+import subprocess
+import sys
+import os
+import pwd
+from datetime import datetime
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sensors"))
+try:
+    from actuator_log import log_cmd     # pulse freno all'ON/OFF nel log uscite (stesso ms del hub)
+except Exception:                        # master_switch non deve MAI fermarsi per il log
+    def log_cmd(*a, **k):
+        return None
+
+# --- Config ---
+GPIO_CHIP = 4          # Pi 5 = gpiochip4
+SWITCH_PIN = 17        # GPIO 17, Pin 11
+DEBOUNCE_MS = 300      # debounce time
+CHECK_INTERVAL = 0.1   # 100ms poll
+WATCHDOG_INTERVAL = 10 # seconds between recorder health checks
+RECORDER_MAX_RETRIES = 5
+RECORDER_STARTUP_WAIT = 5  # seconds to wait before checking if recorder is alive
+
+# Detect username (asmile or asmile2)
+ASMILE_USER = None
+for u in ("asmile", "asmile2"):
+    try:
+        pwd.getpwnam(u)
+        ASMILE_USER = u
+        break
+    except KeyError:
+        continue
+if not ASMILE_USER:
+    ASMILE_USER = "asmile"
+HOME_DIR = f"/home/{ASMILE_USER}"
+
+# Servo (for brake lock) — DFRobot SER0062 brushless waterproof, 6-8.4V
+# 50Hz è lo standard servo. Pulse 500-2500us, dead zone 1us. Stall 5A.
+PIN_SERVO = 12
+SERVO_FREQ = 50
+PULSE_MIN_US = 500
+PULSE_MAX_US = 2500
+PERIOD_US = 1_000_000 / SERVO_FREQ
+BRAKE_ANGLE = 50       # massimo freno (23/11: 50°, non più 60); all'OFF si usa OFF_ANGLE = 0
+RELEASE_ANGLE = 0      # released when ON (gradi "logici" = raw 180°)
+OFF_ANGLE = BRAKE_ANGLE     # 23/11 sera (Daniele): su 0 il freno va a 50° e il pin si libera: la bici resta ferma
+
+# Buzzer (shared con safe_shutdown — GPIO 4 via 2N2222 driver)
+BUZZER_PIN = 4
+
+
+SL_DIR = f"{HOME_DIR}/wip/Moving-One-Billion-People-/projects/asmile/pi/autonomous"
+PARK_MAX_HOLD_A = 0.4      # stazionamento: corrente massima a pin libero (servo che non forza)
+PARK_MIN_ANGLE = 30        # stazionamento: mai sotto questo angolo arretrando
+
+
+def _corrente_servo_a():
+    """INA219 0x40 (shunt 0,1 ohm): corrente dal registro shunt, 3 letture mediate. None se non risponde."""
+    try:
+        import smbus2
+        b = smbus2.SMBus(1)
+        tot = 0.0
+        for _ in range(3):
+            v = b.read_word_data(0x40, 0x01)
+            v = ((v & 0xFF) << 8) | (v >> 8)
+            v = v - 65536 if v > 32767 else v
+            tot += v * 1e-5 / 0.1
+            time.sleep(0.05)
+        b.close()
+        return abs(tot / 3)
+    except Exception:
+        return None
+
+
+def buzzer_sweep(start_freq: int, end_freq: int, step: int = 50, step_time: float = 0.025):
+    """Play a frequency sweep on BUZZER_PIN. Auto-detects ascending/descending."""
+    try:
+        h = lgpio.gpiochip_open(GPIO_CHIP)
+        s = -step if start_freq > end_freq else step
+        for f in range(start_freq, end_freq, s):
+            lgpio.tx_pwm(h, BUZZER_PIN, f, 50)
+            time.sleep(step_time)
+        lgpio.tx_pwm(h, BUZZER_PIN, 0, 0)
+        lgpio.gpiochip_close(h)
+    except Exception:
+        pass
+
+
+def _pin_in_ingresso():
+    """24/11: su Pi 5 gpio_free lascia GPIO12 in OUTPUT LOW ('op dl'); il SER0062 vuole il pin davvero libero."""
+    subprocess.run(["pinctrl", "set", str(PIN_SERVO), "ip", "pn"], timeout=1, check=False,
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def angle_to_duty(angle: float) -> float:
+    # Servo montato invertito: raw 180° = rilasciato, raw 0° = freno pieno.
+    # angle "logico": 0 = release, +N = N° di frenata.
+    raw = 180.0 - angle
+    pulse_us = PULSE_MIN_US + (raw / 180.0) * (PULSE_MAX_US - PULSE_MIN_US)
+    return (pulse_us / PERIOD_US) * 100.0
+
+
+def _porta_freno(a, motivo, attesa_lock_s=3.0):
+    """25/11 Daniele: il servo freno si pilota SEMPRE come in officina: PWM hardware, rampa (sotto 25 gradi 50 gradi/s,
+    sopra 25 gradi 16,7 gradi/s = 25 gradi in 1,5 s), 0,5 s di tenuta, poi pin libero. Parte dall'ultimo angolo comandato
+    (/run/freno_angolo, scritto da master e limiter). Prende il lock di GPIO12: se c'e' un altro padrone non tocca niente.
+    Ritorna l'angolo finale, o None se non ha mosso."""
+    sys.path.insert(0, SL_DIR)
+    from speed_limiter_v3.lock_gpio12 import LockError, acquisisci_lock_attendi
+    from speed_limiter_v3.hw import crea_servo, leggi_angolo, scrivi_angolo
+    from speed_limiter_v3.servizio import rampa_servo
+    try:
+        lock = acquisisci_lock_attendi(timeout_s=attesa_lock_s)
+    except LockError:
+        print(f"[SWITCH] GPIO12 ha un altro padrone: freno non mosso ({motivo})", flush=True)
+        return None
+    servo = None
+    try:
+        servo = crea_servo()
+        da = leggi_angolo(None)
+        if da is None:                                      # ignoto (primo avvio): niente rampa da un punto inventato
+            da = a
+        if a > da:
+            if da < 25.0:
+                rampa_servo(servo, da, min(a, 25.0), 50.0)
+            if a > 25.0:
+                rampa_servo(servo, max(da, 25.0), a, 16.7)
+        elif a < da:
+            if da > 25.0:
+                rampa_servo(servo, da, max(a, 25.0), 16.7)
+            if a < 25.0:
+                rampa_servo(servo, min(da, 25.0), a, 50.0)
+        servo.pwm(a)
+        log_cmd("brake", "pwm", a, f"master_switch: {motivo} (rampa da {da:.1f})")
+        print(f"[SWITCH] freno {da:.1f} -> {a:.1f} gradi a rampa ({motivo}), poi pin libero", flush=True)
+        time.sleep(0.5)
+        return a
+    except Exception as e:
+        print(f"[SWITCH] freno: errore {e!r} ({motivo})", flush=True)
+        return None
+    finally:
+        if servo is not None:
+            try:
+                servo.libera()
+                servo.chiudi()
+            except Exception:
+                pass
+            scrivi_angolo(getattr(servo, "ultimo", a))
+        lock.close()
+        log_cmd("brake", "free", a, f"master_switch: {motivo}")
+
+
+class MasterSwitch:
+    def __init__(self):
+        self.h = lgpio.gpiochip_open(GPIO_CHIP)
+        lgpio.gpio_claim_input(self.h, SWITCH_PIN, lgpio.SET_PULL_UP)
+        self.active = False  # current state: True = ON
+        self.servofreno_was_running = False
+        self.recorder_proc = None
+        self.recorder_retries = 0
+        self.last_watchdog = 0
+
+    def read_switch(self) -> bool:
+        """Returns True if switch is ON (closed, LOW)."""
+        return lgpio.gpio_read(self.h, SWITCH_PIN) == 0
+
+    def _kill_camera_zombies(self):
+        """Kill any leftover camera processes before starting recorder."""
+        subprocess.run(["pkill", "-9", "-f", "training_recorder.py"], capture_output=True)
+        subprocess.run(["killall", "-9", "rpicam-vid"], capture_output=True)
+        subprocess.run(["killall", "-9", "gst-launch-1.0"], capture_output=True)
+        subprocess.run(["fuser", "-k", "/dev/video0"], capture_output=True)
+        time.sleep(1.0)
+        print("[SWITCH] camera zombies cleaned")
+
+    def _start_recorder(self):
+        """Start recorder. Uses training_recorder (Camarray) or dual_cam_recorder
+        depending on which exists. training_recorder is the default for asmile2."""
+        base = f"{HOME_DIR}/wip/Moving-One-Billion-People-/projects/asmile/pi"
+        # Camarray HAT (asmile2): training_recorder with LD_PRELOAD
+        camarray_recorder = f"{base}/logging/training_recorder.py"
+        # Dual separate cams (asmile ID001): dual_cam_recorder
+        dualcam_recorder = f"{base}/camera/dual_cam_recorder.py"
+
+        # Check if arducam_fix.so exists = Camarray HAT present
+        arducam_fix = f"{HOME_DIR}/streaming/arducam_fix.so"
+        if os.path.isfile(arducam_fix):
+            recorder = camarray_recorder
+            cmd = ["sudo", "-u", ASMILE_USER,
+                   "env", f"LD_PRELOAD={arducam_fix}",
+                   "python3", "-u", recorder]
+        else:
+            recorder = dualcam_recorder
+            cmd = ["sudo", "-u", ASMILE_USER,
+                   "python3", "-u", recorder]
+
+        proc = subprocess.Popen(cmd,
+            stdout=open("/tmp/recorder.log", "w"),
+            stderr=subprocess.STDOUT)
+        return proc
+
+    def _recorder_is_alive(self):
+        """Check if recorder process is still running."""
+        if self.recorder_proc is None:
+            return False
+        return self.recorder_proc.poll() is None
+
+    def watchdog_check(self):
+        """Called from main loop — restart recorder if it died while switch is ON."""
+        if not self.active:
+            return
+        self._limiter_check()
+        now = time.monotonic()
+        if now - self.last_watchdog < WATCHDOG_INTERVAL:
+            return
+        self.last_watchdog = now
+
+        if self._recorder_is_alive():
+            self.recorder_retries = 0  # healthy, reset counter
+            return
+
+        # Recorder is dead
+        self.recorder_retries += 1
+        if self.recorder_retries > RECORDER_MAX_RETRIES:
+            print(f"[WATCHDOG] recorder failed {RECORDER_MAX_RETRIES} times, giving up until next switch cycle")
+            return
+
+        print(f"[WATCHDOG] recorder died! Restarting (attempt {self.recorder_retries}/{RECORDER_MAX_RETRIES})")
+        self._kill_camera_zombies()
+        self.recorder_proc = self._start_recorder()
+        time.sleep(RECORDER_STARTUP_WAIT)
+        if self._recorder_is_alive():
+            print("[WATCHDOG] recorder restarted OK")
+        else:
+            print("[WATCHDOG] recorder failed to start")
+
+    def _limiter_check(self):
+        """24/11 (rollback-guardian): se il limiter muore col freno tirato nessuno lo riapre (la guardia di rilascio sta
+        dentro il limiter). Limiter morto con master ON -> freno a 0 per 1,5 s, pin in ingresso, avviso. NON lo riavvia
+        (Restart=no per scelta: si riaccende col master)."""
+        p = getattr(self, "speed_limiter_proc", None)
+        if p is None or p.poll() is None:
+            return
+        print(f"[WATCHDOG] speed_limiter MORTO (codice {p.returncode}): freno a {RELEASE_ANGLE}° e pin libero", flush=True)
+        self.speed_limiter_proc = None
+        _porta_freno(RELEASE_ANGLE, "watchdog: speed_limiter morto, rilascio", attesa_lock_s=1.0)
+        try:
+            with open("/run/speed_limiter_v3.state", "w") as f:
+                f.write('{"stato": "CADUTO", "avvisi": ["LIMITER MORTO: freno rilasciato dal master, nessun limite dei 15 km/h"]}')
+        except OSError:
+            pass
+        buzzer_sweep(1500, 600)
+
+    def activate(self, follow_me=False):
+        """Switch turned ON — release servo + logging. No speed_limiter (deleted 2026-05-22)."""
+        if self.active and self._recorder_is_alive():
+            return  # already running and healthy
+        # If active but recorder dead, force restart
+        self.active = True
+        self.follow_me = follow_me
+        self.recorder_retries = 0
+
+        # Audio cue: switch ON → sweep ascendente 800→1500Hz
+        buzzer_sweep(800, 1500)
+
+        # Release a rampa col PWM hardware (25/11 Daniele: come il freno quando esce sotto 6 km/h), poi pin libero.
+        vecchio = getattr(self, "speed_limiter_proc", None)
+        if vecchio is None or vecchio.poll() is not None:
+            _porta_freno(RELEASE_ANGLE, "ON: rilascio")
+        self.servo_handle = None
+
+        # 23/11 sera (Daniele): speed_limiter v3 ATTIVO (comanda il freno, max 50°, anti-impuntata) e registra ogni ciclo in
+        # /data/logging/limiter_v3/attivo_*.csv. Il vecchio speed_limiter.py NON parte più.
+        sl_dir = f"{HOME_DIR}/wip/Moving-One-Billion-People-/projects/asmile/pi/autonomous"
+        vecchio = getattr(self, "speed_limiter_proc", None)
+        if vecchio is not None and vecchio.poll() is None:
+            # 24/11 (asmile-sicurezza): riattivazione per recorder morto col limiter vivo -> NON lanciarne un secondo
+            print(f"[SWITCH] speed_limiter v3 gia' vivo PID={vecchio.pid}: non ne lancio un altro")
+        else:
+          # 25/11 Daniele: OMBRA (il limiter calcola e registra ma NON tocca il freno; frena Daniele) se esiste /data/limiter_ombra
+          sl_args = ["python3", "-u", "-m", "speed_limiter_v3.hw"] + (["--ombra"] if os.path.exists("/data/limiter_ombra") else [])
+          self.speed_limiter_proc = subprocess.Popen(
+              sl_args,
+              cwd=sl_dir,
+              stdout=open("/tmp/speed_limiter_v3.log", "w"),
+              stderr=subprocess.STDOUT,
+          )
+          print(f"[SWITCH] speed_limiter v3 {'OMBRA' if '--ombra' in sl_args else 'ATTIVO'} started PID={self.speed_limiter_proc.pid}")
+
+        # Clean up any zombie camera processes
+        self._kill_camera_zombies()
+
+        # Start training recorder
+        self.recorder_proc = self._start_recorder()
+        time.sleep(RECORDER_STARTUP_WAIT)
+        if self._recorder_is_alive():
+            print("[SWITCH] training recorder started OK")
+        else:
+            print("[SWITCH] training recorder failed on first try, watchdog will retry")
+
+        self.last_watchdog = time.monotonic()
+
+        if follow_me:
+            follow_me_main = f"{HOME_DIR}/wip/Moving-One-Billion-People-/projects/asmile/follow_me/main.py"
+            arducam = f"{HOME_DIR}/streaming/arducam_fix.so"
+            subprocess.Popen(
+                ["sudo", "-u", ASMILE_USER,
+                 "env", f"LD_PRELOAD={arducam}",
+                 "python3", "-u", follow_me_main],
+                stdout=open("/tmp/follow_me.log", "w"),
+                stderr=subprocess.STDOUT)
+            print("[SWITCH] FOLLOW-ME mode activated!")
+        else:
+            print("[SWITCH] Normal logging mode")
+
+    def deactivate(self, force=False):
+        """Switch turned OFF — BRAKE FIRST, then stop services."""
+        if not self.active and not force:
+            return
+        self.active = False
+
+        # Audio cue: switch OFF → sweep discendente 1500→800Hz
+        buzzer_sweep(1500, 800)
+        self.recorder_proc = None
+
+        # Ferma speed_limiter PRIMA del pulse di parking (gli evita di combattere col servo)
+        if hasattr(self, "speed_limiter_proc") and self.speed_limiter_proc is not None:
+            try:
+                self.speed_limiter_proc.terminate()
+                self.speed_limiter_proc.wait(timeout=2)
+            except Exception:
+                try:
+                    self.speed_limiter_proc.kill()
+                except Exception:
+                    pass
+            self.speed_limiter_proc = None
+            print("[SWITCH] speed_limiter stopped")
+
+        # Switch OFF (25/11 Daniele): dal punto in cui il limiter l'ha lasciato (niente passaggio da 0) allo stazionamento
+        # OFF_ANGLE a rampa col PWM hardware, poi pin libero. A pin libero il SER0062 tiene da solo; se spinge contro l'olio
+        # (corrente > 0,4 A) arretra di 2 gradi alla volta a rampa, mai sotto PARK_MIN_ANGLE. Senza INA resta a OFF_ANGLE.
+        ang = _porta_freno(OFF_ANGLE, "OFF: freno di stazionamento")
+        for _ in range(12):
+            if ang is None:
+                break
+            time.sleep(0.3)
+            i_a = _corrente_servo_a()
+            if i_a is None or i_a < PARK_MAX_HOLD_A or ang - 2 < PARK_MIN_ANGLE:
+                break
+            print(f"[SWITCH] stazionamento: corrente {i_a:.2f} A a pin libero -> arretro a {ang - 2}°")
+            ang = _porta_freno(ang - 2, "OFF: arretro (corrente %.2f A)" % i_a)
+        self.servo_handle = None
+        print("[SWITCH] pin libero — servo fermo, niente segnale")
+
+        # Clean up the rest
+        subprocess.run(["pkill", "-f", "follow_me/main.py"], capture_output=True)
+        self._kill_camera_zombies()
+        print("[SWITCH] services stopped")
+
+    def cleanup(self):
+        if hasattr(self, 'servo_handle') and self.servo_handle:
+            try:
+                lgpio.gpiochip_close(self.servo_handle)
+            except Exception:
+                pass
+        lgpio.gpiochip_close(self.h)
+
+
+def main():
+    sw = MasterSwitch()
+
+    print("=" * 50)
+    print("  ASMILE MASTER SWITCH")
+    print("=" * 50)
+    print(f"GPIO {SWITCH_PIN} (Pin 11) — pull-up, switch to GND (Pin 9)")
+    print(f"ON         = brake released, logging active")
+    print(f"ON-OFF-ON  = follow-me mode (within 1s)")
+    print(f"OFF        = freno a {OFF_ANGLE}° (stazionamento) e pin libero, all stopped")
+
+    # Switch state log
+    SWITCH_LOG = "/tmp/asmile_switch.csv"
+    with open(SWITCH_LOG, "a") as f:
+        if os.path.getsize(SWITCH_LOG) == 0:
+            f.write("timestamp,event,state\n")
+
+    def log_switch(event, state):
+        ts = datetime.now().isoformat(timespec="milliseconds")
+        with open(SWITCH_LOG, "a") as f:
+            f.write(f"{ts},{event},{state}\n")
+        print(f"[SWITCH] {ts} {event} → {state}")
+
+    # Read initial state and act
+    initial = sw.read_switch()
+    log_switch("boot", "ON" if initial else "OFF")
+
+    if initial:
+        sw.activate()
+    else:
+        sw.deactivate(force=True)
+
+    last_state = initial
+    last_change = time.monotonic()
+
+    try:
+        while True:
+            current = sw.read_switch()
+
+            if current != last_state:
+                now = time.monotonic()
+                if (now - last_change) * 1000 >= DEBOUNCE_MS:
+                    last_state = current
+                    last_change = now
+
+                    if current:
+                        log_switch("switch_on", "ON")
+                        sw.activate(follow_me=False)
+                        last_state = True
+                        last_change = time.monotonic()
+                    else:
+                        log_switch("switch_off", "OFF")
+                        sw.deactivate()
+
+            # Watchdog: check recorder is alive while switch is ON
+            sw.watchdog_check()
+
+            time.sleep(CHECK_INTERVAL)
+
+    except KeyboardInterrupt:
+        print("\n[SWITCH] Stopped")
+    finally:
+        sw.cleanup()
+
+
+if __name__ == "__main__":
+    main()
