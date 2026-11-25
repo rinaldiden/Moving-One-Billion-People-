@@ -56,7 +56,7 @@ SESSIONS_DIR = Path.home() / "training_sessions"
 CAM_WIDTH = 1280
 CAM_HEIGHT = 800
 FPS = 15
-BITRATE = 500_000  # 500kbps per camera (guida normale)
+BITRATE = 5_000_000  # 25/11 Daniele: 5 Mbps per camera anche in guida (profondita stereo: a 500 kbps solo 13-18% pixel validi)
 # Calibrazione: a 500 kbps i corner ChArUco si spostano ~0.3 px (RMS mono 0.55 > gate 0.5, sessione 2026-11-10)
 BITRATE_CALIB = 6_000_000
 # master_switch lancia il recorder senza argomenti: per la calibrazione basta creare questo file (in /tmp, sparisce al riavvio)
