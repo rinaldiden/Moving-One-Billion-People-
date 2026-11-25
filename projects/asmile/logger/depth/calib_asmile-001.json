@@ -79,13 +79,13 @@
  "d0_px": 0.0,
  "modello": "k1k2k3",
  "holdout_blocks": 30,
- "stato": "PROVVISORIA (Daniele 2026-11-11): B30 3a ripresa; offset vicino ~11 cm ACCETTATO per questa calib; muro 5.1 m misurato = 5.11 m stereo, manubrio 1.80 m = 1.69 m. Da rifare su set definitivo con schema a terra fisso.",
+ "stato": "VALIDATA (Daniele 2026-11-25: \"calibrazione 001 validata e ok\"; distanze verificate fino a 20 m). Era: PROVVISORIA (Daniele 2026-11-11): B30 3a ripresa; offset vicino ~11 cm ACCETTATO per questa calib; muro 5.1 m misurato = 5.11 m stereo, manubrio 1.80 m = 1.69 m. Da rifare su set definitivo con schema a terra fisso.",
  "cam_height_m": 0.825,
  "camera_hw": {
   "model": "Inno-Maker CAM-MIPIOV9281V2, 2 moduli separati",
   "sensor": "OV9281 mono global shutter 1280x800"
  },
- "valid_for": "SOLO asmile #001 (asmile-tirano, hostname asmile / Tailscale asmile-001) con QUESTO set di 2 camere OV9281 come montate il 2026-11-09 (order=RL: cam0=file *_left=fisicamente DESTRA). NON vale per asmile2, asmile-logger o altre unit\u00e0; se si smonta/sposta una camera va rifatta.",
+ "valid_for": "SOLO asmile #001 (asmile-tirano, hostname asmile / Tailscale asmile-001) con QUESTO set di 2 camere OV9281 come montate il 2026-11-09 (order=RL: cam0=file *_left=fisicamente DESTRA). NON vale per asmile2, asmile-logger o altre unità; se si smonta/sposta una camera va rifatta.",
  "baseline_tape_mm": 198.0,
  "method": "ChArUco 50 mm, calib_charuco_dual.py (3a ripresa 2026-11-11, 5 sessioni, holdout 30 blocchi)",
  "source": "calib_asmile-001.CANDIDATO_v2_B30.json",
