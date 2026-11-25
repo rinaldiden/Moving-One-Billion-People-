@@ -189,10 +189,10 @@
   "incrementale": {
    "attivo": true,
    "v_filtro_s": 0.8,
-   "k_v_deg_s_per_kmh": 3.0,
+   "k_v_deg_s_per_kmh": 4.0,
    "su_max_deg_s": 8.0,
-   "dec_ok_ms2": 0.45,
-   "k_dec_deg_s_per_ms2": 40.0,
+   "dec_ok_ms2": 0.5,
+   "k_dec_deg_s_per_ms2": 30.0,
    "giu_max_deg_s": 30.0,
    "_note": "Daniele 25/11 giro 5: progressivo, mai a scatti. Chiude in base alla VELOCITA' media su una pedalata (filtro 0,8 s): 4 gradi/s per ogni km/h sopra l'obiettivo (max 8), sotto l'obiettivo riapre allo stesso modo. Rilascio in base alla DECEL: oltre 0,6 m/s2 toglie 30 gradi/s per m/s2 in eccesso (max 30)."
   }
