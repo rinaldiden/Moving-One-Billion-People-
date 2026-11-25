@@ -36,27 +36,18 @@ import numpy as np
 
 MODELS = os.path.expanduser("~/.asmile_seg_models")
 
-# Lista delle COSE (prompt testuali: identici per SAM 3, YOLOE maestro e allievo)
-THINGS = ["person", "child", "bicycle", "motorcycle", "car", "van", "truck", "bus", "tractor",
-          "dog", "cat", "stop sign", "traffic sign", "traffic light", "traffic cone", "bollard",
-          "pole", "barrier", "trash can", "bench", "stroller", "wheelchair",
-          "gate", "fence"]   # cancelli aggiunti 2026-11-09 (provati "railing"/"metal grille": falsi positivi su spigoli edifici e calandre)
+# Classi: UN SOLO elenco in classi.json (lista di Daniele 25/11, si allunga in fondo; non riordinare).
+# Cose = prompt testuali identici per SAM 3, YOLOE maestro e allievo; sfondo = Mapillary -> nostre superfici.
+CLASSI_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "classi.json")
+_CL = json.load(open(CLASSI_FILE))
+THINGS = [c["prompt"] for c in _CL["cose"]]
+THINGS_IT = {c["prompt"]: c.get("it", c["prompt"]) for c in _CL["cose"]}
+THINGS_GRUPPO = {c["prompt"]: c.get("gruppo", "") for c in _CL["cose"]}
+DEPTH_NON_AFFIDABILE = {c["prompt"] for c in _CL["cose"] if c.get("depth_affidabile") is False}
 TRACK_EVERY = {"traffic sign": 5, "stop sign": 5, "traffic light": 5}   # cartelli: 3 Hz basta
-
-# SFONDO: classi Mapillary → nostre superfici (colori Cityscapes dove esistono)
-STUFF = {
-    "strada":      ([13, 14, 7, 10, 24], (128, 64, 128)),     # Road, Service/Bike Lane, Parking, segnaletica
-    "strisce":     ([8, 23], (255, 255, 255)),               # attraversamento pedonale
-    "marciapiede": ([15, 11, 9], (244, 35, 232)),            # Sidewalk, Pedestrian Area, Curb Cut
-    "cordolo":     ([2], (196, 196, 0)),
-    "prato":       ([29, 26, 28], (152, 251, 152)),           # Terrain, Sand, Snow
-    "alberi":      ([30], (107, 142, 35)),
-    "edifici":     ([17, 16, 18], (70, 70, 70)),
-    "muri":        ([6, 3, 4, 5], (102, 102, 156)),           # Wall, Fence, Guard Rail, Barrier
-    "cielo":       ([27], (70, 130, 180)),
-    "tombino":     ([36, 41], (0, 255, 255)),
-    "buca":        ([43], (0, 0, 255)),                      # solo indizio: le buche vanno con la depth
-}
+STUFF = {c["nome"]: (c["mapillary"], tuple(c["colore"])) for c in _CL["sfondo"]}
+STUFF_GUIDABILE = [i for i, c in enumerate(_CL["sfondo"]) if c.get("guidabile")]
+CLASSI_VERSIONE = _CL.get("versione", "")
 
 
 def video_frames(path, max_frames=None):

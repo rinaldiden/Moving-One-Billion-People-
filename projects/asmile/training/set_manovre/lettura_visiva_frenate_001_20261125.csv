@@ -1,0 +1,31 @@
+n,visivo,conf,nota
+1,auto_ferma_laterale,media,camion fermo a destra: si passa stretti fra camion e muro (video parte a t-1.8 s)
+2,curva,media,vicolo stretto con angolo di muro: la strada gira; a t-4 si sta ancora passando il camion
+3,rallentamento_libero_altro,bassa,vicolo stretto sotto arco e poi dritto; frenata piccola 11->9
+4,persona_bici,alta,persona con ombrello in mezzo al vicolo a ~8-10 m
+5,curva,alta,facciata con portone davanti: la strada svolta
+6,curva,media,angolo fra case e facciata davanti: svolta
+7,curva,media,giro attorno all'angolo di una casa e sbocco su strada piu' larga (potrebbe essere incrocio)
+8,auto_in_arrivo,media,entrata parcheggio: auto che viene incontro al centro a ~15 m
+9,auto_in_arrivo,alta,la stessa auto arriva davanti all'ingresso del parcheggio: stop
+10,auto_ferma_laterale,bassa,parcheggio con auto ferme ai due lati; una molto vicina a destra
+11,incrocio_immissione,alta,sbocco su strada con linea bianca a terra: stop prima di immettersi
+12,rallentamento_libero_altro,bassa,rettilineo; cartello triangolare (dosso?) + limite 40 a ~20-30 m; auto lontana
+13,curva,media,rettilineo poi svolta a sinistra in una laterale (auto parcheggiata all'imbocco)
+14,curva,media,svolta stretta a sinistra accanto a un pannello di legno (cancello) e un'auto ferma
+15,auto_ferma_laterale,alta,vicolo: auto parcheggiata a sinistra vicinissima, si passa accanto (stop)
+16,rallentamento_libero_altro,media,passaggio stretto sotto un arco (galleria corta)
+17,curva,media,uscita dall'arco e strada che piega
+18,curva,media,giro attorno all'angolo; paletti a lato e cartello a cavalletto sul marciapiede
+19,ostacolo_traiettoria,bassa,fila di paletti davanti (a destra/centro) a ~6-8 m; non chiaro se sono sulla traiettoria
+20,incrocio_immissione,bassa,la via sbuca in una piazza/incrocio con due auto ferme a ~15-20 m
+21,incrocio_immissione,alta,uscita dal vicolo su strada con negozi: stop allo sbocco
+22,incrocio_immissione,media,svolta attorno alla vetrina d'angolo nella piazza (segue #21)
+23,auto_in_arrivo,alta,SUV che viene incontro nella via
+24,incrocio_immissione,media,incrocio con furgone che passa da sx a dx + auto; stop
+25,auto_ferma_laterale,bassa,auto parcheggiata a destra vicina + un'altra auto in mezzo alla via a ~15 m (ferma o in arrivo?)
+26,persona_bici,media,due persone che camminano verso di noi a sinistra a ~5-8 m; poi paletti e stop
+27,curva,media,piazza con foglie: si gira
+28,curva,alta,muro davanti (vicolo cieco apparente): curva stretta; stop
+29,rallentamento_libero_altro,bassa,vicolo dritto, bici parcheggiata a sinistra: inizio dello stop di #30 (arrivo?)
+30,rallentamento_libero_altro,bassa,stop nel vicolo accanto a un portone con bici parcheggiate: probabile arrivo/destinazione

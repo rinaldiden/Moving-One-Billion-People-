@@ -1,0 +1,99 @@
+unita,sessione,cartella,esito,data,durata_s,fix_gps,moto_s,metri,risoluzione,bitrate_kbps,encoder_sterzo,vesc,frenate,sterzate
+asmile2,session_20260416_192317,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260416_192317,ok,2026-04-16T19:23:20,478.5,1.0,78.1,131.1,1280x400,500.0,True,False,8.0,3.0
+asmile2,session_20260417_172512,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260417_172512,ok,2026-04-17T17:25:15,90.9,0.0,0.0,0.0,1280x400,500.0,True,False,0.0,0.0
+asmile2,session_20260417_181452,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260417_181452,ok,2026-04-17T18:14:56,1177.2,1.0,249.7,686.6,1280x400,500.0,True,False,32.0,22.0
+asmile2,session_20260417_183442,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260417_183442,ok,2026-04-17T18:34:45,429.2,0.67,228.5,664.2,1280x400,500.0,True,False,1.0,2.0
+asmile2,session_20260418_153216,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260418_153216,ok,2026-04-18T15:32:19,344.9,0.65,194.6,657.3,1280x400,500.0,True,False,2.0,2.0
+asmile2,session_20260418_153745,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260418_153745,ok,2026-04-18T15:37:48,315.3,0.89,252.0,952.5,1280x400,500.0,True,False,5.0,4.0
+asmile2,session_20260418_154344,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260418_154344,ok,2026-04-18T15:43:47,141.8,0.0,0.0,0.0,1280x400,500.0,True,False,0.0,0.0
+asmile2,session_20260418_155054,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260418_155054,ok,2026-04-18T15:50:57,373.0,1.0,236.1,889.5,1280x400,500.0,True,False,19.0,7.0
+asmile2,session_20260420_083232,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260420_083232,ok,2026-04-20T09:33:26,37.2,0.0,0.0,0.0,1280x400,500.0,True,False,0.0,0.0
+asmile2,session_20260421_132434,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260421_132434,ok,2026-04-21T13:24:37,680.8,1.0,0.0,0.0,1280x400,500.0,True,False,0.0,0.0
+asmile2,session_20260421_141734,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260421_141734,ok,2026-04-21T14:17:37,609.9,1.0,0.0,0.0,1280x400,500.0,True,False,0.0,0.0
+asmile2,session_20260421_142017,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260421_142017,ok,2026-04-21T14:20:20,100.4,1.0,0.0,0.0,1280x400,500.0,True,False,0.0,0.0
+asmile2,session_20260421_144000,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260421_144000,ok,2026-04-21T14:40:04,1461.3,1.0,263.4,455.7,1280x400,500.0,True,False,6.0,3.0
+asmile2,session_20260421_144106,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260421_144106,ok,2026-04-21T14:41:09,32.6,1.0,0.0,0.0,1280x400,500.0,True,False,0.0,0.0
+asmile2,session_20260422_162914,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260422_162914,ok,2026-04-22T16:29:17,241.7,1.0,0.0,0.0,1280x400,500.0,True,False,0.0,0.0
+asmile2,session_20260501_111937,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260501_111937,ok,2026-05-01T11:19:40,409.6,1.0,341.8,948.0,1280x400,500.0,True,False,21.0,3.0
+asmile2,session_20260501_112439,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260501_112439,ok,2026-05-01T11:24:42,376.9,0.98,322.3,1001.7,1280x400,500.0,True,False,33.0,5.0
+asmile2,session_20260501_161106,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260501_161106,ok,2026-05-01T16:11:10,715.9,1.0,211.4,410.1,1280x400,500.0,True,False,20.0,2.0
+asmile2,session_20260501_162715,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260501_162715,ok,2026-05-01T16:27:18,166.8,1.0,118.8,285.5,1280x400,500.0,True,False,9.0,2.0
+asmile2,session_20260502_203623,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260502_203623,ok,2026-05-02T20:36:26,744.1,0.13,82.9,217.5,1280x400,500.0,True,False,0.0,0.0
+asmile2,session_20260503_090454,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260503_090454,ok,2026-05-03T09:04:57,2380.9,0.57,167.7,249.3,1280x400,500.0,True,False,8.0,0.0
+asmile2,session_20260505_093113,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260505_093113,ok,2026-05-05T09:31:17,709.4,1.0,371.9,602.4,1280x400,500.0,True,False,8.0,2.0
+asmile2,session_20260505_094915,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260505_094915,ok,2026-05-05T09:49:18,612.9,1.0,434.0,820.4,1280x400,500.0,True,False,22.0,0.0
+asmile2,session_20260505_101238,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260505_101238,ok,2026-05-05T10:12:41,208.8,0.0,0.0,0.0,1280x400,500.0,True,False,0.0,0.0
+asmile2,session_20260505_102748,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260505_102748,ok,2026-05-05T10:27:51,204.5,1.0,175.7,479.3,1280x400,500.0,True,False,6.0,0.0
+asmile2,session_20260505_103315,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260505_103315,ok,2026-05-05T10:33:18,111.3,1.0,101.8,292.0,1280x400,500.0,True,False,3.0,0.0
+asmile2,session_20260505_104231,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260505_104231,ok,2026-05-05T10:42:34,98.3,1.0,77.2,168.4,1280x400,500.0,True,False,2.0,2.0
+asmile2,session_20260505_105014,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260505_105014,ok,2026-05-05T10:50:17,68.2,1.0,32.2,55.2,1280x400,500.0,True,False,1.0,0.0
+asmile2,session_20260507_172809,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260507_172809,ok,2026-05-07T17:28:12,77.2,1.0,26.7,31.7,1280x400,500.0,False,True,3.0,0.0
+asmile2,session_20260507_173209,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260507_173209,ok,2026-05-07T17:32:12,31.0,1.0,0.0,0.0,1280x400,500.0,False,True,0.0,0.0
+asmile2,session_20260507_174100,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260507_174100,ok,2026-05-07T17:41:03,40.7,1.0,0.0,0.0,1280x400,500.0,False,True,0.0,0.0
+asmile2,session_20260507_175349,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260507_175349,corta o senza video,,,,,,,,,,,
+asmile2,session_20260508_105732,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260508_105732,ok,2026-05-08T10:57:35,39.0,0.0,0.0,0.0,2560x800,2000.0,False,True,0.0,0.0
+asmile2,session_20260508_162323,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260508_162323,corta o senza video,,,,,,,,,,,
+asmile2,session_20260508_164054,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260508_164054,ok,2026-05-08T16:40:58,49.7,1.0,42.3,346.3,2560x800,2000.0,False,True,3.0,0.0
+asmile2,session_20260508_164515,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260508_164515,ok,2026-05-08T16:45:18,1111.8,1.0,1030.3,7952.7,2560x800,2000.0,False,True,2.0,1.0
+asmile2,session_20260508_191226,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260508_191226,ok,2026-05-08T19:12:30,474.0,0.11,0.0,0.0,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260508_205916,/Users/danielerinaldi/progetti/Moving-One-Billion-People-/projects/asmile/segmentazione/da_segmentare/session_20260508_205916,ok,2026-05-08T20:59:19,1330.8,0.99,940.1,1761.3,2560x800,2000.0,True,True,14.0,0.0
+asmile2,session_20260510_103337,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_103337,ok,2026-05-10T10:33:40,650.6,0.28,130.1,425.3,2560x800,2000.0,True,True,3.0,0.0
+asmile2,session_20260510_114146,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_114146,ok,2026-05-10T11:41:49,345.5,1.0,280.8,1019.8,2560x800,2000.0,True,True,13.0,0.0
+asmile2,session_20260510_131150,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_131150,ok,2026-05-10T13:11:53,19.9,0.0,0.0,0.0,2560x800,2000.0,False,True,0.0,0.0
+asmile2,session_20260510_131945,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_131945,ok,2026-05-10T13:19:48,212.0,0.0,0.0,0.0,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260510_132339,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_132339,illeggibile: [Errno 2] No such file or directory: '/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_132339/metadata.json',,,,,,,,,,,
+asmile2,session_20260510_132627,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_132627,ok,2026-05-10T13:26:30,32.3,0.0,0.0,0.0,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260510_132711,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_132711,corta o senza video,,,,,,,,,,,
+asmile2,session_20260510_132720,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_132720,corta o senza video,,,,,,,,,,,
+asmile2,session_20260510_132731,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_132731,ok,2026-05-10T13:27:34,65.3,0.0,0.0,0.0,2560x800,2000.0,False,True,0.0,0.0
+asmile2,session_20260510_133154,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_133154,corta o senza video,,,,,,,,,,,
+asmile2,session_20260510_133322,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_133322,ok,2026-05-10T13:33:25,44.5,0.0,0.0,0.0,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260510_133415,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_133415,corta o senza video,,,,,,,,,,,
+asmile2,session_20260510_133432,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_133432,corta o senza video,,,,,,,,,,,
+asmile2,session_20260510_133443,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_133443,ok,2026-05-10T13:34:47,40.0,0.0,0.0,0.0,2560x800,2000.0,False,True,0.0,0.0
+asmile2,session_20260510_133532,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_133532,ok,2026-05-10T13:35:35,19.9,0.0,0.0,0.0,2560x800,2000.0,False,True,0.0,0.0
+asmile2,session_20260510_133757,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_133757,corta o senza video,,,,,,,,,,,
+asmile2,session_20260510_133807,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_133807,ok,2026-05-10T13:38:10,81.9,0.0,0.0,0.0,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260510_134251,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_134251,ok,2026-05-10T13:42:54,80.0,0.0,0.0,0.0,2560x800,2000.0,False,True,0.0,0.0
+asmile2,session_20260510_134416,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_134416,corta o senza video,,,,,,,,,,,
+asmile2,session_20260510_134645,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_134645,corta o senza video,,,,,,,,,,,
+asmile2,session_20260510_134813,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_134813,corta o senza video,,,,,,,,,,,
+asmile2,session_20260510_134838,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_134838,corta o senza video,,,,,,,,,,,
+asmile2,session_20260510_134854,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_134854,corta o senza video,,,,,,,,,,,
+asmile2,session_20260510_134930,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_134930,corta o senza video,,,,,,,,,,,
+asmile2,session_20260510_180550,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_180550,ok,2026-05-10T18:05:53,74.0,0.0,0.0,0.0,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260510_180730,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_180730,ok,2026-05-10T18:07:33,44.4,0.0,0.0,0.0,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260510_180820,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_180820,ok,2026-05-10T18:08:24,58.5,0.0,0.0,0.0,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260510_181802,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_181802,ok,2026-05-10T18:18:05,110.1,0.0,0.0,0.0,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260510_181958,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_181958,ok,2026-05-10T18:20:01,539.7,0.58,126.3,269.0,2560x800,2000.0,True,True,27.0,1.0
+asmile2,session_20260510_183141,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_183141,ok,2026-05-10T18:31:44,290.3,1.0,175.6,369.6,2560x800,2000.0,True,True,18.0,1.0
+asmile2,session_20260510_184943,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_184943,corta o senza video,,,,,,,,,,,
+asmile2,session_20260510_184954,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260510_184954,corta o senza video,,,,,,,,,,,
+asmile2,session_20260519_001119,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_001119,ok,2026-05-19T00:11:22,1963.5,0.52,0.0,0.0,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260519_004459,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_004459,corta o senza video,,,,,,,,,,,
+asmile2,session_20260519_005300,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_005300,ok,2026-05-19T00:53:03,19.3,0.95,0.0,0.0,2560x800,2000.0,False,True,0.0,0.0
+asmile2,session_20260519_005815,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_005815,ok,2026-05-19T00:58:18,672.7,0.99,0.0,0.0,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260519_013222,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_013222,ok,2026-05-19T01:32:25,25.3,1.0,0.0,0.0,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260519_013455,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_013455,corta o senza video,,,,,,,,,,,
+asmile2,session_20260519_015012,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_015012,ok,2026-05-19T01:50:15,289.2,0.99,11.1,13.4,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260519_015509,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_015509,corta o senza video,,,,,,,,,,,
+asmile2,session_20260519_114041,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_114041,ok,2026-05-19T11:40:44,195.7,1.0,67.9,103.7,2560x800,2000.0,True,True,0.0,1.0
+asmile2,session_20260519_151856,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_151856,ok,2026-05-19T15:18:59,34.3,0.0,0.0,0.0,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260519_175712,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_175712,corta o senza video,,,,,,,,,,,
+asmile2,session_20260519_175721,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_175721,ok,2026-05-19T17:57:24,11.9,0.0,0.0,0.0,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260519_175744,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_175744,ok,2026-05-19T17:57:47,53.5,0.0,0.0,0.0,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260519_175843,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_175843,corta o senza video,,,,,,,,,,,
+asmile2,session_20260519_175938,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_175938,corta o senza video,,,,,,,,,,,
+asmile2,session_20260519_180650,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_180650,corta o senza video,,,,,,,,,,,
+asmile2,session_20260519_180715,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_180715,ok,2026-05-19T18:07:18,21.4,1.0,0.0,0.0,2560x800,2000.0,False,True,0.0,0.0
+asmile2,session_20260519_180801,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_180801,corta o senza video,,,,,,,,,,,
+asmile2,session_20260519_180935,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_180935,ok,2026-05-19T18:09:38,71.3,1.0,0.0,0.0,2560x800,2000.0,False,True,0.0,0.0
+asmile2,session_20260519_181142,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_181142,corta o senza video,,,,,,,,,,,
+asmile2,session_20260519_181200,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_181200,corta o senza video,,,,,,,,,,,
+asmile2,session_20260519_191027,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260519_191027,corta o senza video,,,,,,,,,,,
+asmile2,session_20260520_170549,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260520_170549,corta o senza video,,,,,,,,,,,
+asmile2,session_20260520_173243,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260520_173243,ok,2026-05-20T17:32:46,58.1,0.98,0.0,0.0,2560x800,2000.0,False,True,0.0,0.0
+asmile2,session_20260520_173348,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260520_173348,ok,2026-05-20T17:33:52,11.9,1.0,0.0,0.0,2560x800,2000.0,True,True,0.0,0.0
+asmile2,session_20260520_173406,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260520_173406,corta o senza video,,,,,,,,,,,
+asmile2,session_20260520_173557,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260520_173557,corta o senza video,,,,,,,,,,,
+asmile2,session_20260520_173606,/Users/danielerinaldi/Desktop/asmile2_poschiavo_20260519-20/session_20260520_173606,corta o senza video,,,,,,,,,,,
