@@ -31,3 +31,4 @@
 - 2026-11-25 10:57 001: freno: riapre veloce sotto obiettivo, chiude max 5, dec_ok 0.3 
 - 2026-11-25 12:19 001: freno: fascia del morso (-2/+3, chiude 2, apre 4 gradi/s) 
 - 2026-11-25 14:05 001: freno: corsa veloce 25 gradi poi fascia del morso 
+- 2026-11-25 14:06 001: freno: 25 gradi in un colpo solo 
