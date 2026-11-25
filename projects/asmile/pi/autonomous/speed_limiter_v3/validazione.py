@@ -54,10 +54,10 @@ LIMITI = {
     "ina219.ma_rilascio_max": (200.0, 1500.0), "ina219.rilascio_tempo_s": (0.1, 2.0),
     "log_hz": (1, 50),
     "fallback.tetto_deg": (0.0, 50.0), "fallback.imu_scala_vs_enc": (1.0, 3.0),
-    "freno.contatto_min_deg": (3.0, 10.0), "freno.contatto_max_deg": (10.0, 30.0), "freno.contatto_default_deg": (3.0, 15.0), "freno.rampa_cerca_deg_s": (1.0, 12.0),
+    "freno.contatto_min_deg": (3.0, 22.0), "freno.contatto_max_deg": (10.0, 35.0), "freno.contatto_default_deg": (3.0, 25.0), "freno.rampa_cerca_deg_s": (1.0, 12.0),   # 25/11: #001 morde da 21-24 gradi (misurato)
     "freno.margine_contatto_deg": (0.5, 6.0), "freno.rampa_avvicinamento_deg_s": (5.0, 30.0),
     "freno.rampa_fine_su_deg_s": (0.5, 12.0), "freno.rampa_fine_su_sopra15_deg_s": (0.5, 25.0),
-    "freno.rampa_fine_giu_deg_s": (0.5, 12.0),
+    "freno.rampa_fine_giu_deg_s": (0.5, 25.0),
     "regolatore.v_obiettivo_kmh": (4.0, 19.0), "regolatore.ti_s": (2.0, 30.0), "regolatore.guadagno_anello_1_s": (0.2, 2.0), "regolatore.g_default_ms2_per_deg": (0.03, 0.6), "regolatore.kp_min_deg_per_ms": (0.5, 10.0), "regolatore.kp_max_deg_per_ms": (2.0, 30.0), "regolatore.contatto_rate_max_deg_s": (1.0, 12.0), "regolatore.contatto_a_nat_max_ms2": (0.1, 1.5), "regolatore.kp_sopra_rel": (0.0, 3.0), "regolatore.contatto_soglia_fit_a_ms2": (0.3, 1.5), "regolatore.contatto_conferme": (1, 10), "regolatore.gia_margine_ms2": (0.0, 0.6), "regolatore.salita_dura_decel_ms2": (0.0, 0.5), "regolatore.contatto_coerenza_deg": (0.5, 3.0), "regolatore.contatto_salto_max_deg": (0.5, 3.0), "regolatore.contatto_soglia_anticipo_ms2": (0.2, 1.0), "regolatore.contatto_anticipo_cicli": (3, 50), "freno.contatto_scadenza_s": (3600, 2592000),
     "regolatore.contatto_alfa": (0.05, 1.0), "regolatore.a_nat_tau_s": (0.5, 5.0), "regolatore.ritardo_misura_a_s": (0.0, 1.0),  "regolatore.rilascio_dolce_deg_s": (0.0, 6.0),
     "regolatore.ingaggio_sotto_zona_kmh": (0.0, 3.0), "regolatore.disimpegno_sotto_zona_kmh": (0.5, 5.0),
