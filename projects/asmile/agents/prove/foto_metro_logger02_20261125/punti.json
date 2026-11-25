@@ -1,0 +1,88 @@
+{
+ "calib": "calib_logger02.CANDIDATO_v5_20261124.json",
+ "f_px": 1178.822324531983,
+ "B_m": 0.2,
+ "d0_px": -2.55,
+ "righe": 800,
+ "quando": "2026-11-25 09:45:30",
+ "nota": "distanza diretta = dal punto di mezzo fra le due lenti",
+ "punti": [
+  {
+   "x": 361,
+   "y": 3,
+   "d_px": 103.19,
+   "Z_m": 2.23,
+   "dist_diretta_m": 2.4,
+   "lato_m": -0.51,
+   "alto_m": 0.74,
+   "sd_px": 0.22,
+   "n": 1
+  },
+  {
+   "x": 990,
+   "y": 731,
+   "d_px": 101.38,
+   "Z_m": 2.27,
+   "dist_diretta_m": 2.46,
+   "lato_m": 0.7,
+   "alto_m": -0.65,
+   "sd_px": 0.26,
+   "n": 2
+  },
+  {
+   "x": 796,
+   "y": 582,
+   "d_px": 72.0,
+   "Z_m": 3.16,
+   "dist_diretta_m": 3.23,
+   "lato_m": 0.45,
+   "alto_m": -0.5,
+   "sd_px": 0.01,
+   "n": 3
+  },
+  {
+   "x": 744,
+   "y": 795,
+   "d_px": 62.06,
+   "Z_m": 3.65,
+   "dist_diretta_m": 3.87,
+   "lato_m": 0.36,
+   "alto_m": -1.24,
+   "sd_px": 0.15,
+   "n": 4
+  },
+  {
+   "x": 1036,
+   "y": 361,
+   "d_px": 56.0,
+   "Z_m": 4.03,
+   "dist_diretta_m": 4.26,
+   "lato_m": 1.39,
+   "alto_m": 0.12,
+   "sd_px": 0.13,
+   "n": 5
+  },
+  {
+   "x": 578,
+   "y": 577,
+   "d_px": 52.31,
+   "Z_m": 4.3,
+   "dist_diretta_m": 4.35,
+   "lato_m": -0.18,
+   "alto_m": -0.66,
+   "sd_px": 0.22,
+   "n": 6
+  },
+  {
+   "x": 537,
+   "y": 196,
+   "d_px": 25.0,
+   "Z_m": 8.56,
+   "dist_diretta_m": 8.7,
+   "lato_m": -0.66,
+   "alto_m": 1.45,
+   "sd_px": 0.08,
+   "n": 7
+  }
+ ]
+}

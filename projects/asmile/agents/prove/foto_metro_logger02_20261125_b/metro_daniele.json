@@ -1,0 +1,67 @@
+{
+ "calib": "calib_logger02.CANDIDATO_v5_20261124.json",
+ "foto": "foto_metro.jpg",
+ "nota": "metro di Daniele dal punto di mezzo fra le lenti, 25/11; punto 5 'circa'",
+ "punti": [
+  {
+   "n": 1,
+   "px": [
+    293,
+    553
+   ],
+   "metro_m": 1.95,
+   "calib_m": 2.22,
+   "errore_pct": 13.8
+  },
+  {
+   "n": 2,
+   "px": [
+    989,
+    729
+   ],
+   "metro_m": 2.3,
+   "calib_m": 2.46,
+   "errore_pct": 7.0
+  },
+  {
+   "n": 3,
+   "px": [
+    770,
+    714
+   ],
+   "metro_m": 3.09,
+   "calib_m": 3.29,
+   "errore_pct": 6.5
+  },
+  {
+   "n": 4,
+   "px": [
+    876,
+    553
+   ],
+   "metro_m": 3.2,
+   "calib_m": 3.44,
+   "errore_pct": 7.5
+  },
+  {
+   "n": 5,
+   "px": [
+    1030,
+    357
+   ],
+   "metro_m": 4.0,
+   "calib_m": 4.27,
+   "errore_pct": 6.7
+  },
+  {
+   "n": 6,
+   "px": [
+    1041,
+    182
+   ],
+   "metro_m": 4.1,
+   "calib_m": 4.33,
+   "errore_pct": 5.6
+  }
+ ]
+}
