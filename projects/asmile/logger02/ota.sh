@@ -19,6 +19,10 @@ LOG="$QUI/DEPLOY_LOG.md"
 
 versione() { curl -s -m 8 "http://$A$1/api/stato" | python3 -c "import json,sys;print(json.load(sys.stdin)['versione'])" 2>/dev/null; }
 
+versione_paziente() {   # 25/11: dopo il riavvio la scheda puo' sparire 1-2 min (wifi/Tailscale): vuoto = riprovo, non "tornata indietro"
+    local v i; for i in 1 2 3 4 5 6 7 8 9 10 11 12; do v=$(versione "$1"); [ -n "$v" ] && { echo "$v"; return; }; sleep 10; done
+}
+
 aspetta() {   # aspetta che la scheda risponda con una versione diversa da $2 (max 150 s)
     local pref=$1 prima=$2 t0=$(date +%s) v
     while [ $(( $(date +%s) - t0 )) -lt 150 ]; do
@@ -63,15 +67,15 @@ print(g(0x10,0x30),g(0x60,0x70),g(0x50,0x60))")
         r=$(curl -s -m 150 -X POST --data-binary @"$BIN" "http://$A$pref/ota")
         echo "$nome tentativo $tentativo: $r"
         if dopo=$(aspetta "$pref" "$prima"); then
-            sleep 20; dopo=$(versione "$pref")          # il ritorno automatico avviene nei primi secondi
+            sleep 20; dopo=$(versione_paziente "$pref")   # il ritorno automatico avviene nei primi secondi
             if [ "$dopo" = "$atteso" ]; then
                 # la guardia OTA conferma a ~3 min: un reset in mezzo = rollback silenzioso. Ricontrollo dopo ~4 min.
-                echo "$nome: ricontrollo fra 4 minuti (guardia OTA)..."; sleep 240; dopo=$(versione "$pref")
+                echo "$nome: ricontrollo fra 4 minuti (guardia OTA)..."; sleep 240; dopo=$(versione_paziente "$pref")
                 [ "$dopo" = "$atteso" ] && { ok=1; break; }
-                echo "$nome dopo 4 min gira «$dopo» invece di «$atteso»: rollback silenzioso della guardia"
+                echo "$nome dopo 4 min gira «${dopo}» invece di «${atteso}»: rollback silenzioso della guardia"
                 scrivi_log "$nome" "$prima" "$dopo" "TORNATO INDIETRO dopo 4 min ($GIT)"; exit 1
             fi
-            echo "$nome gira «$dopo» invece di «$atteso»: il firmware nuovo è tornato indietro (crash all'avvio?)"
+            echo "$nome gira «${dopo}» invece di «${atteso}»: il firmware nuovo è tornato indietro (crash all'avvio?)"
             scrivi_log "$nome" "$prima" "$dopo" "TORNATO INDIETRO ($GIT)"; exit 1
         fi
     done
