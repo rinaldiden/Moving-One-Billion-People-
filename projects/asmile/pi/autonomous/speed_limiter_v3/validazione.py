@@ -48,7 +48,7 @@ LIMITI = {
     "anti_impuntata.tetto_precoce.dec_imu_ms2": (2.0, 5.0), "anti_impuntata.tetto_precoce.frazione": (0.3, 1.0),
     "anti_impuntata.rilascio_gradi": (3.0, 25.0), "anti_impuntata.ancora_giu_dps": (0.5, 10.0),
     "anti_impuntata.fermo_s": (0.1, 2.0), "anti_impuntata.ripresa_rampa_deg_s": (0.5, 6.0),
-    "anti_impuntata.ripresa_rampa_s": (1.0, 10.0),
+    "anti_impuntata.ripresa_rampa_s": (1.0, 10.0), "anti_impuntata.dec_enc_conferma_ms2": (0.0, 2.0), "anti_impuntata.attesa_piano_max_s": (0.5, 5.0),
     "ina219.ma_fermo_max": (300.0, 2500.0), "ina219.tempo_s": (0.3, 3.0), "ina219.arretra_deg": (1.0, 10.0),
     "ina219.servo_fermo_s": (0.2, 2.0), "ina219.assente_dopo_s": (0.5, 10.0),
     "ina219.ma_rilascio_max": (200.0, 1500.0), "ina219.rilascio_tempo_s": (0.1, 2.0),

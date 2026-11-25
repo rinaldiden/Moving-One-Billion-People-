@@ -169,11 +169,16 @@ class AntiImpuntata:
         self.episodi = []            # t di inizio di ogni episodio (scatti separati da >1 s)
         self.precoci = 0
 
-    def passo(self, t, v, imu, angolo):
-        """Ritorna (nuovo_angolo_o_None, no_aumento, su_max_o_None, cap). nuovo_angolo e' l'angolo da applicare SUBITO."""
+    def passo(self, t, v, imu, angolo, dec_enc=None):
+        """Ritorna (nuovo_angolo_o_None, no_aumento, su_max_o_None, cap). nuovo_angolo e' l'angolo da applicare SUBITO.
+        dec_enc: decel dall'encoder ruota (None se l'encoder non e' la fonte)."""
         c = self.c
         nuovo = None
         cond = imu.viva(t) and imu.dec >= c["dec_imu_min_ms2"] and imu.d03 >= c["muso_giu_min_deg"]
+        # 25/11 (giro 10:37): in discesa/su una buca l'IMU dava "impuntata" con la ruota che ACCELERAVA (dec enc -0,68):
+        # rilascio + attesa del piano = bici lasciata andare 10 s a 16 km/h. Con l'encoder valido serve anche la sua decel.
+        if cond and dec_enc is not None and dec_enc < c["dec_enc_conferma_ms2"]:
+            cond = False
         if cond:
             prima_ciclo = (t - self.t_ult) > 0.05          # il ciclo subito prima non era di scatto: primo giro dell'episodio
             ancora_giu = imu.gx > c["ancora_giu_dps"]
@@ -195,13 +200,13 @@ class AntiImpuntata:
         piano = abs(imu.d03) < c["ripresa_in_piano_deg"] and abs(imu.gx) < c["ripresa_in_piano_dps"]
         self.t_piano = (self.t_piano if self.t_piano is not None else t) if piano else None
         no_aum = t < self.fermo_fino
-        if not no_aum and self.cap is not None and t - self.t_cap < 5.0 and \
+        if not no_aum and self.cap is not None and t - self.t_cap < c["attesa_piano_max_s"] and \
                 (self.t_piano is None or t - self.t_piano < c["ripresa_in_piano_s"]):
             no_aum = True                                    # aspetta la bici in piano prima di risalire
         if self.cap is not None and t - self.t_cap > c["ripresa_ripristino_s"]:
             self.cap = None
         # ripresa lenta: parte quando finisce il fermo
-        if t >= self.fermo_fino and self.ripresa_fino < self.fermo_fino and self.cap is not None and t - self.t_cap < 5.0:
+        if t >= self.fermo_fino and self.ripresa_fino < self.fermo_fino and self.cap is not None and t - self.t_cap < c["attesa_piano_max_s"]:
             self.ripresa_fino = t + c["ripresa_rampa_s"]
         su_max = c["ripresa_rampa_deg_s"] if t < self.ripresa_fino else None
         cap = self.cap

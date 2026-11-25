@@ -138,7 +138,7 @@ class Controllo:
             self._n_eventi_arb += 1
         dec = -a if a is not None else 0.0
         # 4) anti-impuntata (sopra tutto)
-        nuovo, no_aum, su_max, cap_anti = self.anti.passo(t, v, self.imu, self.rampa.angolo)
+        nuovo, no_aum, su_max, cap_anti = self.anti.passo(t, v, self.imu, self.rampa.angolo, dec if fonte == "ENC" else None)
         rilascia = nuovo is not None
         if rilascia:                       # IMMEDIATO, stesso ciclo: qualche grado, non per forza 0
             self.rampa.angolo = nuovo
