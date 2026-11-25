@@ -91,6 +91,7 @@ void app_main(void)
         ESP_ERROR_CHECK(nvs_flash_init());
     }
     logger02_salute_presto();
+    logger02_riavvio_init();               /* 25/11: stato salvato da un riavvio pulito della rete di sicurezza */
     /* al risveglio dal deep sleep: sblocca i pin tenuti fermi (la C6 poi la gestisce esp_hosted, come prima) */
     const int sblocca[] = {L02_PIN_C6_EN, L02_PIN_SD_PWR, L02_PIN_PA, L02_PIN_WAKE, L02_PIN_ETH_RST};
     for (size_t i = 0; i < sizeof(sblocca) / sizeof(sblocca[0]); i++) gpio_hold_dis(sblocca[i]);
@@ -107,6 +108,7 @@ void app_main(void)
     netbiosns_set_name(ru->nome);
     logger02_link_init();                  /* prima del wifi: SYNC e WAKE subito attivi */
     s_ev = xEventGroupCreate();
+    logger02_rete_sicurezza_start();       /* 25/11: eventi wifi nel registro + (A) rete di sicurezza */
     xTaskCreate(rete_task, "rete", 6144, NULL, 5, NULL);
     xTaskCreate(guardia_ota, "guardia_ota", 4096, NULL, 5, NULL);
     if (!(xEventGroupWaitBits(s_ev, 1, pdFALSE, pdTRUE, pdMS_TO_TICKS(15000)) & 1)) {
