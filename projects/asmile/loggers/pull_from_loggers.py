@@ -249,7 +249,6 @@ def check_batteria(lg):
 
 # --- logger ESP32 (HW3: logger02 e successivi, 2 × ESP32-P4): niente ssh, API HTTP sulla A (la B dietro /b/).
 # Indirizzi di riserva per nome (LAN di casa): Tailscale non sempre c'è.
-RIPOSO_S = 480   # 8 min: il logger da fermo aspetta il Mac 2+10 min, quindi lo trovo sempre sveglio
 HTTP_HOSTS_EXTRA = {"logger02": ["100.117.207.99", "192.168.1.122"]}
 
 
@@ -334,20 +333,8 @@ def pull_logger02(name="logger02", hosts=None):
     if os.path.exists(os.path.join(DEST_BASE, f".pausa_{name}")):     # 24/11: Daniele "smetti di scaricare" (togli il file per riprendere)
         print(f"[{name}] scarico in pausa (file .pausa_{name})")
         return 0
-    # 25/11 (Daniele: "il Mac scarica solo i video nuovi, senza rompergli le balle"): UNA lettura di /api/stato per giro,
-    # poi niente fino al prossimo controllo (RIPOSO_S) se registra o non c'e' niente di nuovo. Il logger resta sveglio da
-    # solo mentre scarica (firmware); la B si tocca solo se sulla A c'erano pezzi nuovi.
-    stato_f = os.path.join(DEST_BASE, f".prossimo_{name}")
-    try:
-        if time.time() < float(open(stato_f).read().strip()):
-            return 0
-    except Exception:
-        pass
-    def riposa():
-        try:
-            open(stato_f, "w").write(str(time.time() + RIPOSO_S))
-        except Exception:
-            pass
+    # 25/11 Daniele: "se lo vede su Tailscale e ci sono video nuovi, scarica. Punto e fine." Una lettura di stato per giro;
+    # la B si tocca solo se sulla A ci sono video nuovi. Il logger resta sveglio da solo mentre scarica (firmware).
     host, st = None, None
     for h in (hosts or HTTP_HOSTS_EXTRA.get(name, [])):
         try:
@@ -362,8 +349,7 @@ def pull_logger02(name="logger02", hosts=None):
     # 24/11 (giro di Daniele rovinato): scaricare MENTRE registra manda in crisi A e B (la B si e' fermata alle 16:12
     # proprio quando il Mac ha iniziato a scaricare). Regola Daniele 18/11: si scarica solo a bici ferma = logger in pausa.
     if st.get("rec", {}).get("registra") is not False:          # solo se dice chiaramente "non registro" (pausa)
-        print(f"[{name}] sta registrando: non scarico, ricontrollo fra {RIPOSO_S // 60} min")
-        riposa()
+        print(f"[{name}] sta registrando: non scarico")
         return 0
     dest = os.path.join(DEST_BASE, name)
     os.makedirs(dest, exist_ok=True)
@@ -419,8 +405,7 @@ def pull_logger02(name="logger02", hosts=None):
             except Exception as e:
                 print(f"  {nome}: errore {e}")
     if not nuovi_a:
-        print(f"[{name}] nessun video nuovo: ricontrollo fra {RIPOSO_S // 60} min")
-        riposa()
+        print(f"[{name}] nessun video nuovo")
     return n
 
 
