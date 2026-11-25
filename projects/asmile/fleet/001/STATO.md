@@ -1,4 +1,4 @@
-# 001 — stato fotografato 2026-11-25 14:39 dopo: freno: tolta guardia corrente col master su 1
+# 001 — stato fotografato 2026-11-25 14:52 dopo: freno: rilascio appena fa effetto + master a rampa col PWM hardware
 kernel: 6.12.75+rpt-rpi-2712
 git sul Pi: 1967cbf 2026-05-13 fix: separate boot config for asmile (ov9281 dual cam, no arducam HAT)
 overlay: si
