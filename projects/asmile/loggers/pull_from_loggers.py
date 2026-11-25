@@ -269,6 +269,9 @@ def scarica_con_ripresa(url, part, size, tentativi=6, pausa=3.0, timeout=30, apr
     import urllib.request, urllib.error, time, re
     aprire = aprire or (lambda rq: urllib.request.urlopen(rq, timeout=timeout))
     senza_progresso = 0
+    if size == 0:                                        # 25/11: file vuoto sulla scheda (resto di un crash): prima tornava True
+        open(part, "wb").close()                         # SENZA creare il .part -> os.replace "No such file" a ogni giro
+        return True
     for t in range(tentativi):
         off = os.path.getsize(part) if os.path.exists(part) else 0
         if off == size:
@@ -325,16 +328,31 @@ def scarica_con_ripresa(url, part, size, tentativi=6, pausa=3.0, timeout=30, apr
     return False
 
 
+def ip_b(name):
+    """IP di casa della scheda B (logger02/flotta.csv, colonna ip_b), None se non c'e'."""
+    import csv
+    try:
+        with open(os.path.join(HERE, "..", "logger02", "flotta.csv")) as f:
+            for r in csv.DictReader(f):
+                if r.get("nome") == name and (r.get("ip_b") or "").strip():
+                    return r["ip_b"].strip()
+    except OSError:
+        pass
+    return None
+
+
 def pull_logger02(name="logger02", hosts=None):
-    """Scarica un logger ESP32 (A + B dietro /b) in asmile-loggers/<name>/: verifica dimensione, poi cancella."""
+    """Scarica un logger ESP32 (A, poi B DIRETTA sul suo IP) in asmile-loggers/<name>/: verifica dimensione, poi cancella.
+    25/11 (Daniele): la B non passa piu' dal proxy /b della A (le letture via A la facevano cadere). Se la B non risponde
+    diretta, per questo giro si salta: MAI ricadere sul proxy."""
     import urllib.request
     def get(url, t=10):
         return urllib.request.urlopen(url, timeout=t)
     if os.path.exists(os.path.join(DEST_BASE, f".pausa_{name}")):     # 24/11: Daniele "smetti di scaricare" (togli il file per riprendere)
         print(f"[{name}] scarico in pausa (file .pausa_{name})")
         return 0
-    # 25/11 Daniele: "se lo vede su Tailscale e ci sono video nuovi, scarica. Punto e fine." Una lettura di stato per giro;
-    # la B si tocca solo se sulla A ci sono video nuovi. Il logger resta sveglio da solo mentre scarica (firmware).
+    # 25/11 Daniele: "se lo vede su Tailscale e ci sono video nuovi, scarica. Punto e fine." Una lettura di stato per giro
+    # per scheda. La B si legge DIRETTA (non disturba la A): si guarda a ogni giro in cui la A e' in pausa.
     host, st = None, None
     for h in (hosts or HTTP_HOSTS_EXTRA.get(name, [])):
         try:
@@ -355,14 +373,23 @@ def pull_logger02(name="logger02", hosts=None):
     os.makedirs(dest, exist_ok=True)
     n = 0
     nuovi_a = 0
-    for pref in ("", "/b"):
-        if pref and not nuovi_a:
-            break                                         # niente di nuovo sulla A = niente sulla B: non la disturbo
+    hb = ip_b(name)
+    for scheda, h in (("A", host), ("B", hb)):
+        etich = f"[{name}/{scheda.lower()}]"
+        if not h:
+            print(f"{etich} IP non in flotta.csv: salto")
+            continue
         try:
-            stato = st if not pref else json.loads(get(f"http://{host}{pref}/api/stato").read())
-            files = json.loads(get(f"http://{host}{pref}/api/files").read())
+            if scheda == "A":
+                stato = st
+            else:
+                stato = json.loads(get(f"http://{h}/api/stato", 5).read())
+                if stato.get("rec", {}).get("registra") is not False:
+                    print(f"{etich} sta registrando: non scarico")
+                    continue
+            files = json.loads(get(f"http://{h}/api/files").read())
         except Exception as e:
-            print(f"[{name}{pref or '/a'}] errore elenco: {e}")
+            print(f"{etich} non risponde diretta ({e}): salto questo giro" if scheda == "B" else f"{etich} errore elenco: {e}")
             continue
         in_corso = stato.get("rec", {}).get("file", "")
         base_corso = in_corso.replace(".h264", "")
@@ -384,22 +411,22 @@ def pull_logger02(name="logger02", hosts=None):
                 continue                                  # CSV IMU ancora aperto
             if nome in aperti:
                 continue                                  # salute/errori del minuto in corso
-            if not pref and nome.endswith(".h264"):
-                nuovi_a += 1                              # un video nuovo sulla A: allora guardo anche la B
+            if nome.endswith(".h264"):
+                nuovi_a += 1                              # un video nuovo (A o B)
             locale = os.path.join(dest, nome)
             try:
-                if not scarica_con_ripresa(f"http://{host}{pref}/dl?f={nome}", locale + ".part", size):
+                if not scarica_con_ripresa(f"http://{h}/dl?f={nome}", locale + ".part", size):
                     guasti += 1
                     print(f"  {nome}: incompleto, il .part resta e si riprende al prossimo giro")
                     if guasti >= 2:
-                        print(f"  [{name}{pref or '/a'}] 2 file di fila falliti: smetto per questo giro (non martello la scheda)")
+                        print(f"  {etich} 2 file di fila falliti: smetto per questo giro (non martello la scheda)")
                         break
                     continue
                 guasti = 0
                 os.replace(locale + ".part", locale)
-                urllib.request.urlopen(urllib.request.Request(f"http://{host}{pref}/del?f={nome}", method="POST"),
+                urllib.request.urlopen(urllib.request.Request(f"http://{h}/del?f={nome}", method="POST"),
                                        timeout=10).read()
-                print(f"  {nome}: OK ({size} byte) -> cancellato dalla scheda {'B' if pref else 'A'}")
+                print(f"  {nome}: OK ({size} byte) -> cancellato dalla scheda {scheda}")
                 n += 1
                 time.sleep(1.0)                            # pausa fra file: la A respira
             except Exception as e:
