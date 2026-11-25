@@ -1,4 +1,4 @@
-# 001 — stato fotografato 2026-11-25 10:47 dopo: freno: corrente servo = sensore morso, attesa 15
+# 001 — stato fotografato 2026-11-25 10:52 dopo: freno: solo vel/decel, morso imparato
 kernel: 6.12.75+rpt-rpi-2712
 git sul Pi: 1967cbf 2026-05-13 fix: separate boot config for asmile (ov9281 dual cam, no arducam HAT)
 overlay: si
