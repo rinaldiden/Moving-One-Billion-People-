@@ -138,7 +138,9 @@ def _porta_freno(a, motivo, attesa_lock_s=3.0):
     servo = None
     try:
         servo = crea_servo()
-        da = leggi_angolo(OFF_ANGLE if a < 1.0 else 0.0)     # ignoto: all'ON si suppone parcheggiato, all'OFF aperto
+        da = leggi_angolo(None)
+        if da is None:                                      # ignoto (primo avvio): niente rampa da un punto inventato
+            da = a
         if a > da:
             if da < 25.0:
                 rampa_servo(servo, da, min(a, 25.0), 50.0)

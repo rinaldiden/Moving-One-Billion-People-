@@ -92,7 +92,8 @@ class ServoLgpio:
             pass
 
 
-ANGOLO_FILE = "/run/freno_angolo"      # ultimo angolo comandato al servo (master e limiter): da qui parte la rampa dopo
+# ultimo angolo comandato al servo (master e limiter): da qui parte la rampa dopo. In /data: resta dopo il riavvio.
+ANGOLO_FILE = "/data/freno_angolo" if os.path.isdir("/data") else "/run/freno_angolo"
 
 
 def leggi_angolo(default=None):
