@@ -31,3 +31,5 @@
 | 2026-11-24 17:13 | logger02 A | hw3-def-20261118-90-g9163c8ab-d Nov 23 2026 19:30:46 | 1 Nov 24 2026 17:05:32 | ok (hw3-def-20261118-111-g1d3fe65f-dirty) |
 | 2026-11-24 17:18 | logger02 B | hw3-def-20261118-90-g9163c8ab-d Nov 23 2026 19:30:46 | 1 Nov 24 2026 17:05:32 | ok (hw3-def-20261118-112-g9f4612b5-dirty) |
 | 2026-11-24 17:18 | logger02 A+B | nota | versione "1" = build da `git archive` (senza storia git) | codice = commit ac6d8974 (firmware identico a be60284d), .bin sha256 5fbae49ae635a50b… — "sveglio mentre scarica". Candidato flotta dal 26/11 se regge (decisione Daniele) |
+| 2026-11-25 11:35/11:40 | logger02 A | 1 Nov 24 2026 17:05:32 | rete-25nov-1 Nov 25 2026 11:13:33 | ok (fix wifi; codice = commit 72cd868d, tag logger02-rete-25nov-1, .bin sha256 49cd6a318e93eda4…). Crash isolato ~11:43:30, causa ignota, poi stabile; risveglio da deep sleep 14:02 con wifi ok |
+| 2026-11-25 11:49 | logger02 B | 1 (ota_0) | rete-25nov-1 Nov 25 2026 11:13:33 | ok (letto dalla storia della B; non era registrato). Stesso .bin della A |
