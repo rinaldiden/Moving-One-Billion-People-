@@ -25,3 +25,4 @@
 - 2026-11-25 09:40 001: freno: loop decel-velocita' senza tetti + freno_regola.py 
 - 2026-11-25 09:58 001: freno: valori appresi da 30 frenate in ombra; master con flag ombra; limiter di nuovo attivo 
 - 2026-11-25 10:21 001: freno progressivo: velocita' media + rilascio da decel 
+- 2026-11-25 10:40 001: freno: anti-impuntata confermata da encoder, filtro v 0.4, rilascio 45 

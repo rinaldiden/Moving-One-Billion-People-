@@ -1,4 +1,4 @@
-# 001 — stato fotografato 2026-11-25 10:21 dopo: freno progressivo: velocita' media + rilascio da decel
+# 001 — stato fotografato 2026-11-25 10:40 dopo: freno: anti-impuntata confermata da encoder, filtro v 0.4, rilascio 45
 kernel: 6.12.75+rpt-rpi-2712
 git sul Pi: 1967cbf 2026-05-13 fix: separate boot config for asmile (ov9281 dual cam, no arducam HAT)
 overlay: si
