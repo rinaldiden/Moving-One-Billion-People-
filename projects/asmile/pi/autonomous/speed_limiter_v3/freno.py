@@ -485,11 +485,15 @@ class Regolatore:
             # fascia di pochi gradi attorno (sotto margine_morso, sopra fascia_sopra), dolce in chiusura (su_max) e in apertura
             # (giu_max), comandato da velocita' e decel. Mai sotto la fascia finche' ingaggiato: resta pronto al contatto.
             m = self._morso
-            if m is None:                                       # morso non ancora visto: cerca piano, apre dolce
+            corsa = inc["corsa_veloce_deg"]       # 25/11 Daniele: "muovi veloce per 25 gradi in direzione della frenata"
+            if m is None:                                       # morso non ancora visto: corsa veloce, poi cerca piano, apre dolce
                 rate = max(-inc["giu_max_deg_s"], min(inc["cerca_deg_s"], rate))
-                nuovo, attesa = angolo + rate * dt, 0.0
+                nuovo, attesa = angolo + rate * dt, corsa
+                if angolo < corsa:
+                    nuovo = min(corsa, angolo + inc["avvicinamento_deg_s"] * dt) if rate > 0 else angolo
             else:
-                attesa, alto = max(0.0, m - inc["margine_morso_deg"]), m + inc["fascia_sopra_deg"]
+                attesa = max(corsa, m - inc["margine_morso_deg"])
+                alto = max(m + inc["fascia_sopra_deg"], attesa + inc["fascia_sopra_deg"])
                 # il morso si sposta piano se la fascia non basta (pastiglie calde) o morde prima del previsto
                 if angolo >= alto - 0.05 and ev > 0 and dec < ok:
                     self._morso = m + inc["morso_deriva_deg_s"] * dt

@@ -64,7 +64,7 @@ LIMITI = {
     "regolatore.incrementale.v_filtro_s": (0.05, 3.0), "regolatore.incrementale.k_v_deg_s_per_kmh": (0.2, 20.0), "regolatore.incrementale.k_v_giu_deg_s_per_kmh": (0.2, 40.0),
     "regolatore.incrementale.su_max_deg_s": (0.5, 15.0), "regolatore.incrementale.dec_ok_ms2": (0.1, 2.0),
     "regolatore.incrementale.k_dec_deg_s_per_ms2": (1.0, 100.0), "regolatore.incrementale.giu_max_deg_s": (1.0, 60.0),
-    "regolatore.incrementale.fascia_sopra_deg": (0.5, 8.0), "regolatore.incrementale.cerca_deg_s": (0.5, 8.0), "regolatore.incrementale.morso_deriva_deg_s": (0.0, 3.0),   # 25/11 fascia del morso
+    "regolatore.incrementale.fascia_sopra_deg": (0.5, 8.0), "regolatore.incrementale.cerca_deg_s": (0.5, 8.0), "regolatore.incrementale.morso_deriva_deg_s": (0.0, 3.0), "regolatore.incrementale.corsa_veloce_deg": (0.0, 35.0),   # 25/11 fascia del morso
     "regolatore.ingaggio_sotto_zona_kmh": (0.0, 3.0), "regolatore.disimpegno_sotto_zona_kmh": (0.5, 5.0),
     "regolatore.esponente_zona": (1.0, 3.0), "regolatore.k_sopra_15_ms2_per_ms": (0.2, 3.0),
     "regolatore.a_pos_max_ms2": (0.05, 0.6), "regolatore.banda_morta_ms2": (0.0, 0.2), "regolatore.a_filtro_s": (0.05, 0.5),
