@@ -468,7 +468,7 @@ class Regolatore:
                 self._v_f = vp
             self._v_f += min(1.0, dt / inc["v_filtro_s"]) * (vp - self._v_f)
             ev = self._v_f * 3.6 - r["v_obiettivo_kmh"]        # km/h sopra (+) o sotto (-) l'obiettivo
-            rate = inc["k_v_deg_s_per_kmh"] * ev
+            rate = (inc["k_v_deg_s_per_kmh"] if ev > 0 else inc["k_v_giu_deg_s_per_kmh"]) * ev   # sotto l'obiettivo riapre piu' in fretta
             if dec > inc["dec_ok_ms2"]:                         # rallenta gia' piu' del voluto: rilascia in proporzione
                 rate -= inc["k_dec_deg_s_per_ms2"] * (dec - inc["dec_ok_ms2"])
             # 25/11 Daniele: "deve fare in automatico leggendo decel e velocita', non soglie fisse". Il punto di morso NON e' un

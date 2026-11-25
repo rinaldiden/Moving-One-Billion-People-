@@ -193,13 +193,15 @@
    "attivo": true,
    "v_filtro_s": 0.4,
    "k_v_deg_s_per_kmh": 4.0,
-   "su_max_deg_s": 8.0,
-   "dec_ok_ms2": 0.5,
+   "su_max_deg_s": 5.0,
+   "dec_ok_ms2": 0.3,
    "k_dec_deg_s_per_ms2": 45.0,
    "giu_max_deg_s": 30.0,
    "_note": "Daniele 25/11: solo velocita' e decel comandano. Chiude in base alla velocita' media (0,4 s): 4 gradi/s per km/h sopra 9,5 (max 8), riapre sotto. Rilascia in base alla decel oltre 0,5 m/s2 (45 gradi/s per m/s2, max 30). Il punto di morso lo IMPARA (angolo a cui la decel supera dec_ok mentre chiude) e aspetta 3 gradi sotto; sotto quel punto avvicina a 25 gradi/s. Nessun angolo fisso.",
    "margine_morso_deg": 3.0,
-   "avvicinamento_deg_s": 25.0
+   "avvicinamento_deg_s": 25.0,
+   "k_v_giu_deg_s_per_kmh": 15.0,
+   "_10_55": "giro 10:54: a 9,1-9,5 km/h teneva 32-37 gradi (riapriva 1 grado/s) e poi mordeva. Sotto l'obiettivo riapre 15 gradi/s per km/h; chiude max 5 gradi/s; rilascia da decel 0,3."
   }
  }
 }

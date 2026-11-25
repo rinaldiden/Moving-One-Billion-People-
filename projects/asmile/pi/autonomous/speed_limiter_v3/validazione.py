@@ -61,7 +61,7 @@ LIMITI = {
     "regolatore.v_obiettivo_kmh": (4.0, 19.0), "regolatore.ti_s": (2.0, 30.0), "regolatore.guadagno_anello_1_s": (0.2, 2.0), "regolatore.g_default_ms2_per_deg": (0.03, 0.6), "regolatore.kp_min_deg_per_ms": (0.5, 10.0), "regolatore.kp_max_deg_per_ms": (2.0, 30.0), "regolatore.contatto_rate_max_deg_s": (1.0, 12.0), "regolatore.contatto_a_nat_max_ms2": (0.1, 1.5), "regolatore.kp_sopra_rel": (0.0, 3.0), "regolatore.contatto_soglia_fit_a_ms2": (0.3, 1.5), "regolatore.contatto_conferme": (1, 10), "regolatore.gia_margine_ms2": (0.0, 0.6), "regolatore.salita_dura_decel_ms2": (0.0, 0.5), "regolatore.contatto_coerenza_deg": (0.5, 3.0), "regolatore.contatto_salto_max_deg": (0.5, 3.0), "regolatore.contatto_soglia_anticipo_ms2": (0.2, 1.0), "regolatore.contatto_anticipo_cicli": (3, 50), "freno.contatto_scadenza_s": (3600, 2592000),
     "regolatore.contatto_alfa": (0.05, 1.0), "regolatore.a_nat_tau_s": (0.5, 5.0), "regolatore.ritardo_misura_a_s": (0.0, 1.0),  "regolatore.rilascio_dolce_deg_s": (0.0, 6.0),
     "regolatore.incrementale.margine_morso_deg": (0.0, 10.0), "regolatore.incrementale.avvicinamento_deg_s": (1.0, 40.0),
-    "regolatore.incrementale.v_filtro_s": (0.05, 3.0), "regolatore.incrementale.k_v_deg_s_per_kmh": (0.2, 20.0),
+    "regolatore.incrementale.v_filtro_s": (0.05, 3.0), "regolatore.incrementale.k_v_deg_s_per_kmh": (0.2, 20.0), "regolatore.incrementale.k_v_giu_deg_s_per_kmh": (0.2, 40.0),
     "regolatore.incrementale.su_max_deg_s": (0.5, 15.0), "regolatore.incrementale.dec_ok_ms2": (0.1, 2.0),
     "regolatore.incrementale.k_dec_deg_s_per_ms2": (1.0, 100.0), "regolatore.incrementale.giu_max_deg_s": (1.0, 60.0),
     "regolatore.ingaggio_sotto_zona_kmh": (0.0, 3.0), "regolatore.disimpegno_sotto_zona_kmh": (0.5, 5.0),
