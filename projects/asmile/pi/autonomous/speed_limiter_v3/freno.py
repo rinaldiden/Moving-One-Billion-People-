@@ -290,7 +290,7 @@ class Regolatore:
         self.frena = False
         self.a_f = 0.0
         self._init = False
-        self._dec_prec, self._jerk, self._v_f = None, 0.0, None
+        self._dec_prec, self._jerk, self._v_f, self._acc_rif = None, 0.0, None, None
         self.ina_ma, self._t_morso, self._morso, self.attesa_appresa = None, -1e9, None, 0.0
         self.ingaggiato = False
         self.I = 0.0
@@ -445,18 +445,26 @@ class Regolatore:
             self.fase = "mai_oltre"
             self.I = max(0.0, min(self.I, angolo * 0.5 - base))
             return angolo * 0.5
+        inc = r.get("incrementale")
+        inc_on = bool(inc and inc.get("attivo"))
+        if inc_on:
+            # 25/11 giro 14:40: ingaggio/disimpegno sulla v prevista (v + a*0,6) => in frenata la previsione scendeva sotto
+            # 6 km/h a 7-8 km/h veri: uscita di colpo e rientro a 25 (scatti 0<->25). Ora sulla velocita' media vera.
+            if self._v_f is None:
+                self._v_f = v
+            self._v_f += min(1.0, dt / inc["v_filtro_s"]) * (v - self._v_f)
+        v_isteresi = self._v_f if inc_on else vp
         # isteresi: ingaggio a zona - ingaggio, disimpegno a zona - disimpegno
         if not self.ingaggiato:
-            if vp >= self.v_ing:
+            if v_isteresi >= self.v_ing:
                 self.ingaggiato = True
                 self.I = max(0.0, angolo - base)
-        elif vp < self.v_dis:
+        elif v_isteresi < self.v_dis:
             self.ingaggiato = False
-        inc = r.get("incrementale")
         if not self.ingaggiato:
             self.fase, self.I, self._scan = "libero", 0.0, None
-            if inc and inc.get("attivo"):
-                self.rate_giu = inc["avvicinamento_deg_s"]       # 25/11 Daniele: esce tornando a 0 come e' arrivato (25 in 0,5 s)
+            if inc_on:                                   # esce: sopra 25 a 16,7 gradi/s, da 25 a 0 in 0,5 s (niente scatti)
+                self.rate_giu = inc["giu_max_deg_s"] if angolo > inc["corsa_veloce_deg"] else inc["avvicinamento_deg_s"]
             return 0.0
         tetto = min(f["tetto_deg"], TETTO_ASSOLUTO)
         if inc and inc.get("attivo"):
@@ -464,21 +472,24 @@ class Regolatore:
             # se serve vista la velocita', alla velocita' 25->50 gradi in 1,5 s, fino a vedere decel corretta e velocita' stabile
             # o leggermente diminuita (possono bastare 3 gradi); da li' viene rilasciato con la stessa velocita' e ampiezza,
             # sul filo della soglia di velocita'/decel appena calata". Il grado lo decidono velocita' (sale/scende) e decel.
-            if self._v_f is None:
-                self._v_f = vp
-            self._v_f += min(1.0, dt / inc["v_filtro_s"]) * (vp - self._v_f)
             ev = self._v_f * 3.6 - r["v_obiettivo_kmh"]        # km/h sopra (+) o sotto (-) l'obiettivo
             corsa, lav = inc["corsa_veloce_deg"], inc["su_max_deg_s"]      # lav: 25 gradi in 1,5 s
             ok, stabile = inc["dec_ok_ms2"], inc["v_stabile_ms2"]
             attesa = corsa
+            # 25/11 giro 14:40 (Daniele: "rallentava troppo; rilascia prima appena la velocita' rimane uguale o accelera ma
+            # meno di come stava accelerando prima"): chiude SOLO finche' la bici accelera quanto prima; appena il freno fa
+            # effetto (v ferma, in calo, o accelerazione che cala) rilascia con la stessa velocita', fino a 25.
+            acc = self.a_f
+            if self._acc_rif is None:
+                self._acc_rif = acc
+            self._acc_rif += min(1.0, dt / inc["acc_rif_s"]) * (acc - self._acc_rif)
+            accelera_come_prima = acc > stabile and acc >= self._acc_rif - inc["acc_calo_ms2"]
             if angolo < corsa:                                  # si prepara: veloce a 25
                 nuovo, self.fase = min(corsa, angolo + inc["avvicinamento_deg_s"] * dt), "prepara"
-            elif dec > d["forte"] or ev < 0:                    # troppa decel, o velocita' appena calata: rilascia
+            elif ev > 0 and accelera_come_prima and dec <= d["forte"]:
+                nuovo, self.fase = angolo + lav * dt, "chiude"  # sopra l'obiettivo e accelera ancora come prima
+            else:                                               # effetto visto, sotto l'obiettivo o troppa decel: rilascia
                 nuovo, self.fase = max(corsa, angolo - inc["giu_max_deg_s"] * dt), "rilascia"
-            elif dec >= ok or (abs(dec) < stabile and ev <= inc["banda_kmh"]):
-                nuovo, self.fase = angolo, "tiene"              # decel corretta, o velocita' stabile sul filo: fermo
-            else:                                               # sopra l'obiettivo e la velocita' sale o non cala abbastanza
-                nuovo, self.fase = angolo + lav * dt, "chiude"
             self.attesa_appresa = attesa
             self.rate_su, self.rate_giu = max(lav, inc["avvicinamento_deg_s"]), inc["giu_max_deg_s"]
             return max(0.0, min(tetto, nuovo))

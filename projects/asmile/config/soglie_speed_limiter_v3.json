@@ -210,7 +210,10 @@
    "_corsa": "Daniele 25/11 pomeriggio: quando deve frenare (velocita' sopra obiettivo) il servo va VELOCE (avvicinamento_deg_s) fino a corsa_veloce_deg; da li' fascia del morso dolce. La fascia non scende mai sotto corsa_veloce_deg.",
    "v_stabile_ms2": 0.1,
    "banda_kmh": 0.5,
-   "_officina": "Daniele 25/11 officina: sopra 7 km/h veloce a 25 gradi (avvicinamento 50 gradi/s = 0,5 s). Oltre 25: chiude/rilascia a 16,7 gradi/s (25 in 1,5 s). Chiude se v sopra obiettivo e la decel non e' ancora dec_ok (o v sale); tiene con decel >= dec_ok o v stabile (|dec|<v_stabile) entro banda_kmh sopra obiettivo; rilascia (fino a 25) se v sotto obiettivo o decel > forte. Esce sotto 6 km/h tornando a 0 a 50 gradi/s. Servo con PWM hardware."
+   "_officina": "Daniele 25/11 officina: sopra 7 km/h veloce a 25 gradi (avvicinamento 50 gradi/s = 0,5 s). Oltre 25: chiude/rilascia a 16,7 gradi/s (25 in 1,5 s). Chiude se v sopra obiettivo e la decel non e' ancora dec_ok (o v sale); tiene con decel >= dec_ok o v stabile (|dec|<v_stabile) entro banda_kmh sopra obiettivo; rilascia (fino a 25) se v sotto obiettivo o decel > forte. Esce sotto 6 km/h tornando a 0 a 50 gradi/s. Servo con PWM hardware.",
+   "acc_rif_s": 0.6,
+   "acc_calo_ms2": 0.05,
+   "_14_40": "Daniele 25/11 dopo giro 14:40 (rallentava troppo): chiude solo se v sopra obiettivo E accelera ancora come prima (acc > v_stabile e non calata di oltre acc_calo rispetto alla media su acc_rif_s); appena il freno fa effetto rilascia a 16,7 gradi/s fino a 25. Ingaggio/disimpegno sulla velocita' media vera (non prevista). Uscita: sopra 25 a 16,7, poi 0 in 0,5 s."
   }
  }
 }

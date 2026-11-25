@@ -20,9 +20,23 @@ def scrivi_stato(path, obj):
         pass
 
 
-def chiudi_servo(servo, tieni_s, sleep=time.sleep):
-    """Uscita: porta a 0 gradi, TIENE il PWM almeno tieni_s (da 50 gradi il servo ci mette tempo), poi libera il pin."""
+def rampa_servo(servo, da, a, gradi_s, sleep=time.sleep):
+    """25/11 Daniele: il servo si porta SEMPRE a rampa (un impulso nuovo ogni 20 ms, come in officina), mai a scatto."""
+    n = max(1, int(round(abs(a - da) / gradi_s / 0.02)))
+    for i in range(1, n + 1):
+        servo.pwm(da + (a - da) * i / n)
+        sleep(0.02)
+
+
+def chiudi_servo(servo, tieni_s, sleep=time.sleep, da=None):
+    """Uscita: porta a 0 gradi a rampa (sopra 25 a 16,7 gradi/s, poi 50 gradi/s), TIENE il PWM tieni_s, poi libera il pin."""
     try:
+        da = getattr(servo, "ultimo", 0.0) if da is None else da
+        if da > 25.0:
+            rampa_servo(servo, da, 25.0, 16.7, sleep)
+            da = 25.0
+        if da > 0.0:
+            rampa_servo(servo, da, 0.0, 50.0, sleep)
         servo.pwm(0.0)
         sleep(tieni_s)
     finally:

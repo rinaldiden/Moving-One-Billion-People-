@@ -61,8 +61,10 @@ class ServoLgpio:
         self.lg = lgpio
         self.h = lgpio.gpiochip_open(GPIO_CHIP)
         self.claimed = False
+        self.ultimo = leggi_angolo(0.0)
 
     def pwm(self, angolo):
+        self.ultimo = float(angolo)
         lg = self.lg
         if not self.claimed:
             try:
@@ -80,6 +82,7 @@ class ServoLgpio:
             lg.gpio_free(self.h, SERVO_PIN)
             self.claimed = False
             pin_in_ingresso()
+            scrivi_angolo(self.ultimo)
 
 
     def chiudi(self):
@@ -87,6 +90,25 @@ class ServoLgpio:
             self.lg.gpiochip_close(self.h)
         except Exception:
             pass
+
+
+ANGOLO_FILE = "/run/freno_angolo"      # ultimo angolo comandato al servo (master e limiter): da qui parte la rampa dopo
+
+
+def leggi_angolo(default=None):
+    try:
+        with open(ANGOLO_FILE) as f:
+            return max(0.0, min(50.0, float(f.read().split()[0])))
+    except (OSError, ValueError, IndexError):
+        return default
+
+
+def scrivi_angolo(angolo):
+    try:
+        with open(ANGOLO_FILE, "w") as f:
+            f.write("%.2f\n" % angolo)
+    except OSError:
+        pass
 
 
 class ServoPwmHw:
@@ -113,6 +135,7 @@ class ServoPwmHw:
         self._w(self.p + "/enable", 0)
         self._w(self.p + "/period", self.PERIODO_NS)
         self.claimed = False
+        self.ultimo = leggi_angolo(0.0)
 
     @staticmethod
     def _w(f, v):
@@ -124,6 +147,7 @@ class ServoPwmHw:
         return int(round((500.0 + (180.0 - angolo) / 180.0 * 2000.0) * 1000))   # montato invertito: raw 180 = rilasciato
 
     def pwm(self, angolo):
+        self.ultimo = float(angolo)
         self._w(self.p + "/duty_cycle", self._ns(angolo))
         if not self.claimed:
             self._w(self.p + "/enable", 1)
@@ -137,13 +161,13 @@ class ServoPwmHw:
             pin_in_ingresso()
             self._w(self.p + "/enable", 0)
             self.claimed = False
+            scrivi_angolo(self.ultimo)
 
     def chiudi(self):
+        """L'overlay resta caricato: anche il master pilota col PWM hardware (25/11 Daniele: 'lo piloterai sempre cosi'')."""
         try:
             self.libera()
         finally:
-            pin_in_ingresso()
-            self.sp.run(["dtoverlay", "-r", "pwm"], timeout=5, check=False)
             pin_in_ingresso()
 
 
@@ -316,23 +340,36 @@ def main():
                 if time.monotonic() - battito[0] > 0.5:
                     print("[LIMITER] CANE DA GUARDIA: loop fermo da >0,5 s -> freno a 0 ed esco", flush=True)
                     try:
-                        servo.pwm(0.0)
-                        time.sleep(0.6)
-                        servo.libera()
-                        servo.chiudi()                  # PWM hardware: toglie l'overlay, il master torna a lgpio
+                        chiudi_servo(servo, 0.6)        # a 0 a rampa (mai a scatto), tenuto 0,6 s, pin libero
                     finally:
                         os._exit(4)
         threading.Thread(target=cane_da_guardia, daemon=True).start()
     sens = LettoreSensori()
     run = [True]
-    signal.signal(signal.SIGTERM, lambda *_: run.__setitem__(0, False))
+    fermato = [False]
+
+    def _ferma(*_):
+        fermato[0] = True
+        run[0] = False
+    signal.signal(signal.SIGTERM, _ferma)
     signal.signal(signal.SIGINT, lambda *_: run.__setitem__(0, False))
     codice = 1
     try:
         codice = esegui(ctl, sens, servo, run)
     finally:
+        if fermato[0] and not ombra:
+            # 25/11 Daniele: fermato dal master (interruttore su 0): il freno resta dov'e' e si libera il pin; lo
+            # stazionamento lo fa il master a rampa partendo da qui (/run/freno_angolo). Niente passaggio da 0.
+            try:
+                servo.libera()
+            finally:
+                try:
+                    servo.chiudi()
+                except Exception:
+                    pass
+        else:
+            chiudi_servo(servo, cfg["freno"]["uscita_tieni_s"])  # caduta: a 0 a rampa, tenuto, poi pin libero
         ctl.rampa.azzera()
-        chiudi_servo(servo, cfg["freno"]["uscita_tieni_s"])      # 0 gradi tenuto >= 0.6 s, poi pin libero
         scrivi_stato(STATO_DEFAULT, {"t": time.time(), "stato": "FERMATO", "codice": codice})
         if lock is not None:
             lock.close()

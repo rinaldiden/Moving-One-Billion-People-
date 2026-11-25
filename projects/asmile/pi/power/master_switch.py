@@ -70,6 +70,7 @@ OFF_ANGLE = BRAKE_ANGLE     # 23/11 sera (Daniele): su 0 il freno va a 50° e il
 BUZZER_PIN = 4
 
 
+SL_DIR = f"{HOME_DIR}/wip/Moving-One-Billion-People-/projects/asmile/pi/autonomous"
 PARK_MAX_HOLD_A = 0.4      # stazionamento: corrente massima a pin libero (servo che non forza)
 PARK_MIN_ANGLE = 30        # stazionamento: mai sotto questo angolo arretrando
 
@@ -118,6 +119,54 @@ def angle_to_duty(angle: float) -> float:
     raw = 180.0 - angle
     pulse_us = PULSE_MIN_US + (raw / 180.0) * (PULSE_MAX_US - PULSE_MIN_US)
     return (pulse_us / PERIOD_US) * 100.0
+
+
+def _porta_freno(a, motivo, attesa_lock_s=3.0):
+    """25/11 Daniele: il servo freno si pilota SEMPRE come in officina: PWM hardware, rampa (sotto 25 gradi 50 gradi/s,
+    sopra 25 gradi 16,7 gradi/s = 25 gradi in 1,5 s), 0,5 s di tenuta, poi pin libero. Parte dall'ultimo angolo comandato
+    (/run/freno_angolo, scritto da master e limiter). Prende il lock di GPIO12: se c'e' un altro padrone non tocca niente.
+    Ritorna l'angolo finale, o None se non ha mosso."""
+    sys.path.insert(0, SL_DIR)
+    from speed_limiter_v3.lock_gpio12 import LockError, acquisisci_lock_attendi
+    from speed_limiter_v3.hw import crea_servo, leggi_angolo, scrivi_angolo
+    from speed_limiter_v3.servizio import rampa_servo
+    try:
+        lock = acquisisci_lock_attendi(timeout_s=attesa_lock_s)
+    except LockError:
+        print(f"[SWITCH] GPIO12 ha un altro padrone: freno non mosso ({motivo})", flush=True)
+        return None
+    servo = None
+    try:
+        servo = crea_servo()
+        da = leggi_angolo(OFF_ANGLE if a < 1.0 else 0.0)     # ignoto: all'ON si suppone parcheggiato, all'OFF aperto
+        if a > da:
+            if da < 25.0:
+                rampa_servo(servo, da, min(a, 25.0), 50.0)
+            if a > 25.0:
+                rampa_servo(servo, max(da, 25.0), a, 16.7)
+        elif a < da:
+            if da > 25.0:
+                rampa_servo(servo, da, max(a, 25.0), 16.7)
+            if a < 25.0:
+                rampa_servo(servo, min(da, 25.0), a, 50.0)
+        servo.pwm(a)
+        log_cmd("brake", "pwm", a, f"master_switch: {motivo} (rampa da {da:.1f})")
+        print(f"[SWITCH] freno {da:.1f} -> {a:.1f} gradi a rampa ({motivo}), poi pin libero", flush=True)
+        time.sleep(0.5)
+        return a
+    except Exception as e:
+        print(f"[SWITCH] freno: errore {e!r} ({motivo})", flush=True)
+        return None
+    finally:
+        if servo is not None:
+            try:
+                servo.libera()
+                servo.chiudi()
+            except Exception:
+                pass
+            scrivi_angolo(getattr(servo, "ultimo", a))
+        lock.close()
+        log_cmd("brake", "free", a, f"master_switch: {motivo}")
 
 
 class MasterSwitch:
@@ -213,31 +262,7 @@ class MasterSwitch:
             return
         print(f"[WATCHDOG] speed_limiter MORTO (codice {p.returncode}): freno a {RELEASE_ANGLE}° e pin libero", flush=True)
         self.speed_limiter_proc = None
-        sys.path.insert(0, f"{HOME_DIR}/wip/Moving-One-Billion-People-/projects/asmile/pi/autonomous")
-        from speed_limiter_v3.lock_gpio12 import LockError, acquisisci_lock_attendi
-        try:
-            lock = acquisisci_lock_attendi(timeout_s=1.0)
-        except LockError:
-            print("[WATCHDOG] GPIO12 ha ancora un padrone: non tocco il freno", flush=True)
-            return
-        try:
-            h = lgpio.gpiochip_open(GPIO_CHIP)
-            try:
-                lgpio.gpio_free(h, PIN_SERVO)
-            except lgpio.error:
-                pass
-            lgpio.gpio_claim_output(h, PIN_SERVO)
-            lgpio.tx_pwm(h, PIN_SERVO, SERVO_FREQ, angle_to_duty(RELEASE_ANGLE))
-            time.sleep(1.5)
-            lgpio.tx_pwm(h, PIN_SERVO, SERVO_FREQ, 0)
-            lgpio.gpio_free(h, PIN_SERVO)
-            _pin_in_ingresso()
-            lgpio.gpiochip_close(h)
-            log_cmd("brake", "pwm", RELEASE_ANGLE, "watchdog: speed_limiter morto, rilascio")
-        except Exception as e:
-            print(f"[WATCHDOG] rilascio freno fallito: {e!r}", flush=True)
-        finally:
-            lock.close()
+        _porta_freno(RELEASE_ANGLE, "watchdog: speed_limiter morto, rilascio", attesa_lock_s=1.0)
         try:
             with open("/run/speed_limiter_v3.state", "w") as f:
                 f.write('{"stato": "CADUTO", "avvisi": ["LIMITER MORTO: freno rilasciato dal master, nessun limite dei 15 km/h"]}')
@@ -257,26 +282,11 @@ class MasterSwitch:
         # Audio cue: switch ON → sweep ascendente 800→1500Hz
         buzzer_sweep(800, 1500)
 
-        # Release: pulse a 0° per 1.5s, poi PWM stop + gpio_free → pin hi-Z.
-        # SER0062 brushless: MAI gpio_write LOW continuo dopo PWM (memory:
-        # feedback_dfrobot_pulse_lock). Solo pulse-and-free.
-        h = lgpio.gpiochip_open(GPIO_CHIP)
-        try:
-            lgpio.gpio_free(h, PIN_SERVO)   # pulisci stato precedente
-        except lgpio.error:
-            pass
-        lgpio.gpio_claim_output(h, PIN_SERVO)
-        lgpio.tx_pwm(h, PIN_SERVO, SERVO_FREQ, angle_to_duty(RELEASE_ANGLE))
-        log_cmd("brake", "pwm", RELEASE_ANGLE, "master_switch ON: rilascio")
-        print(f"[SWITCH] Servo → {RELEASE_ANGLE}° (release, 1.5s di pulse @ {SERVO_FREQ}Hz)")
-        time.sleep(1.5)
-        lgpio.tx_pwm(h, PIN_SERVO, SERVO_FREQ, 0)  # ferma PWM (duty 0)
-        lgpio.gpio_free(h, PIN_SERVO)              # rilascia pin
-        _pin_in_ingresso()                          # davvero hi-Z (Pi 5: gpio_free lascia LOW)
-        log_cmd("brake", "free", RELEASE_ANGLE, "master_switch ON")
-        lgpio.gpiochip_close(h)
+        # Release a rampa col PWM hardware (25/11 Daniele: come il freno quando esce sotto 6 km/h), poi pin libero.
+        vecchio = getattr(self, "speed_limiter_proc", None)
+        if vecchio is None or vecchio.poll() is not None:
+            _porta_freno(RELEASE_ANGLE, "ON: rilascio")
         self.servo_handle = None
-        print("[SWITCH] PWM stopped, pin freed (hi-Z) — servo libero")
 
         # 23/11 sera (Daniele): speed_limiter v3 ATTIVO (comanda il freno, max 50°, anti-impuntata) e registra ogni ciclo in
         # /data/logging/limiter_v3/attivo_*.csv. Il vecchio speed_limiter.py NON parte più.
@@ -286,13 +296,15 @@ class MasterSwitch:
             # 24/11 (asmile-sicurezza): riattivazione per recorder morto col limiter vivo -> NON lanciarne un secondo
             print(f"[SWITCH] speed_limiter v3 gia' vivo PID={vecchio.pid}: non ne lancio un altro")
         else:
+          # 25/11 Daniele: OMBRA (il limiter calcola e registra ma NON tocca il freno; frena Daniele) se esiste /data/limiter_ombra
+          sl_args = ["python3", "-u", "-m", "speed_limiter_v3.hw"] + (["--ombra"] if os.path.exists("/data/limiter_ombra") else [])
           self.speed_limiter_proc = subprocess.Popen(
-              ["python3", "-u", "-m", "speed_limiter_v3.hw"],
+              sl_args,
               cwd=sl_dir,
               stdout=open("/tmp/speed_limiter_v3.log", "w"),
               stderr=subprocess.STDOUT,
           )
-          print(f"[SWITCH] speed_limiter v3 ATTIVO started PID={self.speed_limiter_proc.pid}")
+          print(f"[SWITCH] speed_limiter v3 {'OMBRA' if '--ombra' in sl_args else 'ATTIVO'} started PID={self.speed_limiter_proc.pid}")
 
         # Clean up any zombie camera processes
         self._kill_camera_zombies()
@@ -343,45 +355,21 @@ class MasterSwitch:
             self.speed_limiter_proc = None
             print("[SWITCH] speed_limiter stopped")
 
-        # Switch OFF: freno a 50° (OFF_ANGLE) per tenere ferma la bici, pulse 1.5s, poi pin libero (hi-Z). A 50° il servo
-        # tiene 0,03-0,16 A a pin libero (misura INA 23/11); a 60 andava in stallo >3,2 A. Niente LOW continuo.
-        h2 = lgpio.gpiochip_open(GPIO_CHIP)
-        try:
-            lgpio.gpio_free(h2, PIN_SERVO)
-        except lgpio.error:
-            pass
-        lgpio.gpio_claim_output(h2, PIN_SERVO)
-        lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, angle_to_duty(OFF_ANGLE))
-        log_cmd("brake", "pwm", OFF_ANGLE, "master_switch OFF: freno di stazionamento")
-        print(f"[SWITCH] Freno → {OFF_ANGLE}° (stazionamento, 1.5s di pulse @ {SERVO_FREQ}Hz), poi pin libero")
-        time.sleep(1.5)
-        lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, 0)
-        time.sleep(0.05)
-        lgpio.gpio_free(h2, PIN_SERVO)
-        _pin_in_ingresso()
-        log_cmd("brake", "free", OFF_ANGLE, "master_switch OFF")
-        # 23/11: a pin libero il SER0062 tiene la posizione da solo; se spinge contro l'olio resta in stallo per ore
-        # (misura INA: a 50° a volte 0,03 A, a volte 1,3 A). Guardia: finché la corrente a pin libero è sopra 0,4 A,
-        # arretra di 2° (mai sotto PARK_MIN_ANGLE). Senza INA si resta a OFF_ANGLE.
-        ang = OFF_ANGLE
+        # Switch OFF (25/11 Daniele): dal punto in cui il limiter l'ha lasciato (niente passaggio da 0) allo stazionamento
+        # OFF_ANGLE a rampa col PWM hardware, poi pin libero. A pin libero il SER0062 tiene da solo; se spinge contro l'olio
+        # (corrente > 0,4 A) arretra di 2 gradi alla volta a rampa, mai sotto PARK_MIN_ANGLE. Senza INA resta a OFF_ANGLE.
+        ang = _porta_freno(OFF_ANGLE, "OFF: freno di stazionamento")
         for _ in range(12):
+            if ang is None:
+                break
+            time.sleep(0.3)
             i_a = _corrente_servo_a()
             if i_a is None or i_a < PARK_MAX_HOLD_A or ang - 2 < PARK_MIN_ANGLE:
                 break
-            ang -= 2
-            lgpio.gpio_claim_output(h2, PIN_SERVO)
-            lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, angle_to_duty(ang))
-            time.sleep(0.5)
-            lgpio.tx_pwm(h2, PIN_SERVO, SERVO_FREQ, 0)
-            time.sleep(0.05)
-            lgpio.gpio_free(h2, PIN_SERVO)
-            _pin_in_ingresso()
-            time.sleep(0.3)
-            log_cmd("brake", "free", ang, "master_switch OFF: arretro (corrente %.2f A)" % i_a)
-            print(f"[SWITCH] stazionamento: corrente {i_a:.2f} A a pin libero -> arretro a {ang}°")
-        lgpio.gpiochip_close(h2)
+            print(f"[SWITCH] stazionamento: corrente {i_a:.2f} A a pin libero -> arretro a {ang - 2}°")
+            ang = _porta_freno(ang - 2, "OFF: arretro (corrente %.2f A)" % i_a)
         self.servo_handle = None
-        print("[SWITCH] PWM stopped, pin freed (hi-Z) — servo libero, niente segnale")
+        print("[SWITCH] pin libero — servo fermo, niente segnale")
 
         # Clean up the rest
         subprocess.run(["pkill", "-f", "follow_me/main.py"], capture_output=True)
