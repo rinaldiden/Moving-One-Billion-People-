@@ -96,7 +96,10 @@ def main():
     sh = (f"set -e; mount -o remount,rw /media/root-ro; for b in {R} /media/root-ro{R}; do cp /tmp/soglie_regola.json $b/{F}; done; "
           f"sync; mount -o remount,ro /media/root-ro; cd {R}/pi/autonomous && python3 -c \"import sys; sys.path.insert(0,'.'); "
           f"from speed_limiter_v3.controllo import carica_soglie; carica_soglie(); print('VALIDA sul Pi')\"")
-    subprocess.run(["ssh", "-o", "BatchMode=yes", H, f"echo asmile | sudo -S -p '' bash -c {json.dumps(sh)}"], check=True, timeout=40)
+    tmp = "/tmp/freno_regola_run.sh"
+    open(tmp, "w").write(sh + "\n")
+    subprocess.run(["scp", "-q", tmp, f"{H}:/tmp/freno_regola_run.sh"], check=True, timeout=30)
+    subprocess.run(["ssh", "-o", "BatchMode=yes", H, "echo asmile | sudo -S -p '' bash /tmp/freno_regola_run.sh"], check=True, timeout=40)
     riga = time.strftime("%Y-%m-%d %H:%M:%S ") + "; ".join(cambi)
     open(LOG, "a").write(riga + "\n")
     print(riga)
