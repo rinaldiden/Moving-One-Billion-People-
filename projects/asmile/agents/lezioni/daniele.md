@@ -54,3 +54,6 @@
 
 ## 2026-11-25 — il Mac non tiene in scacco i logger
 - "Se lo vede su Tailscale e ci sono video nuovi, scarica. Punto e fine." — "Il Mac deve scaricare solo i video nuovi che ci sono, e in automatico il logger rimane sveglio da solo, senza che il Mac gli rompa le balle." Il Mac fa UNA lettura di stato per giro; la B solo se la A ha video nuovi. La pausa (.pausa_<nome>) lasciata accesa tiene il logger sveglio 10 min a vuoto: va tolta appena non serve.
+
+- 2026-11-25 **Prova su strada: "fixa e deploy" = fai quello che dico e deploya. Niente simulazioni, test o agenti in mezzo. Quando funziona come dico io, si irrobustisce.**
+- 2026-11-25 Freno #001: i primi gradi di corsa non mordono → attesa vicino al morso già da ~6 km/h; poi morso dolce leggendo sempre il loop velocità-decel; quando morde abbastanza rilascia quel micro per non far faticare chi pedala e restare nel range (8-10 km/h in prova).
