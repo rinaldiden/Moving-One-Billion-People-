@@ -5,7 +5,7 @@
 set -euo pipefail
 H=asmile@100.75.198.118; R=/home/asmile/wip/Moving-One-Billion-People-/projects/asmile; PW=asmile
 cd "$(dirname "$0")/.."
-FILES="config/soglie_speed_limiter_v3.json pi/autonomous/speed_limiter_v3/freno.py pi/autonomous/speed_limiter_v3/validazione.py"
+FILES="config/soglie_speed_limiter_v3.json pi/autonomous/speed_limiter_v3/freno.py pi/autonomous/speed_limiter_v3/validazione.py pi/autonomous/speed_limiter_v3/hw.py"
 if [ "${1:-}" != rollback ]; then for f in $FILES; do scp -q "$f" "$H:/tmp/dep_$(basename $f)"; done; fi
 TMP=$(mktemp)
 cat > "$TMP" <<EOS

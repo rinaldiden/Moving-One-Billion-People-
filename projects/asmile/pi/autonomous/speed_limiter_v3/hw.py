@@ -89,6 +89,73 @@ class ServoLgpio:
             pass
 
 
+class ServoPwmHw:
+    """25/11 Daniele (officina, "cosi' si muove bene"): PWM HARDWARE dell'RP1 su GPIO12 (overlay pwm caricato a runtime),
+    impulsi esatti al us (il SER0062 ha zona morta 1 us: col PWM software di lgpio il servo ballava). Stessa interfaccia di
+    ServoLgpio: pwm(angolo) aggiorna l'impulso (il nuovo valore parte al periodo dopo), libera() = nessun impulso per un
+    periodo e poi pin in ingresso (mai LOW tenuto), chiudi() = toglie l'overlay cosi' il master torna a usare lgpio."""
+    CHIP, CH, PERIODO_NS = "/sys/class/pwm/pwmchip0", 0, 20_000_000
+
+    def __init__(self):
+        import subprocess
+        self.sp = subprocess
+        if not os.path.exists(self.CHIP):
+            subprocess.run(["dtoverlay", "pwm", "pin=%d" % SERVO_PIN, "func=4"], check=True, timeout=5)
+            for _ in range(20):
+                if os.path.exists(self.CHIP):
+                    break
+                time.sleep(0.05)
+        pin_in_ingresso()                            # l'overlay mette il pin in PWM a LOW: subito libero
+        self.p = "%s/pwm%d" % (self.CHIP, self.CH)
+        if not os.path.exists(self.p):
+            self._w("%s/export" % self.CHIP, self.CH)
+            time.sleep(0.2)
+        self._w(self.p + "/enable", 0)
+        self._w(self.p + "/period", self.PERIODO_NS)
+        self.claimed = False
+
+    @staticmethod
+    def _w(f, v):
+        with open(f, "w") as h:
+            h.write(str(v))
+
+    @staticmethod
+    def _ns(angolo):
+        return int(round((500.0 + (180.0 - angolo) / 180.0 * 2000.0) * 1000))   # montato invertito: raw 180 = rilasciato
+
+    def pwm(self, angolo):
+        self._w(self.p + "/duty_cycle", self._ns(angolo))
+        if not self.claimed:
+            self._w(self.p + "/enable", 1)
+            self.sp.run(["pinctrl", "set", str(SERVO_PIN), "a0"], timeout=1, check=False)
+            self.claimed = True
+
+    def libera(self):
+        if self.claimed:
+            self._w(self.p + "/duty_cycle", 0)
+            time.sleep(0.025)                        # l'ultimo impulso finisce intero
+            pin_in_ingresso()
+            self._w(self.p + "/enable", 0)
+            self.claimed = False
+
+    def chiudi(self):
+        try:
+            self.libera()
+        finally:
+            pin_in_ingresso()
+            self.sp.run(["dtoverlay", "-r", "pwm"], timeout=5, check=False)
+            pin_in_ingresso()
+
+
+def crea_servo():
+    """PWM hardware se l'overlay si carica, altrimenti lgpio (come prima)."""
+    try:
+        return ServoPwmHw()
+    except Exception as e:
+        print("[LIMITER] PWM hardware non disponibile (%r): uso lgpio" % (e,), flush=True)
+        return ServoLgpio()
+
+
 class ServoOmbra:
     """SHADOW MODE (Daniele 23/11): stesso controllo, sensori veri, ma il servo NON viene mai toccato. Ricorda solo l'angolo
     che avrebbe comandato: GPIO12 resta libero (nessun lock, nessun claim)."""
@@ -226,7 +293,7 @@ def main():
             print("[LIMITER] non parto: %s" % e, flush=True)
             scrivi_stato(STATO_DEFAULT, {"t": time.time(), "stato": "NON_PARTITO", "errore": str(e)})
             return 3
-        servo = ServoLgpio()
+        servo = crea_servo()
     ctl = Controllo(cfg, servo, log_eventi=lambda t, da, a, m: print(f"[FONTE] {da} -> {a}: {m}", flush=True))
     reg = RegistroOmbra()                           # registro di ogni ciclo, in ombra e da attivo (confronto con Daniele)
     battito = [time.monotonic()]
@@ -252,6 +319,7 @@ def main():
                         servo.pwm(0.0)
                         time.sleep(0.6)
                         servo.libera()
+                        servo.chiudi()                  # PWM hardware: toglie l'overlay, il master torna a lgpio
                     finally:
                         os._exit(4)
         threading.Thread(target=cane_da_guardia, daemon=True).start()
