@@ -285,6 +285,7 @@ class Regolatore:
         self.frena = False
         self.a_f = 0.0
         self._init = False
+        self._dec_prec, self._jerk = None, 0.0
         self.ingaggiato = False
         self.I = 0.0
         self.rate_su = None
@@ -451,21 +452,23 @@ class Regolatore:
         tetto = min(f["tetto_deg"], TETTO_ASSOLUTO)
         inc = r.get("incrementale")
         if inc and inc.get("attivo"):
-            # 25/11 Daniele: "quanto chiude il servo rispetto a decel e velocita', incrementale e mai a scatti".
-            # Velocita' angolare = guadagno x (decel voluta - decel misurata), limitata su/giu'. Tetto di chiusura che cresce
-            # con la velocita' sopra la zona: pedalando forte la decel non compare, ma l'angolo non si accumula oltre il morso
-            # e quando si smette di pedalare non inchioda.
-            vk = vp * 3.6
-            extra = min(inc["extra_max_deg"], max(inc["extra_zona_deg"],
-                        inc["extra_zona_deg"] + inc["extra_per_kmh_deg"] * (vk - self.v["zona_inizio_kmh"])))
-            alto = min(tetto, base + extra)
-            if dec > pmax:
-                rate = -inc["giu_picco_deg_s_per_ms2"] * (dec - pmax) - inc["giu_max_deg_s"]
+            # 25/11 Daniele: "quanto chiude il servo rispetto a decel e velocita', incrementale e mai a scatti"; "niente tetti:
+            # il loop decel-velocita' comanda in tempo reale quando e quanto reagire". Velocita' angolare proporzionale
+            # all'errore fra decel voluta (dal profilo di velocita') e decel PREVISTA (misurata + tendenza x anticipo, per il
+            # ritardo freno->decel): chiude piano, apre in fretta appena la decel supera la voluta (fine pedalata).
+            if self._dec_prec is None:
+                self._dec_prec = dec
+            self._jerk += min(1.0, dt / inc["jerk_filtro_s"]) * ((dec - self._dec_prec) / max(dt, 1e-3) - self._jerk)
+            self._dec_prec = dec
+            dec_prev = dec + self._jerk * inc["anticipo_s"]
+            err = -self.a_des - dec_prev                 # >0: serve piu' freno, <0: frena troppo
+            if err >= 0:
+                rate = min(inc["su_max_deg_s"], inc["k_su_deg_s_per_ms2"] * err)
             else:
-                rate = max(-inc["giu_max_deg_s"], min(inc["su_max_deg_s"], inc["k_deg_s_per_ms2"] * (-self.a_des - dec)))
+                rate = max(-inc["giu_max_deg_s"], inc["k_giu_deg_s_per_ms2"] * err)
             self.fase = "incrementale"
-            self.rate_su, self.rate_giu = inc["su_max_deg_s"], max(inc["giu_max_deg_s"], -rate)
-            return max(0.0, min(alto, max(base, angolo + rate * dt)))
+            self.rate_su, self.rate_giu = inc["su_max_deg_s"], inc["giu_max_deg_s"]
+            return max(0.0, min(tetto, max(base, angolo + rate * dt)))
         umax = max(0.0, tetto - base)
         e = vp - self.v_set
         sopra = max(0.0, vp - self.v2) * r["kp_sopra_rel"] * kp      # sopra la v_max piu' deciso (solo li')

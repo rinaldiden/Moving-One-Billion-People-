@@ -188,14 +188,13 @@
   "_note": "zona 12-15: a_voluta = -normale*x^esp, x=(v-12)/3. Sopra 15: -min(forte, normale + k*(v-15)). Sotto 12: a_voluta=+a_pos (l'angolo cala piano, niente on/off). Banda morta e filtro contro le oscillazioni.",
   "incrementale": {
    "attivo": true,
-   "k_deg_s_per_ms2": 8.0,
+   "k_su_deg_s_per_ms2": 6.0,
    "su_max_deg_s": 4.0,
-   "giu_max_deg_s": 8.0,
-   "giu_picco_deg_s_per_ms2": 20.0,
-   "extra_zona_deg": 6.0,
-   "extra_per_kmh_deg": 4.0,
-   "extra_max_deg": 20.0,
-   "_note": "Daniele 25/11 giro 3: incrementale, mai a scatti. dAngolo/dt = k x (decel voluta - misurata), su<=4, giu<=8 gradi/s; decel oltre il picco: giu' 8 + 20 x eccesso. Chiusura massima = base 16 + extra(v): 22 a 8 km/h (inizio morso), 30 a 10, 36 da 11,5 in su (il 09:25 saliva a 33-38 pedalando e poi inchiodava)."
+   "k_giu_deg_s_per_ms2": 40.0,
+   "giu_max_deg_s": 30.0,
+   "anticipo_s": 0.25,
+   "jerk_filtro_s": 0.15,
+   "_note": "Daniele 25/11 giro 4: niente tetti, il loop decel-velocita' comanda. dAngolo/dt: chiude 6 gradi/s per m/s2 di decel mancante (max 4), apre 40 gradi/s per m/s2 di decel in eccesso (max 30). Decel prevista = misurata + tendenza x 0,25 s (ritardo freno->decel). Solo linea rossa 50."
   }
  }
 }
