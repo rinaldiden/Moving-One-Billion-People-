@@ -23,3 +23,4 @@
 - 2026-11-25 09:24 001: freno: attesa vicino al morso 16 gradi da 6 km/h, morso dolce, rilascio piu' rapido; validazione allargata 
 - 2026-11-25 09:30 001: freno incrementale decel+velocita' (tetto chiusura per velocita') 
 - 2026-11-25 09:40 001: freno: loop decel-velocita' senza tetti + freno_regola.py 
+- 2026-11-25 09:58 001: freno: valori appresi da 30 frenate in ombra; master con flag ombra; limiter di nuovo attivo 

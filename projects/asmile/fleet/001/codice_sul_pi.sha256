@@ -67,7 +67,7 @@ d1ac04dba0f701c1f632dfcd514b515a9a3940bb5bb14372ca3e7f748a47e812  ./pi/camera/st
 bd541f0e45c96ae0fb3b06f8813ab36eba39e3ba8b3d4b2ae7c12f94e966f239  ./pi/camera/test_dual_cam.py
 df6ad026c44d2220960ced8cbb7d095c08c3bb96610df27cd47317cc8849310b  ./pi/logging/training_recorder.py
 4f8d3cb26d07b1c8588ce75bec4b8adddb36fce107f855de5f69e6363c6f3125  ./pi/power/health_logger.py
-55ddc27116f5b9b6539db98f5e5854742b8faae15fc3ae011a453bacd30994bd  ./pi/power/master_switch.py
+aaa991b45f6e2284f9ac3d717621909c8a4d5a384dbb8160bd78463f69253d92  ./pi/power/master_switch.py
 6927159f876f3b748609144a39acac3b10b68a554af66cd502c4ad4a930b1aa9  ./pi/power/safe_shutdown.py
 cfa009aa19f619bf75dd34d2a0edaf78190bdce7ff297151200071a204119fe7  ./pi/sensors/actuator_log.py
 055076a7d735519ce22c4d7ec3b26ad30b2254f5b4f2ff15d70f88fae1674ce6  ./pi/sensors/gps_neo_m10.py
