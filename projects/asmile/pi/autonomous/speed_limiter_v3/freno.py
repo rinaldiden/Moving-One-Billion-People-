@@ -291,6 +291,7 @@ class Regolatore:
         self.a_f = 0.0
         self._init = False
         self._dec_prec, self._jerk, self._v_f = None, 0.0, None
+        self.ina_ma, self._t_morso = None, -1e9
         self.ingaggiato = False
         self.I = 0.0
         self.rate_su = None
@@ -470,6 +471,15 @@ class Regolatore:
             rate = inc["k_v_deg_s_per_kmh"] * ev
             if dec > inc["dec_ok_ms2"]:                         # rallenta gia' piu' del voluto: rilascia in proporzione
                 rate -= inc["k_dec_deg_s_per_ms2"] * (dec - inc["dec_ok_ms2"])
+            # 25/11 giro 10:41 (Daniele: "quando mordi abbastanza rilascia quel micro"): la corrente del servo e' il sensore del
+            # morso in tempo reale (pastiglie serrate = servo sotto carico, 1,5-3,2 A). Il punto di morso si sposta (18-25 gradi,
+            # pastiglie calde): appena il servo e' carico smette di chiudere e torna indietro di un poco.
+            ma = self.ina_ma
+            if ma is not None and ma == ma and ma > inc["ina_morso_ma"]:
+                self._t_morso = self.t
+                rate = min(rate, -inc["indietro_deg_s"])
+            elif self.t - self._t_morso < inc["tieni_dopo_morso_s"]:
+                rate = min(rate, 0.0)                   # appena morso: non richiude subito
             rate = max(-inc["giu_max_deg_s"], min(inc["su_max_deg_s"], rate))
             self.fase = "incrementale"
             self.rate_su, self.rate_giu = inc["su_max_deg_s"], inc["giu_max_deg_s"]

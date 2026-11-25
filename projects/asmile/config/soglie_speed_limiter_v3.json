@@ -88,7 +88,7 @@
   "tieni_zero_s": 1.5,
   "_tieni": "24/11: con 0.15 s fissi il ritorno a 0 non arrivava (freno chiuso, stallo 3.2 A). PWM acceso per la corsa (0.03 s/grado: 50 gradi = 1.5 s) e per tornare a 0 almeno 1.5 s, come il master ON che apre davvero.",
   "libera_sotto_deg": 2.0,
-  "contatto_min_deg": 21.0,
+  "contatto_min_deg": 18.0,
   "contatto_max_deg": 32.0,
   "contatto_default_deg": 22.0,
   "_contatto": "24/11 (Daniele: il loop sull'encoder vede da solo quando la decel compare): il CONTATTO (angolo a cui la decel misurata supera la naturale) lo APPRENDE il Regolatore e lo tiene con media lenta; questi tre sono SOLO limiti di plausibilita' e il default prudente BASSO usato finche' non ha una stima (o con fonte di riserva): avvicinamento lento <= rampa_cerca_deg_s fino al default. Mai da misurare a priori.",
@@ -197,7 +197,11 @@
    "dec_ok_ms2": 0.5,
    "k_dec_deg_s_per_ms2": 45.0,
    "giu_max_deg_s": 30.0,
-   "_note": "Daniele 25/11 giro 5: progressivo, mai a scatti. Chiude in base alla VELOCITA' media su una pedalata (filtro 0,8 s): 4 gradi/s per ogni km/h sopra l'obiettivo (max 8), sotto l'obiettivo riapre allo stesso modo. Rilascio in base alla DECEL: oltre 0,6 m/s2 toglie 30 gradi/s per m/s2 in eccesso (max 30)."
+   "_note": "Daniele 25/11 giro 5: progressivo, mai a scatti. Chiude in base alla VELOCITA' media su una pedalata (filtro 0,8 s): 4 gradi/s per ogni km/h sopra l'obiettivo (max 8), sotto l'obiettivo riapre allo stesso modo. Rilascio in base alla DECEL: oltre 0,6 m/s2 toglie 30 gradi/s per m/s2 in eccesso (max 30).",
+   "ina_morso_ma": 1500.0,
+   "indietro_deg_s": 10.0,
+   "tieni_dopo_morso_s": 0.4,
+   "_morso": "25/11 10:41: a 18 gradi (attesa) decel 1,5-1,7 col servo a 3 A: morso sceso (pastiglie calde). Attesa 18->15; servo >1500 mA = morde: indietro 10 gradi/s e non richiude per 0,4 s."
   }
  }
 }

@@ -144,6 +144,7 @@ class Controllo:
             self.rampa.angolo = nuovo
         # 5) decisione
         self.reg.fonte = fonte
+        self.reg.ina_ma = c.ina_ma                        # corrente servo = sensore del morso (25/11)
         target = self.reg.passo(v, a, self.rampa.angolo, dt)
         if self.reg.appreso_ora:
             self._salva_contatto(t, subito=self.reg.corretto_ora)
