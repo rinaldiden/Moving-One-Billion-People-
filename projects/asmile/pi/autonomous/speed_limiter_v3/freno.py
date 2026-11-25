@@ -452,11 +452,15 @@ class Regolatore:
                 self.I = max(0.0, angolo - base)
         elif vp < self.v_dis:
             self.ingaggiato = False
+        inc = r.get("incrementale")
         if not self.ingaggiato:
             self.fase, self.I, self._scan = "libero", 0.0, None
-            return 0.0                                   # rilascio a rampa (rampa_giu), come prima
+            # 25/11 Daniele: niente rilasci bruschi: dentro la fascia del morso si apre alla velocita' dolce, sotto in fretta
+            # (sotto il morso il freno non frena: aprire veloce li' non si sente)
+            if inc and inc.get("attivo") and self._morso is not None and angolo > self._morso - inc["margine_morso_deg"]:
+                self.rate_giu = inc["giu_max_deg_s"]
+            return 0.0                                   # rilascio a rampa (rampa_giu sotto la fascia)
         tetto = min(f["tetto_deg"], TETTO_ASSOLUTO)
-        inc = r.get("incrementale")
         if inc and inc.get("attivo"):
             # 25/11 Daniele: "quanto chiude il servo rispetto a decel e velocita', incrementale e mai a scatti"; "niente tetti:
             # il loop decel-velocita' comanda in tempo reale quando e quanto reagire". Velocita' angolare proporzionale
@@ -473,16 +477,36 @@ class Regolatore:
                 rate -= inc["k_dec_deg_s_per_ms2"] * (dec - inc["dec_ok_ms2"])
             # 25/11 Daniele: "deve fare in automatico leggendo decel e velocita', non soglie fisse". Il punto di morso NON e' un
             # angolo scritto: lo impara il loop (angolo a cui, chiudendo, la decel supera dec_ok) e l'attesa e' poco sotto.
-            if rate > 0 and dec > inc["dec_ok_ms2"]:
+            ok = inc["dec_ok_ms2"]
+            if rate > 0 and dec > ok:
                 self._morso = angolo if self._morso is None else self._morso + 0.3 * (angolo - self._morso)
-            attesa = max(0.0, self._morso - inc["margine_morso_deg"]) if self._morso is not None else 0.0
-            if angolo < attesa and rate > 0:
-                rate = max(rate, inc["avvicinamento_deg_s"])       # sotto il morso imparato: avvicina in fretta (non frena)
-            rate = max(-inc["giu_max_deg_s"], min(max(inc["su_max_deg_s"], inc["avvicinamento_deg_s"] if angolo < attesa else 0.0), rate))
+            # 25/11 giro 12:08 (Daniele: "un paio di inchiodate troppo forti"): chiudeva oltre il morso finche' la decel
+            # (in ritardo) saltava a 1,3-1,7 e poi scaricava a 30 gradi/s fino a 0. Ora: arrivato al morso si muove SOLO in una
+            # fascia di pochi gradi attorno (sotto margine_morso, sopra fascia_sopra), dolce in chiusura (su_max) e in apertura
+            # (giu_max), comandato da velocita' e decel. Mai sotto la fascia finche' ingaggiato: resta pronto al contatto.
+            m = self._morso
+            if m is None:                                       # morso non ancora visto: cerca piano, apre dolce
+                rate = max(-inc["giu_max_deg_s"], min(inc["cerca_deg_s"], rate))
+                nuovo, attesa = angolo + rate * dt, 0.0
+            else:
+                attesa, alto = max(0.0, m - inc["margine_morso_deg"]), m + inc["fascia_sopra_deg"]
+                # il morso si sposta piano se la fascia non basta (pastiglie calde) o morde prima del previsto
+                if angolo >= alto - 0.05 and ev > 0 and dec < ok:
+                    self._morso = m + inc["morso_deriva_deg_s"] * dt
+                elif angolo <= attesa + 0.05 and ev < 0 and dec > ok:
+                    self._morso = max(0.0, m - inc["morso_deriva_deg_s"] * dt)
+                if angolo < attesa:                             # sotto la fascia il freno non frena: avvicina in fretta
+                    nuovo = min(attesa, angolo + inc["avvicinamento_deg_s"] * dt) if rate > 0 else angolo
+                else:
+                    rate = max(-inc["giu_max_deg_s"], min(inc["su_max_deg_s"], rate))
+                    nuovo = angolo + rate * dt
+                    if nuovo > alto:                            # mai oltre la fascia; se il morso e' sceso, ci rientra dolce
+                        nuovo = max(alto, angolo - inc["giu_max_deg_s"] * dt)
+                    nuovo = max(nuovo, min(attesa, angolo))     # ingaggiato: non scende sotto la fascia
             self.attesa_appresa = attesa
             self.fase = "incrementale"
             self.rate_su, self.rate_giu = max(inc["su_max_deg_s"], inc["avvicinamento_deg_s"]), inc["giu_max_deg_s"]
-            return max(0.0, min(tetto, angolo + rate * dt))
+            return max(0.0, min(tetto, nuovo))
         umax = max(0.0, tetto - base)
         e = vp - self.v_set
         sopra = max(0.0, vp - self.v2) * r["kp_sopra_rel"] * kp      # sopra la v_max piu' deciso (solo li')

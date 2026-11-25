@@ -38,6 +38,7 @@ MAPPA = {
     "vmax": ("velocita", "v_max_kmh"), "zona": ("velocita", "zona_inizio_kmh"),
     "obiettivo": ("regolatore", "v_obiettivo_kmh"), "attesa_da": ("regolatore", "ingaggio_sotto_zona_kmh"),
     "chiude": ("regolatore", "incrementale", "k_v_deg_s_per_kmh"), "riapre": ("regolatore", "incrementale", "k_v_giu_deg_s_per_kmh"), "chiude_max": ("regolatore", "incrementale", "su_max_deg_s"), "avvicina": ("regolatore", "incrementale", "avvicinamento_deg_s"), "gradino": ("freno", "impulso_trigger_deg"),
+    "fascia_sotto": ("regolatore", "incrementale", "margine_morso_deg"), "fascia_sopra": ("regolatore", "incrementale", "fascia_sopra_deg"), "cerca": ("regolatore", "incrementale", "cerca_deg_s"), "deriva": ("regolatore", "incrementale", "morso_deriva_deg_s"),
     "apre": ("regolatore", "incrementale", "k_dec_deg_s_per_ms2"), "apre_max": ("regolatore", "incrementale", "giu_max_deg_s"),
     "filtro_v": ("regolatore", "incrementale", "v_filtro_s"), "dec_ok": ("regolatore", "incrementale", "dec_ok_ms2"),
     "ritardo": ("freno", "ritardo_comando_decel_s"),
