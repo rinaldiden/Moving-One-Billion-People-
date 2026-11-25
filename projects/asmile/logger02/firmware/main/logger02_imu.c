@@ -200,7 +200,9 @@ static float leggi_batteria_adc(void)
     if (adc_oneshot_read(s_adc, ADC_CHANNEL_4, &raw) != ESP_OK) return -1;
     if (s_cali && adc_cali_raw_to_voltage(s_cali, raw, &mv) == ESP_OK) {
         float v = mv / 1000.0f * (100.0f + 33.0f) / 33.0f;
-        return v < 2.0f ? -1 : v;                  /* sotto 2 V = partitore non collegato */
+        if (v < 2.0f) return -1;                   /* sotto 2 V = partitore non collegato (sul valore grezzo) */
+        v = 1.025f * v + 0.01f;                    /* taratura Daniele 25/11: tester 4,0 V contro 3,87 letti */
+        return v;
     }
     return -1;
 }
