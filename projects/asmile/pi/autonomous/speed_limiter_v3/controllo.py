@@ -172,10 +172,9 @@ class Controllo:
             avvisi.append("IMU morta/congelata: " + (self.imu.motivo_scarto or "nessun dato"))
         if cap_anti is not None:
             tetto = min(tetto, cap_anti)
-        cap_ina = self.ina.passo(t, c.ina_ma, self.servo.fermo_da(t), self.rampa.angolo)
-        if cap_ina is not None:
-            tetto = min(tetto, cap_ina)
-            motivi.append("ina")
+        # 25/11 Daniele: "togli la guardia quando il master e' su 1": la corrente non abbassa piu' il tetto; resta solo la
+        # lettura (avviso INA assente). La guardia di stazionamento (master su 0) e' nel master e resta.
+        self.ina.passo(t, c.ina_ma, self.servo.fermo_da(t), self.rampa.angolo)
         if self.ina.assente:
             avvisi.append("INA219 assente: guardia corrente spenta")
         if self.arb.avviso_failopen:
