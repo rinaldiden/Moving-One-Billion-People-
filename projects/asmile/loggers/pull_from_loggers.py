@@ -249,6 +249,7 @@ def check_batteria(lg):
 
 # --- logger ESP32 (HW3: logger02 e successivi, 2 × ESP32-P4): niente ssh, API HTTP sulla A (la B dietro /b/).
 # Indirizzi di riserva per nome (LAN di casa): Tailscale non sempre c'è.
+RIPOSO_S = 480   # 8 min: il logger da fermo aspetta il Mac 2+10 min, quindi lo trovo sempre sveglio
 HTTP_HOSTS_EXTRA = {"logger02": ["100.117.207.99", "192.168.1.122"]}
 
 
@@ -333,10 +334,24 @@ def pull_logger02(name="logger02", hosts=None):
     if os.path.exists(os.path.join(DEST_BASE, f".pausa_{name}")):     # 24/11: Daniele "smetti di scaricare" (togli il file per riprendere)
         print(f"[{name}] scarico in pausa (file .pausa_{name})")
         return 0
-    host = None
+    # 25/11 (Daniele: "il Mac scarica solo i video nuovi, senza rompergli le balle"): UNA lettura di /api/stato per giro,
+    # poi niente fino al prossimo controllo (RIPOSO_S) se registra o non c'e' niente di nuovo. Il logger resta sveglio da
+    # solo mentre scarica (firmware); la B si tocca solo se sulla A c'erano pezzi nuovi.
+    stato_f = os.path.join(DEST_BASE, f".prossimo_{name}")
+    try:
+        if time.time() < float(open(stato_f).read().strip()):
+            return 0
+    except Exception:
+        pass
+    def riposa():
+        try:
+            open(stato_f, "w").write(str(time.time() + RIPOSO_S))
+        except Exception:
+            pass
+    host, st = None, None
     for h in (hosts or HTTP_HOSTS_EXTRA.get(name, [])):
         try:
-            get(f"http://{h}/api/stato", 5).read()
+            st = json.loads(get(f"http://{h}/api/stato", 5).read())
             host = h
             break
         except Exception:
@@ -346,20 +361,19 @@ def pull_logger02(name="logger02", hosts=None):
         return 0
     # 24/11 (giro di Daniele rovinato): scaricare MENTRE registra manda in crisi A e B (la B si e' fermata alle 16:12
     # proprio quando il Mac ha iniziato a scaricare). Regola Daniele 18/11: si scarica solo a bici ferma = logger in pausa.
-    try:
-        st = json.loads(get(f"http://{host}/api/stato", 5).read())
-        if st.get("rec", {}).get("registra") is not False:      # solo se dice chiaramente "non registro" (pausa)
-            print(f"[{name}] sta registrando o stato senza 'registra': non scarico, aspetto la pausa")
-            return 0
-    except Exception as e:
-        print(f"[{name}] stato non leggibile ({e}): non scarico")
+    if st.get("rec", {}).get("registra") is not False:          # solo se dice chiaramente "non registro" (pausa)
+        print(f"[{name}] sta registrando: non scarico, ricontrollo fra {RIPOSO_S // 60} min")
+        riposa()
         return 0
     dest = os.path.join(DEST_BASE, name)
     os.makedirs(dest, exist_ok=True)
     n = 0
+    nuovi_a = 0
     for pref in ("", "/b"):
+        if pref and not nuovi_a:
+            break                                         # niente di nuovo sulla A = niente sulla B: non la disturbo
         try:
-            stato = json.loads(get(f"http://{host}{pref}/api/stato").read())
+            stato = st if not pref else json.loads(get(f"http://{host}{pref}/api/stato").read())
             files = json.loads(get(f"http://{host}{pref}/api/files").read())
         except Exception as e:
             print(f"[{name}{pref or '/a'}] errore elenco: {e}")
@@ -384,6 +398,8 @@ def pull_logger02(name="logger02", hosts=None):
                 continue                                  # CSV IMU ancora aperto
             if nome in aperti:
                 continue                                  # salute/errori del minuto in corso
+            if not pref and nome.endswith(".h264"):
+                nuovi_a += 1                              # un video nuovo sulla A: allora guardo anche la B
             locale = os.path.join(dest, nome)
             try:
                 if not scarica_con_ripresa(f"http://{host}{pref}/dl?f={nome}", locale + ".part", size):
@@ -402,6 +418,9 @@ def pull_logger02(name="logger02", hosts=None):
                 time.sleep(1.0)                            # pausa fra file: la A respira
             except Exception as e:
                 print(f"  {nome}: errore {e}")
+    if not nuovi_a:
+        print(f"[{name}] nessun video nuovo: ricontrollo fra {RIPOSO_S // 60} min")
+        riposa()
     return n
 
 
