@@ -8,6 +8,7 @@
 #include <math.h>
 #include <string.h>
 #include <dirent.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -247,10 +248,34 @@ static void apri_segmento(void)
 }
 
 static volatile int s_da_scaricare = -1;
+/* 25/11 (Daniele): resta sveglio per lo scarico SOLO per i pezzi registrati con la bici IN MOVIMENTO. Un pezzo e' "in moto"
+ * se durante il pezzo c'e' stato movimento vero (A: IMU; B: "M" dalla A). Marcatore = file vuoto L02_MOTO_DIR/<nome .h264>,
+ * fuori da rec/ (il Mac non lo vede e non lo scarica); si toglie a /del del pezzo. Al riavvio contano solo i pezzi marcati:
+ * i vecchi senza marcatore (anche quelli di prima di questo firmware) NON tengono sveglio. */
+#define L02_MOTO_DIR L02_SD "/moto"
+static volatile int s_moto_da_scaricare;
+static volatile uint32_t s_moto_ms;            /* ms dall'avvio dell'ultimo movimento vero (0 = mai): 32 bit, niente strappi */
 static void conta_pezzi_sd(void);
+
+void logger02_rec_moto(void)
+{
+    s_moto_ms = (uint32_t)(esp_timer_get_time() / 1000) | 1;
+}
+
 static void chiudi_segmento(void)
 {
-    if (s_vid) { fclose(s_vid); s_vid = NULL; if (s_da_scaricare >= 0) s_da_scaricare++; }
+    if (s_vid) {
+        fclose(s_vid); s_vid = NULL;
+        if (s_da_scaricare >= 0) s_da_scaricare++;
+        uint32_t m = s_moto_ms;
+        if (m && m >= (uint32_t)(s_seg_t0 / 1000)) {           /* movimento vero dentro il pezzo */
+            char p[112];
+            snprintf(p, sizeof(p), L02_MOTO_DIR "/%s", s_file);
+            FILE *f = fopen(p, "w");
+            if (f) { fclose(f); s_moto_da_scaricare++; }
+            else ESP_LOGW(TAG, "marcatore in moto non scritto: %s", s_file);
+        }
+    }
     if (s_csv) { fclose(s_csv); s_csv = NULL; }
     s_seg++;
 }
@@ -518,15 +543,33 @@ void logger02_rec_pausa(bool p)
 
 static void conta_pezzi_sd(void)
 {
-    int n = 0;
+    int n = 0, nm = 0, orfani = 0;
+    char p[300];
+    struct stat st;
+    mkdir(L02_MOTO_DIR, 0775);
     DIR *d = opendir(L02_REC_DIR);
     struct dirent *e;
     while (d && (e = readdir(d))) {
         size_t l = strlen(e->d_name);
-        if (l > 5 && !strcmp(e->d_name + l - 5, ".h264")) n++;
+        if (l > 5 && !strcmp(e->d_name + l - 5, ".h264")) {
+            n++;
+            snprintf(p, sizeof(p), L02_MOTO_DIR "/%s", e->d_name);
+            if (stat(p, &st) == 0) nm++;                       /* marcato in moto */
+        }
     }
     if (d) closedir(d);
+    d = opendir(L02_MOTO_DIR);                                 /* marcatori senza piu' il pezzo (SD formattata a meta' ecc.) */
+    while (d && (e = readdir(d))) {
+        snprintf(p, sizeof(p), L02_REC_DIR "/%s", e->d_name);
+        if (stat(p, &st) != 0) {
+            snprintf(p, sizeof(p), L02_MOTO_DIR "/%s", e->d_name);
+            if (remove(p) == 0) orfani++;
+        }
+    }
+    if (d) closedir(d);
+    s_moto_da_scaricare = nm;
     s_da_scaricare = n;
+    ESP_LOGI(TAG, "pezzi sulla SD: %d, in moto: %d (marcatori orfani tolti: %d)", n, nm, orfani);
 }
 
 int logger02_rec_da_scaricare(void)
@@ -534,9 +577,17 @@ int logger02_rec_da_scaricare(void)
     return s_da_scaricare < 0 ? 0 : s_da_scaricare;
 }
 
-void logger02_rec_pezzo_tolto(void)
+int logger02_rec_da_scaricare_moto(void)
+{
+    return s_moto_da_scaricare < 0 ? 0 : s_moto_da_scaricare;
+}
+
+void logger02_rec_pezzo_tolto(const char *nome)
 {
     if (s_da_scaricare > 0) s_da_scaricare--;
+    char p[112];
+    snprintf(p, sizeof(p), L02_MOTO_DIR "/%s", nome);
+    if (remove(p) == 0 && s_moto_da_scaricare > 0) s_moto_da_scaricare--;
 }
 
 uint32_t logger02_rec_scritti(void)
@@ -562,10 +613,10 @@ size_t logger02_rec_jpeg(uint8_t *out, size_t max)
 void logger02_rec_stato(char *json, size_t n)
 {
     snprintf(json, n, "{\"w\":%d,\"h\":%d,\"luma\":%d,\"esposizione_us\":%.0f,\"guadagno\":%.2f,\"registra\":%s,\"sessione\":\"%s\",\"file\":\"%s\",\"fotogrammi\":%lu,\"scritti\":%lu,"
-             "\"pezzi\":%lu,\"mb\":%.1f,\"sd_libero_mb\":%llu}",
+             "\"pezzi\":%lu,\"mb\":%.1f,\"sd_libero_mb\":%llu,\"da_scaricare\":%d,\"in_moto\":%d}",
              W, H, s_ae_luma, s_vts0 ? s_exp16 / 16.0 * s_periodo_us / s_vts0 : 0, s_gain / 16.0,
              s_rec && !s_pausa ? "true" : "false", s_sess, s_vid ? s_file : "", (unsigned long)s_frame, (unsigned long)s_scritti,
-             (unsigned long)s_seg, s_bytes / 1e6, logger02_sd_libero_mb());
+             (unsigned long)s_seg, s_bytes / 1e6, logger02_sd_libero_mb(), logger02_rec_da_scaricare(), logger02_rec_da_scaricare_moto());
 }
 
 void logger02_rec_ultimi(char *json, size_t n)

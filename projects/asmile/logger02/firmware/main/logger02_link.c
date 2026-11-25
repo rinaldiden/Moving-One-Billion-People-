@@ -85,8 +85,9 @@ int64_t logger02_t_a(int64_t t)
 
 void logger02_link_invia(const char *riga)
 {
-    uart_write_bytes(UARTN, riga, strlen(riga));
-    uart_write_bytes(UARTN, "\n", 1);
+    char b[100];                                     /* 25/11: riga e \n in UNA scrittura: due task (sync e imu) non si mescolano */
+    int n = snprintf(b, sizeof(b), "%s\n", riga);
+    uart_write_bytes(UARTN, b, n < (int)sizeof(b) ? n : (int)sizeof(b) - 1);
     uart_wait_tx_done(UARTN, pdMS_TO_TICKS(100));    /* esce davvero dal filo (prima del deep sleep) */
 }
 
@@ -161,6 +162,8 @@ static void comando(const char *riga)
         logger02_rec_pausa(true);
     } else if (!strcmp(riga, "R") && !logger02_ruolo()->is_a) {
         logger02_rec_pausa(false);
+    } else if (!strcmp(riga, "M") && !logger02_ruolo()->is_a) {
+        logger02_rec_moto();                         /* 25/11: la A ha visto movimento vero */
     } else if (riga[0] == 'N' && logger02_ruolo()->is_a) {
         int n;
         if (sscanf(riga, "N %d", &n) == 1) { s_b_pend = n; s_b_pend_t = esp_timer_get_time(); }

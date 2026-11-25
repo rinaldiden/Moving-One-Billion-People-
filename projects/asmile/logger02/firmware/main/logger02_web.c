@@ -81,7 +81,7 @@ static esp_err_t h_stream(httpd_req_t *req)
 
 static esp_err_t h_stato(httpd_req_t *req)
 {
-    char rec[320], sync[480], imu[320], ts[96], sal[200], rete[260], out[2200];
+    char rec[400], sync[480], imu[320], ts[96], sal[200], rete[260], out[2300];
     logger02_rec_stato(rec, sizeof(rec));
     logger02_sync_stato(sync, sizeof(sync));
     if (logger02_ruolo()->is_a) logger02_imu_stato(imu, sizeof(imu));
@@ -167,7 +167,7 @@ static esp_err_t h_del(httpd_req_t *req)
     if (!nome_ok(req, p, sizeof(p))) return ESP_OK;
     bool ok = remove(p) == 0;
     size_t l = strlen(p);
-    if (ok && l > 5 && !strcmp(p + l - 5, ".h264")) logger02_rec_pezzo_tolto();
+    if (ok && l > 5 && !strcmp(p + l - 5, ".h264")) logger02_rec_pezzo_tolto(strrchr(p, '/') + 1);
     return httpd_resp_sendstr(req, ok ? "ok" : "errore");
 }
 

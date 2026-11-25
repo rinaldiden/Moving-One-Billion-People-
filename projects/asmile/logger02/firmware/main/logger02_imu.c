@@ -34,7 +34,8 @@ static const char *TAG = "imu";
 #define MOTO_FILA   3           /* movimento vero = 3 campioni di fila (60 ms): un campione storto non tiene sveglio */
 /* a casa col wifi: resta sveglio finché il Mac scarica (Daniele 21/11) */
 /* 23/11 (Daniele: «deve essere così sempre»): ferma col wifi → registrazione in pausa (pezzi chiusi) e resta sveglia
- * finché sulla SD di A e B ci sono pezzi da scaricare e il Mac li sta prendendo; poi dorme. */
+ * finché sulla SD di A e B ci sono pezzi da scaricare e il Mac li sta prendendo; poi dorme.
+ * 25/11 (Daniele): contano solo i pezzi registrati IN MOVIMENTO (marcatori, logger02_rec.c). */
 #define GYRO_FERMO  3.0f
 #define ACC_FERMO_G 0.030f
 
@@ -139,7 +140,7 @@ static bool resto_sveglio_per_scarico(int64_t t)
     int b = logger02_b_da_scaricare();
     l02_sveglio_in_t in = {.ultimo_moto = s_ultimo_moto, .ultimo_blocco = s_ultimo_scarico, .ultimo_inizio = s_ultimo_inizio,
                            .rete_vista = s_rete_vista, .trasf = __atomic_load_n(&s_trasf, __ATOMIC_SEQ_CST),
-                           .pezzi = logger02_rec_da_scaricare() + (b > 0 ? b : 0), .rete = rete_ok()};
+                           .pezzi_moto = logger02_rec_da_scaricare_moto() + (b > 0 ? b : 0), .rete = rete_ok()};
     return l02_resto_sveglio(t, &in);
 }
 
@@ -228,7 +229,12 @@ static void imu_task(void *arg)
         float dacc = fmaxf(fabsf(s_ax - pax), fmaxf(fabsf(s_ay - pay), fabsf(s_az - paz)));
         float g = fmaxf(fabsf(s_gx), fmaxf(fabsf(s_gy), fabsf(s_gz)));
         if (g > GYRO_FERMO || dacc > ACC_FERMO_G) {
-            if (++s_moto_fila >= MOTO_FILA) s_ultimo_moto = t;
+            if (++s_moto_fila >= MOTO_FILA) {
+                s_ultimo_moto = t;
+                logger02_rec_moto();                        /* 25/11: movimento VERO (non l'IMU che non risponde) */
+                static int64_t m_inviato;
+                if (t - m_inviato > 2000000LL) { m_inviato = t; logger02_link_invia("M"); }   /* alla B, max 1 ogni 2 s */
+            }
         } else {
             s_moto_fila = 0;
         }

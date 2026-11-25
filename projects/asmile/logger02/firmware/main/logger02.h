@@ -53,7 +53,9 @@ uint32_t logger02_rec_frame(void);            /* indice dell'ultimo fotogramma *
 uint32_t logger02_rec_scritti(void);
 void logger02_rec_pausa(bool p);              /* bici ferma: chiude il pezzo e non ne apre altri finché p */
 int logger02_rec_da_scaricare(void);           /* pezzi video chiusi ancora sulla SD (contatore, niente scansioni) */
-void logger02_rec_pezzo_tolto(void);           /* lo scarico ha cancellato un pezzo */
+int logger02_rec_da_scaricare_moto(void);      /* 25/11: di questi, quelli registrati con la bici IN MOVIMENTO (solo loro tengono sveglio) */
+void logger02_rec_pezzo_tolto(const char *nome);  /* lo scarico ha cancellato un pezzo (nome del .h264) */
+void logger02_rec_moto(void);                  /* 25/11: movimento vero adesso (A: IMU; B: "M" dalla A) */
 int logger02_b_da_scaricare(void);             /* A: pezzi della B (detti dalla B ogni 10 s), -1 se non noto */          /* fotogrammi scritti su SD */
 void logger02_rec_stato(char *json, size_t n);
 size_t logger02_rec_jpeg(uint8_t *out, size_t max);   /* ultimo fotogramma in JPEG per lo streaming (0 = niente) */

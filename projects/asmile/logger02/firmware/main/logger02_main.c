@@ -73,7 +73,7 @@ static void rete_task(void *arg)
                     snprintf(m, sizeof(m), "I " IPSTR, IP2STR(&ip.ip));
                     logger02_link_invia(m);
                 }
-                snprintf(m, sizeof(m), "N %d", logger02_rec_da_scaricare());   /* pezzi ancora da scaricare */
+                snprintf(m, sizeof(m), "N %d", logger02_rec_da_scaricare_moto());   /* 25/11: pezzi IN MOTO ancora da scaricare */
                 logger02_link_invia(m);
                 vTaskDelay(pdMS_TO_TICKS(10000));
             }
