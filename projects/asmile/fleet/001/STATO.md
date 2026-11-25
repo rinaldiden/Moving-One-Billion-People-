@@ -1,4 +1,4 @@
-# 001 — stato fotografato 2026-11-25 12:19 dopo: freno: fascia del morso (-2/+3, chiude 2, apre 4 gradi/s)
+# 001 — stato fotografato 2026-11-25 14:04 dopo: freno: corsa veloce 25 gradi poi fascia del morso
 kernel: 6.12.75+rpt-rpi-2712
 git sul Pi: 1967cbf 2026-05-13 fix: separate boot config for asmile (ov9281 dual cam, no arducam HAT)
 overlay: si
