@@ -21,3 +21,4 @@
 - 2026-11-24 19:00 001: freno sul loop dell'encoder (14bebb6d: pettine pedalate, contatto appreso, PI velocita', regola dura, encoder fix) + sensor_hub con gps_state.json; ordine di Daniele, prova domani 
 - 2026-11-25 09:12 001: freno: soglie 8-10 km/h dolce (v_max 10, zona 8, obiettivo 9, rampe lente, tetto 50), sicurezza ALLOW condizionato 
 - 2026-11-25 09:24 001: freno: attesa vicino al morso 16 gradi da 6 km/h, morso dolce, rilascio piu' rapido; validazione allargata 
+- 2026-11-25 09:30 001: freno incrementale decel+velocita' (tetto chiusura per velocita') 
