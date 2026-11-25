@@ -35,3 +35,4 @@
 - 2026-11-25 14:35 001: freno come in officina: 25 gradi in 0,5 s, poi 16,7 gradi/s su velocita'/decel, PWM hardware 
 - 2026-11-25 14:39 001: freno: tolta guardia corrente col master su 1 
 - 2026-11-25 14:52 001: freno: rilascio appena fa effetto + master a rampa col PWM hardware 
+- 2026-11-25 14:54 001: freno: angolo servo persistente in /data 

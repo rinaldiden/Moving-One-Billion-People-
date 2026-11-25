@@ -35,7 +35,7 @@ ad9289767696e588985805505943b56c5e818e1cc9bb78233461218f32b596a7  ./pi/autonomou
 3438c628dee341fadb3de927e2b7155cf562e7bbeb0e7cbadc7b610c36673e03  ./pi/autonomous/speed_limiter_v3/controllo.py
 42fcc365c22688c136380ddb6a646a6939251c17a3499c0bfdcfb345a3e766ea  ./pi/autonomous/speed_limiter_v3/fonti.py
 0f0bb9cc5de0820ddaac322319060513f4ababdc3f3dc61d8015e41293a8c05e  ./pi/autonomous/speed_limiter_v3/freno.py
-feed581a2f3615a37d430e1a68b5be4ad409ab3bf88a8729ba08cd3e6dd643ef  ./pi/autonomous/speed_limiter_v3/hw.py
+471dd15c6d89eae29125a7ad4f3916e112a212257ba9fd0b22ae54cefc741342  ./pi/autonomous/speed_limiter_v3/hw.py
 9ae3427d183ff9bb5a89db6ec913fb7120470d326c68e8702253c164c341054b  ./pi/autonomous/speed_limiter_v3/lock_gpio12.py
 fdebdd7657bd3de80328c7ad462cb95e38377cf8616da32cc2513f4d73963690  ./pi/autonomous/speed_limiter_v3/porta_a_zero.py
 1bd88f5e680fa0e116ff293474debbc19384fd86a3cadbcee4269a16660eb6f8  ./pi/autonomous/speed_limiter_v3/prova_secco.py
@@ -67,7 +67,7 @@ d1ac04dba0f701c1f632dfcd514b515a9a3940bb5bb14372ca3e7f748a47e812  ./pi/camera/st
 bd541f0e45c96ae0fb3b06f8813ab36eba39e3ba8b3d4b2ae7c12f94e966f239  ./pi/camera/test_dual_cam.py
 df6ad026c44d2220960ced8cbb7d095c08c3bb96610df27cd47317cc8849310b  ./pi/logging/training_recorder.py
 4f8d3cb26d07b1c8588ce75bec4b8adddb36fce107f855de5f69e6363c6f3125  ./pi/power/health_logger.py
-dc20c1f167f54ec9b6146e975b888338dddc5c2c64a30b826501bc695cdc1c54  ./pi/power/master_switch.py
+88c99991e77525826d300d97a90cc4aa557f673ded5ca74c66029e9c94c16817  ./pi/power/master_switch.py
 6927159f876f3b748609144a39acac3b10b68a554af66cd502c4ad4a930b1aa9  ./pi/power/safe_shutdown.py
 cfa009aa19f619bf75dd34d2a0edaf78190bdce7ff297151200071a204119fe7  ./pi/sensors/actuator_log.py
 055076a7d735519ce22c4d7ec3b26ad30b2254f5b4f2ff15d70f88fae1674ce6  ./pi/sensors/gps_neo_m10.py

@@ -1,4 +1,4 @@
-# 001 — stato fotografato 2026-11-25 14:52 dopo: freno: rilascio appena fa effetto + master a rampa col PWM hardware
+# 001 — stato fotografato 2026-11-25 14:54 dopo: freno: angolo servo persistente in /data
 kernel: 6.12.75+rpt-rpi-2712
 git sul Pi: 1967cbf 2026-05-13 fix: separate boot config for asmile (ov9281 dual cam, no arducam HAT)
 overlay: si
