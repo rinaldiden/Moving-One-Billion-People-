@@ -42,6 +42,10 @@ static void guardia_ota(void *arg)
 {
     esp_ota_img_states_t st;
     if (esp_ota_get_state_partition(esp_ota_get_running_partition(), &st) == ESP_OK && st == ESP_OTA_IMG_PENDING_VERIFY) {
+        /* 25/11: firmware in prova = niente deep sleep finche' la guardia non decide (2 + 3 min). Il 25/11 15:13 la A col
+         * firmware nuovo, bici ferma e nessun pezzo in moto, sarebbe andata a dormire a ~3 min, prima della conferma:
+         * al risveglio il bootloader sarebbe tornato da solo al firmware vecchio. */
+        logger02_prova_sveglio(600);
         if (!(xEventGroupWaitBits(s_ev, 1, pdFALSE, pdTRUE, pdMS_TO_TICKS(120000)) & 1)) {
             ESP_LOGE(TAG, "firmware nuovo senza rete: torno al precedente");
             esp_ota_mark_app_invalid_rollback_and_reboot();

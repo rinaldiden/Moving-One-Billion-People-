@@ -444,6 +444,10 @@ static httpd_handle_t server(uint16_t porta, uint16_t ctrl, int handlers)
 
 static esp_err_t h_b(httpd_req_t *req)
 {
+    /* 25/11: aggiornamento o rollback della B in corso: la A non dorme per 15 min (dormendo addormenta anche la B, che
+     * col firmware ancora in prova al risveglio tornerebbe da sola al precedente) */
+    if (req->method == HTTP_POST && (!strncmp(req->uri, "/b/ota", 6) || !strncmp(req->uri, "/b/rollback", 11)))
+        logger02_prova_sveglio(900);
     return proxy_b(req, "");
 }
 
