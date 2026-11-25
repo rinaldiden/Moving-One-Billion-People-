@@ -20,6 +20,7 @@ Variabili (nome corto -> chiave):
   apre       gradi/s di apertura per ogni m/s2 di decel in eccesso         (piu' alto = molla prima)
   apre_max   gradi/s massimi di apertura
   anticipo   secondi di anticipo sulla tendenza della decel                (ritardo freno->decel)
+  ritardo    secondi di anticipo sulla velocita' (rilascia prima di scendere sotto la zona)
   normale    decel voluta in zona (m/s2)
   forte      decel voluta sopra vmax (m/s2)
 """
@@ -38,6 +39,7 @@ MAPPA = {
     "chiude": ("regolatore", "incrementale", "k_su_deg_s_per_ms2"), "chiude_max": ("regolatore", "incrementale", "su_max_deg_s"),
     "apre": ("regolatore", "incrementale", "k_giu_deg_s_per_ms2"), "apre_max": ("regolatore", "incrementale", "giu_max_deg_s"),
     "anticipo": ("regolatore", "incrementale", "anticipo_s"),
+    "ritardo": ("freno", "ritardo_comando_decel_s"),
     "normale": ("decel_obiettivo_ms2", "normale"), "forte": ("decel_obiettivo_ms2", "forte"),
 }
 

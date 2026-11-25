@@ -2,8 +2,8 @@
  "_cosa": "Soglie dello speed_limiter v3 di #001 (BOZZA, solo prova a secco sul Mac). Tutto qui, niente numeri nel codice. Daniele 23/11 + decel dalle frenate vere 13/11 (agents/rapporti/decel_frenate_20261113-23.md).",
  "stato": "BOZZA - da validare da Daniele prima di qualsiasi deploy",
  "velocita": {
-  "v_max_kmh": 10.0,
-  "zona_inizio_kmh": 8.0,
+  "v_max_kmh": 10.5,
+  "zona_inizio_kmh": 9.0,
   "_note": "Daniele 23/11 (via capo): 12-15 km/h rallenti dolcemente (decel obiettivo cresce piano da 0 a 'normale'); sopra 15 riporti a 15 con anello chiuso sulla decel misurata dall'encoder; <=50 gradi sempre. Sostituisce 14/13. CONSEGUENZA da dire a Daniele: su discesa costante la velocita' si assesta ~12-13, non 15.",
   "_25_11": "Daniele 25/11: prova 8-10 km/h, freno dolce ('lo voglio sentire entrare e funzionare'); prima 12/15."
  },
@@ -63,7 +63,7 @@
  },
  "decel_obiettivo_ms2": {
   "_fonte": "PROVVISORIE: come frena DANIELE a mano (n=30 frenate, 1 giorno 13/11, il servo NON era collegato al freno: le 30 frenate sono tutte sue). Scala ENCODER (parabola 0.3 s). NON confrontare con IMU (legge 1.4-2x). Ritardo comando->decelerazione del servo: nessun dato, vedi freno.ritardo_comando_decel_s.",
-  "normale": 0.7,
+  "normale": 0.5,
   "normale_picco_max": 0.8,
   "forte": 1.0,
   "forte_picco_max": 1.1,
@@ -102,7 +102,7 @@
   "_fascia": "Regolatore a fascia di contatto: avvicinamento veloce fino a contatto-margine (non frena), poi PI sulla velocita' con rampe piccole (8 gradi/s su, 5 giu'; jerk del freno = rampa x 0.1-0.3 m/s2 per grado <= 2.4 m/s3). Il rilascio anti-impuntata e i tetti restano immediati.",
   "tetto_imu_morta_deg": 0.0,
   "_note": "il tetto 50 e' scritto anche nel codice: il file puo' solo ABBASSARLO. L'angolo non e' mappato su decel: anello chiuso sulla decel misurata.",
-  "ritardo_comando_decel_s": 0.3,
+  "ritardo_comando_decel_s": 0.6,
   "_ritardo": "PARAMETRO da misurare a banco (nessun dato: il servo non frenava nei log). Usato solo per rilasciare in anticipo (v prevista fra ritardo secondi < v_rilascia).",
   "_rampe": "salita 12 gradi/s (3 sopra 35), discesa 25 gradi/s: salto di angolo massimo per ciclo 0.5 gradi; con g=0.05 m/s2/grado il jerk del comando e' <=1.25 m/s3 (limite 4). Il rilascio anti-impuntata e' l'UNICA eccezione (immediato).",
   "tetto_imu_morta_emergenza_deg": 25.0,
@@ -160,7 +160,7 @@
   "a_pos_max_ms2": 0.3,
   "banda_morta_ms2": 0.05,
   "a_filtro_s": 0.2,
-  "v_obiettivo_kmh": 9.0,
+  "v_obiettivo_kmh": 9.5,
   "ti_s": 5.0,
   "guadagno_anello_1_s": 1.6,
   "g_default_ms2_per_deg": 0.2,
@@ -189,10 +189,10 @@
   "incrementale": {
    "attivo": true,
    "k_su_deg_s_per_ms2": 10.0,
-   "su_max_deg_s": 8.0,
+   "su_max_deg_s": 6.0,
    "k_giu_deg_s_per_ms2": 40.0,
    "giu_max_deg_s": 30.0,
-   "anticipo_s": 0.25,
+   "anticipo_s": 0.4,
    "jerk_filtro_s": 0.15,
    "_note": "Daniele 25/11 giro 4: niente tetti, il loop decel-velocita' comanda. dAngolo/dt: chiude 6 gradi/s per m/s2 di decel mancante (max 4), apre 40 gradi/s per m/s2 di decel in eccesso (max 30). Decel prevista = misurata + tendenza x 0,25 s (ritardo freno->decel). Solo linea rossa 50."
   }
