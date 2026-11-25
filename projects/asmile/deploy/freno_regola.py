@@ -15,11 +15,12 @@ Variabili (nome corto -> chiave):
   obiettivo  velocita' attorno a cui lavora (km/h), fra zona e vmax
   attesa_da  quanti km/h sotto la zona si mette in attesa vicino al morso
   attesa     angolo di attesa (gradi) = contatto_min - margine: si cambia con attesa=<gradi>
-  chiude     gradi/s di chiusura per ogni m/s2 di decel che manca         (piu' alto = chiude prima)
+  chiude     gradi/s di chiusura per ogni km/h sopra l'obiettivo          (piu' alto = risponde prima alla velocita')
   chiude_max gradi/s massimi di chiusura                                   (piu' alto = piu' brusco)
-  apre       gradi/s di apertura per ogni m/s2 di decel in eccesso         (piu' alto = molla prima)
+  apre       gradi/s di rilascio per ogni m/s2 di decel oltre dec_ok      (piu' alto = molla prima)
+  dec_ok     decel oltre cui comincia a rilasciare (m/s2)
+  filtro_v   secondi di media della velocita' (una pedalata)
   apre_max   gradi/s massimi di apertura
-  anticipo   secondi di anticipo sulla tendenza della decel                (ritardo freno->decel)
   ritardo    secondi di anticipo sulla velocita' (rilascia prima di scendere sotto la zona)
   normale    decel voluta in zona (m/s2)
   forte      decel voluta sopra vmax (m/s2)
@@ -36,9 +37,9 @@ F = "config/soglie_speed_limiter_v3.json"
 MAPPA = {
     "vmax": ("velocita", "v_max_kmh"), "zona": ("velocita", "zona_inizio_kmh"),
     "obiettivo": ("regolatore", "v_obiettivo_kmh"), "attesa_da": ("regolatore", "ingaggio_sotto_zona_kmh"),
-    "chiude": ("regolatore", "incrementale", "k_su_deg_s_per_ms2"), "chiude_max": ("regolatore", "incrementale", "su_max_deg_s"),
-    "apre": ("regolatore", "incrementale", "k_giu_deg_s_per_ms2"), "apre_max": ("regolatore", "incrementale", "giu_max_deg_s"),
-    "anticipo": ("regolatore", "incrementale", "anticipo_s"),
+    "chiude": ("regolatore", "incrementale", "k_v_deg_s_per_kmh"), "chiude_max": ("regolatore", "incrementale", "su_max_deg_s"),
+    "apre": ("regolatore", "incrementale", "k_dec_deg_s_per_ms2"), "apre_max": ("regolatore", "incrementale", "giu_max_deg_s"),
+    "filtro_v": ("regolatore", "incrementale", "v_filtro_s"), "dec_ok": ("regolatore", "incrementale", "dec_ok_ms2"),
     "ritardo": ("freno", "ritardo_comando_decel_s"),
     "normale": ("decel_obiettivo_ms2", "normale"), "forte": ("decel_obiettivo_ms2", "forte"),
 }

@@ -285,7 +285,7 @@ class Regolatore:
         self.frena = False
         self.a_f = 0.0
         self._init = False
-        self._dec_prec, self._jerk = None, 0.0
+        self._dec_prec, self._jerk, self._v_f = None, 0.0, None
         self.ingaggiato = False
         self.I = 0.0
         self.rate_su = None
@@ -456,16 +456,16 @@ class Regolatore:
             # il loop decel-velocita' comanda in tempo reale quando e quanto reagire". Velocita' angolare proporzionale
             # all'errore fra decel voluta (dal profilo di velocita') e decel PREVISTA (misurata + tendenza x anticipo, per il
             # ritardo freno->decel): chiude piano, apre in fretta appena la decel supera la voluta (fine pedalata).
-            if self._dec_prec is None:
-                self._dec_prec = dec
-            self._jerk += min(1.0, dt / inc["jerk_filtro_s"]) * ((dec - self._dec_prec) / max(dt, 1e-3) - self._jerk)
-            self._dec_prec = dec
-            dec_prev = dec + self._jerk * inc["anticipo_s"]
-            err = -self.a_des - dec_prev                 # >0: serve piu' freno, <0: frena troppo
-            if err >= 0:
-                rate = min(inc["su_max_deg_s"], inc["k_su_deg_s_per_ms2"] * err)
-            else:
-                rate = max(-inc["giu_max_deg_s"], inc["k_giu_deg_s_per_ms2"] * err)
+            # 25/11 giro 5 (Daniele: "progressivo, non a scatti; risposta veloce rispetto alla VELOCITA', rilascio rispetto alla
+            # DECEL"): velocita' media su una pedalata (la v dell'encoder sale e scende a ogni spinta e il freno la inseguiva).
+            if self._v_f is None:
+                self._v_f = vp
+            self._v_f += min(1.0, dt / inc["v_filtro_s"]) * (vp - self._v_f)
+            ev = self._v_f * 3.6 - r["v_obiettivo_kmh"]        # km/h sopra (+) o sotto (-) l'obiettivo
+            rate = inc["k_v_deg_s_per_kmh"] * ev
+            if dec > inc["dec_ok_ms2"]:                         # rallenta gia' piu' del voluto: rilascia in proporzione
+                rate -= inc["k_dec_deg_s_per_ms2"] * (dec - inc["dec_ok_ms2"])
+            rate = max(-inc["giu_max_deg_s"], min(inc["su_max_deg_s"], rate))
             self.fase = "incrementale"
             self.rate_su, self.rate_giu = inc["su_max_deg_s"], inc["giu_max_deg_s"]
             return max(0.0, min(tetto, max(base, angolo + rate * dt)))
