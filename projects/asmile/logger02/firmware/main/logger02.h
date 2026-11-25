@@ -30,6 +30,7 @@ typedef struct {
 } logger02_ruolo_t;
 
 const logger02_ruolo_t *logger02_ruolo(void);
+void logger02_beep_batteria(void);            /* 3 beep corti (batteria scarica), bloccante, prima del sonno */
 esp_err_t logger02_saluto(void);              /* "Narmade Har!" dall'altoparlante, una volta a ogni accensione */
 esp_err_t logger02_ip_fisso(void);            /* dopo example_connect(): passa da DHCP all'IP fisso del ruolo */
 void logger02_ora_init(void);                 /* SNTP + fuso Italia */
@@ -70,10 +71,11 @@ double logger02_rec_riga_us(void);
 esp_err_t logger02_imu_start(void);
 void logger02_imu_stato(char *json, size_t n);
 float logger02_batteria_v(void);              /* <0 se non collegata */
-void logger02_dormi(const char *motivo);
+void logger02_dormi(const char *motivo);      /* chiude tutto e va in deep sleep (A sveglia con IMU, B con WAKE) */
 void logger02_dormi_def(const char *motivo);  /* deep sleep SENZA risvegli (batteria): riparte solo con reset/riaccensione */
 void logger02_spegni_batteria(const char *motivo, float media_v);  /* registra motivo (log+NVS) e dormi_def */
-void logger02_batt_avvio(void);               /* A, all'avvio: batteria < 3,1 V = non avvio, dormi_def (soglie in logger02_batt_logic.h) */      /* chiude tutto e va in deep sleep (A sveglia con IMU, B con WAKE) */
+void logger02_batt_avvio(void);               /* A, all'avvio: batteria < 3,1 V = non avvio, dormi_def (soglie in logger02_batt_logic.h) */
+void logger02_batt_start(void);               /* A: task 1 Hz della protezione 3 V, indipendente dall'IMU */
 void logger02_scarico_inizio(void);           /* 24/11: trasferimento aperto (/dl, proxy /b): contatore >0 = mai dormire */
 void logger02_scarico_fine(void);             /* da chiamare SEMPRE in uscita, anche in errore */
 void logger02_scarico_visto(void);            /* il Mac sta scaricando (web): A resta sveglia finché finisce */

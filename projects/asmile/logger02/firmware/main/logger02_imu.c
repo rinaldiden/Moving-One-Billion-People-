@@ -21,6 +21,7 @@
 #include "esp_attr.h"
 #include "esp_timer.h"
 #include "esp_log.h"
+#include "esp_ota_ops.h"
 #include "esp_netif.h"
 #include "protocol_examples_common.h"
 #include "logger02.h"
@@ -54,6 +55,7 @@ static volatile int64_t s_ultimo_scarico;      /* ultimo BLOCCO davvero inviato 
 static volatile int64_t s_ultimo_inizio;
 static int s_moto_fila;
 static bool s_in_pausa;
+static SemaphoreHandle_t s_csv_m;               /* CSV IMU: lo chiude anche lo spegnimento per batteria (altro task) */
 
 void logger02_scarico_visto(void)
 {
@@ -123,6 +125,7 @@ void logger02_riavvio_pulito(const char *motivo)
     s_salva = (salva_t){.magic = SALVA_MAGIC, .riavvii = (uint32_t)s_riavvii + 1, .fermo_us = t - s_ultimo_moto,
                         .rete_eta_us = t - s_rete_vista, .sveglio_us = s_sveglio_fino > t ? s_sveglio_fino - t : 0};
     logger02_rec_stop();
+    if (s_csv_m) xSemaphoreTake(s_csv_m, portMAX_DELAY);     /* riavvio pulito gira nel task wifi: imu_task non scrive piu' */
     if (s_csv) { fclose(s_csv); s_csv = NULL; }
     logger02_salute_chiudi();
     vTaskDelay(pdMS_TO_TICKS(200));
@@ -224,6 +227,47 @@ static float leggi_batteria_adc(void)
     return -1;
 }
 
+/* Protezione 3 V: task a 1 Hz INDIPENDENTE da imu_task (IMU morta = imu_task fermo, la batteria si controlla lo stesso).
+ * Stesso mutex ADC di prima (logger02_analogico dentro leggi_batteria: temperatura e ADC mai insieme). */
+static void batt_task(void *arg)
+{
+    TickType_t t0 = xTaskGetTickCount();
+    while (1) {
+        vTaskDelayUntil(&t0, pdMS_TO_TICKS(1000));
+        int64_t t = esp_timer_get_time();
+        s_batt = leggi_batteria();
+        s_batt_esito = l02_batt_campione(&s_bl, t, s_batt);
+        if (s_batt_esito == L02_BATT_SPEGNI) {
+            char m[96];
+            snprintf(m, sizeof(m), "batteria %.2f V (media %.2f) sotto %.1f V da %d s: spengo", s_batt, s_bl.media,
+                     L02_BATT_OFF_V, L02_BATT_OFF_S);
+            logger02_spegni_batteria(m, s_bl.media);        /* non ritorna */
+        } else if (s_batt_esito == L02_BATT_ASSENTE && t - s_batt_avviso_t > 60000000LL) {
+            s_batt_avviso_t = t;
+            ESP_LOGW(TAG, "batteria non leggibile (<%.1f V o NaN): protezione 3 V NON attiva", L02_BATT_ASSENTE_V);
+        }
+    }
+}
+
+void logger02_batt_start(void)
+{
+    if (!logger02_ruolo()->is_a) return;
+    batt_adc_init();
+    xTaskCreatePinnedToCore(batt_task, "batt", 4096, NULL, 8, NULL, 0);
+}
+
+/* Immagine OTA ancora PENDING_VERIFY: prima di un sonno per batteria la confermo, se no la guardia (3 min di rete) non
+ * arriva mai, il sonno e' definitivo e al riavvio il bootloader tornerebbe SILENZIOSAMENTE alla versione senza protezione. */
+static void conferma_ota_se_pending(bool avvio_ok)
+{
+    esp_ota_img_states_t st;
+    if (!avvio_ok || esp_ota_get_state_partition(esp_ota_get_running_partition(), &st) != ESP_OK ||
+        st != ESP_OTA_IMG_PENDING_VERIFY)
+        return;
+    esp_ota_mark_app_valid_cancel_rollback();
+    ESP_LOGW(TAG, "immagine OTA confermata prima del sonno per batteria (senza la prova di rete)");
+}
+
 static void imu_task(void *arg)
 {
     uint8_t d[14];
@@ -250,20 +294,8 @@ static void imu_task(void *arg)
             s_moto_fila = 0;
         }
         pax = s_ax; pay = s_ay; paz = s_az;
-        if (s_campioni % 50 == 0) {
-            s_batt = leggi_batteria(); if (rete_ok()) s_rete_vista = t;
-            /* protezione 3 V (Daniele 24/11): PRIORITARIA su scarico, pausa e tutto il resto */
-            s_batt_esito = l02_batt_campione(&s_bl, t, s_batt);
-            if (s_batt_esito == L02_BATT_SPEGNI) {
-                char m[96];
-                snprintf(m, sizeof(m), "batteria %.2f V (media %.2f) sotto %.1f V da %d s: spengo", s_batt, s_bl.media,
-                         L02_BATT_OFF_V, L02_BATT_OFF_S);
-                logger02_spegni_batteria(m, s_bl.media);
-            } else if (s_batt_esito == L02_BATT_ASSENTE && t - s_batt_avviso_t > 60000000LL) {
-                s_batt_avviso_t = t;
-                ESP_LOGW(TAG, "batteria non leggibile (<%.1f V o NaN): protezione 3 V NON attiva", L02_BATT_ASSENTE_V);
-            }
-        }
+        if (s_campioni % 50 == 0 && rete_ok()) s_rete_vista = t;
+        if (s_csv_m) xSemaphoreTake(s_csv_m, portMAX_DELAY);
         if (s_csv) {
             fprintf(s_csv, "%lld,%lu,%.4f,%.4f,%.4f,%.2f,%.2f,%.2f,", (long long)t, (unsigned long)logger02_rec_frame(),
                     s_ax, s_ay, s_az, s_gx, s_gy, s_gz);
@@ -271,6 +303,7 @@ static void imu_task(void *arg)
             fputc('\n', s_csv);
             if (t - s_pezzo_t0 > 60000000LL) { fclose(s_csv); s_csv = NULL; apri_csv(); }
         }
+        if (s_csv_m) xSemaphoreGive(s_csv_m);
         bool ferma = (s_ripreso || t > MIN_ACCESO_S * 1000000LL) && t - s_ultimo_moto > FERMO_S * 1000000LL;
         if (ferma != s_in_pausa && s_campioni % 25 == 0) {     /* pausa/ripresa su A e B (ogni 0,5 s al massimo) */
             s_in_pausa = ferma;
@@ -302,6 +335,7 @@ esp_err_t logger02_imu_start(void)
 
     batt_adc_init();
 
+    s_csv_m = xSemaphoreCreateMutex();
     s_ultimo_moto = esp_timer_get_time();
     if (s_salva.magic == SALVA_MAGIC) {                 /* dopo un riavvio pulito: stessi tempi di prima */
         int64_t t = esp_timer_get_time();
@@ -380,7 +414,7 @@ static void spegni_periferiche(void)
 static void dormi_per_sempre(bool a)
 {
     if (a) {
-        w(0x6B, 0x40);                               /* IMU in sleep: niente consumo, niente interrupt */
+        if (s_mpu) w(0x6B, 0x40);                    /* IMU (se c'e') in sleep: niente consumo, niente interrupt */
         gpio_set_direction(L02_PIN_WAKE, GPIO_MODE_OUTPUT);
         gpio_set_level(L02_PIN_WAKE, 0);
         gpio_hold_en(L02_PIN_WAKE);
@@ -398,6 +432,7 @@ void logger02_dormi_def(const char *motivo)
     bool a = logger02_ruolo()->is_a;
     if (a) logger02_link_invia("Z");                 /* prima la B */
     logger02_rec_stop();
+    if (s_csv_m) xSemaphoreTake(s_csv_m, portMAX_DELAY);     /* imu_task non scrive piu' (mai rilasciato: si dorme) */
     if (s_csv) { fclose(s_csv); s_csv = NULL; }
     logger02_salute_chiudi();                        /* scrive il motivo nel registro errori prima di chiudere */
     logger02_rec_standby();
@@ -412,6 +447,8 @@ void logger02_spegni_batteria(const char *motivo, float media_v)
 {
     ESP_LOGE(TAG, "SPEGNIMENTO BATTERIA: %s", motivo);
     logger02_salute_batt_stop(1, media_v);
+    conferma_ota_se_pending(logger02_sd_libero_mb() > 0);   /* SD ok = avvio andato bene */
+    logger02_beep_batteria();
     logger02_dormi_def(motivo);
 }
 
@@ -438,6 +475,8 @@ void logger02_batt_avvio(void)
     }
     ESP_LOGE(TAG, "batteria %.2f V sotto %.1f V all'avvio: non avvio, torno a dormire senza risvegli", media, L02_BATT_START_V);
     logger02_salute_batt_stop(2, media);
+    conferma_ota_se_pending(true);                              /* camera ok (example_video_init e' passata); SD non ancora montata */
+    logger02_beep_batteria();
     gpio_set_direction(L02_PIN_WAKE, GPIO_MODE_OUTPUT);        /* B: WAKE basso >3 s la fa dormire (wake_task) */
     gpio_set_level(L02_PIN_WAKE, 0);
     vTaskDelay(pdMS_TO_TICKS(4000));
@@ -454,6 +493,7 @@ void logger02_dormi(const char *motivo)
     bool a = logger02_ruolo()->is_a;
     if (a) logger02_link_invia("Z");                 /* prima la B */
     logger02_rec_stop();
+    if (s_csv_m) xSemaphoreTake(s_csv_m, portMAX_DELAY);     /* anche da /dormi (task web): imu_task non scrive piu' */
     if (s_csv) { fclose(s_csv); s_csv = NULL; }
     logger02_salute_chiudi();
 

@@ -120,6 +120,7 @@ void app_main(void)
         logger02_rec_start();
         logger02_salute_start();
     }
+    logger02_batt_start();                 /* A: protezione 3 V, task proprio (non dipende dall'IMU) */
     if (ru->is_a) {
         logger02_imu_start();
     }
