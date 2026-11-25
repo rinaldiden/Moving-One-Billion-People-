@@ -489,8 +489,8 @@ class Regolatore:
             if m is None:                                       # morso non ancora visto: corsa veloce, poi cerca piano, apre dolce
                 rate = max(-inc["giu_max_deg_s"], min(inc["cerca_deg_s"], rate))
                 nuovo, attesa = angolo + rate * dt, corsa
-                if angolo < corsa:
-                    nuovo = min(corsa, angolo + inc["avvicinamento_deg_s"] * dt) if rate > 0 else angolo
+                if angolo < corsa:                              # Daniele: "muovi veloce il servo di 25 gradi": un colpo solo
+                    nuovo = corsa if rate > 0 else angolo
             else:
                 attesa = max(corsa, m - inc["margine_morso_deg"])
                 alto = max(m + inc["fascia_sopra_deg"], attesa + inc["fascia_sopra_deg"])
@@ -499,7 +499,9 @@ class Regolatore:
                     self._morso = m + inc["morso_deriva_deg_s"] * dt
                 elif angolo <= attesa + 0.05 and ev < 0 and dec > ok:
                     self._morso = max(0.0, m - inc["morso_deriva_deg_s"] * dt)
-                if angolo < attesa:                             # sotto la fascia il freno non frena: avvicina in fretta
+                if angolo < corsa:                              # Daniele: "muovi veloce il servo di 25 gradi": un colpo solo
+                    nuovo = corsa if rate > 0 else angolo
+                elif angolo < attesa:                           # sopra la corsa ma sotto la fascia: avvicina in fretta
                     nuovo = min(attesa, angolo + inc["avvicinamento_deg_s"] * dt) if rate > 0 else angolo
                 else:
                     rate = max(-inc["giu_max_deg_s"], min(inc["su_max_deg_s"], rate))
@@ -510,6 +512,8 @@ class Regolatore:
             self.attesa_appresa = attesa
             self.fase = "incrementale"
             self.rate_su, self.rate_giu = max(inc["su_max_deg_s"], inc["avvicinamento_deg_s"]), inc["giu_max_deg_s"]
+            if angolo < corsa <= nuovo:
+                self.rate_su = 1000.0                           # la rampa non frena il colpo: va alla velocita' del servo
             return max(0.0, min(tetto, nuovo))
         umax = max(0.0, tetto - base)
         e = vp - self.v_set
