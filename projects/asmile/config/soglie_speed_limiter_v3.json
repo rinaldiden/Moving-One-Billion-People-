@@ -82,7 +82,7 @@
   "soglia_lenta_deg": 35.0,
   "rampa_giu_deg_s": 25.0,
   "k_anello_deg_s_per_ms2": 15.0,
-  "impulso_trigger_deg": 1.0,
+  "impulso_trigger_deg": 0.5,
   "impulso_tieni_s": 0.15,
   "tieni_per_grado_s": 0.03,
   "tieni_zero_s": 1.5,
