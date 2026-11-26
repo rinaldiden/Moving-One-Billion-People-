@@ -178,10 +178,10 @@ static int su_scritto(uint16_t c, const struct ble_gatt_error *e, struct ble_gat
 static int su_dsc(uint16_t c, const struct ble_gatt_error *e, uint16_t chr, const struct ble_gatt_dsc *d, void *arg)
 {
     static uint16_t cccd;
-    if (e->status == 0 && d && !ble_uuid_cmp(&d->uuid.u, BLE_UUID16_DECLARE(BLE_GATT_DSC_CLT_CFG_UUID16))) cccd = d->handle;
+    if (e->status == 0 && d && !cccd && !ble_uuid_cmp(&d->uuid.u, BLE_UUID16_DECLARE(BLE_GATT_DSC_CLT_CFG_UUID16))) cccd = d->handle;   /* il primo dopo il valore: gli altri sono di altre caratteristiche */
     if (e->status == BLE_HS_EDONE) {
         uint8_t on[2] = {1, 0};
-        if (!cccd || (s_tentativo & 1)) cccd = s_val + 1;   /* quasi tutti i sensori lo mettono subito dopo il valore */
+        if (!cccd || !(s_tentativo & 1)) cccd = s_val + 1;   /* quasi tutti i sensori lo mettono subito dopo il valore */
         s_cccd_usato = cccd; s_scrittura = -1;
         ESP_LOGW(TAG, "valore %u, fine servizio %u, CCCD %u (tentativo %d)", s_val, s_fine, cccd, s_tentativo);
         if (ble_gattc_write_flat(c, cccd, on, 2, su_scritto, NULL) == 0) {
@@ -283,6 +283,11 @@ static void regista(void *arg)
             if (s_conn != BLE_HS_CONN_HANDLE_NONE) ble_gap_terminate(s_conn, BLE_ERR_REM_USER_CONN_TERM);
             else s_st = R_CERCA;
             continue;
+        }
+        if (s_st == R_OK && s_rx_conn == 0 && s_conn != BLE_HS_CONN_HANDLE_NONE && t - s_sub_us > 15000000LL) {
+            ESP_LOGW(TAG, "sensore salvato muto da 15 s (CCCD %u esito %d): mi ricollego", s_cccd_usato, s_scrittura);
+            s_tentativo++; s_sub_us = t;
+            ble_gap_terminate(s_conn, BLE_ERR_REM_USER_CONN_TERM);
         }
         if (s_st == R_PROVA) {                    /* in moto senza aumenti per PROVA_MOTO_S → non e' il nostro */
             if (s_rx_conn == 0) {                 /* muto: non e' colpa del sensore, riprovo senza scartarlo */
