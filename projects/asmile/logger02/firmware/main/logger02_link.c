@@ -98,6 +98,10 @@ static void wake_task(void *arg)
     vTaskDelay(pdMS_TO_TICKS(20000));                /* all'avvio la A deve avere il tempo di alzarlo */
     while (1) {
         vTaskDelay(pdMS_TO_TICKS(500));
+        /* 26/11: mai mentre formatta la SD, e i 20 s di tolleranza contano da quando la SD e' montata
+         * (se la SD non si monta, dopo 2 min si torna al controllo normale) */
+        int64_t m = logger02_sd_montata_us(), t = esp_timer_get_time();
+        if (logger02_sd_formatto() || ((m == 0 || t - m < 20000000LL) && t < 120000000LL)) { basso = 0; continue; }
         basso = gpio_get_level(L02_PIN_WAKE) ? 0 : basso + 1;
         if (basso >= 6) logger02_dormi("la A ha abbassato WAKE");
     }

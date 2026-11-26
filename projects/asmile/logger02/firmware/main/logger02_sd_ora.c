@@ -3,6 +3,8 @@
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
+#include <dirent.h>
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
@@ -18,6 +20,26 @@
 static const char *TAG = "sd";
 static sdmmc_card_t *s_card;
 static uint32_t s_boot;
+static volatile bool s_formatto;          /* 26/11: vero mentre formatta (nessuno deve togliere corrente alla SD) */
+static volatile int64_t s_montata_us;     /* quando la SD e' montata (0 = non ancora) */
+
+bool logger02_sd_formatto(void) { return s_formatto; }
+int64_t logger02_sd_montata_us(void) { return s_montata_us; }
+
+/* rec/ leggibile e senza video: la formattazione e' riuscita davvero */
+static bool rec_vuota(void)
+{
+    DIR *d = opendir(L02_REC_DIR);
+    if (!d) return false;
+    struct dirent *e;
+    bool vuota = true;
+    while ((e = readdir(d))) {
+        size_t l = strlen(e->d_name);
+        if (l > 5 && !strcmp(e->d_name + l - 5, ".h264")) { vuota = false; break; }
+    }
+    closedir(d);
+    return vuota;
+}
 
 static esp_err_t monta(bool formatta)
 {
@@ -56,17 +78,27 @@ esp_err_t logger02_sd_monta(void)
 {
     uint8_t f = 0;
     nvs_handle_t h;
-    if (nvs_open("logger02", NVS_READWRITE, &h) == ESP_OK) {
+    if (nvs_open("logger02", NVS_READONLY, &h) == ESP_OK) {
         nvs_get_u8(h, "formatta", &f);
-        if (f) { nvs_set_u8(h, "formatta", 0); nvs_commit(h); }
         nvs_close(h);
     }
-    if (f) ESP_LOGW(TAG, "formatto la SD in FAT32 (richiesto)");
+    /* 26/11: il flag si azzera SOLO a formattazione riuscita. Prima veniva azzerato subito: la B, spenta a meta'
+     * formato dal riavvio della A, ripartiva su una FAT rotta senza riformattare e non scriveva piu' nulla. */
+    if (f) { ESP_LOGW(TAG, "formatto la SD in FAT32 (richiesto)"); s_formatto = true; }
     esp_err_t r = monta(f);
     if (r == ESP_OK && f && s_card) {
         r = esp_vfs_fat_sdcard_format(L02_SD, s_card);    /* anche se era già FAT: la ripulisce */
         mkdir(L02_REC_DIR, 0775);
+        if (r == ESP_OK && rec_vuota()) {
+            if (nvs_open("logger02", NVS_READWRITE, &h) == ESP_OK) { nvs_set_u8(h, "formatta", 0); nvs_commit(h); nvs_close(h); }
+            ESP_LOGW(TAG, "SD formattata e controllata");
+        } else {
+            ESP_LOGE(TAG, "SD: formattazione non riuscita (%s): riprovo al prossimo avvio", esp_err_to_name(r));
+            if (r == ESP_OK) r = ESP_FAIL;
+        }
     }
+    s_formatto = false;
+    if (r == ESP_OK) s_montata_us = esp_timer_get_time();
     return r;
 }
 

@@ -39,6 +39,8 @@ void logger02_nome_sessione(char *out, size_t n);  /* YYYYmmdd_HHMMSS, o bootNNN
 esp_err_t logger02_sd_monta(void);
 uint64_t logger02_sd_libero_mb(void);
 esp_err_t logger02_sd_formatta(void);        /* cancella tutto: solo con l'ok di Daniele */
+bool logger02_sd_formatto(void);             /* vero mentre la SD si sta formattando */
+int64_t logger02_sd_montata_us(void);        /* quando la SD e' stata montata (0 = mai) */
 
 /* sync A↔B */
 esp_err_t logger02_link_init(void);

@@ -121,6 +121,7 @@ int logger02_rete_riavvii(void)
 void logger02_riavvio_pulito(const char *motivo)
 {
     if (__atomic_exchange_n(&s_chiusura, 1, __ATOMIC_SEQ_CST)) return;     /* sta già dormendo o riavviando */
+    for (int i = 0; i < 600 && logger02_sd_formatto(); i++) vTaskDelay(pdMS_TO_TICKS(100));   /* 26/11: mai a meta' formato */
     int64_t t = esp_timer_get_time();
     ESP_LOGW(TAG, "riavvio pulito: %s (ferma da %lld s)", motivo, (long long)((t - s_ultimo_moto) / 1000000));
     s_salva = (salva_t){.magic = SALVA_MAGIC, .riavvii = (uint32_t)s_riavvii + 1, .fermo_us = t - s_ultimo_moto,
@@ -354,6 +355,7 @@ void logger02_dormi(const char *motivo)
     if (__atomic_exchange_n(&s_chiusura, 1, __ATOMIC_SEQ_CST)) {   /* riavvio pulito già in corso */
         vTaskDelay(portMAX_DELAY);
     }
+    for (int i = 0; i < 600 && logger02_sd_formatto(); i++) vTaskDelay(pdMS_TO_TICKS(100));   /* 26/11: mai a meta' formato */
     ESP_LOGW(TAG, "deep sleep: %s", motivo);
     bool a = logger02_ruolo()->is_a;
     if (a) logger02_link_invia("Z");                 /* prima la B */

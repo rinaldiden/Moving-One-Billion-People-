@@ -82,7 +82,8 @@ static esp_err_t h_stream(httpd_req_t *req)
 
 static esp_err_t h_stato(httpd_req_t *req)
 {
-    char rec[400], sync[480], imu[320], ts[96], sal[200], rete[260], ruota[380], out[2600];
+    char rec[480], sync[480], imu[320], ts[96], sal[200], rete[260], ruota[380];
+    static char out[3000];                         /* fuori dallo stack del server http (8 KB): i gestori girano in un solo task */
     logger02_rec_stato(rec, sizeof(rec));
     logger02_sync_stato(sync, sizeof(sync));
     if (logger02_ruolo()->is_a) { logger02_imu_stato(imu, sizeof(imu)); logger02_ruota_stato(ruota, sizeof(ruota)); }
@@ -110,9 +111,14 @@ static esp_err_t h_frames(httpd_req_t *req)
 
 static esp_err_t h_files(httpd_req_t *req)
 {
+    DIR *d = opendir(L02_REC_DIR);
+    if (!d) {                 /* 26/11: mai una lista vuota quando la cartella non si legge (sembrava "niente da scaricare") */
+        httpd_resp_set_status(req, "500 Internal Server Error");
+        httpd_resp_set_type(req, "application/json");
+        return httpd_resp_sendstr(req, "{\"errore\":\"rec/ illeggibile\"}");
+    }
     httpd_resp_set_type(req, "application/json");
     httpd_resp_sendstr_chunk(req, "[");
-    DIR *d = opendir(L02_REC_DIR);
     bool primo = true;
     struct dirent *e;
     char riga[320], p[300];

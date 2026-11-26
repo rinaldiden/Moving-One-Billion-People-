@@ -18,6 +18,8 @@
 #include "freertos/semphr.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "esp_attr.h"
+#include <errno.h>
 #include "esp_heap_caps.h"
 #include "linux/videodev2.h"
 #include "esp_video_device.h"
@@ -86,6 +88,25 @@ static volatile bool s_pausa, s_attendi_idr;   /* 23/11: bici ferma col wifi →
 static volatile uint32_t s_frame, s_scritti, s_seg;
 static FILE *s_vid, *s_csv;
 static char s_sess[24], s_file[64];
+/* 26/11: errori SD visibili e gestiti (la B aveva smesso di scrivere in silenzio dopo una formattazione a meta') */
+static volatile uint32_t s_err_sd;
+static int64_t s_open_ko_us;               /* ultimo fopen fallito: si riprova dopo 1 s, non a ogni fotogramma */
+static volatile int64_t s_sd_ok_us;        /* ultima scrittura riuscita */
+static int64_t s_sd_ko_dal;                /* da quando la SD non scrive mentre registro (0 = scrive) */
+RTC_NOINIT_ATTR static uint32_t s_rip_sd_magic, s_rip_sd_n;   /* riavvii fatti per SD rotta: al massimo uno */
+#define RIP_SD_MAGIC 0x5D0FF1CEu
+
+static void riavvio_task(void *arg)
+{
+    logger02_riavvio_pulito("SD non scrive da 30 s");
+    vTaskDelete(NULL);
+}
+
+static void sd_errore(const char *cosa)
+{
+    s_err_sd++;
+    ESP_LOGE(TAG, "SD: %s (errno %d, errori %lu)", cosa, errno, (unsigned long)s_err_sd);
+}
 static int64_t s_seg_t0;
 static uint64_t s_bytes;
 
@@ -234,10 +255,18 @@ static void apri_segmento(void)
              (unsigned long)s_seg);
     char p[112];
     snprintf(p, sizeof(p), "%s.h264", base);
+    if (s_open_ko_us && esp_timer_get_time() - s_open_ko_us < 1000000) return;   /* riprovo dopo 1 s */
     s_vid = fopen(p, "wb");
+    if (!s_vid) {
+        s_open_ko_us = esp_timer_get_time(); s_file[0] = 0;
+        sd_errore("non apro il pezzo video");
+        return;
+    }
+    s_open_ko_us = 0;
     snprintf(s_file, sizeof(s_file), "%s", strrchr(p, '/') + 1);
     snprintf(p, sizeof(p), "%s_frames.csv", base);
     s_csv = fopen(p, "w");
+    if (!s_csv) sd_errore("non apro il CSV dei fotogrammi");
     if (s_vid) setvbuf(s_vid, NULL, _IOFBF, 64 * 1024);
     if (s_csv) {
         setvbuf(s_csv, NULL, _IOFBF, 16 * 1024);
@@ -265,7 +294,8 @@ void logger02_rec_moto(void)
 static void chiudi_segmento(void)
 {
     if (s_vid) {
-        fclose(s_vid); s_vid = NULL;
+        if (fclose(s_vid) != 0) sd_errore("chiusura del pezzo video");
+        s_vid = NULL;
         if (s_da_scaricare >= 0) s_da_scaricare++;
         uint32_t m = s_moto_ms;
         if (m && m >= (uint32_t)(s_seg_t0 / 1000)) {           /* movimento vero dentro il pezzo */
@@ -377,7 +407,14 @@ static void rec_task(void *arg)
             memset(&ec, 0, sizeof(ec));
             ec.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
             ec.memory = V4L2_MEMORY_MMAP;
-            if (ioctl(s_enc, VIDIOC_QBUF, &eo) == 0 && ioctl(s_enc, VIDIOC_DQBUF, &ec) == 0) {
+            int q = ioctl(s_enc, VIDIOC_QBUF, &eo);
+            int dq = q == 0 ? ioctl(s_enc, VIDIOC_DQBUF, &ec) : -1;
+            if (q == 0 && dq != 0) {               /* 26/11: senza questo l'unico buffer d'ingresso restava in coda per sempre */
+                ioctl(s_enc, VIDIOC_DQBUF, &eo);
+                static int64_t ultimo_log;
+                if (esp_timer_get_time() - ultimo_log > 10000000) { ultimo_log = esp_timer_get_time(); ESP_LOGE(TAG, "encoder: DQBUF fallito, buffer recuperato"); }
+            }
+            if (q == 0 && dq == 0) {
                 uint32_t tipi = nal_tipi(s_enc_out, ec.bytesused);
                 if (tipi & (1u << 7)) salva_header(s_enc_out, ec.bytesused);
                 /* nuovo pezzo solo su un fotogramma IDR, con SPS/PPS in testa: ogni file si decodifica da solo */
@@ -390,9 +427,29 @@ static void rec_task(void *arg)
                     s_attendi_idr = false;
                     if (s_vid) chiudi_segmento();
                     apri_segmento();
-                    if (s_vid && s_hdr_len && !(tipi & (1u << 7))) fwrite(s_hdr, 1, s_hdr_len, s_vid);
+                    if (s_vid && s_hdr_len && !(tipi & (1u << 7)) && fwrite(s_hdr, 1, s_hdr_len, s_vid) != s_hdr_len) {
+                        sd_errore("scrittura intestazione"); chiudi_segmento(); s_open_ko_us = esp_timer_get_time();
+                    }
                 }
-                if (s_vid && !s_pausa) fwrite(s_enc_out, 1, ec.bytesused, s_vid);
+                if (s_vid && !s_pausa) {
+                    if (fwrite(s_enc_out, 1, ec.bytesused, s_vid) == ec.bytesused) s_sd_ok_us = esp_timer_get_time();
+                    else { sd_errore("scrittura video corta"); chiudi_segmento(); s_open_ko_us = esp_timer_get_time(); }
+                }
+                /* SD che non scrive da 30 s mentre registro: un solo riavvio pulito (contatore che sopravvive al riavvio) */
+                if (!s_pausa) {
+                    int64_t now = esp_timer_get_time();
+                    if (s_vid && now - s_sd_ok_us < 5000000) { s_sd_ko_dal = 0; s_rip_sd_n = 0; }
+                    else if (!s_sd_ko_dal) s_sd_ko_dal = now;
+                    else if (now - s_sd_ko_dal > 30000000) {
+                        if (s_rip_sd_magic != RIP_SD_MAGIC) { s_rip_sd_magic = RIP_SD_MAGIC; s_rip_sd_n = 0; }
+                        if (s_rip_sd_n == 0) {
+                            s_rip_sd_n = 1;
+                            ESP_LOGE(TAG, "SD: non scrive da 30 s, riavvio pulito (una volta sola)");
+                            xTaskCreate(riavvio_task, "rip_sd", 4096, NULL, 5, NULL);
+                        }
+                        s_sd_ko_dal = now;               /* non ripetere il messaggio a ogni fotogramma */
+                    }
+                }
                 if (s_csv && !s_pausa) fprintf(s_csv, "%lu,%lld,%lld,%lu\n", (unsigned long)f, (long long)t,
                                    (long long)logger02_t_a(t), (unsigned long)ec.bytesused);
                 s_bytes += ec.bytesused;
@@ -613,10 +670,12 @@ size_t logger02_rec_jpeg(uint8_t *out, size_t max)
 void logger02_rec_stato(char *json, size_t n)
 {
     snprintf(json, n, "{\"w\":%d,\"h\":%d,\"luma\":%d,\"esposizione_us\":%.0f,\"guadagno\":%.2f,\"registra\":%s,\"sessione\":\"%s\",\"file\":\"%s\",\"fotogrammi\":%lu,\"scritti\":%lu,"
-             "\"pezzi\":%lu,\"mb\":%.1f,\"sd_libero_mb\":%llu,\"da_scaricare\":%d,\"in_moto\":%d}",
+             "\"pezzi\":%lu,\"mb\":%.1f,\"sd_libero_mb\":%llu,\"da_scaricare\":%d,\"in_moto\":%d,\"sd_scrive\":%s,\"errori_sd\":%lu}",
              W, H, s_ae_luma, s_vts0 ? s_exp16 / 16.0 * s_periodo_us / s_vts0 : 0, s_gain / 16.0,
              s_rec && !s_pausa ? "true" : "false", s_sess, s_vid ? s_file : "", (unsigned long)s_frame, (unsigned long)s_scritti,
-             (unsigned long)s_seg, s_bytes / 1e6, logger02_sd_libero_mb(), logger02_rec_da_scaricare(), logger02_rec_da_scaricare_moto());
+             (unsigned long)s_seg, s_bytes / 1e6, logger02_sd_libero_mb(), logger02_rec_da_scaricare(), logger02_rec_da_scaricare_moto(),
+             (s_rec && !s_pausa) ? (s_vid && esp_timer_get_time() - s_sd_ok_us < 5000000 ? "true" : "false") : (s_sd_ko_dal ? "false" : "true"),
+             (unsigned long)s_err_sd);
 }
 
 void logger02_rec_ultimi(char *json, size_t n)
