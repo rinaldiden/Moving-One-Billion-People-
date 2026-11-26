@@ -48,6 +48,11 @@ static bool s_ha_salvato;
 static int s_cand_rssi, s_rssi;
 static struct { ble_addr_t a; int64_t fino; } s_nera[4];
 static uint32_t s_giri, s_prev_giri, s_notifiche;
+static uint32_t s_rx, s_rx_conn;     /* notifiche arrivate (qualsiasi handle): totale e su questa connessione */
+static uint16_t s_cccd_usato;
+static int s_scrittura = -1;           /* esito della scrittura del CCCD (-1 = non ancora) */
+static int64_t s_sub_us;               /* quando ho chiesto le notifiche */
+static int s_tentativo;                /* tentativi senza notifiche: alterno il CCCD scoperto e val+1 */
 static uint16_t s_t1024;
 static bool s_prev_ok;
 static int s_prova_ok;
@@ -162,15 +167,26 @@ static void misura(const uint8_t *b, int n)
 }
 
 /* ---- GATT: servizio → caratteristica → descrittore 0x2902 → notifiche ---- */
+static int su_scritto(uint16_t c, const struct ble_gatt_error *e, struct ble_gatt_attr *attr, void *arg)
+{
+    s_scrittura = e->status;
+    ESP_LOGW(TAG, "CCCD %u scritto: esito %d", s_cccd_usato, e->status);
+    if (e->status != 0) ble_gap_terminate(c, BLE_ERR_REM_USER_CONN_TERM);
+    return 0;
+}
+
 static int su_dsc(uint16_t c, const struct ble_gatt_error *e, uint16_t chr, const struct ble_gatt_dsc *d, void *arg)
 {
     static uint16_t cccd;
     if (e->status == 0 && d && !ble_uuid_cmp(&d->uuid.u, BLE_UUID16_DECLARE(BLE_GATT_DSC_CLT_CFG_UUID16))) cccd = d->handle;
     if (e->status == BLE_HS_EDONE) {
         uint8_t on[2] = {1, 0};
-        if (!cccd) cccd = s_val + 1;             /* quasi tutti i sensori lo mettono subito dopo il valore */
-        if (ble_gattc_write_flat(c, cccd, on, 2, NULL, NULL) == 0) {
+        if (!cccd || (s_tentativo & 1)) cccd = s_val + 1;   /* quasi tutti i sensori lo mettono subito dopo il valore */
+        s_cccd_usato = cccd; s_scrittura = -1;
+        ESP_LOGW(TAG, "valore %u, fine servizio %u, CCCD %u (tentativo %d)", s_val, s_fine, cccd, s_tentativo);
+        if (ble_gattc_write_flat(c, cccd, on, 2, su_scritto, NULL) == 0) {
             s_prev_ok = false; s_prova_ok = 0; s_prova_moto_us = 0;
+            s_rx_conn = 0; s_sub_us = esp_timer_get_time();
             s_st = s_ha_salvato ? R_OK : R_PROVA;
             ESP_LOGI(TAG, "notifiche attive (%s)", NOMI[s_st]);
         } else {
@@ -240,6 +256,11 @@ static int evento(struct ble_gap_event *ev, void *arg)
         uint8_t b[24];
         int n = OS_MBUF_PKTLEN(ev->notify_rx.om);
         if (n > (int)sizeof(b)) n = sizeof(b);
+        s_rx++; s_rx_conn++;
+        if (s_rx_conn <= 3) {
+            uint8_t b0 = 0; os_mbuf_copydata(ev->notify_rx.om, 0, 1, &b0);
+            ESP_LOGW(TAG, "notifica handle %u (atteso %u) lunga %d flags %u", ev->notify_rx.attr_handle, s_val, n, b0);
+        }
         if (ev->notify_rx.attr_handle == s_val && os_mbuf_copydata(ev->notify_rx.om, 0, n, b) == 0) misura(b, n);
         return 0;
     }
@@ -264,8 +285,16 @@ static void regista(void *arg)
             continue;
         }
         if (s_st == R_PROVA) {                    /* in moto senza aumenti per PROVA_MOTO_S → non e' il nostro */
-            if (logger02_imu_in_moto()) s_prova_moto_us += t - s_ultimo_check;
-            if (s_prova_moto_us > PROVA_MOTO_S * 1000000LL) scarta("bici in moto e i giri non aumentano");
+            if (s_rx_conn == 0) {                 /* muto: non e' colpa del sensore, riprovo senza scartarlo */
+                if (t - s_sub_us > 15000000LL) {
+                    ESP_LOGW(TAG, "nessuna notifica in 15 s (CCCD %u esito %d): mi ricollego", s_cccd_usato, s_scrittura);
+                    s_tentativo++;
+                    if (s_conn != BLE_HS_CONN_HANDLE_NONE) ble_gap_terminate(s_conn, BLE_ERR_REM_USER_CONN_TERM);
+                }
+            } else {
+                if (logger02_imu_in_moto()) s_prova_moto_us += t - s_ultimo_check;
+                if (s_prova_moto_us > PROVA_MOTO_S * 1000000LL) scarta("bici in moto e i giri non aumentano");
+            }
         }
         s_ultimo_check = t;
         if (s_st == R_INIZIO) s_st = R_CERCA;
@@ -346,7 +375,7 @@ void logger02_ruota_stato(char *json, size_t n)
     if (s_ha_salvato) { a[0] = '"'; addr_str(&s_salvato, a + 1, sizeof(a) - 2); strcat(a, "\""); }
     long long ultimo = s_ultimo_us ? (esp_timer_get_time() - s_ultimo_us) / 1000 : -1;
     snprintf(json, n, "{\"stato\":\"%s\",\"connesso\":%s,\"salvato\":%s,\"giri\":%lu,\"t_evento_1024\":%u,\"notifiche\":%lu,"
-             "\"ultimo_ms\":%lld,\"rssi_aggancio\":%d,\"c6\":\"%s\"}",
+             "\"ultimo_ms\":%lld,\"rssi_aggancio\":%d,\"c6\":\"%s\",\"rx\":%lu,\"rx_conn\":%lu,\"cccd\":%u,\"cccd_esito\":%d,\"tentativo\":%d}",
              NOMI[s_st], (s_st == R_OK || s_st == R_PROVA) ? "true" : "false", a, (unsigned long)s_giri, s_t1024, (unsigned long)s_notifiche,
-             ultimo, s_rssi, s_c6);
+             ultimo, s_rssi, s_c6, (unsigned long)s_rx, (unsigned long)s_rx_conn, s_cccd_usato, s_scrittura, s_tentativo);
 }

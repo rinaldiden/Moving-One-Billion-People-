@@ -82,7 +82,7 @@ static esp_err_t h_stream(httpd_req_t *req)
 
 static esp_err_t h_stato(httpd_req_t *req)
 {
-    char rec[400], sync[480], imu[320], ts[96], sal[200], rete[260], ruota[260], out[2600];
+    char rec[400], sync[480], imu[320], ts[96], sal[200], rete[260], ruota[380], out[2600];
     logger02_rec_stato(rec, sizeof(rec));
     logger02_sync_stato(sync, sizeof(sync));
     if (logger02_ruolo()->is_a) { logger02_imu_stato(imu, sizeof(imu)); logger02_ruota_stato(ruota, sizeof(ruota)); }
