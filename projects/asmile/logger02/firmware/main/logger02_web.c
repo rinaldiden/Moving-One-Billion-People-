@@ -10,7 +10,8 @@
  *   POST /ota               nuovo firmware (corpo = .bin), poi riavvio
  *   POST /dormi             deep sleep subito (prova)
  *   POST /rete_prova?azione=wifi_off|wifi_off_blocca|c6|versione&conferma=si   prove della rete di sicurezza (25/11)
- *   POST /c6_ota?conferma=si   corpo = network_adapter.bin (esp_hosted slave per C6): aggiorna il C6 (25/11) */
+ *   POST /c6_ota?conferma=si   corpo = network_adapter.bin (esp_hosted slave per C6): aggiorna il C6 (25/11)
+ *   POST /ruota/dimentica?conferma=si   A: cancella il sensore ruota salvato, al prossimo giro ne accoppia uno nuovo (26/11) */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -81,20 +82,20 @@ static esp_err_t h_stream(httpd_req_t *req)
 
 static esp_err_t h_stato(httpd_req_t *req)
 {
-    char rec[400], sync[480], imu[320], ts[96], sal[200], rete[260], out[2300];
+    char rec[400], sync[480], imu[320], ts[96], sal[200], rete[260], ruota[260], out[2600];
     logger02_rec_stato(rec, sizeof(rec));
     logger02_sync_stato(sync, sizeof(sync));
-    if (logger02_ruolo()->is_a) logger02_imu_stato(imu, sizeof(imu));
-    else snprintf(imu, sizeof(imu), "null");
+    if (logger02_ruolo()->is_a) { logger02_imu_stato(imu, sizeof(imu)); logger02_ruota_stato(ruota, sizeof(ruota)); }
+    else { snprintf(imu, sizeof(imu), "null"); snprintf(ruota, sizeof(ruota), "null"); }
     logger02_tailscale_stato(ts, sizeof(ts));
     logger02_salute_stato(sal, sizeof(sal));
     logger02_rete_stato(rete, sizeof(rete));
     const esp_app_desc_t *app = esp_app_get_description();
-    snprintf(out, sizeof(out), "{\"scheda\":\"%s\",\"riavvio\":%d,\"versione\":\"%s %s %s\",\"partizione\":\"%s\",\"ram_interna_libera\":%u,\"ram_interna_min\":%u,\"uptime_s\":%lld,\"t_us\":%lld,\"t_a_us\":%lld,\"rec\":%s,\"sync\":%s,\"imu\":%s,\"tailscale\":%s,\"salute\":%s,\"rete\":%s}",
+    snprintf(out, sizeof(out), "{\"scheda\":\"%s\",\"riavvio\":%d,\"versione\":\"%s %s %s\",\"partizione\":\"%s\",\"ram_interna_libera\":%u,\"ram_interna_min\":%u,\"uptime_s\":%lld,\"t_us\":%lld,\"t_a_us\":%lld,\"rec\":%s,\"sync\":%s,\"imu\":%s,\"tailscale\":%s,\"salute\":%s,\"rete\":%s,\"ruota\":%s}",
              logger02_ruolo()->nome, (int)esp_reset_reason(), app->version, app->date, app->time, esp_ota_get_running_partition()->label,
              (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
              (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL), esp_timer_get_time() / 1000000, esp_timer_get_time(),
-             logger02_t_a(esp_timer_get_time()), rec, sync, imu, ts, sal, rete);
+             logger02_t_a(esp_timer_get_time()), rec, sync, imu, ts, sal, rete, ruota);
     httpd_resp_set_type(req, "application/json");
     return httpd_resp_sendstr(req, out);
 }
@@ -338,6 +339,14 @@ static esp_err_t h_rete_prova(httpd_req_t *req)
     return httpd_resp_sendstr(req, out);
 }
 
+static esp_err_t h_ruota_dimentica(httpd_req_t *req)
+{
+    if (!conferma(req, NULL, 0)) return ESP_OK;
+    if (!logger02_ruolo()->is_a) return httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "il sensore ruota e' sulla A");
+    logger02_ruota_dimentica();
+    return httpd_resp_sendstr(req, "sensore ruota dimenticato: al prossimo giro accoppio quello della bici");
+}
+
 /* firmware del C6: controllo che sia davvero un'immagine ESP32-C6 di esp_hosted prima di darla al C6 */
 static esp_err_t h_c6_ota(httpd_req_t *req)
 {
@@ -482,6 +491,7 @@ esp_err_t logger02_web_start(void)
         {"/del", HTTP_POST, h_del}, {"/ota", HTTP_POST, h_ota}, {"/dormi", HTTP_POST, h_dormi}, {"/formatta", HTTP_POST, h_formatta},
         {"/api/storia", HTTP_GET, h_storia}, {"/rollback", HTTP_POST, h_rollback}, {"/tskey", HTTP_POST, h_tskey},
         {"/rete_prova", HTTP_POST, h_rete_prova}, {"/c6_ota", HTTP_POST, h_c6_ota},
+        {"/ruota/dimentica", HTTP_POST, h_ruota_dimentica},
     };
     for (size_t i = 0; i < sizeof(u) / sizeof(u[0]); i++) httpd_register_uri_handler(s, &u[i]);
     if (logger02_ruolo()->is_a) {

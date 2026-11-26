@@ -99,6 +99,13 @@ void logger02_salute_stato(char *json, size_t n);
 #include "freertos/semphr.h"
 extern SemaphoreHandle_t logger02_analogico;  /* ADC batteria e sensore di temperatura: uno alla volta */
 
+/* A: sensore ruota BLE (CSC 0x1816) via C6, accoppiamento automatico (logger02_ruota.c) */
+esp_err_t logger02_ruota_start(void);
+void logger02_ruota_stato(char *json, size_t n);
+void logger02_ruota_dimentica(void);          /* cancella il sensore salvato: al prossimo giro ne accoppia uno nuovo */
+void logger02_ruota_chiudi(void);             /* chiude il CSV (prima del deep sleep / riavvio pulito) */
+bool logger02_imu_in_moto(void);              /* movimento vero negli ultimi 2 s (non l'IMU che non risponde) */
+
 esp_err_t logger02_web_start(void);
 esp_err_t logger02_tailscale_start(void);       /* A: MicroLink, nome "logger02" */
 void logger02_tailscale_stato(char *out, size_t n);

@@ -50,6 +50,12 @@ static float s_batt = -1;
 static volatile int64_t s_ultimo_scarico;      /* ultimo BLOCCO davvero inviato (non /api/files) */
 static volatile int64_t s_ultimo_inizio;
 static int s_moto_fila;
+static volatile int64_t s_moto_vero;           /* ultimo movimento VERO (s_ultimo_moto si sposta anche con l'IMU muta) */
+
+bool logger02_imu_in_moto(void)
+{
+    return s_moto_vero && esp_timer_get_time() - s_moto_vero < 2000000LL;
+}
 static bool s_in_pausa;
 
 void logger02_scarico_visto(void)
@@ -121,6 +127,7 @@ void logger02_riavvio_pulito(const char *motivo)
                         .rete_eta_us = t - s_rete_vista, .sveglio_us = s_sveglio_fino > t ? s_sveglio_fino - t : 0};
     logger02_rec_stop();
     if (s_csv) { fclose(s_csv); s_csv = NULL; }
+    logger02_ruota_chiudi();
     logger02_salute_chiudi();
     vTaskDelay(pdMS_TO_TICKS(200));
     esp_restart();
@@ -231,6 +238,7 @@ static void imu_task(void *arg)
         if (g > GYRO_FERMO || dacc > ACC_FERMO_G) {
             if (++s_moto_fila >= MOTO_FILA) {
                 s_ultimo_moto = t;
+                s_moto_vero = t;
                 logger02_rec_moto();                        /* 25/11: movimento VERO (non l'IMU che non risponde) */
                 static int64_t m_inviato;
                 if (t - m_inviato > 2000000LL) { m_inviato = t; logger02_link_invia("M"); }   /* alla B, max 1 ogni 2 s */
@@ -351,6 +359,7 @@ void logger02_dormi(const char *motivo)
     if (a) logger02_link_invia("Z");                 /* prima la B */
     logger02_rec_stop();
     if (s_csv) { fclose(s_csv); s_csv = NULL; }
+    logger02_ruota_chiudi();                         /* il BLE muore col C6 in reset: basta chiudere il file */
     logger02_salute_chiudi();
 
     logger02_rec_standby();                          /* camera in standby */

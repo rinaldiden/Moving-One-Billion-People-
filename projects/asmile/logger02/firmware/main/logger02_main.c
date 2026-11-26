@@ -125,6 +125,7 @@ void app_main(void)
     }
     if (ru->is_a) {
         logger02_imu_start();
+        logger02_ruota_start();             /* 26/11: sensore ruota BLE, accoppiamento automatico */
     }
     logger02_web_start();
     ESP_LOGI(TAG, "pronto");
