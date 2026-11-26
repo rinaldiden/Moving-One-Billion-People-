@@ -21,6 +21,9 @@
 #define L02_PIN_SD_PWR      45
 #define L02_PIN_ETH_RST     51      /* PHY Ethernet (non usato): tenuto in reset = consuma meno */
 #define L02_PIN_PA          53      /* amplificatore audio */
+#define L02_PIN_LED_R       33      /* A: KY-016 R (pettine pin 29) — LED che respira, Daniele 26/11 (logger02_led.c) */
+#define L02_PIN_LED_G       26      /* A: KY-016 G (pin 31) */
+#define L02_PIN_LED_B       48      /* A: KY-016 B (pin 33); "-" del KY-016 su GND pin 30 */
 
 typedef struct {
     bool is_a;            /* A = master: IMU, batteria, BLE, faccia verso l'esterno; B = slave */
@@ -30,6 +33,11 @@ typedef struct {
 } logger02_ruolo_t;
 
 const logger02_ruolo_t *logger02_ruolo(void);
+/* LED batteria (solo A): respira verde 3,6-4,2 V, arancione 3,3-3,6, rosso sotto (logger02_led_logic.h) */
+void logger02_led_start(void);
+void logger02_led_spegni(void);               /* prima del deep sleep */
+const char *logger02_led_stato(void);         /* "verde" / "arancione" / "rosso" / "spento" */
+float logger02_batteria_media_v(void);         /* A: tensione vera media (ultime 5 letture), -1 = non leggibile */
 esp_err_t logger02_saluto(void);              /* "Narmade Har!" dall'altoparlante, una volta a ogni accensione */
 esp_err_t logger02_ip_fisso(void);            /* dopo example_connect(): passa da DHCP all'IP fisso del ruolo */
 void logger02_ora_init(void);                 /* SNTP + fuso Italia */

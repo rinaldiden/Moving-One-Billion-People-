@@ -47,6 +47,8 @@ static uint32_t s_campioni, s_errori;
 static adc_oneshot_unit_handle_t s_adc;
 static adc_cali_handle_t s_cali;
 static float s_batt = -1;
+static float s_batt_buf[5];                     /* 26/11: media mobile delle ultime 5 letture (1 al secondo) per il LED */
+static int s_batt_n, s_batt_i;
 static volatile int64_t s_ultimo_scarico;      /* ultimo BLOCCO davvero inviato (non /api/files) */
 static volatile int64_t s_ultimo_inizio;
 static int s_moto_fila;
@@ -248,7 +250,12 @@ static void imu_task(void *arg)
             s_moto_fila = 0;
         }
         pax = s_ax; pay = s_ay; paz = s_az;
-        if (s_campioni % 50 == 0) { s_batt = leggi_batteria(); if (rete_ok()) s_rete_vista = t; }
+        if (s_campioni % 50 == 0) {
+            s_batt = leggi_batteria();
+            if (s_batt > 0) { s_batt_buf[s_batt_i] = s_batt; s_batt_i = (s_batt_i + 1) % 5; if (s_batt_n < 5) s_batt_n++; }
+            else s_batt_n = 0;                   /* non leggibile: il LED si spegne, non invento un colore */
+            if (rete_ok()) s_rete_vista = t;
+        }
         if (s_csv) {
             fprintf(s_csv, "%lld,%lu,%.4f,%.4f,%.4f,%.2f,%.2f,%.2f,", (long long)t, (unsigned long)logger02_rec_frame(),
                     s_ax, s_ay, s_az, s_gx, s_gy, s_gz);
@@ -316,6 +323,15 @@ float logger02_batteria_v(void)
     return s_batt;
 }
 
+float logger02_batteria_media_v(void)
+{
+    int n = s_batt_n;
+    if (!n) return -1;
+    float s = 0;
+    for (int k = 0; k < n; k++) s += s_batt_buf[k];
+    return s / n;
+}
+
 void logger02_imu_stato(char *json, size_t n)
 {
     int64_t fermo = (esp_timer_get_time() - s_ultimo_moto) / 1000000;
@@ -323,9 +339,10 @@ void logger02_imu_stato(char *json, size_t n)
     if (s_batt > 0) snprintf(bv, sizeof(bv), "%.2f", s_batt);
     else snprintf(bv, sizeof(bv), "\"non collegata\"");
     snprintf(json, n, "{\"campioni\":%lu,\"errori\":%lu,\"acc_g\":[%.3f,%.3f,%.3f],\"gyro_dps\":[%.2f,%.2f,%.2f],"
-             "\"fermo_s\":%lld,\"spegne_dopo_s\":%d,\"batteria_v\":%s}",
+             "\"fermo_s\":%lld,\"spegne_dopo_s\":%d,\"batteria_v\":%s,\"batt_media_v\":%.2f,\"led\":\"%s\","
+             "\"protezione_3v\":\"spenta (fermata da Daniele)\"}",
              (unsigned long)s_campioni, (unsigned long)s_errori, s_ax, s_ay, s_az, s_gx, s_gy, s_gz,
-             (long long)fermo, FERMO_S, bv);
+             (long long)fermo, FERMO_S, bv, logger02_batteria_media_v(), logger02_led_stato());
 }
 
 /* arma il motion interrupt come imu_wake.py "arma" (taratura di stamattina) */
@@ -365,6 +382,7 @@ void logger02_dormi(const char *motivo)
     logger02_salute_chiudi();
 
     logger02_rec_standby();                          /* camera in standby */
+    logger02_led_spegni();                           /* LED batteria: uscite basse, in sonno pin liberi */
     /* tutto quello che non serve per svegliarsi: spento e tenuto spento durante il deep sleep */
     const struct { int pin, livello; } off[] = {
         {L02_PIN_C6_EN, 0},      /* wifi C6 in reset */
