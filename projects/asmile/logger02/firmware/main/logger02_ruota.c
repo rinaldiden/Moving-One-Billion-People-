@@ -14,6 +14,7 @@
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "nvs.h"
@@ -62,6 +63,10 @@ static char s_sess[24];
 static uint32_t s_pezzo;
 static int64_t s_pezzo_t0;
 static volatile bool s_chiuso;
+/* 27/11: crash 18:18 e 19:10 entrando in deep sleep. misura() (task NimBLE) controllava s_chiuso e poi scriveva,
+ * intanto dormi() faceva fclose sullo stesso FILE (o la scrittura riapriva il file con la SD gia' spenta).
+ * Ora ogni accesso a s_csv passa da questo mutex, e dopo chiudi() nessuno lo riapre. */
+static SemaphoreHandle_t s_csv_m;
 static char s_c6[24] = "?";
 
 static void addr_str(const ble_addr_t *a, char *o, size_t n)
@@ -104,8 +109,10 @@ static void apri_csv(void)
 
 void logger02_ruota_chiudi(void)
 {
+    if (s_csv_m) xSemaphoreTake(s_csv_m, portMAX_DELAY);
     s_chiuso = true;                 /* da qui niente scritture: deep sleep o riavvio pulito */
     if (s_csv) { fclose(s_csv); s_csv = NULL; }
+    if (s_csv_m) xSemaphoreGive(s_csv_m);   /* chi aspettava trova s_chiuso e non scrive */
 }
 
 /* ---- lista nera (sensori scartati in prova) ---- */
@@ -157,12 +164,15 @@ static void misura(const uint8_t *b, int n)
     }
     s_prev_giri = giri; s_prev_ok = true;
     s_giri = giri; s_t1024 = t1024; s_notifiche++; s_ultimo_us = t;
-    if (s_st == R_OK && !s_chiuso) {
-        if (!s_csv) apri_csv();
-        if (s_csv) {
-            fprintf(s_csv, "%lld,%lu,%lu,%u\n", (long long)t, (unsigned long)logger02_rec_frame(), (unsigned long)giri, t1024);
-            if (t - s_pezzo_t0 > 60000000LL) { fclose(s_csv); s_csv = NULL; }
+    if (s_st == R_OK && !s_chiuso && s_csv_m && xSemaphoreTake(s_csv_m, pdMS_TO_TICKS(500)) == pdTRUE) {
+        if (!s_chiuso) {
+            if (!s_csv) apri_csv();
+            if (s_csv) {
+                fprintf(s_csv, "%lld,%lu,%lu,%u\n", (long long)t, (unsigned long)logger02_rec_frame(), (unsigned long)giri, t1024);
+                if (t - s_pezzo_t0 > 60000000LL) { fclose(s_csv); s_csv = NULL; }
+            }
         }
+        xSemaphoreGive(s_csv_m);
     }
 }
 
@@ -250,7 +260,10 @@ static int evento(struct ble_gap_event *ev, void *arg)
     case BLE_GAP_EVENT_DISCONNECT:
         ESP_LOGW(TAG, "sensore perso (motivo %d): lo ricerco", ev->disconnect.reason);
         s_conn = BLE_HS_CONN_HANDLE_NONE; s_st = R_CERCA;
-        if (s_csv) { fclose(s_csv); s_csv = NULL; }
+        if (s_csv_m && xSemaphoreTake(s_csv_m, pdMS_TO_TICKS(500)) == pdTRUE) {
+            if (s_csv) { fclose(s_csv); s_csv = NULL; }
+            xSemaphoreGive(s_csv_m);
+        }
         return 0;
     case BLE_GAP_EVENT_NOTIFY_RX: {
         uint8_t b[24];
@@ -365,6 +378,7 @@ esp_err_t logger02_ruota_start(void)
 {
     if (!logger02_ruolo()->is_a) return ESP_OK;
     nvs_carica();
+    s_csv_m = xSemaphoreCreateMutex();
     xTaskCreate(avvio, "ruota_avvio", 4096, NULL, 4, NULL);
     return ESP_OK;
 }

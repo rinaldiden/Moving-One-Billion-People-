@@ -5,3 +5,6 @@ otadata,  data, ota,     0xf000,  0x2000
 phy_init, data, phy,     0x11000, 0x1000
 ota_0,    app,  ota_0,   0x20000, 4M
 ota_1,    app,  ota_1,   ,        4M
+# 27/11: core dump dell'ultimo crash (riassunto nel registro errori al riavvio). Aggiunta IN CODA: le altre non si
+# spostano, ma la tabella nuova si scrive solo col cavo (idf.py flash), non via OTA.
+coredump, data, coredump,,        1M

@@ -103,7 +103,10 @@ void app_main(void)
     logger02_led_start();                  /* A: LED che respira col colore della batteria (Daniele 26/11) */
     logger02_saluto();
     const logger02_ruolo_t *ru = logger02_ruolo();
-    ESP_LOGI(TAG, "scheda %c, risveglio: %d", ru->is_a ? 'A' : 'B', (int)esp_sleep_get_wakeup_cause());
+    if (ru->is_a) ESP_LOGI(TAG, "scheda A, risveglio: %d", (int)esp_sleep_get_wakeup_cause());   /* dettaglio in imu_start */
+    else ESP_LOGW(TAG, "scheda B, risveglio: causa %d%s", (int)esp_sleep_get_wakeup_cause(),
+                  logger02_guardia_sonno_scattata() ? ", GUARDIA SONNO scattata" : "");
+    logger02_crash_precedente();           /* 27/11: riassunto del core dump dell'ultimo crash nel registro errori */
 
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());

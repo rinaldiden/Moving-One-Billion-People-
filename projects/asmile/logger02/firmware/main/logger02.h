@@ -82,6 +82,9 @@ double logger02_rec_riga_us(void);
 esp_err_t logger02_imu_start(void);
 void logger02_imu_stato(char *json, size_t n);
 float logger02_batteria_v(void);              /* <0 se non collegata */
+void logger02_crash_precedente(void);        /* 27/11: riassunto del core dump nel registro errori, poi lo cancella */
+bool logger02_in_chiusura(void);             /* 27/11: dormi/riavvio partito: niente piu' accessi alla SD */
+bool logger02_guardia_sonno_scattata(void);  /* 27/11: l'ultimo sonno l'ha forzato la guardia (una volta sola) */
 void logger02_dormi(const char *motivo);      /* chiude tutto e va in deep sleep (A sveglia con IMU, B con WAKE) */
 void logger02_scarico_inizio(void);           /* 24/11: trasferimento aperto (/dl, proxy /b): contatore >0 = mai dormire */
 void logger02_scarico_fine(void);             /* da chiamare SEMPRE in uscita, anche in errore */

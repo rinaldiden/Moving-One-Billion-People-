@@ -36,11 +36,14 @@ static const char *TAG = "imu";
 /* 23/11 (Daniele: «deve essere così sempre»): ferma col wifi → registrazione in pausa (pezzi chiusi) e resta sveglia
  * finché sulla SD di A e B ci sono pezzi da scaricare e il Mac li sta prendendo; poi dorme.
  * 25/11 (Daniele): contano solo i pezzi registrati IN MOVIMENTO (marcatori, logger02_rec.c). */
+#define MOT_THR     2           /* soglia di risveglio IMU (LSB MPU6050), era 1 = minimo */
 #define GYRO_FERMO  3.0f
 #define ACC_FERMO_G 0.030f
 
 static i2c_master_dev_handle_t s_mpu;
 static FILE *s_csv;
+/* 27/11: lo scrive imu_task, lo chiudono dormi()/riavvio_pulito() da altri task (web, rete, SD): mutex */
+static SemaphoreHandle_t s_csv_m;
 static volatile int64_t s_ultimo_moto;
 static float s_ax, s_ay, s_az, s_gx, s_gy, s_gz;
 static uint32_t s_campioni, s_errori;
@@ -119,6 +122,74 @@ static int s_riavvii;                 /* della rete di sicurezza, in questo risv
 static bool s_ripreso;                /* stato del sonno ripreso dal riavvio pulito */
 static volatile int s_chiusura;       /* dormi o riavvio pulito: il primo che arriva chiude i file, l'altro aspetta */
 
+static void chiudi_csv_imu(void)
+{
+    if (s_csv_m) xSemaphoreTake(s_csv_m, portMAX_DELAY);     /* imu_task finisce la riga che sta scrivendo */
+    if (s_csv) { fclose(s_csv); s_csv = NULL; }
+    if (s_csv_m) xSemaphoreGive(s_csv_m);                    /* dopo: s_chiusura impedisce di riaprirlo */
+}
+
+/* 27/11 GUARDIA DEL SONNO: andare in deep sleep non deve mai restare appeso (un task che non molla, la SD, il BLE).
+ * Partita la chiusura, se fra GUARDIA_SONNO_S non siamo ancora in deep sleep ci si va comunque da qui (task esp_timer):
+ * C6 in reset, SD spenta, risveglio dall'IMU se gia' armata, se no fra 1 s (riparte pulita e riprova a dormire).
+ * Al risveglio logger02_guardia_sonno_scattata() lo dice nel registro errori. */
+#define GUARDIA_SONNO_S 20
+static volatile bool s_imu_armata;
+static RTC_NOINIT_ATTR uint32_t s_guardia_magic;
+static esp_timer_handle_t s_guardia_t;
+
+static void forza_sonno(void *arg)
+{
+    s_guardia_magic = 0x6A5D1E77;
+    const int giu[] = {L02_PIN_C6_EN, L02_PIN_SD_PWR};
+    const int liv[] = {0, 1};
+    for (int i = 0; i < 2; i++) {
+        gpio_set_direction(giu[i], GPIO_MODE_OUTPUT);
+        gpio_set_level(giu[i], liv[i]);
+        gpio_hold_en(giu[i]);
+    }
+    esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+    if (logger02_ruolo()->is_a) {
+        gpio_set_direction(L02_PIN_WAKE, GPIO_MODE_OUTPUT);
+        gpio_set_level(L02_PIN_WAKE, 0);
+        if (s_imu_armata) {
+            rtc_gpio_pulldown_en(L02_PIN_IMU_INT);
+            esp_sleep_enable_ext1_wakeup_io(1ULL << L02_PIN_IMU_INT, ESP_EXT1_WAKEUP_ANY_HIGH);
+        } else {
+            esp_sleep_enable_timer_wakeup(1000000ULL);
+        }
+    } else {
+        rtc_gpio_pulldown_en(L02_PIN_WAKE);
+        esp_sleep_enable_ext1_wakeup_io(1ULL << L02_PIN_WAKE, ESP_EXT1_WAKEUP_ANY_HIGH);
+    }
+    esp_deep_sleep_start();
+}
+
+static void guardia_sonno_arma(void)
+{
+    const esp_timer_create_args_t a = {.callback = forza_sonno, .name = "guardia_sonno"};
+    if (!s_guardia_t && esp_timer_create(&a, &s_guardia_t) != ESP_OK) return;
+    esp_timer_start_once(s_guardia_t, GUARDIA_SONNO_S * 1000000ULL);
+}
+
+bool logger02_in_chiusura(void)
+{
+    return __atomic_load_n(&s_chiusura, __ATOMIC_SEQ_CST) != 0;
+}
+
+/* prima di spegnere la SD: lo scarico dal web che sta leggendo un file finisce il blocco ed esce (max 3 s) */
+static void aspetta_scarichi(void)
+{
+    for (int i = 0; i < 30 && __atomic_load_n(&s_trasf, __ATOMIC_SEQ_CST) > 0; i++) vTaskDelay(pdMS_TO_TICKS(100));
+}
+
+bool logger02_guardia_sonno_scattata(void)
+{
+    bool s = s_guardia_magic == 0x6A5D1E77;
+    s_guardia_magic = 0;
+    return s;
+}
+
 void logger02_riavvio_init(void)
 {
     if (esp_reset_reason() != ESP_RST_SW || s_salva.magic != SALVA_MAGIC) {
@@ -142,9 +213,10 @@ void logger02_riavvio_pulito(const char *motivo)
     s_salva = (salva_t){.magic = SALVA_MAGIC, .riavvii = (uint32_t)s_riavvii + 1, .fermo_us = t - s_ultimo_moto,
                         .rete_eta_us = t - s_rete_vista, .sveglio_us = s_sveglio_fino > t ? s_sveglio_fino - t : 0};
     logger02_rec_stop();
-    if (s_csv) { fclose(s_csv); s_csv = NULL; }
+    chiudi_csv_imu();
     logger02_ruota_chiudi();
     logger02_salute_chiudi();
+    aspetta_scarichi();
     vTaskDelay(pdMS_TO_TICKS(200));
     esp_restart();
 }
@@ -269,12 +341,15 @@ static void imu_task(void *arg)
             else s_batt_n = 0;                   /* non leggibile: il LED si spegne, non invento un colore */
             if (rete_ok()) s_rete_vista = t;
         }
-        if (s_csv) {
+        if (s_csv_m && xSemaphoreTake(s_csv_m, pdMS_TO_TICKS(100)) == pdTRUE) {
+          if (s_csv && !s_chiusura) {
             fprintf(s_csv, "%lld,%lu,%.4f,%.4f,%.4f,%.2f,%.2f,%.2f,", (long long)t, (unsigned long)logger02_rec_frame(),
                     s_ax, s_ay, s_az, s_gx, s_gy, s_gz);
             if (s_campioni % 50 == 0 && s_batt > 0) fprintf(s_csv, "%.2f", s_batt);
             fputc('\n', s_csv);
             if (t - s_pezzo_t0 > 60000000LL) { fclose(s_csv); s_csv = NULL; apri_csv(); }
+          }
+          xSemaphoreGive(s_csv_m);
         }
         bool ferma = (s_ripreso || t > MIN_ACCESO_S * 1000000LL) && t - s_ultimo_moto > FERMO_S * 1000000LL && t >= s_calib_fino;
         if (ferma != s_in_pausa && s_campioni % 25 == 0) {     /* pausa/ripresa su A e B (ogni 0,5 s al massimo) */
@@ -299,6 +374,16 @@ esp_err_t logger02_imu_start(void)
         ESP_LOGE(TAG, "MPU6050 non risponde (WHO_AM_I 0x%02x)", who);
         return ESP_FAIL;
     }
+    {   /* 27/11: perche' mi sono svegliato? nel registro errori (W), letto prima di riconfigurare l'IMU */
+        uint8_t st = 0, pwr = 0, thr = 0;
+        r(0x3A, &st, 1); r(0x6B, &pwr, 1); r(0x1F, &thr, 1);
+        int causa = (int)esp_sleep_get_wakeup_cause();
+        unsigned long long ext1 = causa == ESP_SLEEP_WAKEUP_EXT1 ? (unsigned long long)esp_sleep_get_ext1_wakeup_status() : 0;
+        ESP_LOGW(TAG, "risveglio: causa %d (%s), ext1 0x%llx, pin INT %d, IMU INT_STATUS 0x%02x (moto %d), PWR 0x%02x, MOT_THR %u%s",
+                 causa, causa == ESP_SLEEP_WAKEUP_EXT1 ? "pin" : causa == ESP_SLEEP_WAKEUP_TIMER ? "timer" :
+                 causa == ESP_SLEEP_WAKEUP_UNDEFINED ? "non da sonno" : "altro", ext1, gpio_get_level(L02_PIN_IMU_INT),
+                 st, (st & 0x40) ? 1 : 0, pwr, thr, logger02_guardia_sonno_scattata() ? ", GUARDIA SONNO scattata" : "");
+    }
     w(0x6B, 0x00); w(0x6C, 0x00);      /* sveglia, tutti gli assi */
     w(0x1A, 0x03);                      /* DLPF 44 Hz */
     w(0x1B, 0x00); w(0x1C, 0x00);       /* ±250 °/s, ±2 g */
@@ -314,6 +399,7 @@ esp_err_t logger02_imu_start(void)
         adc_cali_create_scheme_curve_fitting(&cf, &s_cali);
     }
 
+    s_csv_m = xSemaphoreCreateMutex();
     s_ultimo_moto = esp_timer_get_time();
     if (s_salva.magic == SALVA_MAGIC) {                 /* dopo un riavvio pulito: stessi tempi di prima */
         int64_t t = esp_timer_get_time();
@@ -363,7 +449,7 @@ static bool arma_imu(void)
 {
     w(0x6B, 0x00);
     w(0x1C, 0x04);          /* ±2 g + passa-alto 0,63 Hz */
-    w(0x1F, 1);             /* MOT_THR minimo */
+    w(0x1F, MOT_THR);       /* 27/11: 1 -> 2 (Daniele: "proprio di un micro") */
     w(0x20, 1);             /* MOT_DUR 1 campione */
     w(0x69, 0x15);
     w(0x37, 0x20);          /* INT attivo alto, push-pull, latch */
@@ -389,10 +475,12 @@ void logger02_dormi(const char *motivo)
     ESP_LOGW(TAG, "deep sleep: %s", motivo);
     bool a = logger02_ruolo()->is_a;
     if (a) logger02_link_invia("Z");                 /* prima la B */
+    guardia_sonno_arma();                            /* 27/11: se qualcosa qui sotto si appende, fra 20 s si dorme lo stesso */
     logger02_rec_stop();
-    if (s_csv) { fclose(s_csv); s_csv = NULL; }
+    chiudi_csv_imu();
     logger02_ruota_chiudi();                         /* il BLE muore col C6 in reset: basta chiudere il file */
     logger02_salute_chiudi();
+    aspetta_scarichi();
 
     logger02_rec_standby();                          /* camera in standby */
     logger02_led_spegni();                           /* LED batteria: uscite basse, in sonno pin liberi */
@@ -414,6 +502,7 @@ void logger02_dormi(const char *motivo)
             ESP_LOGW(TAG, "la bici si muove allo spegnimento: resto acceso");
             esp_restart();
         }
+        s_imu_armata = true;
         gpio_set_level(L02_PIN_WAKE, 0);
         rtc_gpio_pulldown_en(L02_PIN_IMU_INT);
         esp_sleep_enable_ext1_wakeup_io(1ULL << L02_PIN_IMU_INT, ESP_EXT1_WAKEUP_ANY_HIGH);

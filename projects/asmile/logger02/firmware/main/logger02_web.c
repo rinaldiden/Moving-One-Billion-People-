@@ -109,8 +109,18 @@ static esp_err_t h_frames(httpd_req_t *req)
     return httpd_resp_sendstr(req, out);
 }
 
+/* 27/11: durante dormi/riavvio la SD si spegne: niente nuove letture/cancellazioni (crash entrando in deep sleep) */
+static bool sd_chiusa(httpd_req_t *req)
+{
+    if (!logger02_in_chiusura()) return false;
+    httpd_resp_set_status(req, "503 Service Unavailable");
+    httpd_resp_sendstr(req, "sto andando a dormire");
+    return true;
+}
+
 static esp_err_t h_files(httpd_req_t *req)
 {
+    if (sd_chiusa(req)) return ESP_OK;
     DIR *d = opendir(L02_REC_DIR);
     if (!d) {                 /* 26/11: mai una lista vuota quando la cartella non si legge (sembrava "niente da scaricare") */
         httpd_resp_set_status(req, "500 Internal Server Error");
@@ -150,7 +160,7 @@ static bool nome_ok(httpd_req_t *req, char *path, size_t n)
 static esp_err_t h_dl(httpd_req_t *req)
 {
     char p[160];
-    if (!nome_ok(req, p, sizeof(p))) return ESP_OK;
+    if (sd_chiusa(req) || !nome_ok(req, p, sizeof(p))) return ESP_OK;
     FILE *f = fopen(p, "rb");
     if (!f) return httpd_resp_send_404(req);
     httpd_resp_set_type(req, "application/octet-stream");
@@ -158,7 +168,7 @@ static esp_err_t h_dl(httpd_req_t *req)
     size_t n;
     esp_err_t r = ESP_OK;
     logger02_scarico_inizio();                      /* 24/11: scarico in corso = mai dormire */
-    while (buf && r == ESP_OK && (n = fread(buf, 1, 32768, f)) > 0) {
+    while (buf && r == ESP_OK && !logger02_in_chiusura() && (n = fread(buf, 1, 32768, f)) > 0) {
         r = httpd_resp_send_chunk(req, buf, n);
         logger02_scarico_visto();                   /* 23/11: un pezzo da 25 MB dura più di un minuto: sveglia a ogni blocco, non solo all'inizio */
     }
@@ -171,7 +181,7 @@ static esp_err_t h_dl(httpd_req_t *req)
 static esp_err_t h_del(httpd_req_t *req)
 {
     char p[160];
-    if (!nome_ok(req, p, sizeof(p))) return ESP_OK;
+    if (sd_chiusa(req) || !nome_ok(req, p, sizeof(p))) return ESP_OK;
     bool ok = remove(p) == 0;
     size_t l = strlen(p);
     if (ok && l > 5 && !strcmp(p + l - 5, ".h264")) logger02_rec_pezzo_tolto(strrchr(p, '/') + 1);

@@ -18,6 +18,7 @@
 #include "esp_timer.h"
 #include "esp_log.h"
 #include "nvs.h"
+#include "esp_core_dump.h"
 #include "logger02.h"
 
 static const char *TAG = "salute";
@@ -254,4 +255,35 @@ void logger02_salute_stato(char *json, size_t n)
     snprintf(json, n, "{\"ultimo_riavvio\":\"%s\",\"avvii\":%lu,\"brownout\":%lu,\"crash\":%lu,\"temp_c\":%.1f,"
              "\"errori\":%lu,\"avvisi\":%lu}", s_motivo ? s_motivo : "?", (unsigned long)s_avvii,
              (unsigned long)s_brownout, (unsigned long)s_crash, s_temp, (unsigned long)s_n_err, (unsigned long)s_n_avv);
+}
+
+/* 27/11: i crash entrando in deep sleep (18:18, 19:10) non lasciavano traccia: core dump spento. Ora il crash scrive il
+ * core dump nella partizione "coredump" (serve la tabella partizioni nuova, flash col cavo); al riavvio qui ne scrivo il
+ * riassunto nel registro errori (task, PC, RA, motivo, indirizzi di codice trovati sullo stack -> addr2line con l'ELF
+ * della stessa versione in logger02/rilasci/) e lo cancello, cosi' il prossimo crash ha posto. */
+void logger02_crash_precedente(void)
+{
+#if CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH
+    if (esp_core_dump_image_check() != ESP_OK) return;
+    esp_core_dump_summary_t *s = heap_caps_calloc(1, sizeof(*s), MALLOC_CAP_SPIRAM);
+    if (s && esp_core_dump_get_summary(s) == ESP_OK) {
+        char motivo[96] = "";
+        esp_core_dump_get_panic_reason(motivo, sizeof(motivo));
+        ESP_LOGE(TAG, "CRASH precedente: task %s, PC 0x%08lx, RA 0x%08lx, SP 0x%08lx, mcause 0x%lx, mtval 0x%lx, motivo \"%s\"",
+                 s->exc_task, (unsigned long)s->exc_pc, (unsigned long)s->ex_info.ra, (unsigned long)s->ex_info.sp,
+                 (unsigned long)s->ex_info.mcause, (unsigned long)s->ex_info.mtval, motivo);
+        char riga[200];
+        int l = snprintf(riga, sizeof(riga), "CRASH stack (indirizzi codice):");
+        for (uint32_t i = 0, k = 0; i + 4 <= s->exc_bt_info.dump_size && k < 14; i += 4) {
+            uint32_t v;
+            memcpy(&v, s->exc_bt_info.stackdump + i, 4);
+            if (v >= 0x40000000u && v < 0x4FF00000u && l < (int)sizeof(riga) - 12) { l += snprintf(riga + l, sizeof(riga) - l, " %08lx", (unsigned long)v); k++; }
+        }
+        ESP_LOGE(TAG, "%s", riga);
+    } else {
+        ESP_LOGE(TAG, "CRASH precedente: core dump presente ma riassunto illeggibile");
+    }
+    free(s);
+    esp_core_dump_image_erase();
+#endif
 }
