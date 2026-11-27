@@ -307,6 +307,20 @@ static esp_err_t h_formatta(httpd_req_t *req)
     return ESP_OK;
 }
 
+/* 27/11 modalita' calibrazione (solo logger02, Daniele): POST /calib?min=20 -> registra anche da ferma per N minuti (max 60) */
+static esp_err_t h_calib(httpd_req_t *req)
+{
+    char q[32], v[8];
+    int m = 20;
+    if (httpd_req_get_url_query_str(req, q, sizeof(q)) == ESP_OK && httpd_query_key_value(q, "min", v, sizeof(v)) == ESP_OK) m = atoi(v);
+    if (m < 0) m = 0;
+    if (m > 60) m = 60;
+    logger02_calib_modo(m);
+    char r[64];
+    snprintf(r, sizeof(r), "calibrazione: registro anche da ferma per %d minuti", m);
+    return httpd_resp_sendstr(req, r);
+}
+
 static esp_err_t h_dormi(httpd_req_t *req)
 {
     extern uint32_t g_dormi_prova_s;
@@ -497,7 +511,7 @@ esp_err_t logger02_web_start(void)
         {"/del", HTTP_POST, h_del}, {"/ota", HTTP_POST, h_ota}, {"/dormi", HTTP_POST, h_dormi}, {"/formatta", HTTP_POST, h_formatta},
         {"/api/storia", HTTP_GET, h_storia}, {"/rollback", HTTP_POST, h_rollback}, {"/tskey", HTTP_POST, h_tskey},
         {"/rete_prova", HTTP_POST, h_rete_prova}, {"/c6_ota", HTTP_POST, h_c6_ota},
-        {"/ruota/dimentica", HTTP_POST, h_ruota_dimentica},
+        {"/ruota/dimentica", HTTP_POST, h_ruota_dimentica}, {"/calib", HTTP_POST, h_calib},
     };
     for (size_t i = 0; i < sizeof(u) / sizeof(u[0]); i++) httpd_register_uri_handler(s, &u[i]);
     if (logger02_ruolo()->is_a) {

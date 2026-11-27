@@ -59,6 +59,19 @@ bool logger02_imu_in_moto(void)
     return s_moto_vero && esp_timer_get_time() - s_moto_vero < 2000000LL;
 }
 static bool s_in_pausa;
+static int64_t s_calib_fino;     /* 27/11 modalita' calibrazione (solo logger02): registra anche da ferma, niente pausa ne' sonno */
+
+void logger02_calib_modo(int minuti)
+{
+    s_calib_fino = esp_timer_get_time() + (int64_t)minuti * 60000000LL;
+    ESP_LOGW(TAG, "modalita' calibrazione: registro anche da ferma per %d minuti", minuti);
+}
+
+int logger02_calib_resta_s(void)
+{
+    int64_t r = s_calib_fino - esp_timer_get_time();
+    return r > 0 ? (int)(r / 1000000) : 0;
+}
 
 void logger02_scarico_visto(void)
 {
@@ -263,7 +276,7 @@ static void imu_task(void *arg)
             fputc('\n', s_csv);
             if (t - s_pezzo_t0 > 60000000LL) { fclose(s_csv); s_csv = NULL; apri_csv(); }
         }
-        bool ferma = (s_ripreso || t > MIN_ACCESO_S * 1000000LL) && t - s_ultimo_moto > FERMO_S * 1000000LL;
+        bool ferma = (s_ripreso || t > MIN_ACCESO_S * 1000000LL) && t - s_ultimo_moto > FERMO_S * 1000000LL && t >= s_calib_fino;
         if (ferma != s_in_pausa && s_campioni % 25 == 0) {     /* pausa/ripresa su A e B (ogni 0,5 s al massimo) */
             s_in_pausa = ferma;
             logger02_rec_pausa(ferma);
@@ -340,9 +353,9 @@ void logger02_imu_stato(char *json, size_t n)
     else snprintf(bv, sizeof(bv), "\"non collegata\"");
     snprintf(json, n, "{\"campioni\":%lu,\"errori\":%lu,\"acc_g\":[%.3f,%.3f,%.3f],\"gyro_dps\":[%.2f,%.2f,%.2f],"
              "\"fermo_s\":%lld,\"spegne_dopo_s\":%d,\"batteria_v\":%s,\"batt_media_v\":%.2f,\"led\":\"%s\","
-             "\"protezione_3v\":\"spenta (fermata da Daniele)\"}",
+             "\"protezione_3v\":\"spenta (fermata da Daniele)\",\"calib_resta_s\":%d}",
              (unsigned long)s_campioni, (unsigned long)s_errori, s_ax, s_ay, s_az, s_gx, s_gy, s_gz,
-             (long long)fermo, FERMO_S, bv, logger02_batteria_media_v(), logger02_led_stato());
+             (long long)fermo, FERMO_S, bv, logger02_batteria_media_v(), logger02_led_stato(), logger02_calib_resta_s());
 }
 
 /* arma il motion interrupt come imu_wake.py "arma" (taratura di stamattina) */

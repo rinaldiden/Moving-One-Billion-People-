@@ -88,6 +88,8 @@ void logger02_scarico_fine(void);             /* da chiamare SEMPRE in uscita, a
 void logger02_scarico_visto(void);            /* il Mac sta scaricando (web): A resta sveglia finché finisce */
 /* 25/11: rete di sicurezza (logger02_wifi.c) */
 bool logger02_in_pausa(void);                 /* A: bici ferma, registrazione in pausa */
+void logger02_calib_modo(int minuti);         /* A: modalita' calibrazione, registra da ferma per N minuti */
+int logger02_calib_resta_s(void);
 bool logger02_scarico_in_corso(void);         /* trasferimento aperto e non appeso (blocchi negli ultimi 3 min) */
 void logger02_prova_sveglio(int s);           /* prove: non dormire per s secondi (anche dopo un riavvio pulito) */
 void logger02_riavvio_init(void);             /* all'avvio: riprende lo stato salvato da logger02_riavvio_pulito */
